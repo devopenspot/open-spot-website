@@ -1,0 +1,8 @@
+###
+GET https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=48.837232658164666&lon=2.3789421865061824&addressdetails=1
+
+###
+GET https://nominatim.openstreetmap.org/search?q=paris+skatepark&addressdetails=1&format=jsonv2
+
+###
+GET https://nominatim.openstreetmap.org/search?format=jsonv2&city=cali&amenity=skatepark&addressdetails=1
