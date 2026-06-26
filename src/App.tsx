@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useCallback, useEffect, useMemo, useState, useTransition, type ReactNode } from 'react';
 import { INITIAL_SPOTS } from './data';
 import { Spot, TabType } from './types';
 import Header from './components/Header';
@@ -8,138 +8,145 @@ import SavedTab from './components/SavedTab';
 import PostTab from './components/PostTab';
 import SpotDetailsModal from './components/SpotDetailsModal';
 import SearchOverlay from './components/SearchOverlay';
+import { ToastViewport } from './components/Toast';
+import { ErrorBoundary } from './components/ErrorBoundary';
+import { useSavedSpots } from './hooks/useSavedSpots';
+import { useEscapeKey } from './hooks/useEscapeKey';
+import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
+import { showToast } from './hooks/useToast';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<TabType>('explore');
+  const [activeTab, setActiveTabRaw] = useState<TabType>('explore');
+  const [, startTabTransition] = useTransition();
   const [spots, setSpots] = useState<Spot[]>(INITIAL_SPOTS);
-  const [savedSpotIds, setSavedSpotIds] = useState<Set<string>>(new Set<string>());
-  
-  // Modals / Overlays
+
   const [selectedSpot, setSelectedSpot] = useState<Spot | null>(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
-  // Synchronize saved spots with local storage on mount (optional/robust)
+  const { savedIds, isSaved, toggle, count, lastError } = useSavedSpots();
+
   useEffect(() => {
-    const saved = localStorage.getItem('openspot_saved_ids');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved) as string[];
-        setSavedSpotIds(new Set(parsed));
-      } catch (e) {
-        console.error('Error parsing saved ids:', e);
-      }
+    if (lastError) {
+      showToast('Could not save your bookmarks locally', 'error');
     }
-  }, []);
+  }, [lastError]);
 
-  const saveToLocalStorage = (newSet: Set<string>) => {
-    localStorage.setItem('openspot_saved_ids', JSON.stringify(Array.from(newSet)));
-  };
+  const closeModal = useCallback(() => setSelectedSpot(null), []);
+  const closeSearch = useCallback(() => setIsSearchOpen(false), []);
+  const openSearch = useCallback(() => setIsSearchOpen(true), []);
+  const toggleSearch = useCallback(() => setIsSearchOpen(prev => !prev), []);
 
-  // Keyboard Shortcuts (Cmd+K / Ctrl+K for search, Esc to dismiss)
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+  useEscapeKey(closeModal, Boolean(selectedSpot));
+  useEscapeKey(closeSearch, isSearchOpen);
+
+  useKeyboardShortcuts([
+    {
+      key: 'k',
+      cmdOrCtrl: true,
+      handler: e => {
         e.preventDefault();
-        setIsSearchOpen(prev => !prev);
-      }
-      if (e.key === 'Escape') {
-        setIsSearchOpen(false);
-        setSelectedSpot(null);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+        toggleSearch();
+      },
+    },
+  ]);
+
+  const setActiveTab = useCallback(
+    (tab: TabType) => {
+      startTabTransition(() => setActiveTabRaw(tab));
+    },
+    [startTabTransition],
+  );
+
+  const handleToggleSave = useCallback(
+    (id: string) => {
+      toggle(id);
+    },
+    [toggle],
+  );
+
+  const handleAddSpot = useCallback((newSpot: Spot) => {
+    setSpots(prev => [newSpot, ...prev]);
   }, []);
 
-  // Save/Unsave action
-  const handleToggleSave = (id: string, e?: React.MouseEvent) => {
-    if (e) {
-      e.stopPropagation(); // Avoid triggering card selection click
-    }
-    setSavedSpotIds(prev => {
-      const next = new Set<string>(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
-      saveToLocalStorage(next);
-      return next;
-    });
-  };
-
-  // Add new registered custom spot
-  const handleAddSpot = (newSpot: Spot) => {
-    setSpots(prev => [newSpot, ...prev]);
-  };
+  const tabs = useMemo<Record<TabType, ReactNode>>(
+    () => ({
+      explore: (
+        <ExploreTab
+          spots={spots}
+          savedSpotIds={savedIds}
+          onSelectSpot={setSelectedSpot}
+          onToggleSave={handleToggleSave}
+          onNavigateToMap={() => setActiveTab('map')}
+        />
+      ),
+      map: (
+        <MapTab
+          spots={spots}
+          savedSpotIds={savedIds}
+          onSelectSpot={setSelectedSpot}
+          onToggleSave={handleToggleSave}
+        />
+      ),
+      saved: (
+        <SavedTab
+          spots={spots}
+          savedSpotIds={savedIds}
+          onSelectSpot={setSelectedSpot}
+          onToggleSave={handleToggleSave}
+          onNavigateToExplore={() => setActiveTab('explore')}
+        />
+      ),
+      post: (
+        <PostTab
+          onAddSpot={handleAddSpot}
+          onNavigateToExplore={() => setActiveTab('explore')}
+        />
+      ),
+    }),
+    [spots, savedIds, handleToggleSave, handleAddSpot, setActiveTab],
+  );
 
   return (
-    <div id="app-root" className="min-h-screen bg-surface font-sans text-on-surface flex flex-col selection:bg-primary selection:text-surface">
-      
-      {/* Universal Navigation Header */}
+    <div
+      id="app-root"
+      className="min-h-screen bg-surface font-sans text-on-surface flex flex-col selection:bg-primary selection:text-surface"
+    >
+      <a href="#main-content" className="skip-link">
+        Skip to main content
+      </a>
+
       <Header
         activeTab={activeTab}
         setActiveTab={setActiveTab}
-        savedCount={savedSpotIds.size}
-        onOpenSearch={() => setIsSearchOpen(true)}
+        savedCount={count}
+        onOpenSearch={openSearch}
       />
 
-      {/* Main Content Pane */}
-      <main id="main-content" className="flex-1 mx-auto w-full max-w-7xl px-4 py-8 md:px-8">
-        {activeTab === 'explore' && (
-          <ExploreTab
-            spots={spots}
-            savedSpotIds={savedSpotIds}
-            onSelectSpot={setSelectedSpot}
-            onToggleSave={handleToggleSave}
-            onNavigateToMap={() => setActiveTab('map')}
-          />
-        )}
-
-        {activeTab === 'map' && (
-          <MapTab
-            spots={spots}
-            savedSpotIds={savedSpotIds}
-            onSelectSpot={setSelectedSpot}
-            onToggleSave={handleToggleSave}
-          />
-        )}
-
-        {activeTab === 'saved' && (
-          <SavedTab
-            spots={spots}
-            savedSpotIds={savedSpotIds}
-            onSelectSpot={setSelectedSpot}
-            onToggleSave={handleToggleSave}
-            onNavigateToExplore={() => setActiveTab('explore')}
-          />
-        )}
-
-        {activeTab === 'post' && (
-          <PostTab
-            onAddSpot={handleAddSpot}
-            onNavigateToExplore={() => setActiveTab('explore')}
-          />
-        )}
+      <main
+        id="main-content"
+        aria-label="Open Spot content"
+        className="flex-1 mx-auto w-full max-w-7xl px-4 py-8 md:px-8"
+      >
+        <ErrorBoundary>{tabs[activeTab]}</ErrorBoundary>
       </main>
 
-      {/* Expanded Spot Spotlight Modal Overlay */}
       {selectedSpot && (
         <SpotDetailsModal
           spot={selectedSpot}
-          onClose={() => setSelectedSpot(null)}
-          onToggleSave={(id) => handleToggleSave(id)}
-          isSaved={savedSpotIds.has(selectedSpot.id)}
+          onClose={closeModal}
+          onToggleSave={handleToggleSave}
+          isSaved={isSaved(selectedSpot.id)}
         />
       )}
 
-      {/* Fullscreen Search Console Overlay */}
       <SearchOverlay
         isOpen={isSearchOpen}
-        onClose={() => setIsSearchOpen(false)}
+        onClose={closeSearch}
         spots={spots}
         onSelectSpot={setSelectedSpot}
       />
+
+      <ToastViewport />
     </div>
   );
 }

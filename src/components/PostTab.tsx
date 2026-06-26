@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
-import { PlusCircle, MapPin, Check, Image as ImageIcon, Camera, Trash2, Tag, Compass } from 'lucide-react';
+import { useId, useState, type FormEvent } from 'react';
+import { Check, Image as ImageIcon, Tag, Plus } from 'lucide-react';
 import { Spot } from '../types';
+import { showToast } from '../hooks/useToast';
 
 interface PostTabProps {
   onAddSpot: (spot: Spot) => void;
   onNavigateToExplore: () => void;
 }
 
-// Pre-curated street photography images to avoid broken links
 const DEFAULT_PRESET_IMAGES = [
   {
     name: 'Industrial Ledge',
@@ -25,46 +25,86 @@ const DEFAULT_PRESET_IMAGES = [
     name: 'Desert Basin Ditch',
     url: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBFcsJ_InsjM_V2ZhdORVirVciKPJ2Uqt5Jii3nfPULenttPQ0cUQzaa_C0Yc_NrAv1eAnHIeR8S04LjqVjCQuleF60loO-Mh7UEOwa--QIQwv3VaR_P4gt5B7jfu-3GeKqm5Rf-NV8q0xJxL_FX9JZR0_YLkAMpHPWfXRNDr5THXJbJawrNxG5oJYPI2YICMJAFHJPsYpbPdVHU8lTuqhXRgmObg3ZuVD7VNiZ6NjRXmQfSSW7vx2q43JFz7ckBgTcpMPRzkp67YMT'
   }
-];
+] as const;
+
+const TERRAIN_OPTIONS = [
+  { value: 'Plaza', label: 'Plaza' },
+  { value: 'DIY', label: 'DIY' },
+  { value: 'Stair', label: 'Stair set' },
+  { value: 'Bowl', label: 'Bowl' },
+  { value: 'Park', label: 'Skatepark' },
+  { value: 'Ledges', label: 'Ledges' },
+  { value: 'Pools', label: 'Pools' },
+] as const;
 
 export default function PostTab({
   onAddSpot,
   onNavigateToExplore,
 }: PostTabProps) {
+  const nameId = useId();
+  const typeId = useId();
+  const cityId = useId();
+  const addressId = useId();
+  const imageId = useId();
+  const crowdId = useId();
+  const featuresId = useId();
+  const noteId = useId();
+  const errorId = useId();
+
   const [name, setName] = useState('');
   const [city, setCity] = useState('');
   const [address, setAddress] = useState('');
-  const [type, setType] = useState('Plaza');
-  const [imageUrl, setImageUrl] = useState(DEFAULT_PRESET_IMAGES[0].url);
+  const [type, setType] = useState<string>('Plaza');
+  const [imageUrl, setImageUrl] = useState<string>(DEFAULT_PRESET_IMAGES[0].url);
   const [selectedPreset, setSelectedPreset] = useState<number>(0);
   const [communityNote, setCommunityNote] = useState('');
   const [featuresInput, setFeaturesInput] = useState('');
   const [featuresList, setFeaturesList] = useState<string[]>(['Transition', 'Smooth Concrete']);
   const [crowdLevel, setCrowdLevel] = useState<number>(35);
-
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
-  const handleAddFeature = (e: React.FormEvent) => {
+  const handleAddFeature = (e: FormEvent) => {
     e.preventDefault();
     const trimmed = featuresInput.trim();
     if (trimmed && !featuresList.includes(trimmed)) {
-      setFeaturesList([...featuresList, trimmed]);
+      setFeaturesList(prev => [...prev, trimmed]);
       setFeaturesInput('');
     }
   };
 
   const handleRemoveFeature = (f: string) => {
-    setFeaturesList(featuresList.filter(item => item !== f));
+    setFeaturesList(prev => prev.filter(item => item !== f));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handlePresetPick = (idx: number, url: string) => {
+    setSelectedPreset(idx);
+    setImageUrl(url);
+  };
+
+  const handleCustomUrl = (url: string) => {
+    setSelectedPreset(-1);
+    setImageUrl(url);
+  };
+
+  const reset = () => {
+    setName('');
+    setCity('');
+    setAddress('');
+    setType('Plaza');
+    setCommunityNote('');
+    setFeaturesList(['Transition', 'Smooth Concrete']);
+    setFormError(null);
+  };
+
+  const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (!name || !city || !address) {
-      alert('Please fill in the required fields: Name, City, and Address.');
+      setFormError('Please fill in the required fields: Name, City, and Address.');
       return;
     }
+    setFormError(null);
 
-    // Generate coordinate roughly near center of LA simulated board (coords: 40-60)
     const randomCoordX = Math.floor(Math.random() * 20) + 40;
     const randomCoordY = Math.floor(Math.random() * 20) + 40;
 
@@ -85,24 +125,30 @@ export default function PostTab({
         forecast: [
           { day: 'TUE', icon: 'sunny', temp: 22 },
           { day: 'WED', icon: 'partly_cloudy_day', temp: 20 },
-          { day: 'THU', icon: 'sunny', temp: 23 }
-        ]
+          { day: 'THU', icon: 'sunny', temp: 23 },
+        ],
       },
-      communityNote: communityNote || 'Contributed by community scout. Bring your setup and session on! — @anonymous_rider'
+      communityNote: communityNote || 'Contributed by community scout. Bring your setup and session on! — @anonymous_rider',
     };
 
     onAddSpot(newSpot);
+    showToast('Spot registered successfully', 'success');
     setIsSubmitted(true);
   };
 
   if (isSubmitted) {
     return (
-      <div id="post-success-panel" className="max-w-md mx-auto py-16 text-center animate-fade-in">
+      <section
+        id="post-success-panel"
+        role="status"
+        aria-live="polite"
+        className="max-w-md mx-auto py-16 text-center animate-fade-in"
+      >
         <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary mx-auto mb-6">
-          <Check size={28} className="text-primary animate-pulse" />
+          <Check size={28} className="text-primary animate-pulse" aria-hidden="true" />
         </div>
         <h2 className="font-display text-2xl font-bold uppercase tracking-widest text-on-surface">
-          SPOT REGISTERED
+          Spot registered
         </h2>
         <p className="mt-2 text-xs text-secondary leading-relaxed">
           Your street coordinates and terrain specifications have been cataloged on the master map! Skaters can now scout this location live.
@@ -110,130 +156,139 @@ export default function PostTab({
 
         <div className="mt-8 flex flex-col gap-2.5">
           <button
+            type="button"
             onClick={() => {
               setIsSubmitted(false);
-              setName('');
-              setCity('');
-              setAddress('');
-              setType('Plaza');
-              setCommunityNote('');
-              setFeaturesList(['Transition', 'Smooth Concrete']);
+              reset();
             }}
             className="w-full bg-on-surface text-surface py-2.5 rounded-lg text-xs font-bold tracking-widest uppercase hover:bg-on-surface/90 transition-all"
           >
-            POST ANOTHER PLOT
+            Post another plot
           </button>
-          
+
           <button
+            type="button"
             onClick={onNavigateToExplore}
             className="w-full border border-outline text-on-surface py-2.5 rounded-lg text-xs font-bold tracking-widest uppercase hover:bg-surface-container transition-all"
           >
-            RETURN TO DIRECTORY
+            Return to directory
           </button>
         </div>
-      </div>
+      </section>
     );
   }
 
   return (
-    <div id="post-tab" className="max-w-3xl mx-auto pb-24 animate-fade-in">
-      <div className="border-b border-outline-variant pb-5 mb-8">
+    <section
+      id="post-tab"
+      role="tabpanel"
+      aria-labelledby="nav-btn-post"
+      className="max-w-3xl mx-auto pb-24 animate-fade-in"
+    >
+      <header className="border-b border-outline-variant pb-5 mb-8">
         <span className="font-mono text-[10px] font-bold tracking-widest text-secondary uppercase block mb-1">
-          CONTRIBUTE TO CARTOGRAPHY
+          Contribute to cartography
         </span>
         <h2 className="font-display text-2xl font-bold tracking-tight text-on-surface uppercase sm:text-3xl">
-          REGISTER NEW OBSTACLE
+          Register new obstacle
         </h2>
         <p className="mt-1.5 text-xs text-secondary leading-relaxed">
           Map your local ledges, stairs, DIYs, or pools. Provide accurate metadata to help fellow skaters coordinate sessions safely.
         </p>
-      </div>
+      </header>
 
-      <form onSubmit={handleSubmit} className="space-y-8">
-        {/* Row 1: Basic Identifiers */}
+      <form onSubmit={handleSubmit} noValidate className="space-y-8">
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
           <div>
-            <label className="block font-mono text-[10px] font-bold uppercase tracking-wider text-secondary mb-1.5">
-              SPOT NAME *
+            <label htmlFor={nameId} className="block font-mono text-[10px] font-bold uppercase tracking-wider text-secondary mb-1.5">
+              Spot name <span aria-hidden="true">*</span>
             </label>
             <input
+              id={nameId}
               type="text"
               required
-              placeholder="e.g. THE WHITE MARBLE NINE"
+              aria-required="true"
+              placeholder="e.g. The White Marble Nine"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={e => setName(e.target.value)}
               className="w-full rounded-lg border border-outline-variant bg-surface-bright p-3 text-xs font-medium text-on-surface shadow-sm focus:border-outline focus:outline-none"
             />
           </div>
 
           <div>
-            <label className="block font-mono text-[10px] font-bold uppercase tracking-wider text-secondary mb-1.5">
-              TERRAIN TYPE *
+            <label htmlFor={typeId} className="block font-mono text-[10px] font-bold uppercase tracking-wider text-secondary mb-1.5">
+              Terrain type <span aria-hidden="true">*</span>
             </label>
             <select
+              id={typeId}
+              required
               value={type}
-              onChange={(e) => setType(e.target.value)}
+              onChange={e => setType(e.target.value)}
               className="w-full rounded-lg border border-outline-variant bg-surface-bright p-3 text-xs font-medium text-on-surface shadow-sm focus:border-outline focus:outline-none"
             >
-              <option value="Plaza">PLAZA</option>
-              <option value="DIY">DIY</option>
-              <option value="Stair">STAIR SET</option>
-              <option value="Bowl">BOWL</option>
-              <option value="Park">SKATEPARK</option>
-              <option value="Ledges">LEDGES</option>
-              <option value="Pools">POOLS</option>
+              {TERRAIN_OPTIONS.map(opt => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label.toUpperCase()}
+                </option>
+              ))}
             </select>
           </div>
         </div>
 
-        {/* Row 2: Location specs */}
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
           <div>
-            <label className="block font-mono text-[10px] font-bold uppercase tracking-wider text-secondary mb-1.5">
-              CITY *
+            <label htmlFor={cityId} className="block font-mono text-[10px] font-bold uppercase tracking-wider text-secondary mb-1.5">
+              City <span aria-hidden="true">*</span>
             </label>
             <input
+              id={cityId}
               type="text"
               required
+              aria-required="true"
               placeholder="e.g. Los Angeles, CA"
               value={city}
-              onChange={(e) => setCity(e.target.value)}
+              onChange={e => setCity(e.target.value)}
               className="w-full rounded-lg border border-outline-variant bg-surface-bright p-3 text-xs font-medium text-on-surface shadow-sm focus:border-outline focus:outline-none"
             />
           </div>
 
           <div>
-            <label className="block font-mono text-[10px] font-bold uppercase tracking-wider text-secondary mb-1.5">
-              EXACT ADDRESS *
+            <label htmlFor={addressId} className="block font-mono text-[10px] font-bold uppercase tracking-wider text-secondary mb-1.5">
+              Exact address <span aria-hidden="true">*</span>
             </label>
             <input
+              id={addressId}
               type="text"
               required
+              aria-required="true"
               placeholder="e.g. Hope Street Corporate Row, L.A."
               value={address}
-              onChange={(e) => setAddress(e.target.value)}
+              onChange={e => setAddress(e.target.value)}
               className="w-full rounded-lg border border-outline-variant bg-surface-bright p-3 text-xs font-medium text-on-surface shadow-sm focus:border-outline focus:outline-none"
             />
           </div>
         </div>
 
-        {/* Section 3: Visual banner selection (preset vs custom) */}
-        <div className="rounded-xl border border-outline-variant bg-surface-container-low p-5">
-          <label className="block font-mono text-[10px] font-bold uppercase tracking-wider text-secondary mb-3 flex items-center">
-            <ImageIcon size={12} className="mr-1.5 text-secondary" />
-            VISUAL BANNER SOURCE (CHOOSE A PRESET OR SUBMIT URL)
-          </label>
+        <fieldset className="rounded-xl border border-outline-variant bg-surface-container-low p-5">
+          <legend className="px-1 font-mono text-[10px] font-bold uppercase tracking-wider text-secondary flex items-center">
+            <ImageIcon size={12} className="mr-1.5" aria-hidden="true" />
+            Visual banner source
+          </legend>
+          <p className="text-[10px] text-secondary mb-3">Choose a preset or submit a URL.</p>
 
-          {/* Preset Images Grid Selection */}
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 mb-4">
+          <div
+            role="radiogroup"
+            aria-label="Preset images"
+            className="grid grid-cols-2 gap-3 sm:grid-cols-4 mb-4"
+          >
             {DEFAULT_PRESET_IMAGES.map((preset, idx) => (
-              <div
-                key={idx}
-                onClick={() => {
-                  setSelectedPreset(idx);
-                  setImageUrl(preset.url);
-                }}
-                className={`relative h-20 rounded-lg overflow-hidden cursor-pointer border-2 transition-all ${
+              <button
+                key={preset.name}
+                type="button"
+                role="radio"
+                aria-checked={selectedPreset === idx}
+                onClick={() => handlePresetPick(idx, preset.url)}
+                className={`relative h-20 rounded-lg overflow-hidden border-2 transition-all ${
                   selectedPreset === idx ? 'border-primary ring-2 ring-primary/10' : 'border-transparent'
                 }`}
               >
@@ -243,131 +298,152 @@ export default function PostTab({
                   referrerPolicy="no-referrer"
                   className="h-full w-full object-cover filter grayscale"
                 />
-                <div className="absolute inset-0 bg-black/40" />
+                <div className="absolute inset-0 bg-black/40" aria-hidden="true" />
                 <span className="absolute bottom-1.5 left-2 right-2 text-[8px] font-bold uppercase tracking-wider text-white text-center truncate">
                   {preset.name}
                 </span>
                 {selectedPreset === idx && (
-                  <div className="absolute top-1.5 right-1.5 bg-primary rounded-full p-0.5 text-white">
+                  <span className="absolute top-1.5 right-1.5 bg-primary rounded-full p-0.5 text-white" aria-hidden="true">
                     <Check size={8} />
-                  </div>
+                  </span>
                 )}
-              </div>
+              </button>
             ))}
           </div>
 
-          {/* Custom URL Input if needed */}
           <div>
-            <span className="block text-[10px] text-secondary font-semibold font-mono mb-1">
-              OR SPECIFY CUSTOM IMAGE URL
-            </span>
+            <label htmlFor={imageId} className="block text-[10px] text-secondary font-semibold font-mono mb-1">
+              Or specify custom image URL
+            </label>
             <input
-              type="text"
+              id={imageId}
+              type="url"
               placeholder="Paste custom hotlink image URL here..."
               value={imageUrl}
-              onChange={(e) => {
-                setSelectedPreset(-1); // Deselect presets
-                setImageUrl(e.target.value);
-              }}
+              onChange={e => handleCustomUrl(e.target.value)}
               className="w-full rounded-lg border border-outline-variant bg-surface-bright p-3 text-xs font-medium text-on-surface shadow-sm focus:border-outline focus:outline-none"
             />
           </div>
-        </div>
+        </fieldset>
 
-        {/* Row 4: Live crowd approximation */}
         <div>
-          <label className="block font-mono text-[10px] font-bold uppercase tracking-wider text-secondary mb-1.5">
-            CROWD APPROXIMATION ({crowdLevel}% OCCUPANCY)
+          <label htmlFor={crowdId} className="block font-mono text-[10px] font-bold uppercase tracking-wider text-secondary mb-1.5">
+            Crowd approximation <span aria-hidden="true">({crowdLevel}% occupancy)</span>
           </label>
           <input
+            id={crowdId}
             type="range"
-            min="0"
-            max="100"
+            min={0}
+            max={100}
             value={crowdLevel}
-            onChange={(e) => setCrowdLevel(Number(e.target.value))}
+            onChange={e => setCrowdLevel(Number(e.target.value))}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={crowdLevel}
+            aria-valuetext={`${crowdLevel} percent occupied`}
             className="w-full accent-primary bg-outline-variant h-1 rounded-full appearance-none cursor-pointer"
           />
-          <div className="flex justify-between text-[9px] font-mono text-secondary mt-1">
-            <span>0% (EMPTY)</span>
-            <span>50% (MODERATE)</span>
-            <span>100% (PRIME TIME / CLOGGED)</span>
+          <div className="flex justify-between text-[9px] font-mono text-secondary mt-1" aria-hidden="true">
+            <span>0% (empty)</span>
+            <span>50% (moderate)</span>
+            <span>100% (prime time)</span>
           </div>
         </div>
 
-        {/* Row 5: Features List and custom creation */}
-        <div className="rounded-xl border border-outline-variant bg-surface-container-low p-5">
-          <label className="block font-mono text-[10px] font-bold uppercase tracking-wider text-secondary mb-3 flex items-center">
-            <Tag size={12} className="mr-1.5" />
-            OBSTACLE SPECIFICATIONS / FEATURES
-          </label>
+        <fieldset className="rounded-xl border border-outline-variant bg-surface-container-low p-5">
+          <legend className="px-1 font-mono text-[10px] font-bold uppercase tracking-wider text-secondary flex items-center">
+            <Tag size={12} className="mr-1.5" aria-hidden="true" />
+            Obstacle specifications / features
+          </legend>
 
           <div className="flex space-x-2 mb-3">
+            <label htmlFor={featuresId} className="visually-hidden">
+              Add feature tag
+            </label>
             <input
+              id={featuresId}
               type="text"
               placeholder="Add tag (e.g. Red Curb, Slappy, Waxed)"
               value={featuresInput}
-              onChange={(e) => setFeaturesInput(e.target.value)}
+              onChange={e => setFeaturesInput(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  handleAddFeature(e as unknown as FormEvent);
+                }
+              }}
               className="flex-1 rounded-lg border border-outline-variant bg-surface-bright px-3 py-2 text-xs font-medium text-on-surface focus:outline-none focus:border-outline"
             />
             <button
               type="button"
               onClick={handleAddFeature}
-              className="bg-on-surface text-surface px-4 rounded-lg text-xs font-bold tracking-wider uppercase hover:bg-on-surface/90 transition-all"
+              className="bg-on-surface text-surface px-4 rounded-lg text-xs font-bold tracking-wider uppercase hover:bg-on-surface/90 transition-all flex items-center space-x-1"
             >
-              ADD
+              <Plus size={12} aria-hidden="true" />
+              <span>Add</span>
             </button>
           </div>
 
-          <div className="flex flex-wrap gap-1.5">
-            {featuresList.map((tag, idx) => (
-              <span
-                key={idx}
+          <ul className="flex flex-wrap gap-1.5" aria-label="Selected features">
+            {featuresList.map(tag => (
+              <li
+                key={tag}
                 className="inline-flex items-center rounded-full bg-surface-container-high border border-outline-variant/60 px-3 py-1 text-[10px] font-semibold text-on-surface"
               >
                 <span>{tag}</span>
                 <button
                   type="button"
                   onClick={() => handleRemoveFeature(tag)}
-                  className="ml-1.5 text-secondary hover:text-red-500 font-bold text-xs"
+                  aria-label={`Remove ${tag}`}
+                  className="ml-1.5 text-secondary hover:text-red-600 font-bold text-xs"
                 >
-                  ×
+                  <span aria-hidden="true">×</span>
                 </button>
-              </span>
+              </li>
             ))}
-          </div>
-        </div>
+          </ul>
+        </fieldset>
 
-        {/* Row 6: Community Intel */}
         <div>
-          <label className="block font-mono text-[10px] font-bold uppercase tracking-wider text-secondary mb-1.5">
-            COMMUNITY INTEL / LOCAL NOTES
+          <label htmlFor={noteId} className="block font-mono text-[10px] font-bold uppercase tracking-wider text-secondary mb-1.5">
+            Community intel / local notes
           </label>
           <textarea
+            id={noteId}
             rows={3}
             placeholder="Describe runway smoothness, security timing, wax needs, lighting, etc..."
             value={communityNote}
-            onChange={(e) => setCommunityNote(e.target.value)}
+            onChange={e => setCommunityNote(e.target.value)}
             className="w-full rounded-lg border border-outline-variant bg-surface-bright p-3 text-xs font-medium text-on-surface shadow-sm focus:border-outline focus:outline-none"
           />
         </div>
 
-        {/* Submit */}
-        <div className="border-t border-outline-variant pt-5 flex justify-end space-x-3">
+        {formError && (
+          <p
+            id={errorId}
+            role="alert"
+            className="rounded-lg border border-error/30 bg-error-container/30 px-4 py-2 text-xs text-error"
+          >
+            {formError}
+          </p>
+        )}
+
+        <div className="border-t border-outline-variant pt-5 flex flex-col sm:flex-row sm:justify-end gap-2 sm:gap-3">
           <button
             type="button"
             onClick={onNavigateToExplore}
             className="px-6 py-3 rounded-lg border border-outline text-xs font-bold tracking-widest uppercase hover:bg-surface-container transition-all"
           >
-            CANCEL
+            Cancel
           </button>
           <button
             type="submit"
             className="px-8 py-3 rounded-lg bg-on-surface text-surface text-xs font-bold tracking-widest uppercase hover:bg-on-surface/90 transition-all shadow-md"
           >
-            REGISTER PLOT
+            Register plot
           </button>
         </div>
       </form>
-    </div>
+    </section>
   );
 }
