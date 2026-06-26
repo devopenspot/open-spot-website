@@ -1,4 +1,11 @@
-import { Spot } from './types';
+import type { Spot } from '@/lib/types';
+import type {
+  ExploreCategory,
+  LegendaryTerrain,
+  PresetImage,
+  Region,
+  TerrainOption,
+} from '@/lib/types';
 
 export const INITIAL_SPOTS: Spot[] = [
   {
@@ -267,7 +274,7 @@ export const INITIAL_SPOTS: Spot[] = [
   }
 ];
 
-export const EXPLORE_CATEGORIES = [
+export const EXPLORE_CATEGORIES: readonly ExploreCategory[] = [
   {
     name: 'Skate',
     image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCIsHwlYWNOO2JOzElIzEveW3zMgE50hH73aPeo2zDSno1jYKX-MuJVOnm2MeEuIrwB23TqF7dexScJl5yykFMJPZG_u48Isx6KwMt-QCkjx0dzoq2eBBxmLrpRZBYvNrOztpEkfKR1uLCMsblNwD8s_GChBm7JwVNg9Y96wN4hyCKHWNnJ0c3m2_iWBu-TvdA_SKwriZWnC3Uk73sosPmxqwYo_djOyzZ6PDlASpi-j2hNgSQIm1k7QVLKXxxL4GZpTbNRYGUeu_Zd'
@@ -276,9 +283,9 @@ export const EXPLORE_CATEGORIES = [
     name: 'BMX',
     image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCasQr-YMW-ZXIu3aaUisuxky4CF5pezxlnLuHvC5GHDgQm-7mw1ot3Q_bcJ1gGwzgS6PAOaKCcpicVloRAlnoratOOiEX7-0oUrUGjzcGYAPNyGLhYVaBg4CCygKeQkHkO9Osg19TQ0hwL5PIg5_-I_jl6G9dh3YMIXZWRhz56NANKaSB_L5RH-zQf1oZhlP5fvk_uD_cmalW9JrPTFG5UARWtYDdvasMj9ePpB61eIthqXKRxoaw7liGQPKr6A1AJYkKB3usd5bEO'
   }
-];
+] as const;
 
-export const LEGENDARY_TERRAINS = [
+export const LEGENDARY_TERRAINS: readonly LegendaryTerrain[] = [
   {
     name: 'Pier 7',
     desc: 'The Holy Grail of manual pads and ledges.',
@@ -304,9 +311,9 @@ export const LEGENDARY_TERRAINS = [
     desc: "San Francisco's most brutalist brick canvas.",
     image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCnp_-uurAhnxP-55IV5gu714rG-7ru9R68lfXR3zUo6y9meAPP1CyRNI2e2GKwzsozDJOqUAE9xLxg-ENQ4F2mRMY6MUI1D3qHdzbdNwYyosPJ8LHMaMYtqkCdh1kpyyEwPuHTde8114DqK1pn-tqL8wyqyVDnnTNC0mcUeIInIRxSCLCMOCom4ziXgwahyFzKkUPS5dXA0mP_zE6p3d7-NlenQwxaKMidLLy3SwlKGk89G7HJUkqYlyh78POw6umte9MGxhWzVaJT'
   }
-];
+] as const;
 
-export const REGIONS_DATA = [
+export const REGIONS_DATA: readonly Region[] = [
   {
     name: 'Americas',
     desc: 'The birthplace of modern street skating. From LA plazas to NYC rough spots.',
@@ -325,17 +332,46 @@ export const REGIONS_DATA = [
     count: '620 Spots',
     image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDYoMVU5vMSIEK35AW46DYG-fQ9WfAoKHQkb_4ukHQYUGRG_PRXomLKHdJjLGAAObuZwc2iRUulbRaAGLi1f9zcExfl3fvsAKslgpL0nmCqvUlaU733G9O2mEHkmoxY2hF0PVtKTvBNHvheJClaq80UJvkXRizlg0jOFO7Bmy5wEyYoDWq4Xd0Qzhar8zYpPh5VTOXYdRO6IhDFLjKPolxSiNF91vLqCIGeZqnZCv5A8Rsg9UPSvQfFGOlOUnkk40YAyHBq6PkfAbt5'
   }
-];
+] as const;
 
-export const POPULAR_SEARCH_TERMS = [
+export const POPULAR_SEARCH_TERMS: readonly string[] = [
   'Barcelona Skateboarding',
   'New York DIY Spots',
   'London Bowls',
   'BMX Trails'
-];
+] as const;
 
-export const RECENT_SEARCHES = [
+export const RECENT_SEARCHES: readonly string[] = [
   'Southbank Skatepark',
   'Paris Street League',
   'Berlin Bowl Session'
-];
+] as const;
+
+export const DEFAULT_PRESET_IMAGES: readonly PresetImage[] = [
+  {
+    name: 'Industrial Ledge',
+    url: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAzOoxxgf8dF_dffEyj1reX-fHjpbmdOzHCKt48IV55g3OcOejsIT9MtaySQEK0hVzvIpPegtGd03j4neTRFC5WGxsEvj5OLJpKfFMhwXdXIY2YAjpD2xwCUOFNv_jCUBDs7mrLeq2J28upIy9Q7fq5m46ytFrpE8efxEcvW-3Bdb4uiMD6QOxExLVPlkQMkRDVmB2DxRfKq8E3Y0pko6HLf3oSNBxhmT5BnVuJ8tSMUEgWQuk_WElNP9xvvc9URbMql80pPwHFxf9P'
+  },
+  {
+    name: 'Metro Underpass',
+    url: 'https://lh3.googleusercontent.com/aida-public/AB6AXuA6GHeF7oipibYvoiyBsC4TPFku7ffQmv6y0B5AvgdhgAmG9pI0BlJLe8-ayJLMlAtDAWwUGu4FAwabH8HuELRowJ3IeEJOlgw4xvg0_RP_eRKPr5eESG5TxVwONEulq3jToyCXr01mrPooWxd_LZyIm1ZjLx-q5OyZPARNZVw0jmm6gY0B_2wuE2kir3siF7K3C7ntb79Rqd-JOHOOpenTRYBWA1KQLZ_r4WVgfahEkzWayr4xRHIqIgYUCuuxsceSaEpXp8segQIg'
+  },
+  {
+    name: 'Marble Stair Run',
+    url: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCrY2kzLB1jQqPxx87OqENxBTnqO00sGNmmbFTu7AVZ6r19NZg7MF3fdWdWnI6gGfw_ffMIMDY_Gspts-w017UN_NrCfiVCFhy5StEGoec3EzYvqmTmbz4lzOgjKciS7RV27IOlPVKHiEzli-wdFgHIurqHwm2HE4kDZQEjudqZODIx-_RyULGF_RgAiTpitlMRoYMh6eCL773msOXd0D2xWpsxVBURfxsElH5AvNf3rqCohSNZhAbWwTXOJZZxwY3ShaMJiJ95FWS2'
+  },
+  {
+    name: 'Desert Basin Ditch',
+    url: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBFcsJ_InsjM_V2ZhdORVirVciKPJ2Uqt5Jii3nfPULenttPQ0cUQzaa_C0Yc_NrAv1eAnHIeR8S04LjqVjCQuleF60loO-Mh7UEOwa--QIQwv3VaR_P4gt5B7jfu-3GeKqm5Rf-NV8q0xJxL_FX9JZR0_YLkAMpHPWfXRNDr5THXJbJawrNxG5oJYPI2YICMJAFHJPsYpbPdVHU8lTuqhXRgmObg3ZuVD7VNiZ6NjRXmQfSSW7vx2q43JFz7ckBgTcpMPRzkp67YMT'
+  }
+] as const;
+
+export const TERRAIN_OPTIONS: readonly TerrainOption[] = [
+  { value: 'Plaza', label: 'Plaza' },
+  { value: 'DIY', label: 'DIY' },
+  { value: 'Stair', label: 'Stair set' },
+  { value: 'Bowl', label: 'Bowl' },
+  { value: 'Park', label: 'Skatepark' },
+  { value: 'Ledges', label: 'Ledges' },
+  { value: 'Pools', label: 'Pools' },
+] as const;

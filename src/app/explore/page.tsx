@@ -1,5 +1,5 @@
 import ExploreTab from '@/components/explore/ExploreTab';
 
-export default function HomePage() {
+export default function ExplorePage() {
   return <ExploreTab />;
 }

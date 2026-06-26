@@ -1,0 +1,26 @@
+import { cache } from 'react';
+import {
+  DEFAULT_PRESET_IMAGES,
+  EXPLORE_CATEGORIES,
+  INITIAL_SPOTS,
+  LEGENDARY_TERRAINS,
+  POPULAR_SEARCH_TERMS,
+  RECENT_SEARCHES,
+  REGIONS_DATA,
+  TERRAIN_OPTIONS,
+} from '@/data';
+import type { Spot } from '@/lib/types';
+
+export const getSpots = cache((): readonly Spot[] => INITIAL_SPOTS);
+
+export const getSpotById = cache((id: string): Spot | undefined => {
+  return INITIAL_SPOTS.find(s => s.id === id);
+});
+
+export const getExploreCategories = cache(() => EXPLORE_CATEGORIES);
+export const getLegendaryTerrains = cache(() => LEGENDARY_TERRAINS);
+export const getRegions = cache(() => REGIONS_DATA);
+export const getPopularSearchTerms = cache(() => POPULAR_SEARCH_TERMS);
+export const getRecentSearches = cache(() => RECENT_SEARCHES);
+export const getPresetImages = cache(() => DEFAULT_PRESET_IMAGES);
+export const getTerrainOptions = cache(() => TERRAIN_OPTIONS);
