@@ -1,17 +1,17 @@
-'use client';
+"use client";
 
-import { useCallback, useMemo, useState } from 'react';
-import Image from 'next/image';
-import { useRouter } from 'next/navigation';
-import { MapPin, ZoomIn, ZoomOut, Filter, X } from 'lucide-react';
-import { useAppState } from '@/components/layout/AppStateProvider';
-import { MapPinButton } from './MapPinButton';
-import type { Spot } from '@/lib/types';
+import { useCallback, useMemo, useState } from "react";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { MapPin, ZoomIn, ZoomOut, Filter, X } from "lucide-react";
+import { useAppState } from "@/components/layout/AppStateProvider";
+import { MapPinButton } from "./MapPinButton";
+import type { Spot } from "@/lib/types";
 
 export default function MapTab() {
   const router = useRouter();
   const { spots, savedIds, toggleSaved } = useAppState();
-  const [selectedType, setSelectedType] = useState<string>('All');
+  const [selectedType, setSelectedType] = useState<string>("All");
   const [activePin, setActivePin] = useState<Spot | null>(null);
   const [zoomLevel, setZoomLevel] = useState<number>(1);
   const [mapPan, setMapPan] = useState<{ x: number; y: number }>({
@@ -21,21 +21,21 @@ export default function MapTab() {
 
   const spotTypes = useMemo(() => {
     const types = new Set<string>();
-    spots.forEach(s => types.add(s.type));
-    return ['All', ...Array.from(types)];
+    spots.forEach((s) => types.add(s.type));
+    return ["All", ...Array.from(types)];
   }, [spots]);
 
   const filteredSpots = useMemo(
     () =>
-      selectedType === 'All'
+      selectedType === "All"
         ? spots
-        : spots.filter(s => s.type === selectedType),
+        : spots.filter((s) => s.type === selectedType),
     [spots, selectedType],
   );
 
-  const handleZoom = useCallback((direction: 'in' | 'out') => {
-    setZoomLevel(prev => {
-      const next = direction === 'in' ? prev + 0.25 : prev - 0.25;
+  const handleZoom = useCallback((direction: "in" | "out") => {
+    setZoomLevel((prev) => {
+      const next = direction === "in" ? prev + 0.25 : prev - 0.25;
       return Math.max(0.75, Math.min(2.5, next));
     });
   }, []);
@@ -47,7 +47,7 @@ export default function MapTab() {
   }, []);
 
   const handlePinToggle = useCallback((spot: Spot) => {
-    setActivePin(prev => (prev?.id === spot.id ? null : spot));
+    setActivePin((prev) => (prev?.id === spot.id ? null : spot));
   }, []);
 
   const handleSidebarSelect = useCallback(
@@ -78,7 +78,7 @@ export default function MapTab() {
       id="map-tab"
       role="tabpanel"
       aria-labelledby="nav-btn-map"
-      className="flex flex-col lg:flex-row gap-6 pb-24 animate-fade-in h-[calc(100vh-160px)] min-h-[500px]"
+      className="flex flex-col lg:flex-row gap-6 pb-24 animate-fade-in h-[calc(100vh-60px)] min-h-[500px]"
     >
       <h1 className="visually-hidden">Spot Map</h1>
       <aside
@@ -97,7 +97,11 @@ export default function MapTab() {
           </div>
 
           <h3 className="font-display text-base font-bold uppercase tracking-wider text-on-surface mb-3 flex items-center">
-            <Filter size={14} className="mr-1.5 text-secondary" aria-hidden="true" />
+            <Filter
+              size={14}
+              className="mr-1.5 text-secondary"
+              aria-hidden="true"
+            />
             Filter by terrain
           </h3>
 
@@ -106,7 +110,7 @@ export default function MapTab() {
             aria-label="Filter spots by terrain type"
             className="flex flex-wrap gap-1.5 no-scrollbar max-h-24 overflow-y-auto"
           >
-            {spotTypes.map(type => (
+            {spotTypes.map((type) => (
               <button
                 key={type}
                 type="button"
@@ -114,8 +118,8 @@ export default function MapTab() {
                 aria-pressed={selectedType === type}
                 className={`rounded-full px-3 py-1 text-[10px] font-medium tracking-wide transition-all border ${
                   selectedType === type
-                    ? 'bg-primary text-surface border-primary'
-                    : 'bg-surface border-outline-variant text-secondary hover:text-on-surface hover:border-outline'
+                    ? "bg-primary text-surface border-primary"
+                    : "bg-surface border-outline-variant text-secondary hover:text-on-surface hover:border-outline"
                 }`}
               >
                 {type.toUpperCase()}
@@ -129,7 +133,7 @@ export default function MapTab() {
           aria-label="Filtered spots"
           className="flex-1 overflow-y-auto p-3 space-y-2 no-scrollbar"
         >
-          {filteredSpots.map(spot => {
+          {filteredSpots.map((spot) => {
             const isHovered = activePin?.id === spot.id;
             const isSaved = savedIds.has(spot.id);
             return (
@@ -140,8 +144,8 @@ export default function MapTab() {
                 onClick={() => handleSidebarSelect(spot)}
                 className={`w-full p-3 rounded-xl border text-left transition-all flex space-x-3 items-center ${
                   isHovered
-                    ? 'border-primary bg-surface-container-high shadow-sm'
-                    : 'border-outline-variant/60 bg-surface-container-low hover:border-outline hover:bg-surface-container'
+                    ? "border-primary bg-surface-container-high shadow-sm"
+                    : "border-outline-variant/60 bg-surface-container-low hover:border-outline hover:bg-surface-container"
                 }`}
               >
                 <span className="relative h-12 w-12 rounded-lg bg-black overflow-hidden shrink-0">
@@ -173,8 +177,13 @@ export default function MapTab() {
                       {spot.city}
                     </span>
                     <span className="flex items-center space-x-1">
-                      <span aria-hidden="true" className="h-1 w-1 rounded-full bg-primary" />
-                      <span className="text-[8px] font-mono text-secondary">CRD: {spot.crowdLevel}%</span>
+                      <span
+                        aria-hidden="true"
+                        className="h-1 w-1 rounded-full bg-primary"
+                      />
+                      <span className="text-[8px] font-mono text-secondary">
+                        CRD: {spot.crowdLevel}%
+                      </span>
                     </span>
                   </span>
                   {isSaved && (
@@ -198,7 +207,10 @@ export default function MapTab() {
       >
         <div className="absolute top-4 left-4 right-4 z-10 flex items-center justify-between pointer-events-none">
           <div className="flex items-center space-x-2 bg-surface/90 backdrop-blur-md px-3 py-1.5 rounded-lg border border-outline-variant shadow-sm pointer-events-auto">
-            <span aria-hidden="true" className="h-2 w-2 rounded-full bg-emerald-500 animate-ping" />
+            <span
+              aria-hidden="true"
+              className="h-2 w-2 rounded-full bg-emerald-500 animate-ping"
+            />
             <span className="font-mono text-[10px] font-bold tracking-wider text-on-surface uppercase">
               Los Angeles Grid Active
             </span>
@@ -207,7 +219,7 @@ export default function MapTab() {
           <div className="flex items-center space-x-1 bg-surface/90 backdrop-blur-md p-1 rounded-lg border border-outline-variant shadow-sm pointer-events-auto">
             <button
               type="button"
-              onClick={() => handleZoom('in')}
+              onClick={() => handleZoom("in")}
               aria-label="Zoom in"
               title="Zoom in"
               className="p-1.5 rounded text-secondary hover:text-on-surface hover:bg-surface-container transition-all"
@@ -216,14 +228,17 @@ export default function MapTab() {
             </button>
             <button
               type="button"
-              onClick={() => handleZoom('out')}
+              onClick={() => handleZoom("out")}
               aria-label="Zoom out"
               title="Zoom out"
               className="p-1.5 rounded text-secondary hover:text-on-surface hover:bg-surface-container transition-all"
             >
               <ZoomOut size={14} aria-hidden="true" />
             </button>
-            <div className="h-4 w-px bg-outline-variant mx-1" aria-hidden="true" />
+            <div
+              className="h-4 w-px bg-outline-variant mx-1"
+              aria-hidden="true"
+            />
             <button
               type="button"
               onClick={handleResetMap}
@@ -244,7 +259,7 @@ export default function MapTab() {
               linear-gradient(to right, var(--color-surface-variant) 1px, transparent 1px),
               linear-gradient(to bottom, var(--color-surface-variant) 1px, transparent 1px)
             `,
-            backgroundSize: '24px 24px',
+            backgroundSize: "24px 24px",
           }}
         >
           <div
@@ -252,13 +267,19 @@ export default function MapTab() {
             className="absolute inset-0 transition-transform duration-500 ease-out"
             style={{
               transform: `scale(${zoomLevel}) translate(${mapPan.x}px, ${mapPan.y}px)`,
-              transformOrigin: 'center center',
+              transformOrigin: "center center",
             }}
           >
-            <div className="absolute top-1/2 left-0 right-0 h-px bg-outline-variant/40" aria-hidden="true" />
-            <div className="absolute left-1/2 top-0 bottom-0 w-px bg-outline-variant/40" aria-hidden="true" />
+            <div
+              className="absolute top-1/2 left-0 right-0 h-px bg-outline-variant/40"
+              aria-hidden="true"
+            />
+            <div
+              className="absolute left-1/2 top-0 bottom-0 w-px bg-outline-variant/40"
+              aria-hidden="true"
+            />
 
-            {filteredSpots.map(spot => (
+            {filteredSpots.map((spot) => (
               <MapPinButton
                 key={spot.id}
                 spot={spot}
@@ -315,12 +336,20 @@ export default function MapTab() {
 
               <div className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-outline-variant/60 text-[10px] font-mono">
                 <div>
-                  <span className="block text-[8px] text-secondary">Crowd density</span>
-                  <span className="font-semibold text-on-surface">{activePin.crowdLevel}% occupied</span>
+                  <span className="block text-[8px] text-secondary">
+                    Crowd density
+                  </span>
+                  <span className="font-semibold text-on-surface">
+                    {activePin.crowdLevel}% occupied
+                  </span>
                 </div>
                 <div>
-                  <span className="block text-[8px] text-secondary">Air temp</span>
-                  <span className="font-semibold text-on-surface">{activePin.weather.current}°C sunny</span>
+                  <span className="block text-[8px] text-secondary">
+                    Air temp
+                  </span>
+                  <span className="font-semibold text-on-surface">
+                    {activePin.weather.current}°C sunny
+                  </span>
                 </div>
               </div>
 
@@ -338,11 +367,11 @@ export default function MapTab() {
                   aria-pressed={savedIds.has(activePin.id)}
                   className={`px-2.5 border rounded-md text-[10px] font-bold tracking-wider uppercase transition-all ${
                     savedIds.has(activePin.id)
-                      ? 'border-primary bg-primary text-surface'
-                      : 'border-outline text-secondary hover:bg-surface-container'
+                      ? "border-primary bg-primary text-surface"
+                      : "border-outline text-secondary hover:bg-surface-container"
                   }`}
                 >
-                  {savedIds.has(activePin.id) ? 'Saved' : 'Save'}
+                  {savedIds.has(activePin.id) ? "Saved" : "Save"}
                 </button>
               </div>
             </div>
@@ -353,18 +382,33 @@ export default function MapTab() {
           aria-label="Map marker legend"
           className="bg-surface border-t border-outline-variant px-4 py-2.5 flex flex-wrap gap-4 text-[10px] font-mono justify-center items-center"
         >
-          <span className="text-secondary font-bold uppercase">Marker legend:</span>
+          <span className="text-secondary font-bold uppercase">
+            Marker legend:
+          </span>
           <span className="flex items-center space-x-1.5">
-            <span aria-hidden="true" className="h-2 w-2 rounded-full bg-primary" />
+            <span
+              aria-hidden="true"
+              className="h-2 w-2 rounded-full bg-primary"
+            />
             <span className="text-secondary uppercase">Skateable plots</span>
           </span>
           <span className="flex items-center space-x-1.5">
-            <span aria-hidden="true" className="h-2 w-2 rounded-full bg-surface-container border border-outline" />
-            <span className="text-secondary uppercase">Unselected obstacle</span>
+            <span
+              aria-hidden="true"
+              className="h-2 w-2 rounded-full bg-surface-container border border-outline"
+            />
+            <span className="text-secondary uppercase">
+              Unselected obstacle
+            </span>
           </span>
           <span className="flex items-center space-x-1.5">
-            <span aria-hidden="true" className="h-2.5 w-2.5 rounded-full bg-primary ring-2 ring-primary/20" />
-            <span className="text-on-surface font-semibold uppercase">Active scout</span>
+            <span
+              aria-hidden="true"
+              className="h-2.5 w-2.5 rounded-full bg-primary ring-2 ring-primary/20"
+            />
+            <span className="text-on-surface font-semibold uppercase">
+              Active scout
+            </span>
           </span>
         </div>
       </div>
