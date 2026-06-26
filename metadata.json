@@ -1,6 +1,0 @@
-{
-  "name": "Open Spot",
-  "description": "A minimalist urban sport and skate spot finder and archive for discovering, sharing, and exploring street architectural features like bowls, stairs, ledges, and DIY spots.",
-  "requestFramePermissions": ["geolocation"],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}

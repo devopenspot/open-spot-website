@@ -1,22 +1,30 @@
-import { useCallback, useEffect, useMemo, useState, useTransition, type ReactNode } from 'react';
-import { INITIAL_SPOTS } from './data';
-import { Spot, TabType } from './types';
-import Header from './components/Header';
-import ExploreTab from './components/ExploreTab';
-import MapTab from './components/MapTab';
-import SavedTab from './components/SavedTab';
-import PostTab from './components/PostTab';
-import SpotDetailsModal from './components/SpotDetailsModal';
-import SearchOverlay from './components/SearchOverlay';
-import { ToastViewport } from './components/Toast';
-import { ErrorBoundary } from './components/ErrorBoundary';
-import { useSavedSpots } from './hooks/useSavedSpots';
-import { useEscapeKey } from './hooks/useEscapeKey';
-import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
-import { showToast } from './hooks/useToast';
+"use client";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  useTransition,
+  type ReactNode,
+} from "react";
+import { INITIAL_SPOTS } from "../data";
+import { Spot, TabType } from "../types";
+import Header from "../components/Header";
+import ExploreTab from "../components/ExploreTab";
+import MapTab from "../components/MapTab";
+import SavedTab from "../components/SavedTab";
+import PostTab from "../components/PostTab";
+import SpotDetailsModal from "../components/SpotDetailsModal";
+import SearchOverlay from "../components/SearchOverlay";
+import { ToastViewport } from "../components/Toast";
+import { ErrorBoundary } from "../components/ErrorBoundary";
+import { useSavedSpots } from "../hooks/useSavedSpots";
+import { useEscapeKey } from "../hooks/useEscapeKey";
+import { useKeyboardShortcuts } from "../hooks/useKeyboardShortcuts";
+import { showToast } from "../hooks/useToast";
 
 export default function App() {
-  const [activeTab, setActiveTabRaw] = useState<TabType>('explore');
+  const [activeTab, setActiveTabRaw] = useState<TabType>("explore");
   const [, startTabTransition] = useTransition();
   const [spots, setSpots] = useState<Spot[]>(INITIAL_SPOTS);
 
@@ -27,23 +35,23 @@ export default function App() {
 
   useEffect(() => {
     if (lastError) {
-      showToast('Could not save your bookmarks locally', 'error');
+      showToast("Could not save your bookmarks locally", "error");
     }
   }, [lastError]);
 
   const closeModal = useCallback(() => setSelectedSpot(null), []);
   const closeSearch = useCallback(() => setIsSearchOpen(false), []);
   const openSearch = useCallback(() => setIsSearchOpen(true), []);
-  const toggleSearch = useCallback(() => setIsSearchOpen(prev => !prev), []);
+  const toggleSearch = useCallback(() => setIsSearchOpen((prev) => !prev), []);
 
   useEscapeKey(closeModal, Boolean(selectedSpot));
   useEscapeKey(closeSearch, isSearchOpen);
 
   useKeyboardShortcuts([
     {
-      key: 'k',
+      key: "k",
       cmdOrCtrl: true,
-      handler: e => {
+      handler: (e) => {
         e.preventDefault();
         toggleSearch();
       },
@@ -65,7 +73,7 @@ export default function App() {
   );
 
   const handleAddSpot = useCallback((newSpot: Spot) => {
-    setSpots(prev => [newSpot, ...prev]);
+    setSpots((prev) => [newSpot, ...prev]);
   }, []);
 
   const tabs = useMemo<Record<TabType, ReactNode>>(
@@ -76,7 +84,7 @@ export default function App() {
           savedSpotIds={savedIds}
           onSelectSpot={setSelectedSpot}
           onToggleSave={handleToggleSave}
-          onNavigateToMap={() => setActiveTab('map')}
+          onNavigateToMap={() => setActiveTab("map")}
         />
       ),
       map: (
@@ -93,13 +101,13 @@ export default function App() {
           savedSpotIds={savedIds}
           onSelectSpot={setSelectedSpot}
           onToggleSave={handleToggleSave}
-          onNavigateToExplore={() => setActiveTab('explore')}
+          onNavigateToExplore={() => setActiveTab("explore")}
         />
       ),
       post: (
         <PostTab
           onAddSpot={handleAddSpot}
-          onNavigateToExplore={() => setActiveTab('explore')}
+          onNavigateToExplore={() => setActiveTab("explore")}
         />
       ),
     }),
