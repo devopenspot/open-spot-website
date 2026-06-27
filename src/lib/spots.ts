@@ -2,20 +2,22 @@ import { cache } from 'react';
 import {
   DEFAULT_PRESET_IMAGES,
   EXPLORE_CATEGORIES,
-  INITIAL_SPOTS,
   LEGENDARY_TERRAINS,
   POPULAR_SEARCH_TERMS,
   RECENT_SEARCHES,
   REGIONS_DATA,
   TERRAIN_OPTIONS,
 } from '@/data';
+import { loadSpot, loadSpots } from '@/lib/spots/loader';
 import type { Spot } from '@/lib/types';
 
-export const getSpots = cache((): readonly Spot[] => INITIAL_SPOTS);
+export const getSpots = cache(
+  async (): Promise<readonly Spot[]> => loadSpots(),
+);
 
-export const getSpotById = cache((id: string): Spot | undefined => {
-  return INITIAL_SPOTS.find(s => s.id === id);
-});
+export const getSpotById = cache(
+  async (id: string): Promise<Spot | undefined> => loadSpot(id),
+);
 
 export const getExploreCategories = cache(() => EXPLORE_CATEGORIES);
 export const getLegendaryTerrains = cache(() => LEGENDARY_TERRAINS);

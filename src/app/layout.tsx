@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter, Archivo_Narrow } from 'next/font/google';
 import { cn } from '@/lib/cn';
+import { getSpots } from '@/lib/spots';
 import { AppProviders } from '@/components/layout/AppProviders';
 import './globals.css';
 
@@ -62,11 +63,12 @@ export const viewport: Viewport = {
   themeColor: '#000000',
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const initialSpots = await getSpots();
   return (
     <html
       lang="en"
@@ -74,7 +76,7 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="bg-background font-sans text-on-background antialiased">
-        <AppProviders>{children}</AppProviders>
+        <AppProviders initialSpots={initialSpots}>{children}</AppProviders>
       </body>
     </html>
   );

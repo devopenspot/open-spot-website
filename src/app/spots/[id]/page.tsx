@@ -3,8 +3,9 @@ import type { Metadata } from 'next';
 import { getSpotById, getSpots } from '@/lib/spots';
 import { SpotDetailsFullPage } from '@/components/spot/SpotDetailsFullPage';
 
-export function generateStaticParams() {
-  return getSpots().map(spot => ({ id: spot.id }));
+export async function generateStaticParams() {
+  const spots = await getSpots();
+  return spots.map(spot => ({ id: spot.id }));
 }
 
 export async function generateMetadata({
@@ -13,7 +14,7 @@ export async function generateMetadata({
   params: Promise<{ id: string }>;
 }): Promise<Metadata> {
   const { id } = await params;
-  const spot = getSpotById(id);
+  const spot = await getSpotById(id);
   if (!spot) {
     return { title: 'Spot not found' };
   }
@@ -34,7 +35,7 @@ export default async function SpotPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const spot = getSpotById(id);
+  const spot = await getSpotById(id);
   if (!spot) {
     notFound();
   }

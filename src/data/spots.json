@@ -11,8 +11,9 @@
     "place_rank": 30,
     "importance": 9.317235065227768e-5,
     "addresstype": "amenity",
-    "name": "",
-    "display_name": "Quai de Bercy, Quartier de Bercy, Paris 12e Arrondissement, Paris, Île-de-France, France métropolitaine, 75012, France",
+    "name": "Bercy Skatepark",
+    "display_name": "Bercy Skatepark",
+    "spot_types": ["skatepark", "street", "rail", "slidebox", "mini ramp"],
     "address": {
       "road": "Quai de Bercy",
       "quarter": "Quartier de Bercy",
@@ -27,7 +28,11 @@
       "country": "France",
       "country_code": "fr"
     },
-    "boundingbox": ["48.8372719", "48.8373719", "2.3789162", "2.3790162"]
+    "boundingbox": ["48.8372719", "48.8373719", "2.3789162", "2.3790162"],
+    "slug": "bercy-skatepark",
+    "country_slug": "france",
+    "state_slug": "ile-de-france",
+    "city_slug": "paris"
   },
   {
     "place_id": 143891930,

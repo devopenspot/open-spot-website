@@ -1,7 +1,6 @@
 'use client';
 
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
-import { INITIAL_SPOTS } from '@/data';
 import type { Spot } from '@/lib/types';
 import { useSavedSpots } from '@/hooks/useSavedSpots';
 
@@ -23,8 +22,14 @@ interface AppStateValue {
 
 const AppStateContext = createContext<AppStateValue | null>(null);
 
-export function AppStateProvider({ children }: { children: ReactNode }) {
-  const [spots, setSpots] = useState<Spot[]>(() => [...INITIAL_SPOTS]);
+export function AppStateProvider({
+  children,
+  initialSpots,
+}: {
+  children: ReactNode;
+  initialSpots: readonly Spot[];
+}) {
+  const [spots, setSpots] = useState<Spot[]>(() => [...initialSpots]);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
