@@ -4,6 +4,7 @@ import { useDeferredValue, useEffect, useId, useMemo, useRef, useState } from 'r
 import { Search, X, MapPin, Compass, ArrowRight, History } from 'lucide-react';
 import Image from 'next/image';
 import { Overlay } from '@/components/feedback/Overlay';
+import { SEARCH_FOCUS_DELAY_MS } from '@/lib/constants';
 import { getPopularSearchTerms, getRecentSearches } from '@/lib/spots';
 import type { Spot } from '@/lib/types';
 
@@ -31,7 +32,10 @@ export function SearchOverlay({
 
   useEffect(() => {
     if (isOpen) {
-      const id = window.setTimeout(() => inputRef.current?.focus(), 150);
+      const id = window.setTimeout(
+        () => inputRef.current?.focus(),
+        SEARCH_FOCUS_DELAY_MS,
+      );
       return () => window.clearTimeout(id);
     }
   }, [isOpen]);

@@ -6,7 +6,7 @@ export const getSportDisciplines = cache(
   (): readonly SportDiscipline[] => SPORT_DISCIPLINES,
 );
 
-export const TIER_LABELS = {
+export const TIER_DISPLAY = {
   "world-tour": "World Tour",
   championship: "Championship",
   festival: "Festival",
@@ -18,10 +18,3 @@ export const STATUS_LABELS = {
   live: "Live Now",
   completed: "Completed",
 } as const;
-
-export const TIER_DISPLAY: Record<keyof typeof TIER_LABELS, string> = {
-  "world-tour": "World Tour",
-  championship: "Championship",
-  festival: "Festival",
-  federation: "Federation",
-};

@@ -1,7 +1,10 @@
+import { MAP_VIEWPORT_OFFSET_PX } from '@/lib/constants';
+
 export function MapSkeleton() {
   return (
     <div
-      className="flex flex-col lg:flex-row gap-6 pb-24 animate-fade-in h-[calc(100vh-160px)] min-h-[500px]"
+      className="flex flex-col lg:flex-row gap-6 pb-24 animate-fade-in min-h-[500px]"
+      style={{ height: `calc(100vh - ${MAP_VIEWPORT_OFFSET_PX.MOBILE}px)` }}
       role="status"
       aria-label="Loading map"
     >

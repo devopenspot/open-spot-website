@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { Heart, Trash2, MapPin } from 'lucide-react';
 import { memo, useCallback, type MouseEvent } from 'react';
 import { cn } from '@/lib/cn';
+import { CROWD_LEVEL } from '@/lib/constants';
 import type { Spot } from '@/lib/types';
 
 interface BaseSpotCardProps {
@@ -144,7 +145,7 @@ function BaseSpotCardImpl({
               aria-hidden="true"
               className={cn(
                 'h-1.5 w-1.5 rounded-full',
-                spot.crowdLevel > 70
+                spot.crowdLevel > CROWD_LEVEL.HIGH_MIN
                   ? 'bg-amber-600 animate-pulse-dot'
                   : 'bg-primary',
               )}
@@ -178,13 +179,5 @@ export const SavedSpotCard = memo(function SavedSpotCard(
 ) {
   return (
     <BaseSpotCardImpl {...props} toggleIconVariant="trash" removeCopy={true} />
-  );
-});
-
-export const SearchSpotCard = memo(function SearchSpotCard(
-  props: BaseSpotCardProps,
-) {
-  return (
-    <BaseSpotCardImpl {...props} toggleIconVariant="heart" removeCopy={true} />
   );
 });

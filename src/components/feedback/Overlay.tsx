@@ -3,7 +3,7 @@
 import { useRef, type ReactNode } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
-import { useEscapeKey } from '@/hooks/useEscapeKey';
+import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock';
 import { cn } from '@/lib/cn';
 
@@ -36,7 +36,9 @@ export function Overlay({
 }: OverlayProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   useFocusTrap(panelRef, isOpen);
-  useEscapeKey(onClose, isOpen);
+  useKeyboardShortcuts(
+    isOpen ? [{ key: 'Escape', handler: () => onClose() }] : [],
+  );
   useBodyScrollLock(isOpen);
   const reduced = useReducedMotion();
 

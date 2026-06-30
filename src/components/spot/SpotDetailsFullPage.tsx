@@ -21,7 +21,6 @@ export function SpotDetailsFullPage({ spot }: { spot: Spot }) {
         spot={spot}
         isSaved={isSaved(spot.id)}
         onToggleSave={toggleSaved}
-        variant="page"
       />
     </article>
   );

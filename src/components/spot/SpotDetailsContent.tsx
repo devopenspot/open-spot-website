@@ -6,21 +6,19 @@ import { MapPin, Heart, Share2, ExternalLink } from 'lucide-react';
 import { WeatherIcon } from './WeatherIcon';
 import { showToast } from '@/hooks/useToast';
 import { cn } from '@/lib/cn';
-import { ROUTES } from '@/lib/nav';
+import { CROWD_LEVEL } from '@/lib/constants';
 import type { Spot } from '@/lib/types';
 
 interface SpotDetailsContentProps {
   spot: Spot;
   isSaved: boolean;
   onToggleSave: (id: string) => void;
-  variant?: 'modal' | 'page';
 }
 
 export function SpotDetailsContent({
   spot,
   isSaved,
   onToggleSave,
-  variant = 'modal',
 }: SpotDetailsContentProps) {
   const titleId = useId();
   const directionsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
@@ -42,21 +40,14 @@ export function SpotDetailsContent({
     }
   };
 
-  const isModal = variant === 'modal';
-
   return (
-    <div
-      className={cn(
-        'flex flex-col md:flex-row w-full',
-        isModal && 'md:max-h-[85vh] max-w-4xl',
-      )}
-    >
+    <div className="flex flex-col md:flex-row w-full">
       <div className="relative h-64 w-full bg-black md:h-auto md:w-1/2 overflow-hidden flex items-center justify-center group">
         <Image
           src={spot.image}
           alt={spot.name}
           fill
-          sizes={isModal ? '(min-width: 768px) 50vw, 100vw' : '100vw'}
+          sizes="100vw"
           className="object-cover grayscale transition-transform duration-700 ease-out group-hover:scale-105"
           referrerPolicy="no-referrer"
           unoptimized
@@ -192,9 +183,9 @@ export function SpotDetailsContent({
                   <div
                     className={cn(
                       'h-full rounded-full transition-all duration-1000',
-                      spot.crowdLevel > 70
+                      spot.crowdLevel > CROWD_LEVEL.HIGH_MIN
                         ? 'bg-amber-600'
-                        : spot.crowdLevel > 40
+                        : spot.crowdLevel > CROWD_LEVEL.LOW_MAX
                           ? 'bg-primary'
                           : 'bg-emerald-600',
                     )}
@@ -266,21 +257,12 @@ export function SpotDetailsContent({
             <span>Launch route</span>
             <ExternalLink size={12} aria-hidden="true" />
           </a>
-          {isModal ? (
-            <a
-              href={ROUTES.spot(spot.id)}
-              className="flex-1 flex h-10 items-center justify-center rounded-lg border border-outline text-xs font-bold tracking-widest uppercase hover:bg-surface-container transition-all"
-            >
-              Open full page
-            </a>
-          ) : (
-            <a
-              href="/explore"
-              className="flex-1 flex h-10 items-center justify-center rounded-lg border border-outline text-xs font-bold tracking-widest uppercase hover:bg-surface-container transition-all"
-            >
-              Back to directory
-            </a>
-          )}
+          <a
+            href="/explore"
+            className="flex-1 flex h-10 items-center justify-center rounded-lg border border-outline text-xs font-bold tracking-widest uppercase hover:bg-surface-container transition-all"
+          >
+            Back to directory
+          </a>
         </div>
       </div>
     </div>

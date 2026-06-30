@@ -7,12 +7,13 @@ import { MobileNav } from './MobileNav';
 import { MobileDrawerTrigger } from './MobileDrawerTrigger';
 import { SearchTrigger } from './SearchTrigger';
 import { useAppState } from './AppStateProvider';
-
-const MAIN_CONTENT_ID = 'main-content';
+import { useUser } from '@/hooks/useUser';
+import { MAIN_CONTENT_ID } from '@/lib/constants';
 
 export function Header() {
   const router = useRouter();
   const { savedCount, openSearch } = useAppState();
+  const user = useUser();
 
   const handleSelect = (path: string) => {
     router.push(path);
@@ -37,10 +38,11 @@ export function Header() {
 
           <div
             id="user-avatar"
-            aria-hidden="true"
+            aria-label={user.name}
+            title={user.email}
             className="hidden sm:flex h-8 w-8 items-center justify-center rounded-full bg-on-surface text-surface text-xs font-bold font-mono"
           >
-            OS
+            {user.initials}
           </div>
 
           <MobileDrawerTrigger />

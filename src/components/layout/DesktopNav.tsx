@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import { NAV_ITEMS } from '@/lib/nav';
 import { NavLink } from './NavLink';
@@ -53,12 +53,6 @@ export function DesktopNav({ savedCount, controlsId, onSelect }: DesktopNavProps
     },
     [],
   );
-
-  useEffect(() => {
-    // When the active route changes via keyboard nav, ensure the active
-    // button is in the tab order (roving tabindex handles this on focus
-    // but we keep a single source of truth via the active prop).
-  }, [pathname]);
 
   return (
     <div

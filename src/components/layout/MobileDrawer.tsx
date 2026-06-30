@@ -4,9 +4,11 @@ import { useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { usePathname, useRouter } from 'next/navigation';
 import { X, Shield, Info } from 'lucide-react';
-import { useEscapeKey } from '@/hooks/useEscapeKey';
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
+import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
+import { useUser } from '@/hooks/useUser';
+import { APP_VERSION, BUILD_TZ } from '@/lib/system-info';
 import { NAV_ITEMS } from '@/lib/nav';
 import { cn } from '@/lib/cn';
 import { BrandLogo } from './BrandLogo';
@@ -19,9 +21,12 @@ export function MobileDrawer() {
   const router = useRouter();
   const pathname = usePathname();
   const { isDrawerOpen, closeDrawer, savedCount } = useAppState();
+  const user = useUser();
   const panelRef = useRef<HTMLDivElement>(null);
 
-  useEscapeKey(closeDrawer, isDrawerOpen);
+  useKeyboardShortcuts(
+    isDrawerOpen ? [{ key: 'Escape', handler: () => closeDrawer() }] : [],
+  );
   useBodyScrollLock(isDrawerOpen);
   useFocusTrap(panelRef, isDrawerOpen);
   const reduced = useReducedMotion();
@@ -153,7 +158,7 @@ export function MobileDrawer() {
                   <div className="flex items-center justify-between text-[10px] font-mono text-secondary">
                     <span className="uppercase">Grid Version</span>
                     <span className="text-on-surface font-semibold">
-                      V2.4.0
+                      {APP_VERSION}
                     </span>
                   </div>
                   <div className="flex items-center justify-between text-[10px] font-mono text-secondary">
@@ -174,16 +179,16 @@ export function MobileDrawer() {
               <div className="flex items-center space-x-3 p-1.5 rounded-lg">
                 <div
                   className="h-9 w-9 rounded-full bg-on-surface text-surface text-xs font-bold font-mono flex items-center justify-center shadow-sm"
-                  aria-hidden="true"
+                  aria-label={user.name}
                 >
-                  OS
+                  {user.initials}
                 </div>
                 <div className="min-w-0 flex-1">
                   <span className="block text-[10px] font-mono font-bold uppercase text-secondary">
                     Active Scout
                   </span>
                   <span className="block text-xs font-bold text-on-surface truncate">
-                    devopenspot@gmail.com
+                    {user.email}
                   </span>
                 </div>
               </div>
@@ -196,7 +201,7 @@ export function MobileDrawer() {
                   <Info size={10} className="mr-1" aria-hidden="true" /> Intel
                 </span>
                 <span className="text-on-surface font-semibold uppercase">
-                  UTC -07:00
+                  {BUILD_TZ}
                 </span>
               </div>
             </div>

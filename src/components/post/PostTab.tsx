@@ -8,6 +8,7 @@ import { useAppState } from '@/components/layout/AppStateProvider';
 import { getPresetImages, getTerrainOptions } from '@/lib/spots';
 import { showToast } from '@/hooks/useToast';
 import { cn } from '@/lib/cn';
+import { CROWD_LEVEL } from '@/lib/constants';
 import type { Spot, SpotType } from '@/lib/types';
 
 export default function PostTab() {
@@ -101,9 +102,9 @@ export default function PostTab() {
       features: featuresList,
       crowdLevel,
       crowdLevelLabel:
-        crowdLevel > 70
+        crowdLevel > CROWD_LEVEL.HIGH_MIN
           ? 'High (Busy)'
-          : crowdLevel > 40
+          : crowdLevel > CROWD_LEVEL.LOW_MAX
             ? 'Moderate Activity'
             : 'Low Crowd (Ideal)',
       weather: {

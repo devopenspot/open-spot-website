@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { MapPin, ZoomIn, ZoomOut, Filter, X } from "lucide-react";
 import { useAppState } from "@/components/layout/AppStateProvider";
 import { MapPinButton } from "./MapPinButton";
+import { MAP_VIEWPORT_OFFSET_PX, MAP_ZOOM } from "@/lib/constants";
 import type { Spot } from "@/lib/types";
 
 export default function MapTab() {
@@ -35,8 +36,8 @@ export default function MapTab() {
 
   const handleZoom = useCallback((direction: "in" | "out") => {
     setZoomLevel((prev) => {
-      const next = direction === "in" ? prev + 0.25 : prev - 0.25;
-      return Math.max(0.75, Math.min(2.5, next));
+      const next = direction === "in" ? prev + MAP_ZOOM.STEP : prev - MAP_ZOOM.STEP;
+      return Math.max(MAP_ZOOM.MIN, Math.min(MAP_ZOOM.MAX, next));
     });
   }, []);
 
@@ -78,7 +79,8 @@ export default function MapTab() {
       id="map-tab"
       role="tabpanel"
       aria-labelledby="nav-btn-map"
-      className="flex flex-col lg:flex-row gap-6 pb-24 animate-fade-in h-[calc(100vh-60px)] min-h-[500px]"
+      className="flex flex-col lg:flex-row gap-6 pb-24 animate-fade-in min-h-[500px]"
+      style={{ height: `calc(100vh - ${MAP_VIEWPORT_OFFSET_PX.DESKTOP}px)` }}
     >
       <h1 className="visually-hidden">Spot Map</h1>
       <aside

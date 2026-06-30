@@ -1,9 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { STORAGE_KEY_VERSION } from '@/lib/constants';
 
-const STORAGE_KEY = 'openspot_saved_ids_v2';
+const STORAGE_KEY = `openspot_saved_ids_${STORAGE_KEY_VERSION}`;
 const STORAGE_KEY_LEGACY = 'openspot_saved_ids_v1';
 
 const memoryCache = new Map<string, string | null>();
+const listeners = new Set<() => void>();
 
 function readStorage(): string | null {
   if (typeof window === 'undefined') return null;
@@ -35,6 +37,10 @@ function writeStorage(value: string | null): string | null {
   }
 }
 
+function notify(): void {
+  for (const l of listeners) l();
+}
+
 function migrateLegacy(): void {
   if (typeof window === 'undefined') return;
   try {
@@ -61,16 +67,60 @@ function parseSavedIds(raw: string | null): Set<string> {
   return new Set();
 }
 
+let cachedSnapshot: { raw: string | null; set: Set<string> } | null = null;
+
+function getSnapshot(): Set<string> {
+  const raw = readStorage();
+  if (cachedSnapshot && cachedSnapshot.raw === raw) {
+    return cachedSnapshot.set;
+  }
+  const set = parseSavedIds(raw);
+  cachedSnapshot = { raw, set };
+  return set;
+}
+
+const SERVER_SNAPSHOT: Set<string> = new Set();
+
+function getServerSnapshot(): Set<string> {
+  return SERVER_SNAPSHOT;
+}
+
+function subscribe(listener: () => void): () => void {
+  if (typeof window === 'undefined') return () => {};
+  listeners.add(listener);
+  const onStorage = (e: StorageEvent) => {
+    if (e.key === STORAGE_KEY || e.key === null) {
+      memoryCache.delete(STORAGE_KEY);
+      cachedSnapshot = null;
+      notify();
+    }
+  };
+  window.addEventListener('storage', onStorage);
+  return () => {
+    listeners.delete(listener);
+    window.removeEventListener('storage', onStorage);
+  };
+}
+
 export function useSavedSpots() {
-  const [savedIds, setSavedIds] = useState<Set<string>>(() => {
-    if (typeof window === 'undefined') return new Set();
-    migrateLegacy();
-    return parseSavedIds(readStorage());
-  });
   const [lastError, setLastError] = useState<string | null>(null);
   const lastErrorRef = useRef<string | null>(null);
+  const hydratedRef = useRef(false);
+
+  const savedIds = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
   useEffect(() => {
+    migrateLegacy();
+    if (memoryCache.has(STORAGE_KEY)) {
+      memoryCache.delete(STORAGE_KEY);
+      cachedSnapshot = null;
+      notify();
+    }
+    hydratedRef.current = true;
+  }, []);
+
+  useEffect(() => {
+    if (!hydratedRef.current) return;
     if (savedIds.size === 0) {
       const err = writeStorage(null);
       if (err && err !== lastErrorRef.current) {
@@ -88,17 +138,25 @@ export function useSavedSpots() {
 
   const isSaved = useCallback((id: string) => savedIds.has(id), [savedIds]);
 
-  const toggle = useCallback((id: string) => {
-    setSavedIds(prev => {
-      const next = new Set(prev);
+  const toggle = useCallback(
+    (id: string) => {
+      const next = new Set(savedIds);
       if (next.has(id)) {
         next.delete(id);
       } else {
         next.add(id);
       }
-      return next;
-    });
-  }, []);
+      const serialized = next.size === 0 ? null : JSON.stringify(Array.from(next));
+      const err = writeStorage(serialized);
+      cachedSnapshot = null;
+      notify();
+      if (err && err !== lastErrorRef.current) {
+        lastErrorRef.current = err;
+        setLastError(err);
+      }
+    },
+    [savedIds],
+  );
 
   return {
     savedIds,

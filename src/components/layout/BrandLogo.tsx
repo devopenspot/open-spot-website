@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { cn } from '@/lib/cn';
 
 interface BrandLogoProps {
@@ -30,7 +31,7 @@ export function BrandLogo({ onClick, size = 'md', className }: BrandLogoProps) {
 
   if (isLink) {
     return (
-      <a
+      <Link
         id={size === 'md' ? 'brand-logo' : undefined}
         href="/"
         aria-label="Open Spot — home"
@@ -40,7 +41,7 @@ export function BrandLogo({ onClick, size = 'md', className }: BrandLogoProps) {
         )}
       >
         {content}
-      </a>
+      </Link>
     );
   }
 

@@ -8,6 +8,7 @@ import { SearchOverlay } from '@/components/search/SearchOverlay';
 import { ToastViewport } from '@/components/feedback/Toast';
 import { useAppState } from './AppStateProvider';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
+import { MAIN_CONTENT_ID } from '@/lib/constants';
 import type { Spot } from '@/lib/types';
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -41,14 +42,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       id="app-root"
       className="min-h-screen bg-surface font-sans text-on-surface flex flex-col selection:bg-primary selection:text-surface"
     >
-      <a href="#main-content" className="skip-link">
+      <a href={`#${MAIN_CONTENT_ID}`} className="skip-link">
         Skip to main content
       </a>
 
       <Header />
 
       <main
-        id="main-content"
+        id={MAIN_CONTENT_ID}
         aria-label="Open Spot content"
         className="flex-1 mx-auto w-full max-w-7xl px-4 py-8 md:px-8"
       >

@@ -235,5 +235,3 @@ export const getSpotById = cache(
   async (id: string): Promise<Spot | undefined> => loadSpot(id),
 )
 
-export function resetSpotsCache(): void {}
-

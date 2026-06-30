@@ -1,6 +1,41 @@
 import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
-import reactHooks from 'eslint-plugin-react-hooks';
+import nextConfig from 'eslint-config-next';
+
+const REACT_RULES_TO_SKIP = new Set([
+  'react/display-name',
+  'react/jsx-no-comment-textnodes',
+  'react/jsx-no-duplicate-props',
+  'react/jsx-no-target-blank',
+  'react/jsx-no-undef',
+  'react/jsx-uses-react',
+  'react/jsx-uses-vars',
+  'react/no-children-prop',
+  'react/no-danger-with-children',
+  'react/no-deprecated',
+  'react/no-direct-mutation-state',
+  'react/no-find-dom-node',
+  'react/no-is-mounted',
+  'react/no-render-return-value',
+  'react/no-string-refs',
+  'react/no-unescaped-entities',
+  'react/no-unknown-property',
+  'react/no-unsafe',
+  'react/prop-types',
+  'react/react-in-jsx-scope',
+  'react/require-render-return',
+]);
+
+function sanitizeNextConfig(configs) {
+  return configs.map((entry) => {
+    if (!entry?.rules) return entry;
+    const next = { ...entry.rules };
+    for (const key of Object.keys(next)) {
+      if (REACT_RULES_TO_SKIP.has(key)) delete next[key];
+    }
+    return { ...entry, rules: next };
+  });
+}
 
 export default [
   {
@@ -8,47 +43,15 @@ export default [
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,
+  ...sanitizeNextConfig(nextConfig),
   {
     files: ['**/*.{js,jsx,ts,tsx}'],
-    plugins: {
-      'react-hooks': reactHooks,
-    },
     rules: {
-      ...reactHooks.configs.recommended.rules,
       'no-unused-vars': 'off',
       '@typescript-eslint/no-unused-vars': [
         'error',
         { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
       ],
-    },
-    languageOptions: {
-      ecmaVersion: 2022,
-      sourceType: 'module',
-      globals: {
-        window: 'readonly',
-        document: 'readonly',
-        navigator: 'readonly',
-        console: 'readonly',
-        localStorage: 'readonly',
-        setTimeout: 'readonly',
-        clearTimeout: 'readonly',
-        setInterval: 'readonly',
-        clearInterval: 'readonly',
-        requestIdleCallback: 'readonly',
-        process: 'readonly',
-        URL: 'readonly',
-        URLSearchParams: 'readonly',
-        Blob: 'readonly',
-        Event: 'readonly',
-        CustomEvent: 'readonly',
-        HTMLElement: 'readonly',
-        HTMLDivElement: 'readonly',
-        HTMLButtonElement: 'readonly',
-        HTMLInputElement: 'readonly',
-        IdleDeadline: 'readonly',
-        React: 'readonly',
-        JSX: 'readonly',
-      },
     },
   },
 ];
