@@ -58,6 +58,7 @@ export interface Region {
   desc: string;
   count: string;
   image: string;
+  link: string;
 }
 
 export interface PresetImage {

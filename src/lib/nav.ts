@@ -24,14 +24,14 @@ export const NAV_ITEMS: readonly {
     drawerLabel: "Explore Archive",
     Icon: Compass,
   },
-  {
-    id: "map",
-    path: "/map",
-    label: "Spot Map",
-    shortLabel: "Map",
-    drawerLabel: "Spot Map",
-    Icon: Map,
-  },
+  //   {
+  //     id: "map",
+  //     path: "/map",
+  //     label: "Spot Map",
+  //     shortLabel: "Map",
+  //     drawerLabel: "Spot Map",
+  //     Icon: Map,
+  //   },
   {
     id: "saved",
     path: "/saved",

@@ -29,7 +29,7 @@ export default function ExploreTab({ events, featured }: ExploreTabProps) {
   const spotlightSpots = useMemo(() => spots.slice(0, 6), [spots]);
   const shelfEvents = useMemo(() => {
     const pool = featured
-      ? events.filter(event => event.id !== featured.id)
+      ? events.filter((event) => event.id !== featured.id)
       : events;
     return pool.slice(0, SHELF_LIMIT);
   }, [events, featured]);
@@ -68,34 +68,36 @@ export default function ExploreTab({ events, featured }: ExploreTabProps) {
               key={region.name}
               className="group relative h-48 overflow-hidden rounded-xl bg-black border border-outline-variant shadow-sm"
             >
-              <Image
-                src={region.image}
-                alt={region.name}
-                fill
-                sizes="(min-width: 640px) 33vw, 100vw"
-                className="object-cover opacity-60 grayscale transition-transform duration-700 ease-out group-hover:scale-105"
-                referrerPolicy="no-referrer"
-                unoptimized
-              />
-              <div
-                className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent"
-                aria-hidden="true"
-              />
+              <a href={region.link} target="_blank" rel="noopener noreferrer">
+                <Image
+                  src={region.image}
+                  alt={region.name}
+                  fill
+                  sizes="(min-width: 640px) 33vw, 100vw"
+                  className="object-cover opacity-60 grayscale transition-transform duration-700 ease-out group-hover:scale-105"
+                  referrerPolicy="no-referrer"
+                  unoptimized
+                />
+                <div
+                  className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent"
+                  aria-hidden="true"
+                />
 
-              <div className="absolute inset-0 p-5 flex flex-col justify-between text-white">
-                <span className="self-end rounded-full bg-white/20 px-2.5 py-0.5 text-[9px] font-mono tracking-widest uppercase backdrop-blur-sm">
-                  {region.count}
-                </span>
+                <div className="absolute inset-0 p-5 flex flex-col justify-between text-white">
+                  <span className="self-end rounded-full bg-white/20 px-2.5 py-0.5 text-[9px] font-mono tracking-widest uppercase backdrop-blur-sm">
+                    {region.count}
+                  </span>
 
-                <div>
-                  <h3 className="font-display text-lg font-bold tracking-wide uppercase sm:text-xl">
-                    {region.name}
-                  </h3>
-                  <p className="mt-1 text-[10px] text-slate-300 leading-normal line-clamp-2">
-                    {region.desc}
-                  </p>
+                  <div>
+                    <h3 className="font-display text-lg font-bold tracking-wide uppercase sm:text-xl">
+                      {region.name}
+                    </h3>
+                    <p className="mt-1 text-[10px] text-slate-300 leading-normal line-clamp-2">
+                      {region.desc}
+                    </p>
+                  </div>
                 </div>
-              </div>
+              </a>
             </div>
           ))}
         </div>
@@ -132,9 +134,7 @@ export default function ExploreTab({ events, featured }: ExploreTabProps) {
           }
         />
 
-        {featured ? (
-          <EventFeaturedHero event={featured} />
-        ) : null}
+        {featured ? <EventFeaturedHero event={featured} /> : null}
 
         {shelfEvents.length > 0 ? (
           <div
