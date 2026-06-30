@@ -1,5 +1,5 @@
 ###
-GET https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=48.837232658164666&lon=2.3789421865061824&addressdetails=1
+GET https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=45.76864173087472&lon=4.836915452991425&addressdetails=1
 
 ###
 GET https://nominatim.openstreetmap.org/search?q=paris+skatepark&addressdetails=1&format=jsonv2
