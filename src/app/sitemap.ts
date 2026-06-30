@@ -1,5 +1,5 @@
 import type { MetadataRoute } from 'next';
-import { getSpots } from '@/lib/spots';
+import { getSpots } from '@/lib/spots/loader';
 
 export const dynamic = 'force-static';
 

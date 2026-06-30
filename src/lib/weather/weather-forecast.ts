@@ -24,7 +24,7 @@ export const fetchForecast = async ({
 	const url = `${OPENWEATHER_BASE}/data/2.5/forecast?lat=${latitude}&lon=${longitude}&appid=${OPENWEATHER_KEY}&units=metric&lang=${language}`
 
 	try {
-		const response = await fetch(url)
+		const response = await fetch(url, { cache: "no-store" })
 		if (!response.ok) {
 			console.error(`OpenWeather /forecast failed: ${response.status}`)
 			return []

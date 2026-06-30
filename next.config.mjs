@@ -1,7 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'export',
-  distDir: './dist',
+  cacheComponents: true,
   images: {
     unoptimized: true,
     remotePatterns: [

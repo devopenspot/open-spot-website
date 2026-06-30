@@ -1,10 +1,6 @@
+import { cache } from "react"
 import spotsJson from "@/data/spots.json"
-import { fetchCurrentWeather } from "@/lib/weather/weather-current"
-import { fetchForecast } from "@/lib/weather/weather-forecast"
-import {
-  mapCurrentWeather,
-  mapForecast,
-} from "@/lib/weather/mappers"
+import { getCachedSpotWeather } from "@/lib/weather/weather-cached"
 import { DEFAULT_PRESET_IMAGES } from "@/data"
 import type { Spot as CoreSpot } from "@/types/core"
 import type { Spot, SpotForecast, SpotType } from "@/lib/types"
@@ -195,42 +191,49 @@ async function fetchWeatherForSpot(
   const lat = Number(entry.lat)
   const lon = Number(entry.lon)
   if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
-    return { current: 22, forecast: mapForecast([], id) }
+    return { current: 22, forecast: [] }
   }
-  const [current, forecast] = await Promise.all([
-    fetchCurrentWeather({ latitude: lat, longitude: lon }),
-    fetchForecast({ latitude: lat, longitude: lon }),
-  ])
-  return {
-    current: mapCurrentWeather(current),
-    forecast: mapForecast(forecast, id),
-  }
+  return getCachedSpotWeather({
+    spotId: id,
+    latitude: lat,
+    longitude: lon,
+  })
 }
 
-async function buildSpot(entry: CoreSpot, bbox: BBox): Promise<Spot> {
-  const id = buildId(entry)
-  const base = buildBaseSpot(entry, bbox)
-  const weather = await fetchWeatherForSpot(entry, id)
+type BaseSpot = Omit<Spot, "weather" | "isSaved">
+
+const BBOX = bboxOf(SOURCE_SPOTS)
+const BASE_SPOTS: readonly BaseSpot[] = Object.freeze(
+  SOURCE_SPOTS.map((entry) => buildBaseSpot(entry, BBOX)),
+)
+
+async function buildSpot(base: BaseSpot, entry: CoreSpot): Promise<Spot> {
+  const weather = await fetchWeatherForSpot(entry, base.id)
   return { ...base, weather }
 }
 
-let spotsCache: Promise<readonly Spot[]> | null = null
-
-export function loadSpots(): Promise<readonly Spot[]> {
-  if (!spotsCache) {
-    const bbox = bboxOf(SOURCE_SPOTS)
-    spotsCache = Promise.all(
-      SOURCE_SPOTS.map((entry) => buildSpot(entry, bbox)),
-    ).then((spots) => Object.freeze(spots as Spot[]))
-  }
-  return spotsCache
+export async function loadSpots(): Promise<readonly Spot[]> {
+  const spots = await Promise.all(
+    BASE_SPOTS.map((base, i) => buildSpot(base, SOURCE_SPOTS[i]!)),
+  )
+  return Object.freeze(spots)
 }
 
 export async function loadSpot(id: string): Promise<Spot | undefined> {
-  const spots = await loadSpots()
-  return spots.find((s) => s.id === id)
+  const base = BASE_SPOTS.find((s) => s.id === id)
+  if (!base) return undefined
+  const entry = SOURCE_SPOTS.find((e) => buildId(e) === id)
+  if (!entry) return undefined
+  return buildSpot(base, entry)
 }
 
-export function resetSpotsCache(): void {
-  spotsCache = null
-}
+export const getSpots = cache(
+  async (): Promise<readonly Spot[]> => loadSpots(),
+)
+
+export const getSpotById = cache(
+  async (id: string): Promise<Spot | undefined> => loadSpot(id),
+)
+
+export function resetSpotsCache(): void {}
+

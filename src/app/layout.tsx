@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter, Archivo_Narrow } from 'next/font/google';
 import { cn } from '@/lib/cn';
-import { getSpots } from '@/lib/spots';
+import { getSpots } from '@/lib/spots/loader';
 import { AppProviders } from '@/components/layout/AppProviders';
 import './globals.css';
 

@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
-import { getSpotById, getSpots } from '@/lib/spots';
+import { getSpots, getSpotById } from '@/lib/spots/loader';
 import { SpotDetailsFullPage } from '@/components/spot/SpotDetailsFullPage';
 
 export async function generateStaticParams() {
