@@ -41,7 +41,7 @@ export default function Image() {
                 display: 'flex',
                 width: 16,
                 height: 16,
-                borderRadius: 999,
+                borderRadius: 0,
                 backgroundColor: '#000000',
               }}
             />

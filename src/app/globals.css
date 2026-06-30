@@ -59,6 +59,17 @@
   --spacing-stack-md: 1.5rem;
   --spacing-margin-mobile: 1.25rem;
   --spacing-margin-desktop: 4rem;
+
+  --radius-none: 0px;
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-lg: 0px;
+  --radius-xl: 0px;
+  --radius-2xl: 0px;
+  --radius-3xl: 0px;
+  --radius-4xl: 0px;
+  --radius: 0px;
+  --radius-full: 0px;
 }
 
 @layer base {
