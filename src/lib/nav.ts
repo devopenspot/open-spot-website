@@ -1,9 +1,16 @@
 import type { TabType } from "@/lib/types";
-import { Compass, Map, Heart, PlusCircle, Trophy, type LucideIcon } from "lucide-react";
+import {
+  Compass,
+  Map,
+  Heart,
+  PlusCircle,
+  Trophy,
+  type LucideIcon,
+} from "lucide-react";
 
 export const NAV_ITEMS: readonly {
   id: TabType;
-  path: "/" | "/map" | "/saved" | "/post" | "/sport-events";
+  path: "/" | "/map" | "/saved" | "/sport-events" | "/post";
   label: string;
   shortLabel: string;
   drawerLabel: string;
@@ -34,20 +41,20 @@ export const NAV_ITEMS: readonly {
     Icon: Heart,
   },
   {
-    id: "post",
-    path: "/post",
-    label: "Post Spot",
-    shortLabel: "Post",
-    drawerLabel: "Register Plot",
-    Icon: PlusCircle,
-  },
-  {
     id: "events",
     path: "/sport-events",
     label: "Events",
     shortLabel: "Events",
     drawerLabel: "Sport Events",
     Icon: Trophy,
+  },
+  {
+    id: "post",
+    path: "/post",
+    label: "Post Spot",
+    shortLabel: "Post",
+    drawerLabel: "Register Spot",
+    Icon: PlusCircle,
   },
 ] as const;
 
@@ -57,8 +64,8 @@ export const ROUTES = {
   explore: "/",
   map: "/map",
   saved: "/saved",
-  post: "/post",
   events: "/sport-events",
+  post: "/post",
   spot: (id: string) => `/spots/${id}`,
 } as const;
 
@@ -70,7 +77,7 @@ export function isActivePath(currentPath: string, itemPath: string): boolean {
 export function getActiveTabFromPath(pathname: string): TabType {
   if (pathname.startsWith("/map")) return "map";
   if (pathname.startsWith("/saved")) return "saved";
-  if (pathname.startsWith("/post")) return "post";
   if (pathname.startsWith("/events")) return "events";
+  if (pathname.startsWith("/post")) return "post";
   return "explore";
 }

@@ -1,15 +1,15 @@
-'use client';
+"use client";
 
-import { useId, useState, type FormEvent } from 'react';
-import Image from 'next/image';
-import { useRouter } from 'next/navigation';
-import { Check, Image as ImageIcon, Tag, Plus } from 'lucide-react';
-import { useAppState } from '@/components/layout/AppStateProvider';
-import { getPresetImages, getTerrainOptions } from '@/lib/spots';
-import { showToast } from '@/hooks/useToast';
-import { cn } from '@/lib/cn';
-import { CROWD_LEVEL } from '@/lib/constants';
-import type { Spot, SpotType } from '@/lib/types';
+import { useId, useState, type FormEvent } from "react";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { Check, Image as ImageIcon, Tag, Plus } from "lucide-react";
+import { useAppState } from "@/components/layout/AppStateProvider";
+import { getPresetImages, getTerrainOptions } from "@/lib/spots";
+import { showToast } from "@/hooks/useToast";
+import { cn } from "@/lib/cn";
+import { CROWD_LEVEL } from "@/lib/constants";
+import type { Spot, SpotType } from "@/lib/types";
 
 export default function PostTab() {
   const router = useRouter();
@@ -28,17 +28,17 @@ export default function PostTab() {
   const noteId = useId();
   const errorId = useId();
 
-  const [name, setName] = useState('');
-  const [city, setCity] = useState('');
-  const [address, setAddress] = useState('');
-  const [type, setType] = useState<SpotType>('Plaza');
+  const [name, setName] = useState("");
+  const [city, setCity] = useState("");
+  const [address, setAddress] = useState("");
+  const [type, setType] = useState<SpotType>("Plaza");
   const [imageUrl, setImageUrl] = useState<string>(presetImages[0].url);
   const [selectedPreset, setSelectedPreset] = useState<number>(0);
-  const [communityNote, setCommunityNote] = useState('');
-  const [featuresInput, setFeaturesInput] = useState('');
+  const [communityNote, setCommunityNote] = useState("");
+  const [featuresInput, setFeaturesInput] = useState("");
   const [featuresList, setFeaturesList] = useState<string[]>([
-    'Transition',
-    'Smooth Concrete',
+    "Transition",
+    "Smooth Concrete",
   ]);
   const [crowdLevel, setCrowdLevel] = useState<number>(35);
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -48,13 +48,13 @@ export default function PostTab() {
     e.preventDefault();
     const trimmed = featuresInput.trim();
     if (trimmed && !featuresList.includes(trimmed)) {
-      setFeaturesList(prev => [...prev, trimmed]);
-      setFeaturesInput('');
+      setFeaturesList((prev) => [...prev, trimmed]);
+      setFeaturesInput("");
     }
   };
 
   const handleRemoveFeature = (f: string) => {
-    setFeaturesList(prev => prev.filter(item => item !== f));
+    setFeaturesList((prev) => prev.filter((item) => item !== f));
   };
 
   const handlePresetPick = (idx: number, url: string) => {
@@ -68,12 +68,12 @@ export default function PostTab() {
   };
 
   const reset = () => {
-    setName('');
-    setCity('');
-    setAddress('');
-    setType('Plaza');
-    setCommunityNote('');
-    setFeaturesList(['Transition', 'Smooth Concrete']);
+    setName("");
+    setCity("");
+    setAddress("");
+    setType("Plaza");
+    setCommunityNote("");
+    setFeaturesList(["Transition", "Smooth Concrete"]);
     setFormError(null);
   };
 
@@ -81,7 +81,7 @@ export default function PostTab() {
     e.preventDefault();
     if (!name || !city || !address) {
       setFormError(
-        'Please fill in the required fields: Name, City, and Address.',
+        "Please fill in the required fields: Name, City, and Address.",
       );
       return;
     }
@@ -96,32 +96,32 @@ export default function PostTab() {
       city,
       address,
       type,
-      distance: '0.5 MILES AWAY',
+      distance: "0.5 MILES AWAY",
       coordinates: { x: randomCoordX, y: randomCoordY },
       image: imageUrl,
       features: featuresList,
       crowdLevel,
       crowdLevelLabel:
         crowdLevel > CROWD_LEVEL.HIGH_MIN
-          ? 'High (Busy)'
+          ? "High (Busy)"
           : crowdLevel > CROWD_LEVEL.LOW_MAX
-            ? 'Moderate Activity'
-            : 'Low Crowd (Ideal)',
+            ? "Moderate Activity"
+            : "Low Crowd (Ideal)",
       weather: {
         current: 23,
         forecast: [
-          { day: 'TUE', icon: 'sunny', temp: 22 },
-          { day: 'WED', icon: 'partly_cloudy_day', temp: 20 },
-          { day: 'THU', icon: 'sunny', temp: 23 },
+          { day: "TUE", icon: "sunny", temp: 22 },
+          { day: "WED", icon: "partly_cloudy_day", temp: 20 },
+          { day: "THU", icon: "sunny", temp: 23 },
         ],
       },
       communityNote:
         communityNote ||
-        'Contributed by community scout. Bring your setup and session on! — @anonymous_rider',
+        "Contributed by community scout. Bring your setup and session on! — @anonymous_rider",
     };
 
     addSpot(newSpot);
-    showToast('Spot registered successfully', 'success');
+    showToast("Spot registered successfully", "success");
     setIsSubmitted(true);
   };
 
@@ -134,13 +134,18 @@ export default function PostTab() {
         className="max-w-md mx-auto py-16 text-center animate-fade-in"
       >
         <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary mx-auto mb-6">
-          <Check size={28} className="text-primary animate-pulse" aria-hidden="true" />
+          <Check
+            size={28}
+            className="text-primary animate-pulse"
+            aria-hidden="true"
+          />
         </div>
         <h2 className="font-display text-2xl font-bold uppercase tracking-widest text-on-surface">
           Spot registered
         </h2>
         <p className="mt-2 text-xs text-secondary leading-relaxed">
-          Your street coordinates and terrain specifications have been cataloged on the master map! Skaters can now scout this location live.
+          Your street coordinates and terrain specifications have been cataloged
+          on the master map! Skaters can now scout this location live.
         </p>
 
         <div className="mt-8 flex flex-col gap-2.5">
@@ -157,7 +162,7 @@ export default function PostTab() {
 
           <button
             type="button"
-            onClick={() => router.push('/')}
+            onClick={() => router.push("/")}
             className="w-full border border-outline text-on-surface py-2.5 rounded-lg text-xs font-bold tracking-widest uppercase hover:bg-surface-container transition-all"
           >
             Return to directory
@@ -182,7 +187,8 @@ export default function PostTab() {
           Register new obstacle
         </h1>
         <p className="mt-1.5 text-xs text-secondary leading-relaxed">
-          Map your local ledges, stairs, DIYs, or pools. Provide accurate metadata to help fellow skaters coordinate sessions safely.
+          Map your local ledges, stairs, DIYs, or pools. Provide accurate
+          metadata to help fellow skaters coordinate sessions safely.
         </p>
       </header>
 
@@ -203,7 +209,7 @@ export default function PostTab() {
               aria-invalid={Boolean(formError) && !name}
               placeholder="e.g. The White Marble Nine"
               value={name}
-              onChange={e => setName(e.target.value)}
+              onChange={(e) => setName(e.target.value)}
               className="w-full rounded-lg border border-outline-variant bg-surface-bright p-3 text-xs font-medium text-on-surface shadow-sm focus:border-outline focus:outline-none"
             />
           </div>
@@ -219,10 +225,10 @@ export default function PostTab() {
               id={typeId}
               required
               value={type}
-              onChange={e => setType(e.target.value as SpotType)}
+              onChange={(e) => setType(e.target.value as SpotType)}
               className="w-full rounded-lg border border-outline-variant bg-surface-bright p-3 text-xs font-medium text-on-surface shadow-sm focus:border-outline focus:outline-none"
             >
-              {terrainOptions.map(opt => (
+              {terrainOptions.map((opt) => (
                 <option key={opt.value} value={opt.value}>
                   {opt.label.toUpperCase()}
                 </option>
@@ -247,7 +253,7 @@ export default function PostTab() {
               aria-invalid={Boolean(formError) && !city}
               placeholder="e.g. Los Angeles, CA"
               value={city}
-              onChange={e => setCity(e.target.value)}
+              onChange={(e) => setCity(e.target.value)}
               className="w-full rounded-lg border border-outline-variant bg-surface-bright p-3 text-xs font-medium text-on-surface shadow-sm focus:border-outline focus:outline-none"
             />
           </div>
@@ -267,7 +273,7 @@ export default function PostTab() {
               aria-invalid={Boolean(formError) && !address}
               placeholder="e.g. Hope Street Corporate Row, L.A."
               value={address}
-              onChange={e => setAddress(e.target.value)}
+              onChange={(e) => setAddress(e.target.value)}
               className="w-full rounded-lg border border-outline-variant bg-surface-bright p-3 text-xs font-medium text-on-surface shadow-sm focus:border-outline focus:outline-none"
             />
           </div>
@@ -295,10 +301,10 @@ export default function PostTab() {
                 aria-checked={selectedPreset === idx}
                 onClick={() => handlePresetPick(idx, preset.url)}
                 className={cn(
-                  'relative h-20 rounded-lg overflow-hidden border-2 transition-all',
+                  "relative h-20 rounded-lg overflow-hidden border-2 transition-all",
                   selectedPreset === idx
-                    ? 'border-primary ring-2 ring-primary/10'
-                    : 'border-transparent',
+                    ? "border-primary ring-2 ring-primary/10"
+                    : "border-transparent",
                 )}
               >
                 <Image
@@ -341,7 +347,7 @@ export default function PostTab() {
               type="url"
               placeholder="Paste custom hotlink image URL here..."
               value={imageUrl}
-              onChange={e => handleCustomUrl(e.target.value)}
+              onChange={(e) => handleCustomUrl(e.target.value)}
               className="w-full rounded-lg border border-outline-variant bg-surface-bright p-3 text-xs font-medium text-on-surface shadow-sm focus:border-outline focus:outline-none"
             />
           </div>
@@ -352,7 +358,7 @@ export default function PostTab() {
             htmlFor={crowdId}
             className="block font-mono text-[10px] font-bold uppercase tracking-wider text-secondary mb-1.5"
           >
-            Crowd approximation{' '}
+            Crowd approximation{" "}
             <span aria-hidden="true">({crowdLevel}% occupancy)</span>
           </label>
           <input
@@ -361,7 +367,7 @@ export default function PostTab() {
             min={0}
             max={100}
             value={crowdLevel}
-            onChange={e => setCrowdLevel(Number(e.target.value))}
+            onChange={(e) => setCrowdLevel(Number(e.target.value))}
             aria-valuemin={0}
             aria-valuemax={100}
             aria-valuenow={crowdLevel}
@@ -395,9 +401,9 @@ export default function PostTab() {
               type="text"
               placeholder="Add tag (e.g. Red Curb, Slappy, Waxed)"
               value={featuresInput}
-              onChange={e => setFeaturesInput(e.target.value)}
-              onKeyDown={e => {
-                if (e.key === 'Enter') {
+              onChange={(e) => setFeaturesInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
                   e.preventDefault();
                   handleAddFeature(e as unknown as FormEvent);
                 }
@@ -415,7 +421,7 @@ export default function PostTab() {
           </div>
 
           <ul className="flex flex-wrap gap-1.5" aria-label="Selected features">
-            {featuresList.map(tag => (
+            {featuresList.map((tag) => (
               <li
                 key={tag}
                 className="inline-flex items-center rounded-full bg-surface-container-high border border-outline-variant/60 px-3 py-1 text-[10px] font-semibold text-on-surface"
@@ -446,7 +452,7 @@ export default function PostTab() {
             rows={3}
             placeholder="Describe runway smoothness, security timing, wax needs, lighting, etc..."
             value={communityNote}
-            onChange={e => setCommunityNote(e.target.value)}
+            onChange={(e) => setCommunityNote(e.target.value)}
             className="w-full rounded-lg border border-outline-variant bg-surface-bright p-3 text-xs font-medium text-on-surface shadow-sm focus:border-outline focus:outline-none"
           />
         </div>
@@ -464,7 +470,7 @@ export default function PostTab() {
         <div className="border-t border-outline-variant pt-5 flex flex-col sm:flex-row sm:justify-end gap-2 sm:gap-3">
           <button
             type="button"
-            onClick={() => router.push('/')}
+            onClick={() => router.push("/")}
             className="px-6 py-3 rounded-lg border border-outline text-xs font-bold tracking-widest uppercase hover:bg-surface-container transition-all"
           >
             Cancel
@@ -473,7 +479,7 @@ export default function PostTab() {
             type="submit"
             className="px-8 py-3 rounded-lg bg-on-surface text-surface text-xs font-bold tracking-widest uppercase hover:bg-on-surface/90 transition-all shadow-md"
           >
-            Register plot
+            Register Spot
           </button>
         </div>
       </form>
