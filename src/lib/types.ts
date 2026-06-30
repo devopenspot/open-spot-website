@@ -1,9 +1,9 @@
 export type WeatherIconName =
-  | 'sunny'
-  | 'partly_cloudy_day'
-  | 'cloudy'
-  | 'rain'
-  | 'snow';
+  | "sunny"
+  | "partly_cloudy_day"
+  | "cloudy"
+  | "rain"
+  | "snow";
 
 export interface SpotForecast {
   day: string;
@@ -12,13 +12,13 @@ export interface SpotForecast {
 }
 
 export type SpotType =
-  | 'Plaza'
-  | 'DIY'
-  | 'Stair'
-  | 'Bowl'
-  | 'Park'
-  | 'Ledges'
-  | 'Pools';
+  | "Plaza"
+  | "DIY"
+  | "Stair"
+  | "Bowl"
+  | "Park"
+  | "Ledges"
+  | "Pools";
 
 export interface Spot {
   id: string;
@@ -40,7 +40,7 @@ export interface Spot {
   isSaved?: boolean;
 }
 
-export type TabType = 'explore' | 'saved' | 'map' | 'post';
+export type TabType = "explore" | "saved" | "map" | "post" | "events";
 
 export interface ExploreCategory {
   name: string;
