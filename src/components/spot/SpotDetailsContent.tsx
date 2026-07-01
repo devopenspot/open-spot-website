@@ -247,7 +247,7 @@ export function SpotDetailsContent({
             href={directionsUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex-1 flex h-10 items-center justify-center space-x-1.5 rounded-lg bg-on-surface text-surface text-xs font-bold tracking-widest uppercase hover:bg-on-surface/90 transition-all shadow-sm"
+            className="flex-1 flex min-h-10 items-center justify-center space-x-1.5 rounded-lg bg-on-surface text-surface text-xs font-bold tracking-widest uppercase hover:bg-on-surface/90 transition-all shadow-sm"
           >
             <span>Launch route</span>
             <ExternalLink size={12} aria-hidden="true" />
@@ -255,7 +255,7 @@ export function SpotDetailsContent({
           <button
             type="button"
             onClick={() => router.back()}
-            className="flex-1 flex h-10 items-center justify-center rounded-lg border border-outline text-xs font-bold tracking-widest uppercase hover:bg-surface-container transition-all"
+            className="flex-1 flex min-h-10 items-center justify-center rounded-lg border border-outline text-xs font-bold tracking-widest uppercase hover:bg-surface-container transition-all"
           >
             Back
           </button>
