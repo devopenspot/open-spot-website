@@ -1,7 +1,9 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { Filter } from "lucide-react";
 import { getRegions } from "@/lib/spots";
+import { useAppState } from "@/components/layout/AppStateProvider";
 import type { MapFilter } from "@/hooks/useMapFilter";
 
 const regions = getRegions();
@@ -12,8 +14,9 @@ export function RegionFilter({
   availableCountries,
   setRegion,
   setCountry,
-  clearAll,
 }: MapFilter) {
+  const router = useRouter();
+  const { closeSearch } = useAppState();
   return (
     <div className="space-y-3">
       <h3 className="font-display text-base font-bold uppercase tracking-wider text-on-surface flex items-center">
@@ -30,11 +33,6 @@ export function RegionFilter({
         aria-label="Filter spots by region"
         className="flex flex-wrap gap-1.5 no-scrollbar"
       >
-        <FilterPill
-          label="All regions"
-          active={region === null}
-          onClick={clearAll}
-        />
         {regions.map((r) => (
           <FilterPill
             key={r.name}
@@ -51,18 +49,19 @@ export function RegionFilter({
           aria-label="Filter spots by country"
           className="flex flex-wrap gap-1.5 no-scrollbar"
         >
-          <FilterPill
-            label={`All ${region}`}
-            active={country === null}
-            onClick={() => setCountry(null)}
-            muted
-          />
           {availableCountries.map((c) => (
             <FilterPill
               key={c}
               label={c}
               active={country === c}
-              onClick={() => setCountry(country === c ? null : c)}
+              onClick={() => {
+                const willSelect = country !== c;
+                setCountry(willSelect ? c : null);
+                if (willSelect) {
+                  closeSearch();
+                  router.push("/map");
+                }
+              }}
               muted
             />
           ))}

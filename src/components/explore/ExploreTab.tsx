@@ -68,7 +68,7 @@ export default function ExploreTab({ events, featured }: ExploreTabProps) {
               key={region.name}
               className="group relative h-48 overflow-hidden rounded-xl bg-black border border-outline-variant shadow-sm"
             >
-              <a href={region.link} target="_blank" rel="noopener noreferrer">
+              <a href={region.link} rel="noopener noreferrer">
                 <Image
                   src={region.image}
                   alt={region.name}
@@ -158,23 +158,7 @@ export default function ExploreTab({ events, featured }: ExploreTabProps) {
           eyebrow="Curated Archive"
           title="Spotlight Spots"
           titleId="spotlight-heading"
-          cta={
-            <button
-              id="view-all-map-link"
-              type="button"
-              onClick={() => router.push("/map")}
-              className="group flex items-center space-x-1 text-xs font-semibold tracking-wider text-primary uppercase hover:underline"
-            >
-              <span>View on map</span>
-              <ChevronRight
-                size={14}
-                aria-hidden="true"
-                className="transition-transform group-hover:translate-x-0.5"
-              />
-            </button>
-          }
         />
-
         <div
           id="spotlight-grid"
           className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
@@ -190,47 +174,6 @@ export default function ExploreTab({ events, featured }: ExploreTabProps) {
           ))}
         </div>
       </section>
-
-      {/* <section id="explore-categories" aria-label="Spot categories">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          {categories.map((cat) => (
-            <div
-              key={cat.name}
-              id={`category-card-${cat.name.toLowerCase()}`}
-              className="group relative h-40 overflow-hidden rounded-xl bg-black shadow-md"
-            >
-              <Image
-                src={cat.image}
-                alt={cat.name}
-                fill
-                sizes="(min-width: 640px) 50vw, 100vw"
-                className="object-cover opacity-70 grayscale transition-transform duration-700 ease-out group-hover:scale-105 group-hover:opacity-60"
-                referrerPolicy="no-referrer"
-                unoptimized
-                priority
-              />
-              <div
-                className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent"
-                aria-hidden="true"
-              />
-              <div className="absolute bottom-5 left-5 text-white">
-                <span className="font-display text-2xl font-bold tracking-widest uppercase sm:text-3xl">
-                  {cat.name}
-                </span>
-                <p className="mt-1 text-xs tracking-wider text-slate-300 font-mono uppercase">
-                  Discover spots & tricks
-                </p>
-              </div>
-              <div
-                className="absolute top-5 right-5 flex h-8 w-8 items-center justify-center rounded-full bg-white/15 text-white opacity-0 transition-all duration-300 group-hover:opacity-100 group-hover:bg-white/25 backdrop-blur-sm"
-                aria-hidden="true"
-              >
-                <ArrowRight size={16} />
-              </div>
-            </div>
-          ))}
-        </div>
-      </section> */}
     </section>
   );
 }
