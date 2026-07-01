@@ -107,6 +107,8 @@ export default function PostTab() {
           : crowdLevel > CROWD_LEVEL.LOW_MAX
             ? "Moderate Activity"
             : "Low Crowd (Ideal)",
+      country: "",
+      region: "Americas",
       weather: {
         current: 23,
         forecast: [

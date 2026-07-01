@@ -1,12 +1,14 @@
-'use client';
+"use client";
 
-import { useDeferredValue, useEffect, useId, useMemo, useRef, useState } from 'react';
-import { Search, X, MapPin, Compass, ArrowRight, History } from 'lucide-react';
-import Image from 'next/image';
-import { Overlay } from '@/components/feedback/Overlay';
-import { SEARCH_FOCUS_DELAY_MS } from '@/lib/constants';
-import { getPopularSearchTerms, getRecentSearches } from '@/lib/spots';
-import type { Spot } from '@/lib/types';
+import { useDeferredValue, useEffect, useId, useRef, useState } from "react";
+import { Search, X, MapPin, ArrowRight } from "lucide-react";
+import Image from "next/image";
+import { Overlay } from "@/components/feedback/Overlay";
+import { SEARCH_FOCUS_DELAY_MS } from "@/lib/constants";
+import { useAppState } from "@/components/layout/AppStateProvider";
+import type { Spot } from "@/lib/types";
+import { RegionFilter } from "@/components/map/RegionFilter";
+import { useMapFilter } from "@/hooks/useMapFilter";
 
 interface SearchOverlayProps {
   isOpen: boolean;
@@ -23,12 +25,20 @@ export function SearchOverlay({
 }: SearchOverlayProps) {
   const titleId = useId();
   const inputId = useId();
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState("");
   const deferredQuery = useDeferredValue(query);
   const inputRef = useRef<HTMLInputElement>(null);
+  const { openSearch } = useAppState();
 
-  const popularTerms = useMemo(() => getPopularSearchTerms(), []);
-  const recentSearches = useMemo(() => getRecentSearches(), []);
+  const {
+    region,
+    country,
+    availableCountries,
+    filteredSpots,
+    setRegion,
+    setCountry,
+    clearAll,
+  } = useMapFilter(spots);
 
   useEffect(() => {
     if (isOpen) {
@@ -40,18 +50,9 @@ export function SearchOverlay({
     }
   }, [isOpen]);
 
-  const filteredSpots = useMemo(() => {
-    const q = deferredQuery.trim().toLowerCase();
-    if (!q) return [];
-    return spots.filter(
-      spot =>
-        spot.name.toLowerCase().includes(q) ||
-        spot.city.toLowerCase().includes(q) ||
-        spot.type.toLowerCase().includes(q) ||
-        spot.address.toLowerCase().includes(q) ||
-        spot.features.some(f => f.toLowerCase().includes(q)),
-    );
-  }, [deferredQuery, spots]);
+  useEffect(() => {
+    if (isOpen) openSearch();
+  }, [isOpen, openSearch]);
 
   const handlePick = (spot: Spot) => {
     onSelectSpot(spot);
@@ -89,13 +90,13 @@ export function SearchOverlay({
               autoComplete="off"
               placeholder="Search spots by name, city, style, or features..."
               value={query}
-              onChange={e => setQuery(e.target.value)}
+              onChange={(e) => setQuery(e.target.value)}
               className="w-full bg-transparent text-lg font-medium text-on-surface focus:outline-none placeholder:text-secondary"
             />
             {query && (
               <button
                 type="button"
-                onClick={() => setQuery('')}
+                onClick={() => setQuery("")}
                 aria-label="Clear search"
                 className="text-secondary hover:text-on-surface"
               >
@@ -120,63 +121,18 @@ export function SearchOverlay({
         </div>
 
         <div className="mx-auto w-full max-w-3xl flex-1">
-          {deferredQuery.trim() === '' ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">
-              <div>
-                <div className="flex items-center space-x-2 mb-4">
-                  <History
-                    size={14}
-                    className="text-secondary"
-                    aria-hidden="true"
-                  />
-                  <h3 className="font-mono text-[10px] font-bold tracking-widest text-secondary uppercase">
-                    Recent scout logs
-                  </h3>
-                </div>
-                <ul className="space-y-2">
-                  {recentSearches.map(term => (
-                    <li key={term}>
-                      <button
-                        type="button"
-                        onClick={() => setQuery(term)}
-                        className="w-full flex items-center justify-between p-3 rounded-lg border border-outline-variant/60 bg-surface hover:border-outline hover:bg-surface-container transition-all text-xs font-semibold uppercase tracking-wider text-on-surface text-left"
-                      >
-                        <span>{term}</span>
-                        <ArrowRight
-                          size={12}
-                          className="text-secondary"
-                          aria-hidden="true"
-                        />
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div>
-                <div className="flex items-center space-x-2 mb-4">
-                  <Compass
-                    size={14}
-                    className="text-secondary"
-                    aria-hidden="true"
-                  />
-                  <h3 className="font-mono text-[10px] font-bold tracking-widest text-secondary uppercase">
-                    Popular queries
-                  </h3>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {popularTerms.map(term => (
-                    <button
-                      key={term}
-                      type="button"
-                      onClick={() => setQuery(term)}
-                      className="px-4 py-2 rounded-lg border border-outline-variant bg-surface text-xs font-semibold uppercase tracking-wider text-on-surface hover:border-outline hover:bg-surface-container transition-all"
-                    >
-                      {term}
-                    </button>
-                  ))}
-                </div>
-              </div>
+          {deferredQuery.trim() === "" ? (
+            <div className="grid grid-cols-1 md:grid-cols-1 gap-8 pt-4">
+              <RegionFilter
+                region={region}
+                country={country}
+                availableCountries={availableCountries}
+                filteredSpots={filteredSpots}
+                hasFilter={region !== null || country !== null}
+                setRegion={setRegion}
+                setCountry={setCountry}
+                clearAll={clearAll}
+              />
             </div>
           ) : (
             <div className="space-y-4">
@@ -190,7 +146,7 @@ export function SearchOverlay({
 
               {filteredSpots.length > 0 ? (
                 <ul className="space-y-3" aria-label="Matched spots">
-                  {filteredSpots.map(spot => (
+                  {filteredSpots.map((spot) => (
                     <li key={spot.id}>
                       <button
                         type="button"
@@ -225,10 +181,10 @@ export function SearchOverlay({
                               className="mr-0.5 shrink-0"
                               aria-hidden="true"
                             />
-                            {spot.city} •{' '}
+                            {spot.city} •{" "}
                             <span className="ml-1 italic">
                               &ldquo;
-                              {spot.features.slice(0, 2).join(', ')}
+                              {spot.features.slice(0, 2).join(", ")}
                               &rdquo;
                             </span>
                           </span>

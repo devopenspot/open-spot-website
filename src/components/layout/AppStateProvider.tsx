@@ -3,6 +3,7 @@
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
 import type { Spot } from '@/lib/types';
 import { useSavedSpots } from '@/hooks/useSavedSpots';
+import { getRegions } from '@/lib/spots';
 
 interface AppStateValue {
   spots: Spot[];
@@ -18,6 +19,11 @@ interface AppStateValue {
   isDrawerOpen: boolean;
   openDrawer: () => void;
   closeDrawer: () => void;
+  region: string | null;
+  country: string | null;
+  setRegion: (name: string | null) => void;
+  setCountry: (name: string | null) => void;
+  clearMapFilter: () => void;
 }
 
 const AppStateContext = createContext<AppStateValue | null>(null);
@@ -32,6 +38,8 @@ export function AppStateProvider({
   const [spots, setSpots] = useState<Spot[]>(() => [...initialSpots]);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [region, setRegionState] = useState<string | null>(null);
+  const [country, setCountryState] = useState<string | null>(null);
 
   const { savedIds, isSaved, toggle, count } = useSavedSpots();
 
@@ -49,6 +57,29 @@ export function AppStateProvider({
   const closeDrawer = useCallback(() => setIsDrawerOpen(false), []);
   const toggleSaved = useCallback((id: string) => toggle(id), [toggle]);
 
+  const setRegion = useCallback((name: string | null) => {
+    setRegionState(name);
+    if (name === null) {
+      setCountryState(null);
+      return;
+    }
+    setCountryState((prev) => {
+      if (prev === null) return null;
+      const next = getRegions().find((r) => r.name === name);
+      if (!next) return null;
+      return next.countries.includes(prev) ? prev : null;
+    });
+  }, []);
+
+  const setCountry = useCallback((name: string | null) => {
+    setCountryState(name);
+  }, []);
+
+  const clearMapFilter = useCallback(() => {
+    setRegionState(null);
+    setCountryState(null);
+  }, []);
+
   const value = useMemo<AppStateValue>(
     () => ({
       spots,
@@ -64,6 +95,11 @@ export function AppStateProvider({
       isDrawerOpen,
       openDrawer,
       closeDrawer,
+      region,
+      country,
+      setRegion,
+      setCountry,
+      clearMapFilter,
     }),
     [
       spots,
@@ -79,6 +115,11 @@ export function AppStateProvider({
       isDrawerOpen,
       openDrawer,
       closeDrawer,
+      region,
+      country,
+      setRegion,
+      setCountry,
+      clearMapFilter,
     ],
   );
 

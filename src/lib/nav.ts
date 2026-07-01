@@ -1,7 +1,6 @@
 import type { TabType } from "@/lib/types";
 import {
   Compass,
-  Map,
   Heart,
   PlusCircle,
   Trophy,

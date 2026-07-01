@@ -1,18 +1,19 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { MapPin, ZoomIn, ZoomOut, Filter, X } from "lucide-react";
+import { MapPin, ZoomIn, ZoomOut, X } from "lucide-react";
 import { useAppState } from "@/components/layout/AppStateProvider";
 import { MapPinButton } from "./MapPinButton";
+import { useMapFilter } from "@/hooks/useMapFilter";
 import { MAP_VIEWPORT_OFFSET_PX, MAP_ZOOM } from "@/lib/constants";
 import type { Spot } from "@/lib/types";
 
 export default function MapTab() {
   const router = useRouter();
   const { spots, savedIds, toggleSaved } = useAppState();
-  const [selectedType, setSelectedType] = useState<string>("All");
+  const { region, country, filteredSpots } = useMapFilter(spots);
   const [activePin, setActivePin] = useState<Spot | null>(null);
   const [zoomLevel, setZoomLevel] = useState<number>(1);
   const [mapPan, setMapPan] = useState<{ x: number; y: number }>({
@@ -20,23 +21,10 @@ export default function MapTab() {
     y: 0,
   });
 
-  const spotTypes = useMemo(() => {
-    const types = new Set<string>();
-    spots.forEach((s) => types.add(s.type));
-    return ["All", ...Array.from(types)];
-  }, [spots]);
-
-  const filteredSpots = useMemo(
-    () =>
-      selectedType === "All"
-        ? spots
-        : spots.filter((s) => s.type === selectedType),
-    [spots, selectedType],
-  );
-
   const handleZoom = useCallback((direction: "in" | "out") => {
     setZoomLevel((prev) => {
-      const next = direction === "in" ? prev + MAP_ZOOM.STEP : prev - MAP_ZOOM.STEP;
+      const next =
+        direction === "in" ? prev + MAP_ZOOM.STEP : prev - MAP_ZOOM.STEP;
       return Math.max(MAP_ZOOM.MIN, Math.min(MAP_ZOOM.MAX, next));
     });
   }, []);
@@ -62,17 +50,18 @@ export default function MapTab() {
     [zoomLevel],
   );
 
-  const handleTypeSelect = useCallback(
-    (type: string) => setSelectedType(type),
-    [],
-  );
-
   const openSpot = useCallback(
     (spot: Spot) => {
       router.push(`/spots/${spot.id}`);
     },
     [router],
   );
+
+  const gridTitle = region
+    ? country
+      ? `${country} (${region})`
+      : region
+    : "Global grid";
 
   return (
     <section
@@ -96,37 +85,6 @@ export default function MapTab() {
             <span className="rounded bg-primary/10 px-2 py-0.5 text-[9px] font-mono font-semibold text-primary">
               {filteredSpots.length} plots active
             </span>
-          </div>
-
-          <h3 className="font-display text-base font-bold uppercase tracking-wider text-on-surface mb-3 flex items-center">
-            <Filter
-              size={14}
-              className="mr-1.5 text-secondary"
-              aria-hidden="true"
-            />
-            Filter by terrain
-          </h3>
-
-          <div
-            role="group"
-            aria-label="Filter spots by terrain type"
-            className="flex flex-wrap gap-1.5 no-scrollbar max-h-24 overflow-y-auto"
-          >
-            {spotTypes.map((type) => (
-              <button
-                key={type}
-                type="button"
-                onClick={() => handleTypeSelect(type)}
-                aria-pressed={selectedType === type}
-                className={`rounded-full px-3 py-1 text-[10px] font-medium tracking-wide transition-all border ${
-                  selectedType === type
-                    ? "bg-primary text-surface border-primary"
-                    : "bg-surface border-outline-variant text-secondary hover:text-on-surface hover:border-outline"
-                }`}
-              >
-                {type.toUpperCase()}
-              </button>
-            ))}
           </div>
         </div>
 
@@ -214,7 +172,7 @@ export default function MapTab() {
               className="h-2 w-2 rounded-full bg-emerald-500 animate-ping"
             />
             <span className="font-mono text-[10px] font-bold tracking-wider text-on-surface uppercase">
-              Los Angeles Grid Active
+              {gridTitle} Active
             </span>
           </div>
 
@@ -324,6 +282,7 @@ export default function MapTab() {
                   <p className="text-[10px] text-secondary flex items-center">
                     <MapPin size={10} className="mr-0.5" aria-hidden="true" />
                     {activePin.city}
+                    {activePin.country ? ` • ${activePin.country}` : ""}
                   </p>
                 </div>
                 <button

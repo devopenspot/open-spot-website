@@ -70,6 +70,16 @@ export const REGIONS_DATA: readonly Region[] = [
     link: "/map?region=americas",
     image:
       "https://lh3.googleusercontent.com/aida-public/AB6AXuCOGT4RjC_f8LEOXu8S-BRUxgbzarq84gQHvcGO1K3d6--lyAQLGuKp0AG8KalE9U0XUF66JNSyZEJ7POYJjTn7MvNO7ugKuJoPzBALxR6XRZL3aIXIh2SnlUixMIJNPC5wSzmc4Vcjo03cECPDHRZXP25f8AK-xPcVKzHsen9nyFbli-eRLlJTneta4ocXdLbbBTlsfQzF09Lj2OgidpgdqZQGhf993kRsH5AhAVFQgRyJZlUAfuvueff7tOSaU006jyAkpJX1QHQh",
+    countries: [
+      "United States",
+      "Canada",
+      "Mexico",
+      "Brazil",
+      "Argentina",
+      "Colombia",
+      "Chile",
+      "Peru",
+    ],
   },
   {
     name: "Europe",
@@ -78,6 +88,16 @@ export const REGIONS_DATA: readonly Region[] = [
     link: "/map?region=europe",
     image:
       "https://lh3.googleusercontent.com/aida-public/AB6AXuBMjTAsfqYsfIa-J3FbGvL438k-wnv9hmGvtFxql96WByww-EpeLFtCDM7JhJWgWICRd9F53Xhr4ozXqMFFoGRc_Wjle17Xdm4g-0cZ3xWI6HJSP0uQ9PXlFXwYFpcl-JdQmqJiXS9s2QQvtGd2KCqYp_HNf5GYXRoHbTai5x7U1Imf3k2RxiKjV6WHCU0NK6LyTNbCyboR-7ZMz2_48kq61xmjwHdhML2G2F3rTWv0CdOre0xsLga_xyZy2gf65mCXN53bDlWuxWb5",
+    countries: [
+      "France",
+      "Germany",
+      "United Kingdom",
+      "Italy",
+      "Spain",
+      "Netherlands",
+      "Portugal",
+      "Sweden",
+    ],
   },
   {
     name: "Asia",
@@ -86,8 +106,38 @@ export const REGIONS_DATA: readonly Region[] = [
     link: "/map?region=asia",
     image:
       "https://lh3.googleusercontent.com/aida-public/AB6AXuDYoMVU5vMSIEK35AW46DYG-fQ9WfAoKHQkb_4ukHQYUGRG_PRXomLKHdJjLGAAObuZwc2iRUulbRaAGLi1f9zcExfl3fvsAKslgpL0nmCqvUlaU733G9O2mEHkmoxY2hF0PVtKTvBNHvheJClaq80UJvkXRizlg0jOFO7Bmy5wEyYoDWq4Xd0Qzhar8zYpPh5VTOXYdRO6IhDFLjKPolxSiNF91vLqCIGeZqnZCv5A8Rsg9UPSvQfFGOlOUnkk40YAyHBq6PkfAbt5",
+    countries: [
+      "Japan",
+      "South Korea",
+      "China",
+      "Thailand",
+      "Singapore",
+      "Indonesia",
+      "Philippines",
+      "Malaysia",
+    ],
   },
 ] as const;
+
+export const COUNTRY_NAME_OVERRIDES: Readonly<Record<string, string>> = {
+  Deutschland: "Germany",
+  Italia: "Italy",
+  España: "Spain",
+  Brasil: "Brazil",
+  日本: "Japan",
+  한국: "South Korea",
+  中国: "China",
+} as const;
+
+export const COUNTRY_TO_REGION: Readonly<Record<string, string>> = REGIONS_DATA.reduce(
+  (acc, region) => {
+    for (const country of region.countries) {
+      acc[country] = region.name;
+    }
+    return acc;
+  },
+  {} as Record<string, string>,
+);
 
 export const POPULAR_SEARCH_TERMS: readonly string[] = [
   "Barcelona Skateboarding",

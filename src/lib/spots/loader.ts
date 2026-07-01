@@ -1,7 +1,7 @@
 import { cache } from "react"
 import spotsJson from "@/data/spots.json"
 import { getCachedSpotWeather } from "@/lib/weather/weather-cached"
-import { DEFAULT_PRESET_IMAGES } from "@/data"
+import { DEFAULT_PRESET_IMAGES, COUNTRY_NAME_OVERRIDES, COUNTRY_TO_REGION } from "@/data"
 import type { Spot as CoreSpot } from "@/types/core"
 import type { Spot, SpotForecast, SpotType } from "@/lib/types"
 import {
@@ -168,6 +168,9 @@ function buildBaseSpot(
   const crowdLevel = Math.floor(
     hashToUnitInterval("crowd:" + id) * 100,
   )
+  const rawCountry = entry.address?.country ?? ""
+  const country = COUNTRY_NAME_OVERRIDES[rawCountry] ?? rawCountry
+  const region = COUNTRY_TO_REGION[country] ?? "Americas"
   return {
     id,
     name: entry.name.toUpperCase(),
@@ -181,6 +184,8 @@ function buildBaseSpot(
     crowdLevel,
     crowdLevelLabel: buildCrowdLabel(crowdLevel, id),
     communityNote: buildCommunityNote(entry, type, id),
+    country,
+    region,
   }
 }
 

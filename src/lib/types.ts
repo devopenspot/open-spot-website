@@ -37,6 +37,8 @@ export interface Spot {
     forecast: SpotForecast[];
   };
   communityNote: string;
+  country: string;
+  region: string;
   isSaved?: boolean;
 }
 
@@ -59,6 +61,12 @@ export interface Region {
   count: string;
   image: string;
   link: string;
+  countries: readonly string[];
+}
+
+export interface Country {
+  name: string;
+  region: string;
 }
 
 export interface PresetImage {

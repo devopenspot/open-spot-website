@@ -1,4 +1,4 @@
-import { cache } from "react"
+import { cache } from "react";
 import {
   DEFAULT_PRESET_IMAGES,
   EXPLORE_CATEGORIES,
@@ -7,13 +7,23 @@ import {
   RECENT_SEARCHES,
   REGIONS_DATA,
   TERRAIN_OPTIONS,
-} from "@/data"
+} from "@/data";
 
-export const getExploreCategories = cache(() => EXPLORE_CATEGORIES)
-export const getLegendaryTerrains = cache(() => LEGENDARY_TERRAINS)
-export const getRegions = cache(() => REGIONS_DATA)
-export const getPopularSearchTerms = cache(() => POPULAR_SEARCH_TERMS)
-export const getRecentSearches = cache(() => RECENT_SEARCHES)
-export const getPresetImages = cache(() => DEFAULT_PRESET_IMAGES)
-export const getTerrainOptions = cache(() => TERRAIN_OPTIONS)
+export const getExploreCategories = cache(() => EXPLORE_CATEGORIES);
+export const getLegendaryTerrains = cache(() => LEGENDARY_TERRAINS);
+export const getRegions = cache(() => REGIONS_DATA);
+export const getCountriesRegion = cache(() => {
+  const countries: { name: string; region: string }[] = [];
 
+  REGIONS_DATA.forEach((region) => {
+    region.countries.forEach((country) => {
+      countries.push({ name: country, region: region.name });
+    });
+  });
+
+  return countries;
+});
+export const getPopularSearchTerms = cache(() => POPULAR_SEARCH_TERMS);
+export const getRecentSearches = cache(() => RECENT_SEARCHES);
+export const getPresetImages = cache(() => DEFAULT_PRESET_IMAGES);
+export const getTerrainOptions = cache(() => TERRAIN_OPTIONS);
