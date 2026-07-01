@@ -75,15 +75,15 @@ export default function MapTab() {
       <aside
         id="map-sidebar"
         aria-label="Spot list"
-        className="w-full lg:w-80 flex flex-col border border-outline-variant rounded-2xl bg-surface-bright overflow-hidden h-[300px] lg:h-full"
+        className="w-full lg:w-80 flex flex-col border border-outline-variant rounded-2xl bg-surface-bright overflow-hidden sm:h-[150px] lg:h-full"
       >
         <div className="p-4 border-b border-outline-variant bg-surface-container-low">
           <div className="flex items-center justify-between mb-3">
             <span className="font-mono text-[10px] font-bold tracking-widest text-secondary uppercase">
-              Locator Matrix
+              Results
             </span>
-            <span className="rounded bg-primary/10 px-2 py-0.5 text-[9px] font-mono font-semibold text-primary">
-              {filteredSpots.length} plots active
+            <span className="bg-primary/10 px-2 py-0.5 text-[9px] font-mono font-semibold text-primary">
+              {filteredSpots.length} spots active
             </span>
           </div>
         </div>
@@ -91,7 +91,7 @@ export default function MapTab() {
         <div
           id="sidebar-spots-list"
           aria-label="Filtered spots"
-          className="flex-1 overflow-y-auto p-3 space-y-2 no-scrollbar"
+          className="flex-1 flex flex-row lg:flex-col overflow-x-auto lg:overflow-y-auto p-3 space-x-2 lg:space-x-0 lg:space-y-2 no-scrollbar snap-x lg:snap-none snap-mandatory"
         >
           {filteredSpots.map((spot) => {
             const isHovered = activePin?.id === spot.id;
@@ -102,7 +102,7 @@ export default function MapTab() {
                 id={`sidebar-spot-item-${spot.id}`}
                 type="button"
                 onClick={() => handleSidebarSelect(spot)}
-                className={`w-full p-3 rounded-xl border text-left transition-all flex space-x-3 items-center ${
+                className={`shrink-0 lg:shrink w-48 lg:w-full snap-start p-3 rounded-xl border text-left transition-all flex space-x-3 items-center ${
                   isHovered
                     ? "border-primary bg-surface-container-high shadow-sm"
                     : "border-outline-variant/60 bg-surface-container-low hover:border-outline hover:bg-surface-container"
