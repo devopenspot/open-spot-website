@@ -1,13 +1,14 @@
-'use client';
+"use client";
 
-import { useId } from 'react';
-import Image from 'next/image';
-import { MapPin, Heart, Share2, ExternalLink } from 'lucide-react';
-import { WeatherIcon } from './WeatherIcon';
-import { showToast } from '@/hooks/useToast';
-import { cn } from '@/lib/cn';
-import { CROWD_LEVEL } from '@/lib/constants';
-import type { Spot } from '@/lib/types';
+import { useId } from "react";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { MapPin, Heart, Share2, ExternalLink } from "lucide-react";
+import { WeatherIcon } from "./WeatherIcon";
+import { showToast } from "@/hooks/useToast";
+import { cn } from "@/lib/cn";
+import { CROWD_LEVEL } from "@/lib/constants";
+import type { Spot } from "@/lib/types";
 
 interface SpotDetailsContentProps {
   spot: Spot;
@@ -21,22 +22,22 @@ export function SpotDetailsContent({
   onToggleSave,
 }: SpotDetailsContentProps) {
   const titleId = useId();
+  const router = useRouter();
   const directionsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-    spot.name + ' ' + spot.address,
+    spot.name + " " + spot.address,
   )}`;
 
   const handleShare = async () => {
     try {
-      const url =
-        typeof window !== 'undefined' ? window.location.href : '';
-      if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+      const url = typeof window !== "undefined" ? window.location.href : "";
+      if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
         await navigator.clipboard.writeText(url);
-        showToast('Link copied to clipboard', 'success');
+        showToast("Link copied to clipboard", "success");
       } else {
-        showToast('Sharing not supported in this browser', 'error');
+        showToast("Sharing not supported in this browser", "error");
       }
     } catch {
-      showToast('Could not copy link', 'error');
+      showToast("Could not copy link", "error");
     }
   };
 
@@ -88,23 +89,21 @@ export function SpotDetailsContent({
                 onClick={() => onToggleSave(spot.id)}
                 aria-pressed={isSaved}
                 aria-label={
-                  isSaved
-                    ? `Unsave ${spot.name}`
-                    : `Save ${spot.name}`
+                  isSaved ? `Unsave ${spot.name}` : `Save ${spot.name}`
                 }
                 className={cn(
-                  'flex h-9 items-center space-x-1.5 rounded-full px-4 text-xs font-semibold tracking-wider uppercase transition-all border',
+                  "flex h-9 items-center space-x-1.5 rounded-full px-4 text-xs font-semibold tracking-wider uppercase transition-all border",
                   isSaved
-                    ? 'bg-primary text-surface border-primary hover:bg-primary/95'
-                    : 'border-outline text-on-surface hover:bg-surface-container',
+                    ? "bg-primary text-surface border-primary hover:bg-primary/95"
+                    : "border-outline text-on-surface hover:bg-surface-container",
                 )}
               >
                 <Heart
                   size={14}
                   aria-hidden="true"
-                  className={isSaved ? 'fill-surface' : ''}
+                  className={isSaved ? "fill-surface" : ""}
                 />
-                <span>{isSaved ? 'Saved' : 'Save spot'}</span>
+                <span>{isSaved ? "Saved" : "Save spot"}</span>
               </button>
 
               <button
@@ -140,7 +139,7 @@ export function SpotDetailsContent({
                 3-day forecast
               </span>
               <div className="flex justify-between gap-1.5 text-center">
-                {spot.weather.forecast.map(fc => (
+                {spot.weather.forecast.map((fc) => (
                   <div
                     key={fc.day}
                     className="flex-1 rounded bg-surface-container p-2 border border-outline-variant/50"
@@ -182,12 +181,12 @@ export function SpotDetailsContent({
                 >
                   <div
                     className={cn(
-                      'h-full rounded-full transition-all duration-1000',
+                      "h-full rounded-full transition-all duration-1000",
                       spot.crowdLevel > CROWD_LEVEL.HIGH_MIN
-                        ? 'bg-amber-600'
+                        ? "bg-amber-600"
                         : spot.crowdLevel > CROWD_LEVEL.LOW_MAX
-                          ? 'bg-primary'
-                          : 'bg-emerald-600',
+                          ? "bg-primary"
+                          : "bg-emerald-600",
                     )}
                     style={{ width: `${spot.crowdLevel}%` }}
                   />
@@ -213,11 +212,7 @@ export function SpotDetailsContent({
               className="mt-2.5 inline-flex items-center text-[10px] font-bold tracking-wider uppercase text-primary hover:underline"
             >
               <span>Get directions</span>
-              <ExternalLink
-                size={10}
-                className="ml-1"
-                aria-hidden="true"
-              />
+              <ExternalLink size={10} className="ml-1" aria-hidden="true" />
             </a>
           </div>
 
@@ -235,7 +230,7 @@ export function SpotDetailsContent({
               Spot details
             </span>
             <ul className="flex flex-wrap gap-1.5" aria-label="Spot features">
-              {spot.features.map(feature => (
+              {spot.features.map((feature) => (
                 <li
                   key={feature}
                   className="rounded-full bg-surface-container-high px-2.5 py-1 text-[10px] font-medium text-on-surface border border-outline-variant/60"
@@ -257,12 +252,13 @@ export function SpotDetailsContent({
             <span>Launch route</span>
             <ExternalLink size={12} aria-hidden="true" />
           </a>
-          <a
-            href="/explore"
+          <button
+            type="button"
+            onClick={() => router.back()}
             className="flex-1 flex h-10 items-center justify-center rounded-lg border border-outline text-xs font-bold tracking-widest uppercase hover:bg-surface-container transition-all"
           >
-            Back to directory
-          </a>
+            Back
+          </button>
         </div>
       </div>
     </div>

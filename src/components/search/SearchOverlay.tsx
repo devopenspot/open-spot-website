@@ -7,7 +7,7 @@ import { Overlay } from "@/components/feedback/Overlay";
 import { SEARCH_FOCUS_DELAY_MS } from "@/lib/constants";
 import { useAppState } from "@/components/layout/AppStateProvider";
 import type { Spot } from "@/lib/types";
-import { RegionFilter } from "@/components/map/RegionFilter";
+import { RegionFilter } from "@/components/search/RegionFilter";
 import { useMapFilter } from "@/hooks/useMapFilter";
 
 interface SearchOverlayProps {
