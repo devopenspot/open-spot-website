@@ -2,6 +2,7 @@
 
 import { AlertTriangle } from 'lucide-react';
 import { useEffect } from 'react';
+import { log } from '@/lib/log';
 
 export default function GlobalError({
   error,
@@ -11,7 +12,7 @@ export default function GlobalError({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error('GlobalError caught', error);
+    log.error('GlobalError caught', error);
   }, [error]);
 
   return (

@@ -9,6 +9,7 @@ import { ToastViewport } from '@/components/feedback/Toast';
 import { useAppState } from './AppStateProvider';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { MAIN_CONTENT_ID } from '@/lib/constants';
+import { ROUTES } from '@/lib/nav';
 import type { Spot } from '@/lib/types';
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -34,7 +35,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   ]);
 
   const handleSelectSpot = (spot: Spot) => {
-    router.push(`/spots/${spot.id}`);
+    router.push(ROUTES.spot(spot.id));
   };
 
   return (

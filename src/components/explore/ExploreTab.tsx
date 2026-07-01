@@ -35,7 +35,7 @@ export default function ExploreTab({ events, featured }: ExploreTabProps) {
   }, [events, featured]);
 
   const openSpot = useCallback(
-    (spot: Spot) => router.push(`/spots/${spot.id}`),
+    (spot: Spot) => router.push(ROUTES.spot(spot.id)),
     [router],
   );
   const openEvents = useCallback(() => router.push(ROUTES.events), [router]);

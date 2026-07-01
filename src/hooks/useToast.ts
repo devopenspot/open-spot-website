@@ -42,13 +42,9 @@ export function useToast() {
     };
   }, []);
 
-  const push = useCallback((message: string, tone: ToastTone = 'info') => {
-    showToast(message, tone);
-  }, []);
-
   const dismiss = useCallback((id: string) => {
     dismissToast(id);
   }, []);
 
-  return { toasts, push, dismiss } as const;
+  return { toasts, dismiss } as const;
 }

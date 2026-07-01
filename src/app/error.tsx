@@ -2,6 +2,7 @@
 
 import { AlertTriangle } from 'lucide-react';
 import { useEffect } from 'react';
+import { log } from '@/lib/log';
 
 export default function Error({
   error,
@@ -11,7 +12,7 @@ export default function Error({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error('Route error boundary caught', error);
+    log.error('Route error boundary caught', error);
   }, [error]);
 
   return (

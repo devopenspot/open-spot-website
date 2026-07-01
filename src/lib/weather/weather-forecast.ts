@@ -1,8 +1,10 @@
 import type { WeatherItem } from "@/types/weather"
+import { URL_WEATHER, URL_WEATHER_IMG, API_KEY_WEATHER } from "./env"
+import { log } from "@/lib/log"
 
-const OPENWEATHER_BASE = process.env.URL_WEATHER ?? ""
-const OPENWEATHER_IMG_BASE = process.env.URL_WEATHER_IMG ?? ""
-const OPENWEATHER_KEY = process.env.API_KEY_WEATHER ?? ""
+const OPENWEATHER_BASE = URL_WEATHER
+const OPENWEATHER_IMG_BASE = URL_WEATHER_IMG
+const OPENWEATHER_KEY = API_KEY_WEATHER
 
 export const fetchForecast = async ({
 	latitude,
@@ -14,7 +16,7 @@ export const fetchForecast = async ({
 	language?: string
 }): Promise<WeatherItem[]> => {
 	if (!OPENWEATHER_BASE || !OPENWEATHER_KEY) {
-		console.error(
+		log.error(
 			"OpenWeather env vars are not set (URL_WEATHER, API_KEY_WEATHER).",
 		)
 		return []
@@ -26,7 +28,7 @@ export const fetchForecast = async ({
 	try {
 		const response = await fetch(url, { cache: "no-store" })
 		if (!response.ok) {
-			console.error(`OpenWeather /forecast failed: ${response.status}`)
+			log.error(`OpenWeather /forecast failed: ${response.status}`)
 			return []
 		}
 		const data: { list: WeatherItem[] } = await response.json()
@@ -35,7 +37,7 @@ export const fetchForecast = async ({
 			weatherIconUrl: OPENWEATHER_IMG_BASE,
 		}))
 	} catch (error) {
-		console.error(`Failed to fetch forecast: ${error}`)
+		log.error(`Failed to fetch forecast: ${error}`)
 		return []
 	}
 }

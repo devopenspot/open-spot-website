@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useRef, useSyncExternalStore } from 'react';
 import { STORAGE_KEY_VERSION } from '@/lib/constants';
+import { showToast } from './useToast';
 
 const STORAGE_KEY = `openspot_saved_ids_${STORAGE_KEY_VERSION}`;
 const STORAGE_KEY_LEGACY = 'openspot_saved_ids_v1';
@@ -103,7 +104,6 @@ function subscribe(listener: () => void): () => void {
 }
 
 export function useSavedSpots() {
-  const [lastError, setLastError] = useState<string | null>(null);
   const lastErrorRef = useRef<string | null>(null);
   const hydratedRef = useRef(false);
 
@@ -121,18 +121,12 @@ export function useSavedSpots() {
 
   useEffect(() => {
     if (!hydratedRef.current) return;
-    if (savedIds.size === 0) {
-      const err = writeStorage(null);
-      if (err && err !== lastErrorRef.current) {
-        lastErrorRef.current = err;
-        setLastError(err);
-      }
-      return;
-    }
-    const err = writeStorage(JSON.stringify(Array.from(savedIds)));
+    const serialized =
+      savedIds.size === 0 ? null : JSON.stringify(Array.from(savedIds));
+    const err = writeStorage(serialized);
     if (err && err !== lastErrorRef.current) {
       lastErrorRef.current = err;
-      setLastError(err);
+      showToast(`Saved spots could not be persisted: ${err}`, 'error');
     }
   }, [savedIds]);
 
@@ -152,7 +146,7 @@ export function useSavedSpots() {
       notify();
       if (err && err !== lastErrorRef.current) {
         lastErrorRef.current = err;
-        setLastError(err);
+        showToast(`Saved spots could not be persisted: ${err}`, 'error');
       }
     },
     [savedIds],
@@ -163,6 +157,5 @@ export function useSavedSpots() {
     isSaved,
     toggle,
     count: savedIds.size,
-    lastError,
   } as const;
 }

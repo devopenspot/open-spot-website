@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useRef } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { usePathname, useRouter } from 'next/navigation';
 import { X, Shield, Info } from 'lucide-react';
@@ -9,7 +9,7 @@ import { useFocusTrap } from '@/hooks/useFocusTrap';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { useUser } from '@/hooks/useUser';
 import { APP_VERSION, BUILD_TZ } from '@/lib/system-info';
-import { NAV_ITEMS } from '@/lib/nav';
+import { NAV_ITEMS, isActivePath } from '@/lib/nav';
 import { cn } from '@/lib/cn';
 import { BrandLogo } from './BrandLogo';
 import { useAppState } from './AppStateProvider';
@@ -30,17 +30,6 @@ export function MobileDrawer() {
   useBodyScrollLock(isDrawerOpen);
   useFocusTrap(panelRef, isDrawerOpen);
   const reduced = useReducedMotion();
-
-  useEffect(() => {
-    if (!isDrawerOpen) return;
-    const id = window.setTimeout(() => {
-      const close = panelRef.current?.querySelector<HTMLButtonElement>(
-        '#close-hamburger-btn',
-      );
-      close?.focus();
-    }, 50);
-    return () => window.clearTimeout(id);
-  }, [isDrawerOpen]);
 
   const handleSelect = (path: string) => {
     router.push(path);
@@ -99,11 +88,7 @@ export function MobileDrawer() {
 
               <nav className="space-y-2" aria-label="Drawer primary navigation">
                 {NAV_ITEMS.map(item => {
-                  const isActive =
-                    item.path === '/'
-                      ? pathname === '/'
-                      : pathname === item.path ||
-                        pathname.startsWith(`${item.path}/`);
+                  const isActive = isActivePath(pathname, item.path);
                   const showBadge = item.id === 'saved' && savedCount > 0;
                   const Icon = item.Icon;
                   return (

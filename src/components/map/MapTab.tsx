@@ -8,6 +8,7 @@ import { useAppState } from "@/components/layout/AppStateProvider";
 import { MapPinButton } from "./MapPinButton";
 import { useMapFilter } from "@/hooks/useMapFilter";
 import { MAP_VIEWPORT_OFFSET_PX, MAP_ZOOM } from "@/lib/constants";
+import { ROUTES } from "@/lib/nav";
 import type { Spot } from "@/lib/types";
 
 export default function MapTab() {
@@ -52,7 +53,7 @@ export default function MapTab() {
 
   const openSpot = useCallback(
     (spot: Spot) => {
-      router.push(`/spots/${spot.id}`);
+      router.push(ROUTES.spot(spot.id));
     },
     [router],
   );

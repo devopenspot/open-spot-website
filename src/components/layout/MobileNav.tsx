@@ -2,7 +2,7 @@
 
 import { useCallback, useRef } from 'react';
 import { usePathname } from 'next/navigation';
-import { NAV_ITEMS } from '@/lib/nav';
+import { NAV_ITEMS, isActivePath } from '@/lib/nav';
 import { NavLink } from './NavLink';
 
 interface MobileNavProps {
@@ -59,10 +59,7 @@ export function MobileNav({ savedCount, controlsId, onSelect }: MobileNavProps) 
       className="fixed bottom-0 left-0 right-0 z-40 flex border-t border-outline-variant bg-surface px-2 py-2.5 md:hidden justify-around"
     >
       {NAV_ITEMS.map(item => {
-        const isActive =
-          item.path === '/'
-            ? pathname === '/'
-            : pathname === item.path || pathname.startsWith(`${item.path}/`);
+        const isActive = isActivePath(pathname, item.path);
         const showBadge = item.id === 'saved' && savedCount > 0;
         const Icon = item.Icon;
         return (

@@ -72,11 +72,3 @@ export function isActivePath(currentPath: string, itemPath: string): boolean {
   if (itemPath === "/") return currentPath === "/";
   return currentPath === itemPath || currentPath.startsWith(`${itemPath}/`);
 }
-
-export function getActiveTabFromPath(pathname: string): TabType {
-  if (pathname.startsWith("/map")) return "map";
-  if (pathname.startsWith("/saved")) return "saved";
-  if (pathname.startsWith("/events")) return "events";
-  if (pathname.startsWith("/post")) return "post";
-  return "explore";
-}

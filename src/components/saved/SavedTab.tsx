@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { Heart, Compass } from 'lucide-react';
 import { useAppState } from '@/components/layout/AppStateProvider';
+import { ROUTES } from '@/lib/nav';
 import { SavedSpotCard } from '@/components/spot/SpotCard';
 
 export default function SavedTab() {
@@ -10,7 +11,7 @@ export default function SavedTab() {
   const { spots, savedIds, toggleSaved } = useAppState();
   const savedSpots = spots.filter(s => savedIds.has(s.id));
 
-  const openSpot = (spot: { id: string }) => router.push(`/spots/${spot.id}`);
+  const openSpot = (spot: { id: string }) => router.push(ROUTES.spot(spot.id));
 
   return (
     <section

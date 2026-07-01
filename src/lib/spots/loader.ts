@@ -2,7 +2,6 @@ import { cache } from "react"
 import spotsJson from "@/data/spots.json"
 import { getCachedSpotWeather } from "@/lib/weather/weather-cached"
 import { DEFAULT_PRESET_IMAGES, COUNTRY_NAME_OVERRIDES, COUNTRY_TO_REGION } from "@/data"
-import type { Spot as CoreSpot } from "@/types/core"
 import type { Spot, SpotForecast, SpotType } from "@/lib/types"
 import {
   bboxOf,
@@ -15,7 +14,29 @@ import {
   type BBox,
 } from "./geo"
 
-const SOURCE_SPOTS = spotsJson as CoreSpot[]
+interface RawAddress {
+  city?: string
+  town?: string
+  village?: string
+  suburb?: string
+  county?: string
+  state?: string
+  country?: string
+  [key: string]: string | undefined
+}
+
+interface RawSpot {
+  slug?: string
+  place_id: number
+  lat: string
+  lon: string
+  address?: RawAddress
+  display_name?: string
+  name: string
+  spot_types?: string[]
+}
+
+const SOURCE_SPOTS = spotsJson as RawSpot[]
 
 const TYPE_PRIORITY: readonly { match: RegExp; type: SpotType }[] = [
   { match: /\bbowl\b/i, type: "Bowl" },
@@ -88,7 +109,7 @@ function buildCrowdLabel(level: number, seed: string): string {
 }
 
 function buildCommunityNote(
-  entry: CoreSpot,
+  entry: RawSpot,
   type: SpotType,
   id: string,
 ): string {
@@ -126,12 +147,12 @@ function pickImage(id: string): string {
   return DEFAULT_PRESET_IMAGES[idx]!.url
 }
 
-function buildId(entry: CoreSpot): string {
+function buildId(entry: RawSpot): string {
   if (entry.slug) return entry.slug
   return String(entry.place_id)
 }
 
-function buildCity(entry: CoreSpot): string {
+function buildCity(entry: RawSpot): string {
   const a = entry.address ?? {}
   return (
     a.city ||
@@ -145,12 +166,12 @@ function buildCity(entry: CoreSpot): string {
   )
 }
 
-function buildAddress(entry: CoreSpot): string {
+function buildAddress(entry: RawSpot): string {
   return entry.display_name ?? entry.name ?? ""
 }
 
 function buildBaseSpot(
-  entry: CoreSpot,
+  entry: RawSpot,
   bbox: BBox,
 ): Omit<Spot, "weather" | "isSaved"> {
   const id = buildId(entry)
@@ -190,7 +211,7 @@ function buildBaseSpot(
 }
 
 async function fetchWeatherForSpot(
-  entry: CoreSpot,
+  entry: RawSpot,
   id: string,
 ): Promise<{ current: number; forecast: SpotForecast[] }> {
   const lat = Number(entry.lat)
@@ -212,7 +233,7 @@ const BASE_SPOTS: readonly BaseSpot[] = Object.freeze(
   SOURCE_SPOTS.map((entry) => buildBaseSpot(entry, BBOX)),
 )
 
-async function buildSpot(base: BaseSpot, entry: CoreSpot): Promise<Spot> {
+async function buildSpot(base: BaseSpot, entry: RawSpot): Promise<Spot> {
   const weather = await fetchWeatherForSpot(entry, base.id)
   return { ...base, weather }
 }

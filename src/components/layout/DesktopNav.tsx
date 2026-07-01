@@ -2,7 +2,7 @@
 
 import { useCallback, useRef } from 'react';
 import { usePathname } from 'next/navigation';
-import { NAV_ITEMS } from '@/lib/nav';
+import { NAV_ITEMS, isActivePath } from '@/lib/nav';
 import { NavLink } from './NavLink';
 
 interface DesktopNavProps {
@@ -64,10 +64,7 @@ export function DesktopNav({ savedCount, controlsId, onSelect }: DesktopNavProps
       className="hidden items-center space-x-1 md:flex"
     >
       {NAV_ITEMS.map(item => {
-        const isActive =
-          item.path === '/'
-            ? pathname === '/'
-            : pathname === item.path || pathname.startsWith(`${item.path}/`);
+        const isActive = isActivePath(pathname, item.path);
         const showBadge = item.id === 'saved' && savedCount > 0;
         const Icon = item.Icon;
         return (

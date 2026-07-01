@@ -1,5 +1,3 @@
-import type { Spot as CoreSpot } from "@/types/core"
-
 export interface BBox {
   minLat: number
   maxLat: number
@@ -7,7 +5,12 @@ export interface BBox {
   maxLon: number
 }
 
-export function bboxOf(entries: CoreSpot[]): BBox {
+export type BBoxEntry = {
+  lat: string | number
+  lon: string | number
+}
+
+export function bboxOf(entries: ReadonlyArray<BBoxEntry>): BBox {
   if (entries.length === 0) {
     return { minLat: -90, maxLat: 90, minLon: -180, maxLon: 180 }
   }
