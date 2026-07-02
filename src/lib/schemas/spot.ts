@@ -36,6 +36,7 @@ export const SpotSchema = z.object({
 })
 
 export const NewSpotSchema = z.object({
+  id: z.string().min(1).optional(),
   name: z.string().min(1),
   city: z.string().min(1),
   citySlug: z.string().min(1).optional(),
@@ -43,6 +44,7 @@ export const NewSpotSchema = z.object({
   type: SpotTypeSchema,
   features: z.array(z.string()).default([]),
   image: z.string(),
+  imagePath: z.string().nullable().optional(),
   communityNote: z.string().default(""),
   crowdLevel: z.number().int().min(0).max(100).default(0),
   crowdLevelLabel: z.string().default(""),

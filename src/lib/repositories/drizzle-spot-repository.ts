@@ -10,6 +10,7 @@ import type {
 } from "./types"
 import type { SpotRepository } from "./spot-repository"
 import { hashToUnitInterval } from "@/lib/spots/geo"
+import { withImageUrls, type SpotWithImagePath } from "@/lib/supabase/storage"
 
 const DEFAULT_REGION = "Americas"
 const EARTH_RADIUS_METERS = 6_371_000
@@ -29,25 +30,28 @@ function haversineMeters(
   return 2 * EARTH_RADIUS_METERS * Math.asin(Math.sqrt(a))
 }
 
-function toSpot(row: SpotRow): Spot {
+function toRawSpot(row: SpotRow): SpotWithImagePath {
   return {
-    id: row.id,
-    slug: row.slug,
-    name: row.name,
-    city: row.city,
-    citySlug: row.citySlug,
-    address: row.address,
-    type: row.type as SpotType,
-    features: row.features as readonly string[],
-    image: row.imagePath ? row.imagePath : row.imageUrl,
-    communityNote: row.communityNote,
-    crowdLevel: row.crowdLevel,
-    crowdLevelLabel: row.crowdLevelLabel,
-    country: row.country,
-    location: row.location as SpotLocation,
-    createdBy: row.createdBy,
-    createdAt: row.createdAt.toISOString(),
-    updatedAt: row.updatedAt.toISOString(),
+    spot: {
+      id: row.id,
+      slug: row.slug,
+      name: row.name,
+      city: row.city,
+      citySlug: row.citySlug,
+      address: row.address,
+      type: row.type as SpotType,
+      features: row.features as readonly string[],
+      image: row.imagePath ?? row.imageUrl,
+      communityNote: row.communityNote,
+      crowdLevel: row.crowdLevel,
+      crowdLevelLabel: row.crowdLevelLabel,
+      country: row.country,
+      location: row.location as SpotLocation,
+      createdBy: row.createdBy,
+      createdAt: row.createdAt.toISOString(),
+      updatedAt: row.updatedAt.toISOString(),
+    },
+    imagePath: row.imagePath,
   }
 }
 
@@ -89,7 +93,8 @@ export class DrizzleSpotRepository implements SpotRepository {
       .orderBy(query?.cursor ? asc(spots.slug) : asc(spots.slug))
       .limit(limit + 1)
 
-    let items = rows.slice(0, limit).map(toSpot)
+    const raws = rows.slice(0, limit).map(toRawSpot)
+    let items = await withImageUrls(raws)
     if (query?.near) {
       items = items
         .map((s) => ({
@@ -117,7 +122,9 @@ export class DrizzleSpotRepository implements SpotRepository {
       .from(spots)
       .where(eq(spots.id, id))
       .limit(1)
-    return row ? toSpot(row) : null
+    if (!row) return null
+    const [spot] = await withImageUrls([toRawSpot(row)])
+    return spot ?? null
   }
 
   async findBySlug(slug: string): Promise<Spot | null> {
@@ -126,7 +133,9 @@ export class DrizzleSpotRepository implements SpotRepository {
       .from(spots)
       .where(eq(spots.slug, slug))
       .limit(1)
-    return row ? toSpot(row) : null
+    if (!row) return null
+    const [spot] = await withImageUrls([toRawSpot(row)])
+    return spot ?? null
   }
 
   async findNearby(params: {
@@ -142,7 +151,7 @@ export class DrizzleSpotRepository implements SpotRepository {
         sql`ST_DWithin(${spots.location}, ${point}, ${params.radiusMeters})`,
       )
       .limit(200)
-    return rows.map(toSpot)
+    return withImageUrls(rows.map(toRawSpot))
   }
 
   async listCountries(): Promise<readonly { name: string; region: string; count: number }[]> {
@@ -199,27 +208,32 @@ export class DrizzleSpotRepository implements SpotRepository {
   }
 
   async create(input: NewSpot): Promise<Spot> {
+    const insertValues: NewSpotRow = {
+      id: input.id ?? crypto.randomUUID(),
+      slug: `${input.citySlug}-${Date.now()}`,
+      name: input.name.toUpperCase(),
+      city: input.city,
+      citySlug: input.citySlug ?? input.city.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+      address: input.address,
+      type: input.type,
+      features: [...input.features],
+      imageUrl: input.image,
+      imagePath: input.imagePath ?? null,
+      communityNote: input.communityNote,
+      crowdLevel: input.crowdLevel,
+      crowdLevelLabel: input.crowdLevelLabel,
+      country: input.country,
+      location: input.location as unknown as SpotRow["location"],
+      createdBy: input.createdBy,
+    }
     const [row] = await this.db
       .insert(spots)
-      .values({
-        slug: `${input.citySlug}-${Date.now()}`,
-        name: input.name.toUpperCase(),
-        city: input.city,
-        citySlug: input.citySlug ?? input.city.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
-        address: input.address,
-        type: input.type,
-        features: [...input.features],
-        imageUrl: input.image,
-        communityNote: input.communityNote,
-        crowdLevel: input.crowdLevel,
-        crowdLevelLabel: input.crowdLevelLabel,
-        country: input.country,
-        location: input.location as unknown as SpotRow["location"],
-        createdBy: input.createdBy,
-      } satisfies Partial<NewSpotRow>)
+      .values(insertValues)
       .returning()
     if (!row) throw new Error("Insert returned no row")
-    return toSpot(row)
+    const [spot] = await withImageUrls([toRawSpot(row)])
+    if (!spot) throw new Error("withImageUrls returned no spot")
+    return spot
   }
 
   async update(id: string, patch: SpotPatch): Promise<Spot> {
@@ -232,7 +246,9 @@ export class DrizzleSpotRepository implements SpotRepository {
       .where(eq(spots.id, id))
       .returning()
     if (!row) throw new Error(`Spot not found: ${id}`)
-    return toSpot(row)
+    const [spot] = await withImageUrls([toRawSpot(row)])
+    if (!spot) throw new Error(`Spot not found: ${id}`)
+    return spot
   }
 
   async delete(id: string): Promise<void> {

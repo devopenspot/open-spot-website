@@ -1,9 +1,9 @@
 "use client";
 
-import { useId, useState, useTransition, type FormEvent } from "react";
+import { useEffect, useId, useRef, useState, useTransition, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Check, Image as ImageIcon, Tag, Plus } from "lucide-react";
+import { Check, Image as ImageIcon, Tag, Plus, Upload, X } from "lucide-react";
 import { getPresetImages, getTerrainOptions } from "@/lib/spots";
 import { showToast } from "@/hooks/useToast";
 import { cn } from "@/lib/cn";
@@ -13,6 +13,7 @@ import { createSpotAction } from "@/app/actions/spots";
 import type { SpotType } from "@/lib/types";
 
 const DEFAULT_FEATURES = ["Transition", "Smooth Concrete"];
+const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
 
 interface PostFormProps {
   onSubmitted: () => void;
@@ -29,6 +30,7 @@ export function PostForm({ onSubmitted }: PostFormProps) {
   const cityId = useId();
   const addressId = useId();
   const imageId = useId();
+  const fileId = useId();
   const crowdId = useId();
   const crowdHelpId = useId();
   const featuresId = useId();
@@ -46,6 +48,15 @@ export function PostForm({ onSubmitted }: PostFormProps) {
   const [featuresList, setFeaturesList] = useState<string[]>(DEFAULT_FEATURES);
   const [crowdLevel, setCrowdLevel] = useState<number>(35);
   const [formError, setFormError] = useState<string | null>(null);
+  const [file, setFile] = useState<File | null>(null);
+  const [filePreview, setFilePreview] = useState<string | null>(null);
+  const previewUrlRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
+    };
+  }, []);
 
   const handleAddFeature = (e: FormEvent) => {
     e.preventDefault();
@@ -63,11 +74,54 @@ export function PostForm({ onSubmitted }: PostFormProps) {
   const handlePresetPick = (idx: number, url: string) => {
     setSelectedPreset(idx);
     setImageUrl(url);
+    if (previewUrlRef.current) {
+      URL.revokeObjectURL(previewUrlRef.current);
+      previewUrlRef.current = null;
+    }
+    setFile(null);
+    setFilePreview(null);
   };
 
   const handleCustomUrl = (url: string) => {
     setSelectedPreset(-1);
     setImageUrl(url);
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const next = e.target.files?.[0] ?? null;
+    if (!next) {
+      if (previewUrlRef.current) {
+        URL.revokeObjectURL(previewUrlRef.current);
+        previewUrlRef.current = null;
+      }
+      setFile(null);
+      setFilePreview(null);
+      return;
+    }
+    if (!next.type.startsWith("image/")) {
+      setFormError("Please choose an image file (PNG, JPG, or WebP).");
+      return;
+    }
+    if (next.size > MAX_UPLOAD_BYTES) {
+      setFormError(`Image is too large (max ${Math.round(MAX_UPLOAD_BYTES / 1024 / 1024)} MB).`);
+      return;
+    }
+    if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
+    const url = URL.createObjectURL(next);
+    previewUrlRef.current = url;
+    setFile(next);
+    setFilePreview(url);
+    setSelectedPreset(-1);
+    setFormError(null);
+  };
+
+  const handleClearFile = () => {
+    if (previewUrlRef.current) {
+      URL.revokeObjectURL(previewUrlRef.current);
+      previewUrlRef.current = null;
+    }
+    setFile(null);
+    setFilePreview(null);
   };
 
   const handleSubmit = (e: FormEvent) => {
@@ -92,29 +146,37 @@ export function PostForm({ onSubmitted }: PostFormProps) {
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-+|-+$/g, "");
 
+    const fallbackNote =
+      communityNote ||
+      "Contributed by community scout. Bring your setup and session on! — @anonymous_rider";
+
+    const formData = new FormData();
+    formData.set("name", name);
+    formData.set("city", city);
+    formData.set("citySlug", citySlug);
+    formData.set("address", address);
+    formData.set("type", type);
+    formData.set("features", featuresList.join(","));
+    formData.set("imageUrl", imageUrl);
+    formData.set("communityNote", fallbackNote);
+    formData.set("crowdLevel", String(crowdLevel));
+    formData.set("crowdLevelLabel", crowdLevelLabel);
+    formData.set("country", "");
+    formData.set("locationLat", String(REFERENCE_LAT));
+    formData.set("locationLon", String(REFERENCE_LON));
+    if (file) {
+      formData.set("image", file);
+    }
+
     startTransition(async () => {
       try {
-        await createSpotAction({
-          name,
-          city,
-          citySlug,
-          address,
-          type,
-          features: featuresList,
-          image: imageUrl,
-          communityNote:
-            communityNote ||
-            "Contributed by community scout. Bring your setup and session on! — @anonymous_rider",
-          crowdLevel,
-          crowdLevelLabel,
-          country: "",
-          location: { lat: REFERENCE_LAT, lon: REFERENCE_LON },
-          createdBy: "dev",
-        });
+        await createSpotAction(formData);
         showToast("Spot registered successfully", "success");
         onSubmitted();
-      } catch {
-        showToast("Could not register spot. Try again.", "error");
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message : "Something went wrong";
+        showToast(`Could not register spot: ${message}`, "error");
         setFormError("Something went wrong while registering your spot.");
       }
     });
@@ -233,7 +295,9 @@ export function PostForm({ onSubmitted }: PostFormProps) {
             Visual banner source
           </legend>
           <p className="text-[10px] text-secondary mb-3">
-            Choose a preset or submit a URL.
+            Choose a preset, paste a custom URL, or upload a photo. Uploaded
+            photos are stored privately in Supabase Storage and rendered via a
+            1-hour signed URL.
           </p>
 
           <div
@@ -246,11 +310,11 @@ export function PostForm({ onSubmitted }: PostFormProps) {
                 key={preset.name}
                 type="button"
                 role="radio"
-                aria-checked={selectedPreset === idx}
+                aria-checked={selectedPreset === idx && !filePreview}
                 onClick={() => handlePresetPick(idx, preset.url)}
                 className={cn(
                   "relative h-20 rounded-lg overflow-hidden border-2 transition-all",
-                  selectedPreset === idx
+                  selectedPreset === idx && !filePreview
                     ? "border-primary ring-2 ring-primary/10"
                     : "border-transparent",
                 )}
@@ -271,7 +335,7 @@ export function PostForm({ onSubmitted }: PostFormProps) {
                 <span className="absolute bottom-1.5 left-2 right-2 text-[8px] font-bold uppercase tracking-wider text-white text-center truncate">
                   {preset.name}
                 </span>
-                {selectedPreset === idx && (
+                {selectedPreset === idx && !filePreview && (
                   <span
                     className="absolute top-1.5 right-1.5 bg-primary rounded-full p-0.5 text-white"
                     aria-hidden="true"
@@ -281,6 +345,54 @@ export function PostForm({ onSubmitted }: PostFormProps) {
                 )}
               </button>
             ))}
+          </div>
+
+          <div className="mb-3">
+            <label
+              htmlFor={fileId}
+              className="block text-[10px] text-secondary font-semibold font-mono mb-1"
+            >
+              Or upload your own photo
+            </label>
+            <div className="flex items-center gap-2">
+              <label
+                htmlFor={fileId}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-outline-variant bg-surface-bright px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-on-surface cursor-pointer hover:bg-surface-container transition-all"
+              >
+                <Upload size={12} aria-hidden="true" />
+                <span>Choose file</span>
+              </label>
+              <input
+                id={fileId}
+                name="image"
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                onChange={handleFileChange}
+                className="sr-only"
+              />
+              {file && (
+                <button
+                  type="button"
+                  onClick={handleClearFile}
+                  className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-secondary hover:text-error"
+                >
+                  <X size={12} aria-hidden="true" />
+                  <span>Clear</span>
+                </button>
+              )}
+            </div>
+            {filePreview && (
+              <div className="mt-3 relative h-32 w-full max-w-sm rounded-lg overflow-hidden border border-outline-variant">
+                <Image
+                  src={filePreview}
+                  alt="Selected upload preview"
+                  fill
+                  sizes="(min-width: 640px) 24rem, 100vw"
+                  className="object-cover"
+                  unoptimized
+                />
+              </div>
+            )}
           </div>
 
           <div>

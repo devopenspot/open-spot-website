@@ -318,8 +318,11 @@ export class JsonSpotRepository implements SpotRepository {
       input.citySlug && input.name
         ? `${input.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "")}-${input.citySlug}`
         : `spot-${Date.now()}`
+    // The Json impl has no Storage, so `imagePath` is informational only —
+    // we keep the supplied `image` (URL) as the rendered value. The Drizzle
+    // impl resolves `imagePath` to a signed URL at the boundary.
     const spot: Spot = {
-      id: `custom-spot-${Date.now()}`,
+      id: input.id ?? `custom-spot-${Date.now()}`,
       slug,
       name: input.name.toUpperCase(),
       city: input.city,

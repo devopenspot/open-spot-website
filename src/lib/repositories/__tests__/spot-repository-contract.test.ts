@@ -72,6 +72,30 @@ export function spotRepositoryContract(getRepo: () => JsonSpotRepository) {
       expect(after.items.some((s) => s.id === created.id)).toBe(true)
     })
 
+    it("create honors a caller-supplied id (Stage E.8 wire-up)", async () => {
+      const providedId = "user-upload-spot-" + Date.now().toString(36)
+      const created = await repo.create({
+        id: providedId,
+        name: "Provided ID Spot",
+        city: "Provided City",
+        citySlug: "provided-city",
+        address: "1 Provided Way",
+        type: "Plaza",
+        features: [],
+        image: "https://example.com/img.png",
+        imagePath: "spots/" + providedId + "/x.png",
+        communityNote: "",
+        crowdLevel: 0,
+        crowdLevelLabel: "",
+        country: "United States",
+        location: { lat: 0, lon: 0 },
+        createdBy: "dev",
+      })
+      expect(created.id).toBe(providedId)
+      const found = await repo.findById(providedId)
+      expect(found?.id).toBe(providedId)
+    })
+
     it("update mutates a spot and bumps updatedAt", async () => {
       const first = (await repo.list()).items[0]
       expect(first).toBeDefined()

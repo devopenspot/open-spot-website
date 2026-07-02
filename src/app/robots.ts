@@ -1,9 +1,9 @@
 import type { MetadataRoute } from 'next';
+import { env } from '@/lib/env';
 
 export const dynamic = 'force-static';
 
-const BASE_URL =
-  process.env.APP_URL ?? 'https://openspot.example.com';
+const BASE_URL = env.APP_URL;
 
 export default function robots(): MetadataRoute.Robots {
   return {

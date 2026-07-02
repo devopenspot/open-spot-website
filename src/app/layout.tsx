@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from 'next';
+import { Suspense } from 'react';
 import { Inter, Archivo_Narrow } from 'next/font/google';
 import { cn } from '@/lib/cn';
+import { env } from '@/lib/env';
 import { getSpotRepositoryAsync, getSavedSpotsRepositoryAsync } from '@/lib/repositories';
 import { getWeatherForAllSpots } from '@/lib/weather/weather-bundle';
 import { getServerUserFromCookies } from '@/lib/auth';
@@ -21,9 +23,7 @@ const archivo = Archivo_Narrow({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(
-    process.env.APP_URL ?? 'https://openspot.example.com',
-  ),
+  metadataBase: new URL(env.APP_URL),
   title: {
     default: 'Open Spot — Discover and map skate spots',
     template: '%s · Open Spot',
@@ -65,11 +65,27 @@ export const viewport: Viewport = {
   themeColor: '#000000',
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  return (
+    <html
+      lang="en"
+      className={cn(inter.variable, archivo.variable)}
+      suppressHydrationWarning
+    >
+      <body className="bg-background font-sans text-on-background antialiased">
+        <Suspense fallback={null}>
+          <RootDataProviders>{children}</RootDataProviders>
+        </Suspense>
+      </body>
+    </html>
+  );
+}
+
+async function RootDataProviders({ children }: { children: React.ReactNode }) {
   const [spotsResult, initialWeather, initialUser] = await Promise.all([
     getSpotRepositoryAsync(),
     getWeatherForAllSpots(),
@@ -85,21 +101,13 @@ export default async function RootLayout({
           })
         ).items
   return (
-    <html
-      lang="en"
-      className={cn(inter.variable, archivo.variable)}
-      suppressHydrationWarning
+    <SpotsProvider
+      initialSpots={initialSpots}
+      initialWeather={initialWeather}
+      initialUser={initialUser}
+      initialSavedSpots={initialSavedSpots}
     >
-      <body className="bg-background font-sans text-on-background antialiased">
-        <SpotsProvider
-          initialSpots={initialSpots}
-          initialWeather={initialWeather}
-          initialUser={initialUser}
-          initialSavedSpots={initialSavedSpots}
-        >
-          {children}
-        </SpotsProvider>
-      </body>
-    </html>
+      {children}
+    </SpotsProvider>
   );
 }

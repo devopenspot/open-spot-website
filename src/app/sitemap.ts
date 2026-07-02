@@ -1,10 +1,10 @@
 import type { MetadataRoute } from 'next';
+import { env } from '@/lib/env';
 import { getSpotRepositoryAsync } from '@/lib/repositories';
 
 export const dynamic = 'force-static';
 
-const BASE_URL =
-  process.env.APP_URL ?? 'https://openspot.example.com';
+const BASE_URL = env.APP_URL;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
