@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useAppState } from '@/components/layout/AppStateProvider';
+import { useMapFilterStore } from '@/stores/map-filter-store';
 import { getRegions } from '@/lib/spots';
 import { MapSkeleton } from './MapSkeleton';
 
@@ -81,7 +81,10 @@ const NAME_TO_COUNTRY_SLUG: Readonly<Record<string, string>> = {
 export function MapPageClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { region, country, setRegion, setCountry } = useAppState();
+  const region = useMapFilterStore((s) => s.region);
+  const country = useMapFilterStore((s) => s.country);
+  const setRegion = useMapFilterStore((s) => s.setRegion);
+  const setCountry = useMapFilterStore((s) => s.setCountry);
   const [hasInitialized, setHasInitialized] = useState(false);
   const regions = getRegions();
   const validRegionNames = useMemo(

@@ -2,13 +2,17 @@
 
 import { useRouter } from 'next/navigation';
 import { Heart, Compass } from 'lucide-react';
-import { useAppState } from '@/components/layout/AppStateProvider';
+import { useSpotsStore } from '@/stores/spots-store';
+import { useSavedSpots } from '@/hooks/useSavedSpots';
+import { useUser } from '@/hooks/useUser';
 import { ROUTES } from '@/lib/nav';
 import { SavedSpotCard } from '@/components/spot/SpotCard';
 
 export default function SavedTab() {
   const router = useRouter();
-  const { spots, savedIds, toggleSaved } = useAppState();
+  const user = useUser();
+  const spots = useSpotsStore((s) => s.spots);
+  const { savedIds, toggle: toggleSaved } = useSavedSpots(user.id);
   const savedSpots = spots.filter(s => savedIds.has(s.id));
 
   const openSpot = (spot: { id: string }) => router.push(ROUTES.spot(spot.id));

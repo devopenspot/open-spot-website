@@ -8,18 +8,22 @@ import { WeatherIcon } from "./WeatherIcon";
 import { showToast } from "@/hooks/useToast";
 import { cn } from "@/lib/cn";
 import { CROWD_LEVEL } from "@/lib/constants";
+import { getSpotDistanceLabel } from "@/lib/spots/geo";
 import type { Spot } from "@/lib/types";
+import type { CachedSpotWeather } from "@/lib/weather/weather-cached";
 
 interface SpotDetailsContentProps {
   spot: Spot;
   isSaved: boolean;
   onToggleSave: (id: string) => void;
+  weather?: CachedSpotWeather;
 }
 
 export function SpotDetailsContent({
   spot,
   isSaved,
   onToggleSave,
+  weather,
 }: SpotDetailsContentProps) {
   const titleId = useId();
   const router = useRouter();
@@ -80,7 +84,7 @@ export function SpotDetailsContent({
         <div>
           <div className="flex items-center justify-between border-b border-outline-variant pb-4 mb-6 gap-2">
             <span className="font-mono text-xs font-semibold tracking-wider text-secondary uppercase">
-              {spot.distance}
+              {getSpotDistanceLabel(spot)}
             </span>
 
             <div className="flex items-center space-x-2">
@@ -127,7 +131,7 @@ export function SpotDetailsContent({
                   <WeatherIcon name="sunny" size={24} />
                   <div>
                     <span className="text-2xl font-bold font-display">
-                      {spot.weather.current}°C
+                      {weather?.current ?? "—"}°C
                     </span>
                     <span className="block text-[10px] text-secondary font-mono">
                       Current temp
@@ -139,7 +143,7 @@ export function SpotDetailsContent({
                 3-day forecast
               </span>
               <div className="flex justify-between gap-1.5 text-center">
-                {spot.weather.forecast.map((fc) => (
+                {(weather?.forecast ?? []).map((fc) => (
                   <div
                     key={fc.day}
                     className="flex-1 rounded bg-surface-container p-2 border border-outline-variant/50"

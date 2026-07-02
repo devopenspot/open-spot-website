@@ -4,6 +4,7 @@ import { memo, useCallback } from 'react';
 import { MapPin } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import type { Spot } from '@/lib/types';
+import { getSpotGridCoordinates } from '@/lib/spots/geo';
 
 interface MapPinButtonProps {
   spot: Spot;
@@ -13,12 +14,13 @@ interface MapPinButtonProps {
 
 function MapPinButtonImpl({ spot, active, onToggle }: MapPinButtonProps) {
   const handleClick = useCallback(() => onToggle(spot), [onToggle, spot]);
+  const coords = getSpotGridCoordinates(spot);
 
   return (
     <div
       id={`map-pin-${spot.id}`}
       className="absolute"
-      style={{ left: `${spot.coordinates.x}%`, top: `${spot.coordinates.y}%` }}
+      style={{ left: `${coords.x}%`, top: `${coords.y}%` }}
     >
       <div className="relative -left-3 -top-3">
         {active && (

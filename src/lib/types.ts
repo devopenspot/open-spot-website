@@ -20,26 +20,29 @@ export type SpotType =
   | "Ledges"
   | "Pools";
 
+export interface SpotLocation {
+  lat: number;
+  lon: number;
+}
+
 export interface Spot {
   id: string;
+  slug: string;
   name: string;
   city: string;
+  citySlug: string;
   address: string;
   type: SpotType;
-  distance: string;
-  coordinates: { x: number; y: number };
+  features: readonly string[];
   image: string;
-  features: string[];
+  communityNote: string;
   crowdLevel: number;
   crowdLevelLabel: string;
-  weather: {
-    current: number;
-    forecast: SpotForecast[];
-  };
-  communityNote: string;
   country: string;
-  region: string;
-  isSaved?: boolean;
+  location: SpotLocation;
+  createdBy: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export type TabType = "explore" | "saved" | "map" | "post" | "events";

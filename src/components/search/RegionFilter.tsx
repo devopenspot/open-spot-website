@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { Filter } from "lucide-react";
 import { getRegions } from "@/lib/spots";
-import { useAppState } from "@/components/layout/AppStateProvider";
+import { useUIStore } from "@/stores/ui-store";
 import type { MapFilter } from "@/hooks/useMapFilter";
 
 const regions = getRegions();
@@ -16,7 +16,7 @@ export function RegionFilter({
   setCountry,
 }: MapFilter) {
   const router = useRouter();
-  const { closeSearch } = useAppState();
+  const closeSearch = useUIStore((s) => s.closeSearch);
   return (
     <div className="space-y-3">
       <h3 className="font-display text-base font-bold uppercase tracking-wider text-on-surface flex items-center">

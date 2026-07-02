@@ -6,6 +6,7 @@ import { memo, useCallback, type MouseEvent } from 'react';
 import { cn } from '@/lib/cn';
 import { CROWD_LEVEL } from '@/lib/constants';
 import type { Spot } from '@/lib/types';
+import { getSpotDistanceLabel } from '@/lib/spots/geo';
 
 interface BaseSpotCardProps {
   spot: Spot;
@@ -128,7 +129,7 @@ function BaseSpotCardImpl({
       >
         <div>
           <span className="font-mono text-[9px] font-bold text-secondary uppercase tracking-wider block mb-1">
-            {spot.distance}
+            {getSpotDistanceLabel(spot)}
           </span>
           <h3 className="font-display text-base font-bold tracking-wide text-on-surface uppercase group-hover:underline">
             {spot.name}

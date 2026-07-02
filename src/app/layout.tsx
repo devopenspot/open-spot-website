@@ -1,8 +1,9 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter, Archivo_Narrow } from 'next/font/google';
 import { cn } from '@/lib/cn';
-import { getSpots } from '@/lib/spots/loader';
-import { AppProviders } from '@/components/layout/AppProviders';
+import { getSpotRepository } from '@/lib/repositories';
+import { getWeatherForAllSpots } from '@/lib/weather/weather-bundle';
+import { SpotsProvider } from '@/components/layout/SpotsProvider';
 import './globals.css';
 
 const inter = Inter({
@@ -68,7 +69,11 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const initialSpots = await getSpots();
+  const [spotsResult, initialWeather] = await Promise.all([
+    getSpotRepository().list(),
+    getWeatherForAllSpots(),
+  ]);
+  const initialSpots = spotsResult.items;
   return (
     <html
       lang="en"
@@ -76,7 +81,9 @@ export default async function RootLayout({
       suppressHydrationWarning
     >
       <body className="bg-background font-sans text-on-background antialiased">
-        <AppProviders initialSpots={initialSpots}>{children}</AppProviders>
+        <SpotsProvider initialSpots={initialSpots} initialWeather={initialWeather}>
+          {children}
+        </SpotsProvider>
       </body>
     </html>
   );

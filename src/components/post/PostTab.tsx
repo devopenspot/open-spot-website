@@ -1,21 +1,22 @@
 "use client";
 
-import { useId, useState, type FormEvent } from "react";
+import { useId, useState, useTransition, type FormEvent } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Check, Image as ImageIcon, Tag, Plus } from "lucide-react";
-import { useAppState } from "@/components/layout/AppStateProvider";
 import { getPresetImages, getTerrainOptions } from "@/lib/spots";
 import { showToast } from "@/hooks/useToast";
 import { cn } from "@/lib/cn";
 import { CROWD_LEVEL } from "@/lib/constants";
-import type { Spot, SpotType } from "@/lib/types";
+import type { SpotType } from "@/lib/types";
+import { REFERENCE_LAT, REFERENCE_LON } from "@/lib/spots/geo";
+import { createSpotAction } from "@/app/actions/spots";
 
 export default function PostTab() {
   const router = useRouter();
-  const { addSpot } = useAppState();
   const presetImages = getPresetImages();
   const terrainOptions = getTerrainOptions();
+  const [isPending, startTransition] = useTransition();
 
   const nameId = useId();
   const typeId = useId();
@@ -87,44 +88,41 @@ export default function PostTab() {
     }
     setFormError(null);
 
-    const randomCoordX = Math.floor(Math.random() * 20) + 40;
-    const randomCoordY = Math.floor(Math.random() * 20) + 40;
+    const crowdLevelLabel =
+      crowdLevel > CROWD_LEVEL.HIGH_MIN
+        ? "High (Busy)"
+        : crowdLevel > CROWD_LEVEL.LOW_MAX
+          ? "Moderate Activity"
+          : "Low Crowd (Ideal)";
 
-    const newSpot: Spot = {
-      id: `custom-spot-${Date.now()}`,
-      name: name.toUpperCase(),
-      city,
-      address,
-      type,
-      distance: "0.5 MILES AWAY",
-      coordinates: { x: randomCoordX, y: randomCoordY },
-      image: imageUrl,
-      features: featuresList,
-      crowdLevel,
-      crowdLevelLabel:
-        crowdLevel > CROWD_LEVEL.HIGH_MIN
-          ? "High (Busy)"
-          : crowdLevel > CROWD_LEVEL.LOW_MAX
-            ? "Moderate Activity"
-            : "Low Crowd (Ideal)",
-      country: "",
-      region: "Americas",
-      weather: {
-        current: 23,
-        forecast: [
-          { day: "TUE", icon: "sunny", temp: 22 },
-          { day: "WED", icon: "partly_cloudy_day", temp: 20 },
-          { day: "THU", icon: "sunny", temp: 23 },
-        ],
-      },
-      communityNote:
-        communityNote ||
-        "Contributed by community scout. Bring your setup and session on! — @anonymous_rider",
-    };
+    const citySlug = city.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 
-    addSpot(newSpot);
-    showToast("Spot registered successfully", "success");
-    setIsSubmitted(true);
+    startTransition(async () => {
+      try {
+        await createSpotAction({
+          name,
+          city,
+          citySlug,
+          address,
+          type,
+          features: featuresList,
+          image: imageUrl,
+          communityNote:
+            communityNote ||
+            "Contributed by community scout. Bring your setup and session on! — @anonymous_rider",
+          crowdLevel,
+          crowdLevelLabel,
+          country: "",
+          location: { lat: REFERENCE_LAT, lon: REFERENCE_LON },
+          createdBy: "dev",
+        });
+        showToast("Spot registered successfully", "success");
+        setIsSubmitted(true);
+      } catch {
+        showToast("Could not register spot. Try again.", "error");
+        setFormError("Something went wrong while registering your spot.");
+      }
+    });
   };
 
   if (isSubmitted) {
@@ -479,9 +477,10 @@ export default function PostTab() {
           </button>
           <button
             type="submit"
-            className="px-8 py-3 rounded-lg bg-on-surface text-surface text-xs font-bold tracking-widest uppercase hover:bg-on-surface/90 transition-all shadow-md"
+            disabled={isPending}
+            className="px-8 py-3 rounded-lg bg-on-surface text-surface text-xs font-bold tracking-widest uppercase hover:bg-on-surface/90 transition-all shadow-md disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            Register Spot
+            {isPending ? "Registering…" : "Register Spot"}
           </button>
         </div>
       </form>

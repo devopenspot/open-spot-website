@@ -6,14 +6,16 @@ import { DesktopNav } from './DesktopNav';
 import { MobileNav } from './MobileNav';
 import { MobileDrawerTrigger } from './MobileDrawerTrigger';
 import { SearchTrigger } from './SearchTrigger';
-import { useAppState } from './AppStateProvider';
+import { useUIStore } from '@/stores/ui-store';
+import { useSavedSpots } from '@/hooks/useSavedSpots';
 import { useUser } from '@/hooks/useUser';
 import { MAIN_CONTENT_ID } from '@/lib/constants';
 
 export function Header() {
   const router = useRouter();
-  const { savedCount, openSearch } = useAppState();
+  const openSearch = useUIStore((s) => s.openSearch);
   const user = useUser();
+  const { count: savedCount } = useSavedSpots(user.id);
 
   const handleSelect = (path: string) => {
     router.push(path);

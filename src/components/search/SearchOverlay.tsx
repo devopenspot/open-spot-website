@@ -5,15 +5,16 @@ import { Search, X, MapPin, ArrowRight } from "lucide-react";
 import Image from "next/image";
 import { Overlay } from "@/components/feedback/Overlay";
 import { SEARCH_FOCUS_DELAY_MS } from "@/lib/constants";
-import { useAppState } from "@/components/layout/AppStateProvider";
+import { useUIStore } from "@/stores/ui-store";
 import type { Spot } from "@/lib/types";
+import { getSpotDistanceLabel } from "@/lib/spots/geo";
 import { RegionFilter } from "@/components/search/RegionFilter";
 import { useMapFilter } from "@/hooks/useMapFilter";
 
 interface SearchOverlayProps {
   isOpen: boolean;
   onClose: () => void;
-  spots: Spot[];
+  spots: readonly Spot[];
   onSelectSpot: (spot: Spot) => void;
 }
 
@@ -28,7 +29,7 @@ export function SearchOverlay({
   const [query, setQuery] = useState("");
   const deferredQuery = useDeferredValue(query);
   const inputRef = useRef<HTMLInputElement>(null);
-  const { openSearch } = useAppState();
+  const openSearch = useUIStore((s) => s.openSearch);
 
   const {
     region,
@@ -170,7 +171,7 @@ export function SearchOverlay({
                             <span className="font-bold uppercase">
                               {spot.type}
                             </span>
-                            <span>{spot.distance}</span>
+                            <span>{getSpotDistanceLabel(spot)}</span>
                           </span>
                           <span className="block font-display text-sm font-bold tracking-wide text-on-surface uppercase truncate">
                             {spot.name}

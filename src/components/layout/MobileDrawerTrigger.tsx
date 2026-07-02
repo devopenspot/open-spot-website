@@ -1,10 +1,10 @@
 'use client';
 
 import { Menu } from 'lucide-react';
-import { useAppState } from './AppStateProvider';
+import { useUIStore } from '@/stores/ui-store';
 
 export function MobileDrawerTrigger() {
-  const { openDrawer } = useAppState();
+  const openDrawer = useUIStore((s) => s.openDrawer);
   return (
     <button
       id="mobile-hamburger-btn"

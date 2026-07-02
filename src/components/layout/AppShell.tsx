@@ -6,7 +6,8 @@ import { Header } from './Header';
 import { MobileDrawer } from './MobileDrawer';
 import { SearchOverlay } from '@/components/search/SearchOverlay';
 import { ToastViewport } from '@/components/feedback/Toast';
-import { useAppState } from './AppStateProvider';
+import { useUIStore } from '@/stores/ui-store';
+import { useSpotsStore } from '@/stores/spots-store';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { MAIN_CONTENT_ID } from '@/lib/constants';
 import { ROUTES } from '@/lib/nav';
@@ -14,7 +15,10 @@ import type { Spot } from '@/lib/types';
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const { toggleSearch, closeSearch, isSearchOpen, spots } = useAppState();
+  const toggleSearch = useUIStore((s) => s.toggleSearch);
+  const closeSearch = useUIStore((s) => s.closeSearch);
+  const isSearchOpen = useUIStore((s) => s.isSearchOpen);
+  const spots = useSpotsStore((s) => s.spots);
   const pathname = usePathname();
 
   // Close the search overlay on route change

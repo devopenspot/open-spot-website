@@ -1,3 +1,6 @@
+import spotsJson from "@/data/spots.json"
+import type { Spot } from "@/lib/types"
+
 export interface BBox {
   minLat: number
   maxLat: number
@@ -99,4 +102,22 @@ export function hashToUnitInterval(s: string): number {
     h = (h * 31 + s.charCodeAt(i)) | 0
   }
   return (Math.abs(h) % 1000) / 1000
+}
+
+const RAW_SPOT_ENTRIES = spotsJson as ReadonlyArray<{ lat: string | number; lon: string | number }>
+
+const GRID_BBOX: BBox = bboxOf(RAW_SPOT_ENTRIES)
+
+export function getSpotDistanceLabel(spot: Spot): string {
+  const miles = haversineMiles(
+    REFERENCE_LAT,
+    REFERENCE_LON,
+    spot.location.lat,
+    spot.location.lon,
+  )
+  return formatDistanceMiles(miles)
+}
+
+export function getSpotGridCoordinates(spot: Spot): { x: number; y: number } {
+  return projectToGrid(spot.location.lat, spot.location.lon, GRID_BBOX)
 }

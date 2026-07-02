@@ -1,13 +1,7 @@
 import { cache } from "react";
 import { connection } from "next/server";
-import sportEventsJson from "@/data/sport-events.json";
-import type {
-  SportEvent,
-  SportEventEnriched,
-  SportEventStatus,
-} from "@/types/sport-events";
-
-const SOURCE_EVENTS = sportEventsJson as SportEvent[];
+import { getEventRepository } from "@/lib/repositories";
+import type { SportEvent, SportEventEnriched, SportEventStatus } from "@/types/sport-events";
 
 const STATUS_PRIORITY: Record<SportEventStatus, number> = {
   live: 0,
@@ -91,7 +85,8 @@ function sortEvents(events: readonly SportEventEnriched[]): readonly SportEventE
 async function loadSportEvents(): Promise<readonly SportEventEnriched[]> {
   await connection();
   const now = new Date();
-  const enriched = SOURCE_EVENTS.map(event => enrich(event, now));
+  const { items } = await getEventRepository().list();
+  const enriched = items.map(event => enrich(event, now));
   return Object.freeze(sortEvents(enriched));
 }
 

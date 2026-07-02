@@ -12,7 +12,8 @@ import { APP_VERSION, BUILD_TZ } from '@/lib/system-info';
 import { NAV_ITEMS, isActivePath } from '@/lib/nav';
 import { cn } from '@/lib/cn';
 import { BrandLogo } from './BrandLogo';
-import { useAppState } from './AppStateProvider';
+import { useUIStore } from '@/stores/ui-store';
+import { useSavedSpots } from '@/hooks/useSavedSpots';
 
 const DRAWER_ID = 'mobile-hamburger-portal';
 const DRAWER_TITLE_ID = 'mobile-drawer-title';
@@ -20,8 +21,10 @@ const DRAWER_TITLE_ID = 'mobile-drawer-title';
 export function MobileDrawer() {
   const router = useRouter();
   const pathname = usePathname();
-  const { isDrawerOpen, closeDrawer, savedCount } = useAppState();
+  const isDrawerOpen = useUIStore((s) => s.isDrawerOpen);
+  const closeDrawer = useUIStore((s) => s.closeDrawer);
   const user = useUser();
+  const { count: savedCount } = useSavedSpots(user.id);
   const panelRef = useRef<HTMLDivElement>(null);
 
   useKeyboardShortcuts(

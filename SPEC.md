@@ -59,13 +59,13 @@ The baseline every later stage assumes. Snapshot taken after the Stage A-prep cl
 | Stage | Status | Touches |
 |---|---|---|
 | A.1 (type unification — `core.ts` deleted) | done | `src/lib/types.ts` |
-| A.1b (boundary derivation — strip weather/coords/region/distance; add slug/location/audit) | **not started** | `src/lib/types.ts`, `loader.ts`, consumers |
-| A.2 (Zod) | not started | `lib/schemas/*` |
-| A.3 (SpotRepository + factory) | not started | `lib/repositories/*` |
-| A.4 (EventRepository) | not started | `lib/repositories/*` |
-| A.5 (Server Action) | not started | `app/actions/spots.ts` |
-| A.6 (Zustand stores) | not started | `stores/*` |
-| A.7 (useSavedSpots userId) | not started | `hooks/useSavedSpots.ts` |
+| A.1b (boundary derivation — strip weather/coords/region/distance; add slug/location/audit) | **done** | `src/lib/types.ts`, `lib/repositories/json-spot-repository.ts`, consumers |
+| A.2 (Zod) | **done** | `lib/schemas/spot.ts`, `lib/schemas/event.ts`, wired into repositories |
+| A.3 (SpotRepository + factory) | **done** | `lib/repositories/*`, call sites migrated, `loader.ts` deleted |
+| A.4 (EventRepository) | **done** | `lib/repositories/*`, enrich layer over repo |
+| A.5 (Server Action) | **done** | `app/actions/spots.ts`, `PostTab` migrated, `addSpot` removed |
+| A.6 (Zustand stores) | **done** | `stores/*`, `SpotsProvider` + `WeatherContext` + `HydrationGate`, ~13 call sites migrated, `AppStateProvider` + `AppProviders` deleted |
+| A.7 (useSavedSpots userId) | **done** | per-user key namespacing, `userId` parameter, DB-sync skeleton |
 | B (composition cleanup) | not started | nav, map, post, primitives |
 | C (testing infra) | not started | vitest, contract test |
 | E (DB + PostGIS + Supabase) | not started | this SPEC |

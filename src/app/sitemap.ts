@@ -1,5 +1,5 @@
 import type { MetadataRoute } from 'next';
-import { getSpots } from '@/lib/spots/loader';
+import { getSpotRepository } from '@/lib/repositories';
 
 export const dynamic = 'force-static';
 
@@ -17,7 +17,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE_URL}/sport-events`, lastModified: now, changeFrequency: 'weekly', priority: 0.7 },
   ];
 
-  const spots = await getSpots();
+  const { items: spots } = await getSpotRepository().list();
   const spotEntries: MetadataRoute.Sitemap = spots.map(spot => ({
     url: `${BASE_URL}/spots/${spot.id}`,
     lastModified: now,

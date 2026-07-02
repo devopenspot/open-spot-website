@@ -6,7 +6,9 @@ import { useRouter } from "next/navigation";
 import { ChevronRight, Award, Globe } from "lucide-react";
 import { getRegions } from "@/lib/spots";
 import { ROUTES } from "@/lib/nav";
-import { useAppState } from "@/components/layout/AppStateProvider";
+import { useSpotsStore } from "@/stores/spots-store";
+import { useSavedSpots } from "@/hooks/useSavedSpots";
+import { useUser } from "@/hooks/useUser";
 import { ExploreSpotCard } from "@/components/spot/SpotCard";
 import { SectionHeader } from "./SectionHeader";
 import { EventCard } from "@/components/sport-events/EventCard";
@@ -23,7 +25,9 @@ interface ExploreTabProps {
 
 export default function ExploreTab({ events, featured }: ExploreTabProps) {
   const router = useRouter();
-  const { spots, savedIds, toggleSaved } = useAppState();
+  const spots = useSpotsStore((s) => s.spots);
+  const user = useUser();
+  const { savedIds, toggle: toggleSaved } = useSavedSpots(user.id);
   const regions = useMemo(() => getRegions(), []);
 
   const spotlightSpots = useMemo(() => spots.slice(0, 6), [spots]);

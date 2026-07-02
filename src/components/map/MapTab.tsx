@@ -4,16 +4,23 @@ import { useCallback, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { MapPin, ZoomIn, ZoomOut, X } from "lucide-react";
-import { useAppState } from "@/components/layout/AppStateProvider";
+import { useSpotsStore } from "@/stores/spots-store";
+import { useWeather } from "@/components/layout/WeatherContext";
+import { useSavedSpots } from "@/hooks/useSavedSpots";
+import { useUser } from "@/hooks/useUser";
 import { MapPinButton } from "./MapPinButton";
 import { useMapFilter } from "@/hooks/useMapFilter";
 import { MAP_VIEWPORT_OFFSET_PX, MAP_ZOOM } from "@/lib/constants";
 import { ROUTES } from "@/lib/nav";
+import { getSpotDistanceLabel, getSpotGridCoordinates } from "@/lib/spots/geo";
 import type { Spot } from "@/lib/types";
 
 export default function MapTab() {
   const router = useRouter();
-  const { spots, savedIds, toggleSaved } = useAppState();
+  const spots = useSpotsStore((s) => s.spots);
+  const user = useUser();
+  const { savedIds, toggle: toggleSaved } = useSavedSpots(user.id);
+  const { weather } = useWeather();
   const { region, country, filteredSpots } = useMapFilter(spots);
   const [activePin, setActivePin] = useState<Spot | null>(null);
   const [zoomLevel, setZoomLevel] = useState<number>(1);
@@ -43,9 +50,10 @@ export default function MapTab() {
   const handleSidebarSelect = useCallback(
     (spot: Spot) => {
       setActivePin(spot);
+      const coords = getSpotGridCoordinates(spot);
       setMapPan({
-        x: (50 - spot.coordinates.x) * 2 * zoomLevel,
-        y: (50 - spot.coordinates.y) * 2 * zoomLevel,
+        x: (50 - coords.x) * 2 * zoomLevel,
+        y: (50 - coords.y) * 2 * zoomLevel,
       });
     },
     [zoomLevel],
@@ -127,7 +135,7 @@ export default function MapTab() {
                       {spot.type}
                     </span>
                     <span className="text-[8px] font-mono font-medium text-secondary">
-                      {spot.distance}
+                      {getSpotDistanceLabel(spot)}
                     </span>
                   </span>
                   <span className="block font-display text-xs font-bold uppercase tracking-wide truncate text-on-surface">
@@ -310,7 +318,7 @@ export default function MapTab() {
                     Air temp
                   </span>
                   <span className="font-semibold text-on-surface">
-                    {activePin.weather.current}°C sunny
+                    {weather[activePin.id]?.current ?? "—"}°C sunny
                   </span>
                 </div>
               </div>
