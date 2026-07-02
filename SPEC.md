@@ -1,6 +1,6 @@
 # Open Spot — Engineering Roadmap
 
-> Status: **active**. Stage A-prep is shipped. Stage A is next.
+> Status: **active**. Stage A-prep (Passes 1–3) is shipped. Stage A is next.
 > Stage E (PostgreSQL + PostGIS + Supabase + Auth + Storage) is the backend destination.
 > This document is the agreed-upon plan from the current state through full
 > persistence in Supabase: a clean data model, RSC + Server Actions, Zustand
@@ -20,22 +20,24 @@ We are about to introduce a real backend (Supabase + PostGIS + Drizzle ORM) and 
 
 The goal is to make the swap **mechanical**: every read goes through a `Repository`, every write through a Server Action, every UI slice through a Zustand store. Replacing `JsonSpotRepository` with `DrizzleSpotRepository` becomes a one-file change.
 
+**Frozen — must not change:** the UI/design layer is contract-frozen for the entire roadmap. `DESIGN.md` (color, typography, layout, shape, components), the `src/data.ts` UI catalog shapes (`ExploreCategory`, `LegendaryTerrain`, the UI-facing `Region`/`Country` with `count`/`desc`/`image`/`link`), component markup, and Tailwind class strings are out of scope for every stage below. A clean entity type (§8.13) must coexist with the UI catalog types, not replace them.
+
 **Out of scope (this SPEC):** real map library, geocoding. The CSS-grid map stays. The `MapTab` file split in B.4 sets the boundary for the future swap.
 
 **State management — non-goals:**
 
-- **React Query / TanStack Query is out of scope.** The data flow is server-authoritative RSC (reads) + Server Actions (writes) + `useTransition` / `useOptimistic` (optimistic UI). The dataset is small (~60 spots, ~10 events) and there is no client-side fetching today. If a future feature needs client-side caching — typeahead search, bbox-driven map queries, offline mutation replay — introduce React Query at that point, scoped to that feature, not globally. Adding it pre-emptively would add ~13 KB gz to the bundle and a second cache layer to keep in sync with Next's `unstable_cache` and the repo's in-memory fallback.
+- **React Query / TanStack Query is out of scope.** The data flow is server-authoritative RSC (reads) + Server Actions (writes) + `useTransition` / `useOptimistic` (optimistic UI). The dataset is small (~60 spots, ~10 events) and there is no client-side fetching today. If a future feature needs client-side caching — typeahead search, bbox-driven map queries, offline mutation replay — introduce React Query at that point, scoped to that feature, not globally. Adding it pre-emptively would add ~13 KB gz to the bundle and a second cache layer to keep in sync with Next's `cacheLife` / `cacheTag` (the real weather-cache API in `src/lib/weather/weather-cached.ts`) and the repo's in-memory fallback.
 - **Zustand is the chosen client-state library** for the small set of slices that survive the `AppStateProvider` removal (UI toggles, map filter, spots domain). See A.6 + §8.13.
 
 ---
 
 ## 2. Current state of the project
 
-The baseline every later stage assumes. Snapshot taken after the Stage A-prep cleanup landed (dead-code removal, nav helper, weather env centralization, focus timer, logger, saved-spots error surfacing).
+The baseline every later stage assumes. Snapshot taken after the Stage A-prep cleanup (Passes 1–3: dead-code removal, nav helper, weather env centralization, focus timer, logger, saved-spots error surfacing, `core.ts` deletion).
 
-**Shipped (Pass 1 + Pass 2 + Stage A prep):**
+**Shipped (Pass 1 + Pass 2 + Stage A prep / Pass 3):**
 
-- Single `Spot` type in `src/lib/types.ts`; `core.ts` deleted.
+- **Type unification (partial — A.1 only):** `core.ts` deleted; a single `Spot` interface lives in `src/lib/types.ts:23`. **The field stripping promised by the old A.1 has not happened** — `weather`, `coordinates: { x, y }`, `region`, `distance`, and `isSaved?` are still on `Spot`. That work is re-opened as **A.1b** in §4.
 - `ROUTES.*` and `isActivePath()` used everywhere; no inline URL templates.
 - `log` helper in `src/lib/log.ts`; console calls routed through it.
 - `useSavedSpots` no longer deletes localStorage on first render (Pass 1 fix).
@@ -43,11 +45,21 @@ The baseline every later stage assumes. Snapshot taken after the Stage A-prep cl
 - `STORAGE_KEY_VERSION = 'v2'`; `openspot_saved_ids_v2` is the live key.
 - ESLint wired with `eslint-config-next` + `eslint-plugin-jsx-a11y` + `@next/eslint-plugin-next`.
 
+**Runtime / build facts today (corrected against the real tree):**
+
+- **`AppStateProvider` + `AppProviders` still present.** `useAppState()` is consumed by ~13 files (Header, MobileDrawer, MobileDrawerTrigger, AppShell, ExploreTab, MapTab, SavedTab, PostTab, SpotDetailsFullPage, SearchOverlay, RegionFilter, map/MapPageClient, …), not ~7 as the old SPEC stated.
+- **`AppProviders` (`src/components/layout/AppProviders.tsx:8-19`) takes a server-fed `initialSpots: readonly Spot[]` prop** and nests `AppStateProvider > AppShell`. This server-feed pattern is the precedent E.6 will reuse for `savedSpots`; A.6 must preserve the boundary, not delete the idea.
+- **No Zustand, no Zod, no Drizzle, no Supabase, no vitest, no repositories, no Server Actions, no `app/actions/`, no `stores/`, no `db/`, no `lib/schemas/`, no `lib/repositories/`, no `lib/env.ts`.** All of those land in their stages below.
+- **`next.config.mjs` has `cacheComponents: true`** (Next 16 + React 19). Under this flag every `cookies()` / `headers()` / `draftMode()` call site becomes async, and Server Actions + middleware must `await` these APIs. The Stage E server/client wiring in §E.4, §E.7 reflects this.
+- **Weather cache uses Next 16 `cacheLife` / `cacheTag` from `next/cache`** (`src/lib/weather/weather-cached.ts:1`), not the old `unstable_cache` API. `getCachedSpotWeather(spot.id)` is the boundary call referenced in §8.13.1 #7.
+- **A route handler,** `src/app/api/weather/revalidate/route.ts`, already exists for tag revalidation. It is outside the A.5 Server Action scope and stays untouched.
+
 **Pending work, by stage:**
 
 | Stage | Status | Touches |
 |---|---|---|
-| A.1 (single Spot type) | done | `src/lib/types.ts` |
+| A.1 (type unification — `core.ts` deleted) | done | `src/lib/types.ts` |
+| A.1b (boundary derivation — strip weather/coords/region/distance; add slug/location/audit) | **not started** | `src/lib/types.ts`, `loader.ts`, consumers |
 | A.2 (Zod) | not started | `lib/schemas/*` |
 | A.3 (SpotRepository + factory) | not started | `lib/repositories/*` |
 | A.4 (EventRepository) | not started | `lib/repositories/*` |
@@ -60,10 +72,11 @@ The baseline every later stage assumes. Snapshot taken after the Stage A-prep cl
 
 **Runtime data today (no DB):**
 
-- Domain entities: `src/data/spots.json` (26 KB, Nominatim-shaped) and `src/data/sport-events.json` (3.6 KB).
+- Domain entities: `src/data/spots.json` (~12 KB / 381 lines, Nominatim-shaped) and `src/data/sport-events.json` (~3.6 KB / 102 lines).
+- UI catalogs (frozen — see §1): `src/data.ts` exports `EXPLORE_CATEGORIES`, `LEGENDARY_TERRAIN`, `REGIONS` (a UI `Region` with `count`, `desc`, `image`, `link`, `countries`), `COUNTRY_TO_REGION` (`src/data.ts:132`), `COUNTRY_NAME_OVERRIDES` (`src/data.ts:122`). The data-model `Region` in §8.13.2 must coexist with this UI `Region`, not delete it.
 - User: hardcoded `DEV_USER` in `src/lib/user.ts:8` — `id: 'dev'`, `name: 'Active Scout'`, `initials: 'OS'`.
 - Favorites: `localStorage` only, key `openspot_saved_ids_v2`, no user scope, no server mirror, no cross-device sync.
-- Weather: live OpenWeather API, cached in Next.js `unstable_cache` per `spotId`, 5-min revalidate, 1-hr expire.
+- Weather: live OpenWeather API, cached via Next 16 `cacheLife` + `cacheTag` per `spotId` (`src/lib/weather/weather-cached.ts`); a route handler `src/app/api/weather/revalidate/route.ts` refreshes the tag.
 - `.env.example` already documents `DATABASE_URL` and `SPOTS_DATA_SOURCE=json|db` — neither is read yet.
 
 ---
@@ -101,9 +114,53 @@ The user's "this spot matters to me" affordance. The only piece of user-generate
 
 The structural changes that make the DB swap mechanical.
 
-### A.1 Single `Spot` type — DONE
+### A.1 Single `Spot` type — DONE (partial: type unification only)
 
-`core.ts` is deleted; `src/lib/types.ts:23` holds the single UI `Spot`. The presentational denormalizations (uppercase name, pre-formatted distance, `{x, y}` percentage coordinates, `weather`) are out of the type. No further work.
+`core.ts` is deleted; `src/lib/types.ts:23` holds the single UI `Spot`. This milestone covers the **merge** of the former `CoreSpot`/`Spot` split only. The field stripping described in the old A.1 ("weather, {x,y}, region, distance are out of the type") has **not** happened — see A.1b.
+
+### A.1b Boundary derivation — strip presentation fields, add entity fields
+
+This is the missing half of the old A.1. It moves every presentation-only field *off* `Spot` and adds the server-owned fields the DB (Stage E) and Zod (A.2) require. Done before A.2, because A.2 validates this target shape.
+
+**`Spot` after A.1b** (matches §8.13.2):
+
+```ts
+export interface Spot {
+  id: string;                    // today: client-built 'custom-spot-<ts>'; later: server uuid
+  slug: string;                  // NEW; URL-safe unique handle
+  name: string;                  // raw case; UI uppercases at the boundary
+  city: string;
+  citySlug: string;              // NEW; lowercased hyphenated
+  address: string;
+  type: SpotType;
+  features: readonly string[];
+  image: string;                 // external URL today; signed-URL path in E.8
+  communityNote: string;
+  crowdLevel: number;
+  crowdLevelLabel: string;
+  country: string;               // canonical, after COUNTRY_NAME_OVERRIDES
+  location: { lat: number; lon: number };   // NEW; replaces coordinates {x,y}
+  createdBy: string | null;      // NEW; null for curated
+  createdAt: string;             // NEW; ISO 8601
+  updatedAt: string;             // NEW; ISO 8601
+}
+```
+
+**Removed fields and where they derive at the UI boundary** (no UI/design change — only the derivation moves out of the entity):
+
+| Removed from `Spot` | Derives at the boundary | File today |
+|---|---|---|
+| `weather: { current, forecast }` | `getCachedSpotWeather(spot.id)` → `WeatherIcon` / `SpotDetailsContent` | `src/lib/weather/weather-cached.ts` |
+| `coordinates: { x, y }` | `projectToGrid(spot.location)` → `MapPin` absolute-position | `src/lib/spots/geo.ts`, `MapTab.tsx` |
+| `region: string` | `COUNTRY_TO_REGION[spot.country]` → `RegionFilter` / nav | `src/data.ts:132`, `useMapFilter` |
+| `distance: string` | `haversineMiles(user, spot.location)` → `SpotCard` / `SavedSpotCard` | `src/lib/spots/geo.ts`, `SpotCard.tsx` |
+| `isSaved?: boolean` | `useSavedSpots().isSaved(spot.id)` → heart button `aria-pressed` | `src/hooks/useSavedSpots.ts` |
+
+**`src/data.ts` catalog types stay frozen.** The UI-facing `Region` (`count`, `desc`, `image`, `link`, `countries`) and `ExploreCategory` / `LegendaryTerrain` exported from `src/data.ts` are NOT touched. A.1b only removes presentation fields from the **entity** `Spot`; the catalog types remain the source for `ExploreTab` / region tiles. The data-model `Region` from §8.13.2 is a separate interface (facet shape), coexisting with the UI `Region`.
+
+**Loader changes:** `src/lib/spots/loader.ts`'s `buildBaseSpot` (line ~173) stops adding `distance`, `coordinates`, `region`, `weather`, `isSaved`. The `Omit<…, 'weather' | 'isSaved'>` scaffolding (around line 176/229) collapses. The new fields (`slug`, `citySlug`, `location`, `createdBy`, `createdAt`, `updatedAt`) are derived from the raw JSON in `JsonSpotRepository` (A.3) — `slug` from name+city, `location` from the raw lat/lon already in `spots.json`, `createdBy: null`, timestamps from a stable hash or the file mtime. The JSON-backed `id` stays the existing `custom-spot-<ts>` pattern until E.5 assigns server uuids.
+
+**Breaking but mechanical:** every `spot.weather` / `spot.coordinates` / `spot.region` / `spot.distance` read in components is replaced by the boundary call above. ~13 call sites; lint fails fast on the missing fields.
 
 ### A.2 Add Zod and validate source data
 
@@ -137,6 +194,8 @@ The `getSpotRepository()` factory reads `SPOTS_DATA_SOURCE` from `process.env` a
 
 The `JsonSpotRepository` wraps the existing loader logic: `spots.json` is parsed via `SpotSchema.array().parse()` once at module init, and every method is a pure function over the in-memory array. The existing `pickType`, `pickFeatures`, `buildCrowdLabel`, `buildCommunityNote` helpers move to the repo's private implementation.
 
+**Async server context (`cacheComponents: true`).** `next.config.mjs` has `cacheComponents: true`; under this flag the RSC tree is rendered in an async context where `cookies()`, `headers()`, and `draftMode()` from `next/headers` are async. `getSpotRepository()` itself must stay synchronous (no cookie read at factory time — the env-var switch is sync). Any auth- or request-scoped repo behavior (per-user RLS in E.6, fallback header in E.9) is **injected by the caller** (`getSpotRepository({ userId })` after `await cookies()`) rather than read inside the factory. This keeps the factory usable from static RSC and `generateStaticParams`. The same rule applies to `env.ts` in E.4: only `process.env.*` reads are sync; anything cookies-derived is awaited by the caller.
+
 ### A.4 `EventRepository` (parallel, smaller)
 
 Same pattern. `list(q?)`, `findById(id)`, `findFeatured()`. The current `src/lib/sport-events/loader.ts` becomes `json-event-repository.ts`. Writes (`create` / `update` / `delete`) are **service-role only** — sport events are admin-curated via dashboard / seed scripts, not user-facing.
@@ -148,6 +207,8 @@ Same pattern. `list(q?)`, `findById(id)`, `findFeatured()`. The current `src/lib
 - New: `src/app/actions/spots.ts` exports `createSpotAction(formData)`. It validates via `NewSpotSchema.parse(Object.fromEntries(formData))`, calls `getSpotRepository().create(input)`, and calls `revalidateTag('spots')`.
 - `PostTab.handleSubmit` becomes one line: `await createSpotAction(formData)` followed by `showToast` and the success-screen toggle. Pending state via `useTransition`; error handling via try/catch.
 - The `addSpot` method disappears from `AppStateProvider` (see A.6).
+
+**Note:** `src/app/api/weather/revalidate/route.ts` already exists (weather cache tag refresh) and is untouched by A.5. A.5 introduces a new Server Action at `src/app/actions/spots.ts`; it does not delete or refactor any existing route handler.
 
 ### A.6 Replace `AppStateProvider` with Zustand stores
 
@@ -307,6 +368,8 @@ Granular re-renders: a consumer that only reads `openSearch` does not re-render 
 
 **Files deleted:** `src/components/layout/AppStateProvider.tsx`, `src/components/layout/AppProviders.tsx`.
 
+**Preserving the server-feed boundary.** `AppProviders` today takes `initialSpots: readonly Spot[]` from `app/layout.tsx:71` and threads it into `AppStateProvider`. This server-feed pattern must **not** be lost — E.6 reuses it for `savedSpots`. After A.6, the new boundary (the root layout or a thin `<SpotsProvider>` peer to `<HydrationGate>`) keeps taking `initialSpots` from the server and seeding `useSpotsStore` once on mount (e.g. `useSpotsStore.setState({ spots: initialSpots })` in a client effect or a `useSyncExternalStore`-style init). A second `savedSpots` prop is **reserved** on the same boundary — left unused in A.6, wired in E.6.
+
 **`useSavedSpots` stays a hook.** Its `useSyncExternalStore` semantics are correct for the data-loss fix from Pass 1; rewriting it as a Zustand store would lose that.
 
 ### A.7 `useSavedSpots` gains a `userId` namespace
@@ -324,11 +387,11 @@ The hook signature change is one line per call site. A.7 also adds a `useEffect`
 
 After Stage A:
 
-- `getSpots()` no longer exists as a free function — only `getSpotRepository().list()`.
+- `getSpots()` and `getSpotById()` no longer exist as free functions (`src/lib/spots/loader.ts:256,260`) — only `getSpotRepository().list()` / `.findById()`. (The old SPEC referenced a `getSpot()` export; the real exports are `getSpots` / `getSpotById`.)
 - Every spot read in the app goes through the repository.
 - Every spot write is a Server Action.
-- `AppStateProvider` and `AppProviders` are deleted; three Zustand stores own the state.
-- The `Spot` type has no `weather`, no `coordinates: { x, y }`, no `region`, no `distance` — those are derived at the UI boundary.
+- `AppStateProvider` and `AppProviders` are deleted; three Zustand stores own the state. The `initialSpots` server-feed boundary is preserved (see A.6).
+- The `Spot` type has no `weather`, no `coordinates: { x, y }`, no `region`, no `distance` — **A.1b** moved those to the UI boundary. (`Spot` gets `slug`, `citySlug`, `location`, `createdBy`, `createdAt`, `updatedAt`.)
 - `SPOTS_DATA_SOURCE=db` is read by the factory; only the JSON branch is shipped until E.5.
 - Supabase / Drizzle integration = "write `drizzle-spot-repository.ts`, set the env var."
 
@@ -448,6 +511,16 @@ In scope. This is the stage that brings the app from a JSON-backed prototype to 
 
 **Why "Stage E" instead of "Stage D":** the original SPEC reserved D for "out of scope, future". We are now committing to it, and the work is too large to land in a single stage.
 
+### E.0 Prerequisites (carried forward from Stages A–C)
+
+Stage E is **not** executable unless Stages A–C left these seeds in place. Keep this subsection as a checklist before starting E.1.
+
+1. **Async server contract (`cacheComponents: true`).** `next.config.mjs` runs with `cacheComponents: true`; every `cookies()` / `headers()` / `draftMode()` call site in Stage E (E.4 env reads from headers, E.7 middleware + `createServerClient`, E.6 `toggleSavedAction`) must `await` these APIs. Server Actions and middleware are async functions under this flag.
+2. **Server-feed boundary preserved (A.6).** The replacement for `AppProviders` must still take a server-fed prop (`initialSpots`, and a reserved `savedSpots`) so E.6 can inject the user's saved spots from the server without a client fetch.
+3. **`Region` / `SpotFacets` reconciliation (A.1b).** The data-model `Region` in §8.13.2 coexists with the frozen UI `Region` in `src/data.ts`. E.5's `listRegions()` returns the **facet** shape; consumers map it onto the UI catalog at the boundary. The two interfaces are not merged.
+4. **Weather cache API.** Boundary calls use Next 16 `cacheLife` / `cacheTag` (`src/lib/weather/weather-cached.ts:1`), not `unstable_cache`. E.9 observability and the `getCachedSpotWeather(spot.id)` boundary call in §8.13.1 #7 must reference the real API.
+5. **Clean `Spot` (A.1b) + Zod (A.2) + Repository (A.3).** E.5 implements the `SpotRepository` interface defined in A.3 against the A.1b-shaped `Spot`. If any of A.1b/A.2/A.3 is skipped, E.5 is blocked.
+
 ### E.1 Dependencies & local PostGIS
 
 - Add deps: `drizzle-orm`, `drizzle-kit`, `pg`, `@types/pg`, `postgres`, `zod`, `@supabase/supabase-js`, `@supabase/ssr`.
@@ -497,7 +570,7 @@ Three core tables + one lookup + one auth mirror. See §8.13 for the column list
   # Direct connection (port 5432) for migrations
   SUPABASE_DIRECT_URL=postgresql://postgres.<ref>:<password>@aws-0-<region>.pooler.supabase.com:5432/postgres
   ```
-- `src/lib/env.ts` — single typed env reader, Zod-validated at process start. Throws on missing required vars in production; warns in dev. All `process.env.*` reads funnel through here (replaces the current `weather/env.ts` pattern for all other env groups).
+- `src/lib/env.ts` — single typed env reader, Zod-validated at process start. Throws on missing required vars in production; warns in dev. All `process.env.*` reads funnel through here (replaces the current `weather/env.ts` pattern for all other env groups). **`cacheComponents` note:** `process.env.*` reads are sync and safe to call at module init; however, any env value that would derive from request headers (e.g. per-request overrides) must instead be passed in by the caller after `await headers()`. Keep `env.ts` a pure `process.env` reader — no `next/headers` import.
 
 ### E.5 Drizzle repository implementations
 
@@ -525,7 +598,7 @@ Three core tables + one lookup + one auth mirror. See §8.13 for the column list
   - `toggleSavedAction(spotId: string)` — calls `getServerSession()`, flips the row, `revalidateTag('saved-spots:${userId}')`, returns the new boolean.
   - `listSavedSpotsAction()` — returns the user's spot ids.
 - `useSavedSpots(userId)` rewritten:
-  - Reads from a server-fed `SavedSpot[]` passed via `<AppProviders savedSpots={savedSpots}>`.
+  - Reads from a server-fed `SavedSpot[]` passed to the server-feed boundary preserved in A.6 (the `savedSpots` prop reserved there; `AppProviders` itself is already gone).
   - `toggle(id)` calls the Server Action; on success, updates local state; on failure, rolls back + toast.
   - On first mount while online, `localStorage` is reconciled with the server.
 
@@ -533,10 +606,11 @@ Three core tables + one lookup + one auth mirror. See §8.13 for the column list
 
 - `src/lib/supabase/server.ts` — `createServerClient(cookies)` from `@supabase/ssr`.
 - `src/lib/supabase/browser.ts` — `createBrowserClient()` from `@supabase/ssr`.
-- `src/middleware.ts` — refreshes the session on every request, `config = { matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'] }`.
+- `src/middleware.ts` — refreshes the session on every request, `config = { matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'] }`. **`cacheComponents` note:** `middleware.ts` is already async in Next 16; `createServerClient`'s cookie read uses `await cookies()` (the awaited form is required under `cacheComponents: true`). Same for `signOutAction`.
+
 - `useUser` rewritten:
-  - Server: `getCurrentUser()` in `src/lib/user.ts` calls `createServerClient().auth.getUser()`, returns the typed `User`.
-  - Client: `useUser()` reads from a `UserContext` provided by `<AppProviders user={user}>`.
+  - Server: `getCurrentUser()` in `src/lib/user.ts` calls `await createServerClient().auth.getUser()`, returns the typed `User`. The `cookies()` call inside `createServerClient` is awaited.
+  - Client: `useUser()` reads from a `UserContext` provided by `<AppProviders user={user}>` (the same server-feed boundary preserved in A.6).
 - New pages: `/login` (email + magic link form), `/auth/callback`, `/account` (profile + sign-out).
 - `signOutAction()` Server Action clears the cookie + redirects to `/`.
 
@@ -609,7 +683,7 @@ The detailed schema, types, indexes, and query strategy for the three domain ent
 4. **Full-text search via basic `to_tsvector('simple', name || ' ' || city || ' ' || address || ' ' || features || ' ' || country)` with a GIN index.** No weight classes, no trigram — add later if needed.
 5. **Pagination is cursor-based** (slug-lexical for spots, `start_date` for events), not offset.
 6. **Facets via live `GROUP BY`** against the rows. Materialized view deferred to > 100k spots.
-7. **`weather` is not in the schema** — fetched at the boundary via `getCachedSpotWeather(spot.id)`.
+7. **`weather` is not in the schema** — fetched at the boundary via `getCachedSpotWeather(spot.id)`, which wraps Next 16 `cacheLife` / `cacheTag` from `next/cache` (see `src/lib/weather/weather-cached.ts:1`). Not the legacy `unstable_cache` API.
 8. **No `isSaved` column on `Spot`** — saved state is owned by the `saved_spots` join, not the row.
 9. **No custom `tsvector` weights, no custom `geometry` type abstraction.** Drizzle's `geometry` helper + Zod re-validation at the repo boundary.
 
@@ -841,8 +915,9 @@ All RSC; client navigates with `router.push`, no client-side fetching.
 
 | Stage | What this section changes |
 |---|---|
-| A.1 | `Spot` already clean (no `weather`, no `coordinates: {x,y}`, no `region`, no `distance`). |
-| A.2 | Zod schemas match the new types. |
+| A.1 | Type unification (`core.ts` deleted) — done. Does NOT yet strip presentation fields. |
+| A.1b | Strips `weather`, `coordinates: {x,y}`, `region`, `distance`, `isSaved` from `Spot`; adds `slug`, `citySlug`, `location`, `createdBy`, `createdAt`, `updatedAt`. The UI `Region`/`Country`/`ExploreCategory` in `src/data.ts` stay frozen. |
+| A.2 | Zod schemas match the new types (validate the A.1b target shape). |
 | A.3 | `SpotRepository` / `EventRepository` / `SavedSpotsRepository` interfaces include the facet + query methods. |
 | A.6 | Zustand stores hold the map filter (`useMapFilterStore`). |
 | E.2 | Drizzle schema, GIST + GIN + btree indexes. |
@@ -856,10 +931,13 @@ All RSC; client navigates with `router.push`, no client-side fetching.
 ## 9. Migration order & dependencies
 
 ```
-Stage A.1 (single Spot type)         [done]
+Stage A.1 (single Spot type, core.ts deleted)   [done]
    │
    ▼
-Stage A.2 (Zod)
+Stage A.1b (boundary derivation — strip + add fields)   [not started, BLOCKS A.2]
+   │
+   ▼
+Stage A.2 (Zod, validates the A.1b shape)
    │
    ▼
 Stage A.3 (SpotRepository + factory) ◄──┐
@@ -874,6 +952,11 @@ Stage A.3 (SpotRepository + factory) ◄──┐
 
 Stage B (composition cleanup) — after A
 Stage C (testing) — any time after A
+
+Stage E.0 (prerequisites checklist) — verify A.1b/A.2/A.3 + cacheComponents + initialSpots boundary + Region reconciliation
+   │
+   ▼
+Stage E.1  (deps + local PostGIS via docker-compose)
 
 Stage E.1  (deps + local PostGIS via docker-compose)
    │
@@ -899,19 +982,20 @@ Stage E.2  (Drizzle schema)
    └──► E.11 (deploy + CI)
 ```
 
-A.1 is done. A.2 → A.3 is a tight sequence. After A.3, A.4/A.5/A.6 can parallel. B and C run as their own PRs.
+A.1 is done. **A.1b is next and BLOCKS A.2** (Zod schemas validate the A.1b target shape). After A.1b, A.2 → A.3 is a tight sequence. After A.3, A.4/A.5/A.6 can parallel. A.6 must preserve the `initialSpots` server-feed boundary for E.6. B and C run as their own PRs.
 
-E.1 → E.2 is a tight sequence. After E.2, E.3/E.4/E.5 can parallel; E.6 needs A.5; E.7 needs E.5; E.9 needs E.4 + E.5. E.10 and E.11 ship last.
+E.0 is a verification checklist, not new code. E.1 → E.2 is a tight sequence. After E.2, E.3/E.4/E.5 can parallel; E.6 needs A.5; E.7 needs E.5; E.9 needs E.4 + E.5. E.10 and E.11 ship last.
 
 ---
 
 ## 10. Breaking changes list
 
 - **A.2:** `core.ts` already deleted in Pass 3. The `CoreSpot` alias in `loader.ts` is gone.
-- **A.3:** `getSpots()` / `getSpotById()` deleted in favor of `getSpotRepository().list()` / `.findById()`. Call sites: `app/layout.tsx:71`, `app/spots/[id]/page.tsx:7`, `app/sitemap.ts:20`, `app/page.tsx:5`, `app/sport-events/page.tsx:13`. The return type changes from `readonly Spot[]` (with `weather`) to `readonly Spot[]` (without).
+- **A.1b:** `Spot` loses `weather`, `coordinates: {x,y}`, `region`, `distance`, `isSaved`; gains `slug`, `citySlug`, `location {lat,lon}`, `createdBy`, `createdAt`, `updatedAt`. Every `spot.weather` / `spot.coordinates` / `spot.region` / `spot.distance` / `spot.isSaved` read in components is replaced by the boundary call in the consumer-derivation table (§4 A.1b). UI `Region`/`Country`/`ExploreCategory` in `src/data.ts` are untouched.
+- **A.3:** `getSpots()` / `getSpotById()` deleted in favor of `getSpotRepository().list()` / `.findById()`. (Actual exports today are `getSpots` at `src/lib/spots/loader.ts:256` and `getSpotById` at `:260` — the old SPEC's `getSpot()` never existed.) Real call sites: `app/layout.tsx:71`, `app/page.tsx:6`, `app/explore/page.tsx:6`, `app/sport-events/page.tsx:13`, `app/spots/[id]/page.tsx:7,17,38`. The return type changes from `readonly Spot[]` (with `weather`) to `readonly Spot[]` (without, per A.1b).
 - **A.4:** `getSportEvents()` / `getFeaturedSportEvent()` deleted in favor of `getSportEventsRepository().list()` / `.findFeatured()`.
 - **A.5:** `addSpot` removed from `AppStateProvider`. `PostTab` calls `createSpotAction(formData)` instead.
-- **A.6:** `AppStateProvider` and `AppProviders` deleted. `useAppState()` deleted. ~7 call sites rewritten to per-store selectors (`useSpotsStore`, `useUIStore`, `useMapFilterStore`). The `useSavedSpots` hook stays.
+- **A.6:** `AppStateProvider` and `AppProviders` deleted. `useAppState()` deleted. ~13 call sites (Header, MobileDrawer, MobileDrawerTrigger, AppShell, ExploreTab, MapTab, SavedTab, PostTab, SpotDetailsFullPage, SearchOverlay, RegionFilter, `map/MapPageClient`, …) rewritten to per-store selectors (`useSpotsStore`, `useUIStore`, `useMapFilterStore`). The `initialSpots` server-feed boundary is preserved (new boundary component takes the prop). The `useSavedSpots` hook stays.
 - **A.7:** `useSavedSpots()` → `useSavedSpots(userId)`. All callers pass `useUser().id`. The localStorage key becomes `openspot_saved_ids_v2:${userId}`.
 - **B.1:** `DesktopNav`, `MobileNav` deleted. `MobileDrawer` loses its nav section. `Header.tsx` and `AppShell.tsx` use `<NavList variant="desktop" | "mobile-tab" | "mobile-drawer" />`.
 - **B.2:** `MobileDrawer` becomes much thinner; the `DRAWER_ID` and `DRAWER_TITLE_ID` constants either move to the new shell or become props.
@@ -946,6 +1030,8 @@ E.1 → E.2 is a tight sequence. After E.2, E.3/E.4/E.5 can parallel; E.6 needs 
 12. **Multi-tab sign-in race:** the v2 → DB migration on first sign-in can race. Use a per-tab UUID lock; second tab sees the first tab's success via a `storage` event.
 13. **Offline write-through:** localStorage writes during a network outage queue up; on reconnect, replay them in order. Add a `pendingOps` array in localStorage for replay; surface a permanent error if a save fails forever (don't retry indefinitely).
 14. **No React Query:** deliberate. If a future feature needs client-side caching (typeahead search, bbox-driven map, offline mutation replay), introduce React Query at that point for that feature, not globally.
+15. **`cacheComponents: true` async contract.** `next.config.mjs` runs with this flag. Stage E's `createServerClient`, `middleware.ts`, `signOutAction`, and `toggleSavedAction` must `await` `cookies()` / `headers()`. If a future Next upgrade changes the awaited form, E.7 + E.9 break silently. Pin the Next major in `package.json` and add a smoke test that asserts `await cookies()` is used (ESLint `no-restricted-syntax` against the sync call form).
+16. **Server-feed boundary regression.** A.6 deletes `AppProviders` but must preserve its `initialSpots` server-feed. If a refactor accidentally moves spot seeding to a client fetch, E.6's `savedSpots` prop has no home and `useSavedSpots(userId)` becomes client-side fetching (violates the "RSC reads + Server Actions writes" rule). Add a contract test that `app/layout.tsx` passes `initialSpots` to the boundary component.
 
 ---
 
