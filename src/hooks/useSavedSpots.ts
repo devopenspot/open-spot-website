@@ -1,13 +1,12 @@
 import { useCallback, useEffect, useRef, useSyncExternalStore } from 'react';
 import { STORAGE_KEY_VERSION } from '@/lib/constants';
 import { showToast } from './useToast';
+import { toggleSavedAction } from '@/app/actions/saved-spots';
+import type { SavedSpot } from '@/types/saved-spot';
+import { useInitialSavedSpots } from '@/lib/saved-spots-context';
 
 const STORAGE_KEY_LEGACY = 'openspot_saved_ids_v1';
 const DEFAULT_USER_ID = 'dev';
-
-function storageKeyFor(userId: string): string {
-  return `openspot_saved_ids_${STORAGE_KEY_VERSION}:${userId}`;
-}
 
 type Listener = () => void;
 type Entry = { raw: string | null; set: Set<string> };
@@ -19,6 +18,10 @@ interface UserStore {
 }
 
 const userStores = new Map<string, UserStore>();
+
+function storageKeyFor(userId: string): string {
+  return `openspot_saved_ids_${STORAGE_KEY_VERSION}:${userId}`;
+}
 
 function getUserStore(userId: string): UserStore {
   let store = userStores.get(userId);
@@ -66,21 +69,6 @@ function writeStorage(userId: string, value: string | null): string | null {
 function notify(userId: string): void {
   const store = getUserStore(userId);
   for (const l of store.listeners) l();
-}
-
-function migrateLegacy(userId: string): void {
-  if (typeof window === 'undefined') return;
-  try {
-    const key = storageKeyFor(userId);
-    if (userId !== DEFAULT_USER_ID) return;
-    const legacy = window.localStorage.getItem(STORAGE_KEY_LEGACY);
-    if (legacy && !window.localStorage.getItem(key)) {
-      window.localStorage.setItem(key, legacy);
-    }
-    window.localStorage.removeItem(STORAGE_KEY_LEGACY);
-  } catch {
-    // ignore
-  }
 }
 
 function parseSavedIds(raw: string | null): Set<string> {
@@ -132,9 +120,24 @@ function subscribe(userId: string, listener: Listener): () => void {
   };
 }
 
-export function useSavedSpots(userId: string = DEFAULT_USER_ID) {
+export function __resetUserStoresForTests(): void {
+  userStores.clear();
+}
+
+export function __migrateLegacyForTests(userId: string = DEFAULT_USER_ID): void {
+  migrateLegacy(userId);
+}
+
+export function useSavedSpots(
+  userId: string = DEFAULT_USER_ID,
+  initialServerSavedSpotsArg?: readonly SavedSpot[],
+) {
+  const contextInitial = useInitialSavedSpots()
+  const initialServerSavedSpots =
+    initialServerSavedSpotsArg ?? (contextInitial.length > 0 ? contextInitial : undefined)
   const lastErrorRef = useRef<string | null>(null);
   const hydratedRef = useRef(false);
+  const isServerHydratedRef = useRef(Boolean(initialServerSavedSpots))
 
   const subscribeBound = useCallback(
     (listener: Listener) => subscribe(userId, listener),
@@ -151,18 +154,29 @@ export function useSavedSpots(userId: string = DEFAULT_USER_ID) {
     getServerSnapshot,
   );
 
+  // Hydration: clear the in-memory cache so the next getSnapshot re-reads
+  // localStorage. Also seed from the server-fed list on first mount so
+  // the UI is correct without a fetch.
   useEffect(() => {
     migrateLegacy(userId);
     const store = getUserStore(userId);
     const key = storageKeyFor(userId);
-    if (store.memoryCache.has(key)) {
-      store.memoryCache.delete(key);
-      store.cachedSnapshot = null;
-      notify(userId);
+    if (isServerHydratedRef.current && initialServerSavedSpots) {
+      const ids = initialServerSavedSpots.map((s) => s.spotId)
+      const serialized = ids.length === 0 ? null : JSON.stringify(ids)
+      writeStorage(userId, serialized)
+      store.memoryCache.set(key, serialized)
+      store.cachedSnapshot = null
+      notify(userId)
+    } else if (store.memoryCache.has(key)) {
+      store.memoryCache.delete(key)
+      store.cachedSnapshot = null
+      notify(userId)
     }
-    hydratedRef.current = true;
-  }, [userId]);
+    hydratedRef.current = true
+  }, [userId, initialServerSavedSpots])
 
+  // Persist localStorage on every change (after hydration).
   useEffect(() => {
     if (!hydratedRef.current) return;
     const serialized =
@@ -174,33 +188,30 @@ export function useSavedSpots(userId: string = DEFAULT_USER_ID) {
     }
   }, [userId, savedIds]);
 
-  // DB sync skeleton — Stage A.7.
-  // Once `toggleSavedAction` / `listSavedSpotsAction` land in E.6, this effect will:
-  //   1. On mount, if the user is online, list the server's saved spot ids and reconcile local state.
-  //   2. On every `savedIds` change (after hydration), fire a Server Action to push the new set to the DB.
-  // For now the localStorage write above is the only persistence.
-  useEffect(() => {
-    // TODO(E.6): wire to Server Actions in src/app/actions/saved-spots.ts.
-  }, [userId, savedIds]);
-
   const isSaved = useCallback((id: string) => savedIds.has(id), [savedIds]);
 
   const toggle = useCallback(
-    (id: string) => {
-      const store = getUserStore(userId);
-      const next = new Set(savedIds);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
-      const serialized = next.size === 0 ? null : JSON.stringify(Array.from(next));
-      const err = writeStorage(userId, serialized);
-      store.cachedSnapshot = null;
-      notify(userId);
-      if (err && err !== lastErrorRef.current) {
-        lastErrorRef.current = err;
-        showToast(`Saved spots could not be persisted: ${err}`, 'error');
+    async (id: string) => {
+      const store = getUserStore(userId)
+      const next = new Set(savedIds)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      const serialized = next.size === 0 ? null : JSON.stringify(Array.from(next))
+      writeStorage(userId, serialized)
+      store.cachedSnapshot = null
+      notify(userId)
+
+      // Push to the server. On failure, roll back + toast.
+      try {
+        await toggleSavedAction(id)
+      } catch (err) {
+        const prevSerialized =
+          savedIds.size === 0 ? null : JSON.stringify(Array.from(savedIds))
+        writeStorage(userId, prevSerialized)
+        store.cachedSnapshot = null
+        notify(userId)
+        const msg = err instanceof Error ? err.message : 'Toggle failed'
+        showToast(`Could not sync saved spot: ${msg}`, 'error')
       }
     },
     [userId, savedIds],
@@ -212,4 +223,21 @@ export function useSavedSpots(userId: string = DEFAULT_USER_ID) {
     toggle,
     count: savedIds.size,
   } as const;
+}
+
+function migrateLegacy(userId: string): void {
+  if (typeof window === 'undefined') return;
+  try {
+    const key = storageKeyFor(userId);
+    const isDefault = userId === DEFAULT_USER_ID;
+    if (isDefault) {
+      const legacy = window.localStorage.getItem(STORAGE_KEY_LEGACY);
+      if (legacy && !window.localStorage.getItem(key)) {
+        window.localStorage.setItem(key, legacy);
+      }
+    }
+    window.localStorage.removeItem(STORAGE_KEY_LEGACY);
+  } catch {
+    // ignore
+  }
 }

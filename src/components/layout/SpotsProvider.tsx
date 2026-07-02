@@ -3,9 +3,12 @@
 import { useEffect, type ReactNode } from 'react';
 import type { Spot } from '@/lib/types';
 import type { CachedSpotWeather } from '@/lib/weather/weather-cached';
+import type { User } from '@/lib/user';
 import { useSpotsStore } from '@/stores/spots-store';
 import { HydrationGate } from '@/stores/HydrationGate';
 import { WeatherProvider } from './WeatherContext';
+import { UserProvider } from '@/lib/user-context';
+import { SavedSpotsProvider } from '@/lib/saved-spots-context';
 import { AppShell } from './AppShell';
 import type { SavedSpot } from '@/types/saved-spot';
 
@@ -13,25 +16,30 @@ export function SpotsProvider({
   children,
   initialSpots,
   initialWeather,
-  savedSpots,
+  initialUser,
+  initialSavedSpots,
 }: {
   children: ReactNode;
   initialSpots: readonly Spot[];
   initialWeather: Record<string, CachedSpotWeather>;
-  savedSpots?: readonly SavedSpot[];
+  initialUser: User;
+  initialSavedSpots?: readonly SavedSpot[];
 }) {
   const setSpots = useSpotsStore((s) => s.setSpots);
 
   useEffect(() => {
     setSpots(initialSpots);
   }, [initialSpots, setSpots]);
-  void savedSpots;
 
   return (
-    <WeatherProvider initialWeather={initialWeather}>
-      <HydrationGate>
-        <AppShell>{children}</AppShell>
-      </HydrationGate>
-    </WeatherProvider>
+    <UserProvider user={initialUser}>
+      <WeatherProvider initialWeather={initialWeather}>
+        <SavedSpotsProvider initial={initialSavedSpots ?? []}>
+          <HydrationGate>
+            <AppShell>{children}</AppShell>
+          </HydrationGate>
+        </SavedSpotsProvider>
+      </WeatherProvider>
+    </UserProvider>
   );
 }

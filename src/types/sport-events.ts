@@ -38,6 +38,7 @@ export interface SportEventLocation {
 
 export interface SportEvent {
   id: string;
+  slug: string;
   name: string;
   shortName?: string;
   url: string;
@@ -49,6 +50,8 @@ export interface SportEvent {
   location: SportEventLocation;
   tier: SportEventTier;
   featured?: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface SportEventEnriched extends SportEvent {

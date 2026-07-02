@@ -1,5 +1,6 @@
 verifyDepsBeforeRun: false
 minimumReleaseAge: 0
 allowBuilds:
+  esbuild: set this to true or false
   sharp: false
   unrs-resolver: false

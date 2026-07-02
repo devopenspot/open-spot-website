@@ -1,5 +1,5 @@
 import { cache } from "react"
-import { getSpotRepository } from "@/lib/repositories"
+import { getSpotRepositoryAsync } from "@/lib/repositories"
 import { getCachedSpotWeather } from "./weather-cached"
 import type { CachedSpotWeather } from "./weather-cached"
 import type { Spot } from "@/lib/types"
@@ -22,7 +22,8 @@ export async function getWeatherForSpots(
 
 export const getWeatherForAllSpots = cache(
   async (): Promise<Record<string, CachedSpotWeather>> => {
-    const { items } = await getSpotRepository().list()
+    const repo = await getSpotRepositoryAsync()
+    const { items } = await repo.list()
     return getWeatherForSpots(items)
   },
 )

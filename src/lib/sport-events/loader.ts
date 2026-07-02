@@ -1,6 +1,7 @@
 import { cache } from "react";
 import { connection } from "next/server";
-import { getEventRepository } from "@/lib/repositories";
+import { getEventRepositoryAsync } from "@/lib/repositories";
+import { deriveStatus } from "./status";
 import type { SportEvent, SportEventEnriched, SportEventStatus } from "@/types/sport-events";
 
 const STATUS_PRIORITY: Record<SportEventStatus, number> = {
@@ -21,18 +22,6 @@ const MONTH_YEAR_FORMAT = new Intl.DateTimeFormat("en-US", {
 
 function toUTCDate(iso: string): Date {
   return new Date(`${iso}T00:00:00Z`);
-}
-
-function endOfDayUTC(iso: string): Date {
-  return new Date(`${iso}T23:59:59Z`);
-}
-
-function deriveStatus(event: SportEvent, now: Date): SportEventStatus {
-  const start = toUTCDate(event.startDate);
-  const end = event.endDate ? endOfDayUTC(event.endDate) : endOfDayUTC(event.startDate);
-  if (now < start) return "upcoming";
-  if (now > end) return "completed";
-  return "live";
 }
 
 function formatDateRange(event: SportEvent): string {
@@ -85,7 +74,8 @@ function sortEvents(events: readonly SportEventEnriched[]): readonly SportEventE
 async function loadSportEvents(): Promise<readonly SportEventEnriched[]> {
   await connection();
   const now = new Date();
-  const { items } = await getEventRepository().list();
+  const repo = await getEventRepositoryAsync();
+  const { items } = await repo.list();
   const enriched = items.map(event => enrich(event, now));
   return Object.freeze(sortEvents(enriched));
 }

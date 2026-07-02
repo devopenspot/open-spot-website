@@ -1,7 +1,2 @@
-import { getCurrentUser, type User } from '@/lib/user';
-
-export type { User };
-
-export function useUser(): User {
-  return getCurrentUser();
-}
+export { useUser } from "@/lib/user-context"
+export type { User } from "@/lib/user"

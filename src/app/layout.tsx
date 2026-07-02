@@ -1,8 +1,9 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter, Archivo_Narrow } from 'next/font/google';
 import { cn } from '@/lib/cn';
-import { getSpotRepository } from '@/lib/repositories';
+import { getSpotRepositoryAsync, getSavedSpotsRepositoryAsync } from '@/lib/repositories';
 import { getWeatherForAllSpots } from '@/lib/weather/weather-bundle';
+import { getServerUserFromCookies } from '@/lib/auth';
 import { SpotsProvider } from '@/components/layout/SpotsProvider';
 import './globals.css';
 
@@ -69,11 +70,20 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const [spotsResult, initialWeather] = await Promise.all([
-    getSpotRepository().list(),
+  const [spotsResult, initialWeather, initialUser] = await Promise.all([
+    getSpotRepositoryAsync(),
     getWeatherForAllSpots(),
+    getServerUserFromCookies(),
   ]);
-  const initialSpots = spotsResult.items;
+  const { items: initialSpots } = await spotsResult.list();
+  const initialSavedSpots =
+    initialUser.id === 'dev'
+      ? []
+      : (
+          await (await getSavedSpotsRepositoryAsync()).list(initialUser.id, {
+            limit: 200,
+          })
+        ).items
   return (
     <html
       lang="en"
@@ -81,7 +91,12 @@ export default async function RootLayout({
       suppressHydrationWarning
     >
       <body className="bg-background font-sans text-on-background antialiased">
-        <SpotsProvider initialSpots={initialSpots} initialWeather={initialWeather}>
+        <SpotsProvider
+          initialSpots={initialSpots}
+          initialWeather={initialWeather}
+          initialUser={initialUser}
+          initialSavedSpots={initialSavedSpots}
+        >
           {children}
         </SpotsProvider>
       </body>
