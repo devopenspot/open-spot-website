@@ -1,4 +1,5 @@
 import { sql } from "drizzle-orm"
+import { cacheLife, cacheTag } from "next/cache"
 import { withRetry, getDbClient } from "./client"
 
 export interface DbHealth {
@@ -9,6 +10,14 @@ export interface DbHealth {
 }
 
 export async function checkDbHealth(): Promise<DbHealth> {
+  "use cache"
+  cacheTag("db-health")
+  cacheLife({
+    revalidate: 30,
+    stale: 30,
+    expire: 300,
+  })
+
   const started = Date.now()
   try {
     const { db } = getDbClient()

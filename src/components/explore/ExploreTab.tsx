@@ -72,7 +72,11 @@ export default function ExploreTab({ events, featured }: ExploreTabProps) {
               key={region.name}
               className="group relative h-48 overflow-hidden rounded-xl bg-black border border-outline-variant shadow-sm"
             >
-              <a href={region.link} rel="noopener noreferrer">
+              <a
+                href={region.link}
+                rel="noopener noreferrer"
+                className="block relative h-full w-full"
+              >
                 <Image
                   src={region.image}
                   alt={region.name}

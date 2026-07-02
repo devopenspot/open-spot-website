@@ -40,7 +40,7 @@ const EnvSchema = z
     SUPABASE_SECRET_KEY: z.string().optional(),
     SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),
 
-    // Browser-public Supabase. The middleware and @supabase/ssr browser client
+    // Browser-public Supabase. The proxy and @supabase/ssr browser client
     // read NEXT_PUBLIC_* first, with the server-only SUPABASE_* as fallback.
     NEXT_PUBLIC_SUPABASE_URL: z.string().url().optional(),
     NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().optional(),
