@@ -1,0 +1,101 @@
+"use client";
+
+import Image from "next/image";
+import type { Spot } from "@/lib/types";
+import { getSpotDistanceLabel } from "@/lib/spots/geo";
+
+interface MapSidebarProps {
+  spots: readonly Spot[];
+  activeId: string | null;
+  savedIds: Set<string>;
+  onSelect: (spot: Spot) => void;
+}
+
+export function MapSidebar({ spots, activeId, savedIds, onSelect }: MapSidebarProps) {
+  return (
+    <aside
+      id="map-sidebar"
+      aria-label="Spot list"
+      className="w-full lg:w-80 flex flex-col border border-outline-variant rounded-2xl bg-surface-bright overflow-hidden sm:h-[150px] lg:h-full"
+    >
+      <div className="p-4 border-b border-outline-variant bg-surface-container-low">
+        <div className="flex items-center justify-between mb-3">
+          <span className="font-mono text-[10px] font-bold tracking-widest text-secondary uppercase">
+            Results
+          </span>
+          <span className="bg-primary/10 px-2 py-0.5 text-[9px] font-mono font-semibold text-primary">
+            {spots.length} spots active
+          </span>
+        </div>
+      </div>
+
+      <div
+        id="sidebar-spots-list"
+        aria-label="Filtered spots"
+        className="flex-1 flex flex-row lg:flex-col overflow-x-auto lg:overflow-y-auto p-3 space-x-2 lg:space-x-0 lg:space-y-2 no-scrollbar snap-x lg:snap-none snap-mandatory"
+      >
+        {spots.map((spot) => {
+          const isHovered = activeId === spot.id;
+          const isSaved = savedIds.has(spot.id);
+          return (
+            <button
+              key={spot.id}
+              id={`sidebar-spot-item-${spot.id}`}
+              type="button"
+              onClick={() => onSelect(spot)}
+              className={`shrink-0 lg:shrink w-48 lg:w-full snap-start p-3 rounded-xl border text-left transition-all flex space-x-3 items-center ${
+                isHovered
+                  ? "border-primary bg-surface-container-high shadow-sm"
+                  : "border-outline-variant/60 bg-surface-container-low hover:border-outline hover:bg-surface-container"
+              }`}
+            >
+              <span className="relative h-12 w-12 rounded-lg bg-black overflow-hidden shrink-0">
+                <Image
+                  src={spot.image}
+                  alt=""
+                  fill
+                  sizes="48px"
+                  className="object-cover grayscale"
+                  referrerPolicy="no-referrer"
+                  unoptimized
+                />
+              </span>
+
+              <span className="flex-1 min-w-0">
+                <span className="flex items-center justify-between">
+                  <span className="font-mono text-[9px] font-semibold text-secondary uppercase">
+                    {spot.type}
+                  </span>
+                  <span className="text-[8px] font-mono font-medium text-secondary">
+                    {getSpotDistanceLabel(spot)}
+                  </span>
+                </span>
+                <span className="block font-display text-xs font-bold uppercase tracking-wide truncate text-on-surface">
+                  {spot.name}
+                </span>
+                <span className="flex items-center justify-between mt-1">
+                  <span className="text-[9px] text-secondary truncate">{spot.city}</span>
+                  <span className="flex items-center space-x-1">
+                    <span
+                      aria-hidden="true"
+                      className="h-1 w-1 rounded-full bg-primary"
+                    />
+                    <span className="text-[8px] font-mono text-secondary">
+                      CRD: {spot.crowdLevel}%
+                    </span>
+                  </span>
+                </span>
+                {isSaved && <span className="visually-hidden">Saved spot</span>}
+              </span>
+            </button>
+          );
+        })}
+        {spots.length === 0 && (
+          <div className="p-6 text-center text-xs text-secondary font-mono">
+            No locations match filter
+          </div>
+        )}
+      </div>
+    </aside>
+  );
+}

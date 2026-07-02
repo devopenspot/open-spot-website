@@ -2,8 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { BrandLogo } from './BrandLogo';
-import { DesktopNav } from './DesktopNav';
-import { MobileNav } from './MobileNav';
+import { NavList } from './NavList';
 import { MobileDrawerTrigger } from './MobileDrawerTrigger';
 import { SearchTrigger } from './SearchTrigger';
 import { useUIStore } from '@/stores/ui-store';
@@ -29,7 +28,8 @@ export function Header() {
       <div className="mx-auto flex max-w-7xl items-center justify-between">
         <BrandLogo />
 
-        <DesktopNav
+        <NavList
+          variant="desktop"
           savedCount={savedCount}
           controlsId={MAIN_CONTENT_ID}
           onSelect={handleSelect}
@@ -51,7 +51,8 @@ export function Header() {
         </div>
       </div>
 
-      <MobileNav
+      <NavList
+        variant="mobile-tab"
         savedCount={savedCount}
         controlsId={MAIN_CONTENT_ID}
         onSelect={handleSelect}

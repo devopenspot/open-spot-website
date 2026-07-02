@@ -66,7 +66,12 @@ The baseline every later stage assumes. Snapshot taken after the Stage A-prep cl
 | A.5 (Server Action) | **done** | `app/actions/spots.ts`, `PostTab` migrated, `addSpot` removed |
 | A.6 (Zustand stores) | **done** | `stores/*`, `SpotsProvider` + `WeatherContext` + `HydrationGate`, ~13 call sites migrated, `AppStateProvider` + `AppProviders` deleted |
 | A.7 (useSavedSpots userId) | **done** | per-user key namespacing, `userId` parameter, DB-sync skeleton |
-| B (composition cleanup) | not started | nav, map, post, primitives |
+| B.1 (NavList + useNavList) | **done** | `components/layout/NavList.tsx`, `hooks/useNavList.tsx`; `DesktopNav.tsx` + `MobileNav.tsx` deleted |
+| B.2 (MobileDrawer uses `<Overlay flush>`) | **done** | `components/layout/MobileDrawer.tsx`; escape, focus trap, body scroll lock delegated to `Overlay` |
+| B.3 (UI primitives) | **done** | `components/ui/{Eyebrow,SurfaceCard,PrimaryButton,TabPanel}.tsx` |
+| B.4 (MapTab split) | **done** | `components/map/{MapCanvas,MapSidebar,MapInfoPopup,MapLegend}.tsx`; `MapInfoPopup` gains focus trap + escape |
+| B.5 (PostTab split) | **done** | `components/post/{PostForm,PostSuccessScreen}.tsx`; `PostTab` is a thin orchestrator |
+| B.6 (noUncheckedIndexedAccess) | **done** | enabled in `tsconfig.json`; non-null fixes in `useFocusTrap` + `weather/mappers` |
 | C (testing infra) | not started | vitest, contract test |
 | E (DB + PostGIS + Supabase) | not started | this SPEC |
 

@@ -16,7 +16,7 @@ function hash(s: string): number {
 }
 
 function dayNameFromUnix(dt: number): string {
-	return DAY_NAMES[new Date(dt * 1000).getDay()]
+	return DAY_NAMES[new Date(dt * 1000).getDay()] ?? FALLBACK_DAY
 }
 
 function pickRepresentativeForDay(items: WeatherItem[]): WeatherItem | undefined {

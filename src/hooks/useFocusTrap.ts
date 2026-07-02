@@ -41,8 +41,8 @@ export function useFocusTrap<T extends HTMLElement>(
         e.preventDefault();
         return;
       }
-      const first = items[0];
-      const last = items[items.length - 1];
+      const first = items[0]!;
+      const last = items[items.length - 1]!;
       const activeEl = document.activeElement as HTMLElement | null;
 
       if (e.shiftKey) {
