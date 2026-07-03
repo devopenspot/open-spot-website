@@ -33,17 +33,18 @@ const EnvSchema = z
       .string()
       .default("postgresql://dev:dev@localhost:5432/app"),
 
-    // Supabase. Code-side name: SUPABASE_SECRET_KEY (server-only, service role).
-    // The SPEC §E.4 calls this SUPABASE_SERVICE_ROLE_KEY — both names map to the
-    // same value; we read SUPABASE_SECRET_KEY first, fall back to the SPEC name.
+    // Supabase server-only admin key (`sb_secret_...`). Used only for
+    // server-side admin operations (e.g. upserting into `profiles` with
+    // RLS bypass). Never read by the SSR client or the proxy.
     SUPABASE_URL: z.string().url().optional(),
     SUPABASE_SECRET_KEY: z.string().optional(),
-    SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),
 
-    // Browser-public Supabase. The proxy and @supabase/ssr browser client
-    // read NEXT_PUBLIC_* first, with the server-only SUPABASE_* as fallback.
+    // Browser-public Supabase publishable key (`sb_publishable_...`). The
+    // proxy and the @supabase/ssr SSR client both use this — the SSR
+    // client because it represents a user-context call that must respect
+    // RLS, the proxy because it refreshes the cookie-based user session.
     NEXT_PUBLIC_SUPABASE_URL: z.string().url().optional(),
-    NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().optional(),
+    NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: z.string().optional(),
 
     // Supabase Postgres. The code name is DB_CONNETION_STRING (typo, kept for
     // back-compat with the CI workflow and any operator that already set it);
@@ -111,12 +112,12 @@ export function getSupabaseUrl(): string | null {
   return env.NEXT_PUBLIC_SUPABASE_URL ?? env.SUPABASE_URL ?? null
 }
 
-export function getSupabaseAnonKey(): string | null {
-  return env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? null
+export function getSupabasePublishableKey(): string | null {
+  return env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? null
 }
 
 export function getSupabaseServiceRoleKey(): string | null {
-  return env.SUPABASE_SECRET_KEY ?? env.SUPABASE_SERVICE_ROLE_KEY ?? null
+  return env.SUPABASE_SECRET_KEY ?? null
 }
 
 export function getSpotImagesBucket(): string {

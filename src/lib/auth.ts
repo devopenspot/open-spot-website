@@ -20,11 +20,21 @@ export async function getServerUserFromCookies(): Promise<User> {
     const { isSupabaseConfigured } = await import("@/lib/env")
     if (!isSupabaseConfigured()) return getDevUser()
     const supabase = await createSupabaseServerClient()
-    const { data, error } = await supabase.auth.getUser()
-    if (error || !data.user) return getDevUser()
-    const u = data.user
-    const meta = (u.user_metadata ?? {}) as Record<string, unknown>
-    const email = u.email ?? getDevUser().email
+    // getClaims validates the session cookie's JWT (locally with the JWKS
+    // for asymmetric keys, via the auth server for symmetric). It does not
+    // make a network round trip to fetch the full user record on every
+    // request, unlike getUser(). The user_metadata we need for display
+    // (name, initials, avatar) is embedded in the JWT payload.
+    const { data, error } = await supabase.auth.getClaims()
+    if (error || !data?.claims) return getDevUser()
+    const claims = data.claims as {
+      sub?: string
+      email?: string
+      user_metadata?: Record<string, unknown>
+    }
+    if (!claims.sub) return getDevUser()
+    const meta = (claims.user_metadata ?? {}) as Record<string, unknown>
+    const email = claims.email ?? getDevUser().email
     const name =
       (typeof meta["display_name"] === "string" && meta["display_name"]) ||
       (typeof meta["name"] === "string" && meta["name"]) ||
@@ -42,7 +52,7 @@ export async function getServerUserFromCookies(): Promise<User> {
       (typeof meta["avatar_url"] === "string" && meta["avatar_url"]) ||
       (typeof meta["picture"] === "string" && meta["picture"]) ||
       null
-    return { id: u.id, name, email, initials, avatarUrl }
+    return { id: claims.sub, name, email, initials, avatarUrl }
   } catch {
     return getDevUser()
   }

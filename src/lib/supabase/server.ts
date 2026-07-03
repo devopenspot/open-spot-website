@@ -1,14 +1,21 @@
 import "server-only"
 import { cookies } from "next/headers"
 import { createServerClient } from "@supabase/ssr"
-import { isSupabaseConfigured, env } from "@/lib/env"
+import {
+  getSupabaseUrl,
+  getSupabasePublishableKey,
+} from "@/lib/env"
 
 export async function createSupabaseServerClient() {
-  if (!isSupabaseConfigured()) {
-    throw new Error("Supabase is not configured (SUPABASE_URL / SUPABASE_SECRET_KEY)")
+  const url = getSupabaseUrl()
+  const publishableKey = getSupabasePublishableKey()
+  if (!url || !publishableKey) {
+    throw new Error(
+      "Supabase SSR client is not configured: set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
+    )
   }
   const cookieStore = await cookies()
-  return createServerClient(env.SUPABASE_URL!, env.SUPABASE_SECRET_KEY!, {
+  return createServerClient(url, publishableKey, {
     cookies: {
       getAll() {
         return cookieStore.getAll()

@@ -1,18 +1,18 @@
 import { NextResponse, type NextRequest } from "next/server"
 import { createServerClient } from "@supabase/ssr"
+import { log } from "@/lib/log"
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL
-const SUPABASE_ANON_KEY =
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? process.env.SUPABASE_SECRET_KEY
+const SUPABASE_PUBLISHABLE_KEY = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? null
 
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request })
 
-  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
     return response
   }
 
-  const supabase = createServerClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  const supabase = createServerClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
     cookies: {
       getAll() {
         return request.cookies.getAll()
@@ -29,12 +29,12 @@ export async function proxy(request: NextRequest) {
     },
   })
 
-  // Refresh the session if needed. Wrapped in try/catch so a missing
-  // Supabase config doesn't break the whole request.
-  try {
-    await supabase.auth.getUser()
-  } catch {
-    // no-op
+  // Refresh the session if needed. getClaims validates the cookie JWT
+  // locally (asymmetric signing) or via the auth server (symmetric) — no
+  // network round trip to fetch the full user record on every request.
+  const { error } = await supabase.auth.getClaims()
+  if (error) {
+    log.warn("proxy: supabase.auth.getClaims failed", error.message)
   }
 
   return response

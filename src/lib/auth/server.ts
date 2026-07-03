@@ -1,7 +1,7 @@
 import "server-only"
 import { NextResponse } from "next/server"
 import { redirect } from "next/navigation"
-import { isSupabaseConfigured, getSupabaseUrl, getSupabaseAnonKey } from "@/lib/env"
+import { isSupabaseConfigured, getSupabaseUrl, getSupabasePublishableKey } from "@/lib/env"
 import { createSupabaseServerClient } from "@/lib/supabase/server"
 import type { User } from "@/lib/user"
 import { getServerUserFromCookies } from "@/lib/auth"
@@ -15,11 +15,11 @@ export class AuthConfigError extends Error {
   }
 }
 
-export function requireAuthConfig(): { url: string; anonKey: string } {
+export function requireAuthConfig(): { url: string; publishableKey: string } {
   const url = getSupabaseUrl()
-  const anonKey = getSupabaseAnonKey()
-  if (!url || !anonKey) throw new AuthConfigError()
-  return { url, anonKey }
+  const publishableKey = getSupabasePublishableKey()
+  if (!url || !publishableKey) throw new AuthConfigError()
+  return { url, publishableKey }
 }
 
 export function configNotReadyResponse() {
@@ -35,9 +35,22 @@ export function sanitizeNext(value: unknown): string {
   return value
 }
 
+/**
+ * Resolves the request's external origin — used as the `redirectTo` base
+ * for the OAuth flow. Order of preference:
+ *   1. `x-forwarded-origin` (set by some proxies / CDNs).
+ *   2. `x-forwarded-host` + `x-forwarded-proto` (Vercel and most reverse
+ *      proxies; defaults `proto` to `https` when missing).
+ *   3. `new URL(request.url).origin` as a last-resort fallback.
+ */
 export function originFromRequest(request: Request): string {
   const fromHeader = request.headers.get("x-forwarded-origin")
   if (fromHeader) return fromHeader
+  const fwdHost = request.headers.get("x-forwarded-host")
+  if (fwdHost) {
+    const fwdProto = request.headers.get("x-forwarded-proto") ?? "https"
+    return `${fwdProto}://${fwdHost}`
+  }
   return new URL(request.url).origin
 }
 
