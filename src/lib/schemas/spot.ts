@@ -5,12 +5,9 @@ export const SpotTypeSchema = z.enum([
   "DIY",
   "Stair",
   "Bowl",
+  "Park",
   "Ledges",
   "Pools",
-  "Vert",
-  "Rail",
-  "Street",
-  "Skatepark",
 ]);
 
 export const SpotLocationSchema = z.object({

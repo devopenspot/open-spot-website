@@ -6,6 +6,9 @@ export const SportDisciplineSchema = z.enum([
   "Inline",
   "Scooter",
   "Rollerblade",
+  "Wakeboard",
+  "Snowboard",
+  "Ski",
 ]);
 
 export const SportEventTierSchema = z.enum([
