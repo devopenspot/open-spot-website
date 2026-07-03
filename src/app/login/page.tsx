@@ -1,38 +1,59 @@
 'use client';
 
-import { useState, type FormEvent } from 'react'
-import { useRouter } from 'next/navigation'
-import { getSupabaseBrowserClient } from '@/lib/supabase/browser'
+import { useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { useTransition } from 'react'
 import { showToast } from '@/hooks/useToast'
+
+function isSafeNext(value: string | null): string {
+  if (!value) return '/'
+  if (!value.startsWith('/') || value.startsWith('//')) return '/'
+  return value
+}
 
 export default function LoginPage() {
   const router = useRouter()
-  const [email, setEmail] = useState('')
-  const [sending, setSending] = useState(false)
-  const [sent, setSent] = useState(false)
+  const searchParams = useSearchParams()
+  const [pending, startTransition] = useTransition()
+  const [loading, setLoading] = useState(false)
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault()
-    if (!email) return
-    setSending(true)
-    try {
-      const supabase = getSupabaseBrowserClient()
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
-        },
-      })
-      if (error) {
-        showToast(error.message, 'error')
-      } else {
-        setSent(true)
-        showToast('Check your email for the magic link', 'success')
+  const errorParam = searchParams.get('error')
+  const errorMessage =
+    errorParam === 'oauth'
+      ? 'Google sign-in was cancelled or failed. Try again.'
+      : null
+
+  const next = isSafeNext(searchParams.get('next'))
+
+  const handleGoogleSignIn = () => {
+    setLoading(true)
+    startTransition(async () => {
+      try {
+        const res = await fetch('/api/auth/signin/google', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ next }),
+        })
+        const data = (await res.json().catch(() => null)) as
+          | { url?: string; error?: string }
+          | null
+        if (!res.ok || !data?.url) {
+          const message = data?.error ?? 'Sign-in is not available right now.'
+          showToast(message, 'error')
+          setLoading(false)
+          return
+        }
+        window.location.href = data.url
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message : 'Sign-in failed. Try again.'
+        showToast(message, 'error')
+        setLoading(false)
       }
-    } finally {
-      setSending(false)
-    }
+    })
   }
+
+  const busy = pending || loading
 
   return (
     <section
@@ -45,47 +66,73 @@ export default function LoginPage() {
         Sign in
       </h1>
       <p className="mt-2 text-xs text-secondary leading-relaxed">
-        We use a passwordless email link. We never store your password.
+        Continue with your Google account. We only read your name, email, and
+        profile photo — nothing else.
       </p>
-      {sent ? (
+
+      {errorMessage ? (
         <div
           role="status"
           aria-live="polite"
           className="mt-6 rounded-lg border border-primary/30 bg-primary/5 px-4 py-3 text-xs"
         >
-          Magic link sent to <span className="font-mono">{email}</span>. Check your inbox.
+          {errorMessage}
         </div>
-      ) : (
-        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-          <label className="block">
-            <span className="block font-mono text-[10px] font-bold uppercase tracking-wider text-secondary mb-1.5">
-              Email
-            </span>
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-lg border border-outline-variant bg-surface-bright p-3 text-xs font-medium text-on-surface shadow-sm focus:border-outline focus:outline-none"
-              placeholder="rider@openspot.local"
-            />
-          </label>
-          <button
-            type="submit"
-            disabled={sending}
-            className="w-full px-5 py-3 rounded-lg bg-on-surface text-surface text-xs font-bold tracking-widest uppercase hover:bg-on-surface/90 transition-all disabled:opacity-60"
-          >
-            {sending ? 'Sending…' : 'Send magic link'}
-          </button>
-        </form>
-      )}
+      ) : null}
+
+      <button
+        type="button"
+        onClick={handleGoogleSignIn}
+        disabled={busy}
+        className="mt-8 w-full inline-flex items-center justify-center gap-3 rounded-lg border border-outline bg-on-surface text-surface px-5 py-3 text-xs font-bold tracking-widest uppercase shadow-sm transition-all hover:bg-on-surface/90 disabled:opacity-60 disabled:cursor-not-allowed"
+      >
+        <GoogleMark />
+        <span>{busy ? 'Opening Google…' : 'Continue with Google'}</span>
+      </button>
+
+      <p className="mt-4 text-[10px] font-mono uppercase tracking-widest text-secondary text-center">
+        One account. One click. You're in.
+      </p>
+
       <button
         type="button"
         onClick={() => router.push('/')}
-        className="mt-6 text-[10px] font-mono uppercase tracking-widest text-secondary hover:text-on-surface"
+        className="mt-10 text-[10px] font-mono uppercase tracking-widest text-secondary hover:text-on-surface"
       >
         Back to directory
       </button>
     </section>
+  )
+}
+
+function GoogleMark() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      width="16"
+      height="16"
+      className="shrink-0"
+    >
+      <path
+        fill="#FFFFFF"
+        d="M21.6 12.227c0-.709-.064-1.39-.182-2.045H12v3.868h5.382a4.6 4.6 0 0 1-1.995 3.018v2.51h3.227c1.886-1.741 2.986-4.305 2.986-7.351z"
+      />
+      <path
+        fill="#FFFFFF"
+        fillOpacity="0.75"
+        d="M12 22c2.7 0 4.964-.895 6.614-2.422l-3.227-2.51c-.895.6-2.04.955-3.387.955-2.605 0-4.81-1.76-5.595-4.122H3.064v2.59A9.997 9.997 0 0 0 12 22z"
+      />
+      <path
+        fill="#FFFFFF"
+        fillOpacity="0.5"
+        d="M6.405 13.9A6.005 6.005 0 0 1 6.09 12c0-.66.114-1.3.314-1.9V7.51H3.064A9.997 9.997 0 0 0 2 12c0 1.614.386 3.14 1.064 4.49l3.341-2.59z"
+      />
+      <path
+        fill="#FFFFFF"
+        fillOpacity="0.85"
+        d="M12 5.977c1.468 0 2.786.505 3.823 1.495l2.868-2.867C16.96 2.987 14.695 2 12 2 8.118 2 4.764 4.222 3.064 7.51l3.341 2.59C7.19 7.736 9.395 5.977 12 5.977z"
+      />
+    </svg>
   )
 }

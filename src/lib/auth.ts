@@ -28,6 +28,7 @@ export async function getServerUserFromCookies(): Promise<User> {
     const name =
       (typeof meta["display_name"] === "string" && meta["display_name"]) ||
       (typeof meta["name"] === "string" && meta["name"]) ||
+      (typeof meta["full_name"] === "string" && meta["full_name"]) ||
       email.split("@")[0]!
     const initials =
       (typeof meta["initials"] === "string" && meta["initials"]) ||
@@ -37,7 +38,11 @@ export async function getServerUserFromCookies(): Promise<User> {
         .slice(0, 2)
         .join("") ||
       "OS"
-    return { id: u.id, name, email, initials }
+    const avatarUrl =
+      (typeof meta["avatar_url"] === "string" && meta["avatar_url"]) ||
+      (typeof meta["picture"] === "string" && meta["picture"]) ||
+      null
+    return { id: u.id, name, email, initials, avatarUrl }
   } catch {
     return getDevUser()
   }
@@ -53,6 +58,7 @@ export async function ensureProfileRow(user: User): Promise<void> {
         display_name: user.name,
         email: user.email,
         initials: user.initials,
+        avatar_url: user.avatarUrl,
       },
       { onConflict: "id" },
     )

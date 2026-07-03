@@ -24,6 +24,7 @@ export function useUser(): User {
       name: 'Active Scout',
       email: 'dev@openspot.local',
       initials: 'OS',
+      avatarUrl: null,
     }
   }
   return ctx

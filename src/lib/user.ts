@@ -3,6 +3,7 @@ export interface User {
   name: string;
   email: string;
   initials: string;
+  avatarUrl: string | null;
 }
 
 const DEV_USER: User = {
@@ -10,6 +11,7 @@ const DEV_USER: User = {
   name: 'Active Scout',
   email: 'devopenspot@gmail.com',
   initials: 'OS',
+  avatarUrl: null,
 };
 
 export function getCurrentUser(): User {

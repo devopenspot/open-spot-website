@@ -5,6 +5,8 @@ import { BrandLogo } from './BrandLogo';
 import { NavList } from './NavList';
 import { MobileDrawerTrigger } from './MobileDrawerTrigger';
 import { SearchTrigger } from './SearchTrigger';
+import { SignInLink } from './SignInLink';
+import { UserAvatar } from '@/components/ui';
 import { useUIStore } from '@/stores/ui-store';
 import { useSavedSpots } from '@/hooks/useSavedSpots';
 import { useUser } from '@/hooks/useUser';
@@ -38,14 +40,13 @@ export function Header() {
         <div id="header-actions" className="flex items-center space-x-3">
           <SearchTrigger onClick={openSearch} />
 
-          <div
-            id="user-avatar"
-            aria-label={user.name}
-            title={user.email}
-            className="hidden sm:flex h-8 w-8 items-center justify-center rounded-full bg-on-surface text-surface text-xs font-bold font-mono"
-          >
-            {user.initials}
-          </div>
+          <SignInLink variant="header" />
+
+          <UserAvatar
+            user={user}
+            size="sm"
+            className="hidden sm:inline-flex"
+          />
 
           <MobileDrawerTrigger />
         </div>
