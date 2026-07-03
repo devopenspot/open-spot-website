@@ -5,6 +5,7 @@ import { isSupabaseConfigured, getSupabaseUrl, getSupabasePublishableKey } from 
 import { createSupabaseServerClient } from "@/lib/supabase/server"
 import type { User } from "@/lib/user"
 import { getServerUserFromCookies } from "@/lib/auth"
+import { DEV_USER_ID } from "@/lib/user"
 
 const DEFAULT_NEXT = "/"
 
@@ -57,7 +58,7 @@ export function originFromRequest(request: Request): string {
 export async function getSessionUser(): Promise<User | null> {
   if (!isSupabaseConfigured()) return null
   const u = await getServerUserFromCookies()
-  if (u.id === "dev") return null
+  if (u.id === DEV_USER_ID) return null
   return u
 }
 
@@ -85,6 +86,27 @@ export async function requireUserOrRedirect(nextPath: string): Promise<User> {
   return user
 }
 
+/**
+ * Server-side guard for server actions and route handlers. Unlike
+ * {@link requireUserOrRedirect}, this throws a plain `Error` instead of
+ * triggering a navigation — callers handle it in a try/catch.
+ *
+ * - Supabase not configured (local dev without env): returns the dev
+ *   placeholder so actions still work.
+ * - Configured and signed in: returns the real user.
+ * - Configured and not signed in: throws.
+ */
+export async function requireUser(): Promise<User> {
+  if (!isSupabaseConfigured()) {
+    return getServerUserFromCookies()
+  }
+  const user = await getSessionUser()
+  if (!user) {
+    throw new Error("Not signed in")
+  }
+  return user
+}
+
 export async function signInWithGoogle(opts: {
   origin: string
   next: string
@@ -103,6 +125,28 @@ export async function signInWithGoogle(opts: {
 
 export async function signOut(): Promise<{ error: string | null }> {
   const supabase = await createSupabaseServerClient()
+  // `supabase.auth.signOut()` on the SSR client only clears the response
+  // cookies — the refresh token stays valid until natural expiry. Revoke
+  // it server-side via the service-role client so a leaked refresh token
+  // cannot outlive the user's sign-out click.
+  try {
+    const { data: sessionData } = await supabase.auth.getSession()
+    const accessToken = sessionData.session?.access_token
+    if (accessToken) {
+      const { getAdminClient } = await import("@/lib/auth")
+      const admin = getAdminClient()
+      if (admin) {
+        const { error: revokeError } =
+          await admin.auth.admin.signOut(accessToken)
+        if (revokeError) {
+          // best-effort: still clear cookies below
+          console.warn("signOut: admin.signOut failed", revokeError.message)
+        }
+      }
+    }
+  } catch {
+    // best-effort: never block sign-out on a revoke failure
+  }
   const { error } = await supabase.auth.signOut()
   return { error: error?.message ?? null }
 }

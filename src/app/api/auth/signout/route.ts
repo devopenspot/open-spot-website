@@ -1,7 +1,20 @@
-import { NextResponse } from "next/server"
+import { NextResponse, type NextRequest } from "next/server"
 import { AuthConfigError, configNotReadyResponse, signOut } from "@/lib/auth/server"
 
-export async function POST() {
+function originMatchesRequest(request: NextRequest): boolean {
+  const origin = request.headers.get("origin")
+  if (!origin) return false
+  try {
+    return new URL(request.url).origin === origin
+  } catch {
+    return false
+  }
+}
+
+export async function POST(request: NextRequest) {
+  if (!originMatchesRequest(request)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+  }
   try {
     const { error } = await signOut()
     if (error) {

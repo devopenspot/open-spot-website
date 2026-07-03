@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, type ReactNode } from 'react'
-import type { User } from '@/lib/user'
+import { DEV_USER_ID, type User } from '@/lib/user'
 
 const UserCtx = createContext<User | null>(null)
 
@@ -18,9 +18,8 @@ export function UserProvider({
 export function useUser(): User {
   const ctx = useContext(UserCtx)
   if (!ctx) {
-    // Fall back to a synthesized placeholder if the provider is missing.
     return {
-      id: 'dev',
+      id: DEV_USER_ID,
       name: 'Active Scout',
       email: 'dev@openspot.local',
       initials: 'OS',

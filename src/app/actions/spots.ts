@@ -9,7 +9,7 @@ import type { Spot } from "@/lib/types"
 import { uploadSpotImage } from "@/lib/supabase/storage"
 import { REFERENCE_LAT, REFERENCE_LON } from "@/lib/spots/geo"
 import { CROWD_LEVEL } from "@/lib/constants"
-import { getCurrentUser } from "@/lib/user"
+import { requireUser } from "@/lib/auth/server"
 
 function strField(form: FormData, key: string): string {
   const v = form.get(key)
@@ -30,6 +30,8 @@ function deriveCitySlug(city: string): string {
 }
 
 export async function createSpotAction(formData: FormData): Promise<Spot> {
+  const user = await requireUser()
+
   const fileEntry = formData.get("image")
   const file = fileEntry instanceof File && fileEntry.size > 0 ? fileEntry : null
 
@@ -77,7 +79,7 @@ export async function createSpotAction(formData: FormData): Promise<Spot> {
     crowdLevelLabel: crowdLabel(crowdLevel),
     country,
     location: { lat: REFERENCE_LAT, lon: REFERENCE_LON },
-    createdBy: getCurrentUser().id,
+    createdBy: user.id,
   }
 
   const parsed = NewSpotSchema.parse(input)

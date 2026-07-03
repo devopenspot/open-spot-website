@@ -14,6 +14,45 @@ function getAdminClient() {
   return cachedAdmin
 }
 
+export { getAdminClient }
+
+export interface AuthClaims {
+  sub?: string
+  email?: string
+  user_metadata?: Record<string, unknown>
+}
+
+/**
+ * Pure projection of a Supabase JWT payload to a {@link User}. Single source
+ * of truth for the `display_name` → `full_name` → `name` → email-local-part →
+ * "Scout" fallback chain and the avatar/picture lookup. Called from both
+ * the cookie reader and the OAuth callback so they cannot drift.
+ */
+export function userFromClaims(claims: AuthClaims): User | null {
+  if (!claims.sub) return null
+  const meta = (claims.user_metadata ?? {}) as Record<string, unknown>
+  const email = (typeof claims.email === "string" && claims.email) || ""
+  const name =
+    (typeof meta["display_name"] === "string" && meta["display_name"]) ||
+    (typeof meta["full_name"] === "string" && meta["full_name"]) ||
+    (typeof meta["name"] === "string" && meta["name"]) ||
+    email.split("@")[0] ||
+    "Scout"
+  const initials =
+    (typeof meta["initials"] === "string" && meta["initials"]) ||
+    name
+      .split(/\s+/)
+      .map((p) => p[0]?.toUpperCase() ?? "")
+      .slice(0, 2)
+      .join("") ||
+    "OS"
+  const avatarUrl =
+    (typeof meta["avatar_url"] === "string" && meta["avatar_url"]) ||
+    (typeof meta["picture"] === "string" && meta["picture"]) ||
+    null
+  return { id: claims.sub, name, email, initials, avatarUrl }
+}
+
 export async function getServerUserFromCookies(): Promise<User> {
   try {
     const { createSupabaseServerClient } = await import("@/lib/supabase/server")
@@ -27,32 +66,7 @@ export async function getServerUserFromCookies(): Promise<User> {
     // (name, initials, avatar) is embedded in the JWT payload.
     const { data, error } = await supabase.auth.getClaims()
     if (error || !data?.claims) return getDevUser()
-    const claims = data.claims as {
-      sub?: string
-      email?: string
-      user_metadata?: Record<string, unknown>
-    }
-    if (!claims.sub) return getDevUser()
-    const meta = (claims.user_metadata ?? {}) as Record<string, unknown>
-    const email = claims.email ?? getDevUser().email
-    const name =
-      (typeof meta["display_name"] === "string" && meta["display_name"]) ||
-      (typeof meta["name"] === "string" && meta["name"]) ||
-      (typeof meta["full_name"] === "string" && meta["full_name"]) ||
-      email.split("@")[0]!
-    const initials =
-      (typeof meta["initials"] === "string" && meta["initials"]) ||
-      name
-        .split(/\s+/)
-        .map((p) => p[0]?.toUpperCase() ?? "")
-        .slice(0, 2)
-        .join("") ||
-      "OS"
-    const avatarUrl =
-      (typeof meta["avatar_url"] === "string" && meta["avatar_url"]) ||
-      (typeof meta["picture"] === "string" && meta["picture"]) ||
-      null
-    return { id: claims.sub, name, email, initials, avatarUrl }
+    return userFromClaims(data.claims as AuthClaims) ?? getDevUser()
   } catch {
     return getDevUser()
   }

@@ -6,6 +6,7 @@ import { NavList } from './NavList';
 import { MobileDrawerTrigger } from './MobileDrawerTrigger';
 import { SearchTrigger } from './SearchTrigger';
 import { SignInLink } from './SignInLink';
+import { SignOutButton } from './SignOutButton';
 import { UserAvatar } from '@/components/ui';
 import { useUIStore } from '@/stores/ui-store';
 import { useSavedSpots } from '@/hooks/useSavedSpots';
@@ -47,6 +48,8 @@ export function Header() {
             size="sm"
             className="hidden sm:inline-flex"
           />
+
+          <SignOutButton className="hidden sm:inline-flex" />
 
           <MobileDrawerTrigger />
         </div>

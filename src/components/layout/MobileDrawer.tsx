@@ -6,10 +6,12 @@ import { Overlay } from '@/components/feedback/Overlay';
 import { UserAvatar } from '@/components/ui';
 import { NavList } from './NavList';
 import { SignInLink } from './SignInLink';
+import { SignOutButton } from './SignOutButton';
 import { useUIStore } from '@/stores/ui-store';
 import { useSavedSpots } from '@/hooks/useSavedSpots';
 import { useUser } from '@/hooks/useUser';
 import { APP_VERSION, BUILD_TZ } from '@/lib/system-info';
+import { DEV_USER_ID } from '@/lib/user';
 import { BrandLogo } from './BrandLogo';
 
 const DRAWER_ID = 'mobile-hamburger-portal';
@@ -89,20 +91,23 @@ export function MobileDrawer() {
       </div>
 
       <div className="border-t border-outline-variant pt-4 space-y-4">
-        {user.id === "dev" ? (
+        {user.id === DEV_USER_ID ? (
           <SignInLink variant="drawer" />
         ) : (
-          <div className="flex items-center space-x-3 p-1.5 rounded-lg">
-            <UserAvatar user={user} size="md" />
-            <div className="min-w-0 flex-1">
-              <span className="block text-[10px] font-mono font-bold uppercase text-secondary">
-                Active Scout
-              </span>
-              <span className="block text-xs font-bold text-on-surface truncate">
-                {user.email}
-              </span>
+          <>
+            <div className="flex items-center space-x-3 p-1.5 rounded-lg">
+              <UserAvatar user={user} size="md" />
+              <div className="min-w-0 flex-1">
+                <span className="block text-[10px] font-mono font-bold uppercase text-secondary">
+                  Active Scout
+                </span>
+                <span className="block text-xs font-bold text-on-surface truncate">
+                  {user.email}
+                </span>
+              </div>
             </div>
-          </div>
+            <SignOutButton variant="drawer" />
+          </>
         )}
 
         <div className="flex items-center justify-between text-[9px] font-mono text-secondary px-1">

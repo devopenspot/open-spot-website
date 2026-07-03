@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
-import { ensureProfileRow } from '@/lib/auth'
+import { ensureProfileRow, userFromClaims, type AuthClaims } from '@/lib/auth'
 import { isSupabaseConfigured } from '@/lib/env'
 import { sanitizeNext } from '@/lib/auth/server'
 import { log } from '@/lib/log'
@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
   // Log which query keys are present so we can diagnose the
   // `?error=oauth` redirect without dumping the one-time `code`.
   const presentKeys = Array.from(url.searchParams.keys())
-  log.error('auth/callback: hit', { presentKeys, hasCode: Boolean(code) })
+  log.info('auth/callback: hit', { presentKeys, hasCode: Boolean(code) })
 
   if (!isSupabaseConfigured()) {
     return NextResponse.redirect(new URL(next, url))
@@ -38,35 +38,9 @@ export async function GET(request: NextRequest) {
     log.error('auth/callback: getClaims failed after exchange', claimsError.message)
     return NextResponse.redirect(new URL('/login?error=oauth', url))
   }
-  const claims = claimsResult?.claims
-  if (claims?.sub) {
-    const meta = (claims.user_metadata ?? {}) as Record<string, unknown>
-    const email = (typeof claims.email === 'string' && claims.email) || ''
-    const name =
-      (typeof meta['display_name'] === 'string' && meta['display_name']) ||
-      (typeof meta['full_name'] === 'string' && meta['full_name']) ||
-      (typeof meta['name'] === 'string' && meta['name']) ||
-      email.split('@')[0] ||
-      'Scout'
-    const initials =
-      (typeof meta['initials'] === 'string' && meta['initials']) ||
-      name
-        .split(/\s+/)
-        .map((p: string) => p[0]?.toUpperCase() ?? '')
-        .slice(0, 2)
-        .join('') ||
-      'OS'
-    const avatarUrl =
-      (typeof meta['avatar_url'] === 'string' && meta['avatar_url']) ||
-      (typeof meta['picture'] === 'string' && meta['picture']) ||
-      null
-    await ensureProfileRow({
-      id: claims.sub,
-      name,
-      email,
-      initials,
-      avatarUrl,
-    })
+  const user = userFromClaims(claimsResult?.claims as AuthClaims | undefined ?? {})
+  if (user) {
+    await ensureProfileRow(user)
   }
   return NextResponse.redirect(new URL(next, url))
 }

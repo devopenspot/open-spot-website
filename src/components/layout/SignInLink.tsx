@@ -4,6 +4,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useUser } from "@/hooks/useUser"
 import { cn } from "@/lib/cn"
+import { DEV_USER_ID } from "@/lib/user"
 
 type Variant = "header" | "drawer"
 
@@ -25,7 +26,7 @@ interface SignInLinkProps {
 export function SignInLink({ variant, className }: SignInLinkProps) {
   const user = useUser()
   const pathname = usePathname()
-  if (user.id !== "dev") return null
+  if (user.id !== DEV_USER_ID) return null
   const search =
     pathname && pathname !== "/login"
       ? `?next=${encodeURIComponent(pathname)}`

@@ -1,36 +1,14 @@
 'use client';
 
-import { useTransition } from 'react'
-import { useRouter } from 'next/navigation'
+// SPEC §A.1: no server actions for auth. Sign-out is a client `fetch` to
+// the dedicated `/api/auth/signout` route handler.
 import { useUser } from '@/hooks/useUser'
-import { showToast } from '@/hooks/useToast'
+import { useSignOut } from '@/hooks/useSignOut'
 import { UserAvatar } from '@/components/ui'
 
 export default function AccountPage() {
-  const router = useRouter()
   const user = useUser()
-  const [pending, startTransition] = useTransition()
-
-  const handleSignOut = () => {
-    startTransition(async () => {
-      try {
-        const res = await fetch('/api/auth/signout', { method: 'POST' })
-        const data = (await res.json().catch(() => null)) as
-          | { ok?: boolean; error?: string }
-          | null
-        if (!res.ok || !data?.ok) {
-          showToast(data?.error ?? 'Sign-out failed', 'error')
-          return
-        }
-        showToast('Signed out', 'success')
-        router.push('/')
-        router.refresh()
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : 'Sign-out failed'
-        showToast(msg, 'error')
-      }
-    })
-  }
+  const { signOut, pending } = useSignOut()
 
   return (
     <section
@@ -77,8 +55,9 @@ export default function AccountPage() {
 
       <button
         type="button"
-        onClick={handleSignOut}
+        onClick={signOut}
         disabled={pending}
+        aria-busy={pending}
         className="mt-6 w-full px-5 py-3 rounded-lg border border-outline text-xs font-bold tracking-widest uppercase hover:bg-surface-container transition-all disabled:opacity-60 disabled:cursor-not-allowed"
       >
         {pending ? 'Signing out…' : 'Sign out'}

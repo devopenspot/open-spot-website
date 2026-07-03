@@ -6,8 +6,10 @@ export interface User {
   avatarUrl: string | null;
 }
 
+export const DEV_USER_ID = 'dev';
+
 const DEV_USER: User = {
-  id: 'dev',
+  id: DEV_USER_ID,
   name: 'Active Scout',
   email: 'devopenspot@gmail.com',
   initials: 'OS',
