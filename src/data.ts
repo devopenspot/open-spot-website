@@ -129,15 +129,16 @@ export const COUNTRY_NAME_OVERRIDES: Readonly<Record<string, string>> = {
   中国: "China",
 } as const;
 
-export const COUNTRY_TO_REGION: Readonly<Record<string, string>> = REGIONS_DATA.reduce(
-  (acc, region) => {
-    for (const country of region.countries) {
-      acc[country] = region.name;
-    }
-    return acc;
-  },
-  {} as Record<string, string>,
-);
+export const COUNTRY_TO_REGION: Readonly<Record<string, string>> =
+  REGIONS_DATA.reduce(
+    (acc, region) => {
+      for (const country of region.countries) {
+        acc[country] = region.name;
+      }
+      return acc;
+    },
+    {} as Record<string, string>,
+  );
 
 export const POPULAR_SEARCH_TERMS: readonly string[] = [
   "Barcelona Skateboarding",
