@@ -67,32 +67,34 @@ There is currently no admin concept in the codebase. We introduce **email allow-
 `src/lib/admin.ts` (new):
 
 ```ts
-import "server-only";
-import { getServerUserFromCookies } from "@/lib/auth";
-import { DEV_USER_ID, type User } from "@/lib/user";
 import { env } from "@/lib/env";
+import { DEV_USER_ID, type User } from "@/lib/user";
 
-const ADMIN_EMAILS: readonly string[] = (env.ADMIN_EMAILS ?? "")
-  .split(",")
-  .map(s => s.trim().toLowerCase())
-  .filter(Boolean);
-
-export function isAdminUser(user: User): boolean {
-  if (user.id === DEV_USER_ID) return true;
-  return ADMIN_EMAILS.includes(user.email.toLowerCase());
+function parseAdminEmails(raw: string): readonly string[] {
+  return raw.split(",").map(s => s.trim().toLowerCase()).filter(Boolean);
 }
 
-export async function requireAdmin(): Promise<User> {
-  const user = await getServerUserFromCookies();
-  if (!isAdminUser(user)) throw new Error("Admin only");
-  return user;
+export function getAdminEmails(): readonly string[] {
+  return parseAdminEmails(env.ADMIN_EMAILS);
+}
+
+export function isAdminUser(
+  user: User,
+  adminEmails: readonly string[] = getAdminEmails(),
+): boolean {
+  if (user.id === DEV_USER_ID) return true;
+  return adminEmails.includes(user.email.toLowerCase());
 }
 ```
+
+`src/lib/auth.ts` `getServerUserFromCookies` spreads `isAdmin: isAdminUser(fromClaims)` over the result of `userFromClaims` so the `User` returned to the client always carries the correct `isAdmin` flag.
 
 `src/lib/auth/server.ts` gains two siblings that mirror the existing `requireUser` / `requireUserOrRedirect`:
 
 - `requireAdminOrRedirect(nextPath: string): Promise<User>` — for Server Components; throws `redirect("/")` on failure.
 - `requireAdmin(): Promise<User>` — for server actions and route handlers; throws `Error("Admin only")` on failure. Callers handle the throw.
+
+The two new guards live in `auth/server.ts` (alongside `requireUser`) rather than `admin.ts` to keep the dependency graph acyclic: `auth.ts` ↔ `admin.ts` would otherwise be a cycle. `admin.ts` stays a pure module with no auth imports and is therefore safe to import from client components.
 
 `src/lib/user-context.tsx` and `useUser()` expose `isAdmin: boolean` on the `User` so client components can hide/show admin UI without a server round trip.
 

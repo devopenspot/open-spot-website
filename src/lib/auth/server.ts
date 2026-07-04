@@ -5,6 +5,7 @@ import { isSupabaseConfigured, getSupabaseUrl, getSupabasePublishableKey } from 
 import { createSupabaseServerClient } from "@/lib/supabase/server"
 import type { User } from "@/lib/user"
 import { getServerUserFromCookies } from "@/lib/auth"
+import { isAdminUser } from "@/lib/admin"
 import { DEV_USER_ID } from "@/lib/user"
 
 const DEFAULT_NEXT = "/"
@@ -103,6 +104,53 @@ export async function requireUser(): Promise<User> {
   const user = await getSessionUser()
   if (!user) {
     throw new Error("Not signed in")
+  }
+  return user
+}
+
+/**
+ * Server-side guard for admin-only Server Components.
+ *
+ * - If Supabase is not configured (local dev without env), the dev
+ *   placeholder user is admin by definition (see `isAdminUser`).
+ * - If Supabase is configured and the visitor is signed in and admin,
+ *   returns the admin user.
+ * - If Supabase is configured and the visitor has no session, throws a
+ *   `NEXT_REDIRECT` to `/login?next=<path>`.
+ * - If Supabase is configured and the visitor is signed in but not
+ *   admin, throws a `NEXT_REDIRECT` to `/`.
+ *
+ * Must be called from a Server Component. Do not wrap in try/catch — the
+ * `redirect()` throw is handled by the Next.js framework.
+ */
+export async function requireAdminOrRedirect(nextPath: string): Promise<User> {
+  if (!isSupabaseConfigured()) {
+    return getServerUserFromCookies()
+  }
+  const user = await getSessionUser()
+  if (!user) {
+    redirect(`/login?next=${encodeURIComponent(nextPath)}`)
+  }
+  if (!isAdminUser(user)) {
+    redirect("/")
+  }
+  return user
+}
+
+/**
+ * Server-side guard for admin-only server actions and route handlers.
+ * Throws a plain `Error("Admin only")` instead of triggering a
+ * navigation — callers handle it in a try/catch.
+ *
+ * - Supabase not configured (local dev without env): the dev placeholder
+ *   is admin by definition.
+ * - Configured and admin: returns the admin user.
+ * - Configured and not admin: throws.
+ */
+export async function requireAdmin(): Promise<User> {
+  const user = await getServerUserFromCookies()
+  if (!isAdminUser(user)) {
+    throw new Error("Admin only")
   }
   return user
 }

@@ -21,9 +21,10 @@ export function useUser(): User {
     return {
       id: DEV_USER_ID,
       name: 'Active Scout',
-      email: 'dev@openspot.local',
+      email: 'devopenspot@gmail.com',
       initials: 'OS',
       avatarUrl: null,
+      isAdmin: true,
     }
   }
   return ctx

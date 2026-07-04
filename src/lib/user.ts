@@ -4,6 +4,7 @@ export interface User {
   email: string;
   initials: string;
   avatarUrl: string | null;
+  isAdmin: boolean;
 }
 
 export const DEV_USER_ID = 'dev';
@@ -14,6 +15,7 @@ const DEV_USER: User = {
   email: 'devopenspot@gmail.com',
   initials: 'OS',
   avatarUrl: null,
+  isAdmin: true,
 };
 
 export function getCurrentUser(): User {

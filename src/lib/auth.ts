@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js"
 import { getCurrentUser as getDevUser } from "@/lib/user"
 import type { User } from "@/lib/user"
+import { isAdminUser } from "@/lib/admin"
 
 let cachedAdmin: ReturnType<typeof createClient> | null = null
 function getAdminClient() {
@@ -50,7 +51,7 @@ export function userFromClaims(claims: AuthClaims): User | null {
     (typeof meta["avatar_url"] === "string" && meta["avatar_url"]) ||
     (typeof meta["picture"] === "string" && meta["picture"]) ||
     null
-  return { id: claims.sub, name, email, initials, avatarUrl }
+  return { id: claims.sub, name, email, initials, avatarUrl, isAdmin: false }
 }
 
 export async function getServerUserFromCookies(): Promise<User> {
@@ -66,7 +67,11 @@ export async function getServerUserFromCookies(): Promise<User> {
     // (name, initials, avatar) is embedded in the JWT payload.
     const { data, error } = await supabase.auth.getClaims()
     if (error || !data?.claims) return getDevUser()
-    return userFromClaims(data.claims as AuthClaims) ?? getDevUser()
+    const fromClaims = userFromClaims(data.claims as AuthClaims) ?? getDevUser()
+    // `userFromClaims` does not know about the admin allow-list, so re-evaluate
+    // here against `ADMIN_EMAILS`. The dev user already returns `isAdmin: true`
+    // from `getDevUser`, so this is a no-op for them.
+    return { ...fromClaims, isAdmin: isAdminUser(fromClaims) }
   } catch {
     return getDevUser()
   }

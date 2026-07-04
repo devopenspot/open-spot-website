@@ -61,6 +61,11 @@ const EnvSchema = z
       .min(1)
       .default("spot-images"),
 
+    // Admin allow-list (CSV of emails, case-insensitive). When Supabase is
+    // unconfigured the dev placeholder user is automatically treated as
+    // admin (see `isAdminUser` in `@/lib/admin`).
+    ADMIN_EMAILS: z.string().default(""),
+
     // Data source
     SPOTS_DATA_SOURCE: z.enum(["json", "db"]).default("json"),
 
