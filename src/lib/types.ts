@@ -1,3 +1,5 @@
+import type { SportDiscipline } from "@/types/sport-events";
+
 export type WeatherIconName =
   | "sunny"
   | "partly_cloudy_day"
@@ -34,6 +36,7 @@ export interface Spot {
   address: string;
   type: SpotType;
   features: readonly string[];
+  sports: readonly SportDiscipline[];
   image: string;
   communityNote: string;
   crowdLevel: number;

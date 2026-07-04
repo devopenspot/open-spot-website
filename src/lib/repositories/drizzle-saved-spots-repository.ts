@@ -1,6 +1,7 @@
 import { and, count, desc, eq, sql } from "drizzle-orm"
 import { drizzle } from "drizzle-orm/postgres-js"
 import { savedSpots, spots } from "@/db/schema"
+import type { SportDiscipline } from "@/types/sport-events"
 import type { Spot } from "@/lib/types"
 import type { SavedSpotWithDetails } from "@/types/saved-spot"
 import type { SavedSpotsListResult, SavedSpotsRepository } from "./saved-spots-repository"
@@ -86,6 +87,7 @@ function rowToSpot(row: SpotRow): Spot {
     address: row.address,
     type: row.type as Spot["type"],
     features: row.features as readonly string[],
+    sports: row.sports as readonly SportDiscipline[],
     image: row.imagePath ? row.imagePath : row.imageUrl,
     communityNote: row.communityNote,
     crowdLevel: row.crowdLevel,

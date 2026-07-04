@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { SportDisciplineSchema } from "./event";
 
 export const SpotTypeSchema = z.enum([
   "Plaza",
@@ -24,6 +25,7 @@ export const SpotSchema = z.object({
   address: z.string(),
   type: SpotTypeSchema,
   features: z.array(z.string()),
+  sports: z.array(SportDisciplineSchema),
   image: z.string(),
   communityNote: z.string(),
   crowdLevel: z.number().int().min(0).max(100),
@@ -44,6 +46,7 @@ export const NewSpotSchema = z
     address: z.string(),
     type: SpotTypeSchema,
     features: z.array(z.string()).default([]),
+    sports: z.array(SportDisciplineSchema).default([]),
     image: z.string(),
     imagePath: z.string().nullable().optional(),
     communityNote: z.string().default(""),
@@ -63,6 +66,7 @@ export const SpotPatchSchema = z
     address: z.string().optional(),
     type: SpotTypeSchema.optional(),
     features: z.array(z.string()).optional(),
+    sports: z.array(SportDisciplineSchema).optional(),
     image: z.string().optional(),
     communityNote: z.string().optional(),
     crowdLevel: z.number().int().min(0).max(100).optional(),

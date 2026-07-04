@@ -1,6 +1,7 @@
 import spotsJson from "@/data/spots.json"
 import { COUNTRY_NAME_OVERRIDES, COUNTRY_TO_REGION, DEFAULT_PRESET_IMAGES } from "@/data"
 import { SpotSchema } from "@/lib/schemas/spot"
+import type { SportDiscipline } from "@/types/sport-events"
 import type { Spot, SpotType } from "@/lib/types"
 import { hashToUnitInterval } from "@/lib/spots/geo"
 import type { NewSpot, SpotListResult, SpotPatch, SpotQuery } from "./types"
@@ -187,6 +188,7 @@ function buildSpot(entry: RawSpot): Spot {
     type,
     image: pickImage(id),
     features: pickFeatures(entry.spot_types, type),
+    sports: [] as readonly SportDiscipline[],
     crowdLevel,
     crowdLevelLabel: buildCrowdLabel(crowdLevel, id),
     communityNote: buildCommunityNote(entry, type, id),
@@ -330,6 +332,7 @@ export class JsonSpotRepository implements SpotRepository {
       address: input.address,
       type: input.type,
       features: input.features,
+      sports: input.sports,
       image: input.image,
       communityNote: input.communityNote,
       crowdLevel: input.crowdLevel,

@@ -67,6 +67,7 @@ export const spots = pgTable(
     address: text("address").notNull(),
     type: spotTypeEnum("type").notNull(),
     features: text("features").array().notNull().default([]),
+    sports: text("sports").array().notNull().default([]),
     imageUrl: text("image_url").notNull(),
     imagePath: text("image_path"),
     communityNote: text("community_note").notNull().default(""),

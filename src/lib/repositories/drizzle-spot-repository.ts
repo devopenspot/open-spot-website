@@ -1,6 +1,7 @@
 import { and, asc, desc, eq, ilike, inArray, isNotNull, sql } from "drizzle-orm"
 import { drizzle } from "drizzle-orm/postgres-js"
 import { spots, type NewSpotRow, type SpotRow } from "@/db/schema"
+import type { SportDiscipline } from "@/types/sport-events"
 import type { Spot, SpotLocation, SpotType } from "@/lib/types"
 import type {
   NewSpot,
@@ -41,6 +42,7 @@ function toRawSpot(row: SpotRow): SpotWithImagePath {
       address: row.address,
       type: row.type as SpotType,
       features: row.features as readonly string[],
+      sports: row.sports as readonly SportDiscipline[],
       image: row.imagePath ?? row.imageUrl,
       communityNote: row.communityNote,
       crowdLevel: row.crowdLevel,
@@ -217,6 +219,7 @@ export class DrizzleSpotRepository implements SpotRepository {
       address: input.address,
       type: input.type,
       features: [...input.features],
+      sports: [...input.sports],
       imageUrl: input.image,
       imagePath: input.imagePath ?? null,
       communityNote: input.communityNote,

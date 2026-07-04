@@ -14,6 +14,7 @@ function fakeSpot(): Spot {
     address: "1 Main St",
     type: "Plaza",
     features: ["Smooth Concrete"],
+    sports: [],
     image: "https://example.com/img.png",
     communityNote: "Scout report",
     crowdLevel: 25,

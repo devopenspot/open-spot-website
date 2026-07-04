@@ -1,0 +1,182 @@
+"use client"
+
+import { useMemo, useState } from "react"
+import { useRouter } from "next/navigation"
+import { showToast } from "@/hooks/useToast"
+import { createSpotFromLookupAction } from "@/app/actions/admin-spots"
+import {
+  LatLonLookupPanel,
+  type LatLonLookupResult,
+} from "@/components/admin/spots/LatLonLookupPanel"
+import { SpotFormFields, type SpotFormState } from "@/components/admin/spots/SpotFormFields"
+import { SpotFormSubmit } from "@/components/admin/spots/SpotFormSubmit"
+import type { ProjectedAddress } from "@/lib/geocode/project"
+import type { SportDiscipline } from "@/types/sport-events"
+
+const FEATURE_DEFAULTS = ["Smooth Concrete"]
+const INITIAL_TYPE = "Plaza" as const
+
+function buildInitialState(): SpotFormState {
+  return {
+    name: "",
+    city: "",
+    citySlug: "",
+    address: "",
+    country: "",
+    type: INITIAL_TYPE,
+    features: [...FEATURE_DEFAULTS],
+    sports: [],
+    communityNote: "",
+    crowdLevel: 35,
+    image: { imageUrl: "", file: null },
+    lat: 0,
+    lon: 0,
+  }
+}
+
+function applyAddress(
+  state: SpotFormState,
+  address: ProjectedAddress,
+): SpotFormState {
+  return {
+    ...state,
+    city: state.city || address.city || "",
+    citySlug:
+      state.citySlug ||
+      (address.city ?? "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, ""),
+    country: state.country || address.country || "",
+    address:
+      state.address ||
+      [address.houseNumber, address.road].filter(Boolean).join(" "),
+    lat: address.lat,
+    lon: address.lon,
+  }
+}
+
+function buildFormData(state: SpotFormState): FormData {
+  const fd = new FormData()
+  fd.set("name", state.name)
+  fd.set("city", state.city)
+  fd.set("citySlug", state.citySlug)
+  fd.set("address", state.address)
+  fd.set("country", state.country)
+  fd.set("type", state.type)
+  fd.set("features", state.features.join(","))
+  for (const sport of state.sports as readonly SportDiscipline[]) {
+    fd.append("sports", sport)
+  }
+  fd.set("communityNote", state.communityNote)
+  fd.set("crowdLevel", String(state.crowdLevel))
+  fd.set("imageUrl", state.image.imageUrl)
+  fd.set("lat", String(state.lat))
+  fd.set("lon", String(state.lon))
+  if (state.image.file) {
+    fd.set("image", state.image.file)
+  }
+  return fd
+}
+
+interface AdminNewSpotFormProps {
+  writeEnabled: boolean
+}
+
+export function AdminNewSpotForm({ writeEnabled }: AdminNewSpotFormProps) {
+  const router = useRouter()
+  const [state, setState] = useState<SpotFormState>(buildInitialState())
+  const [hasLookup, setHasLookup] = useState(false)
+
+  const handleLookup = (result: LatLonLookupResult) => {
+    setState((s) => applyAddress(s, result.address))
+    setHasLookup(true)
+  }
+
+  const handleError = (message: string) => {
+    showToast(message, "error")
+  }
+
+  const handleAction = async (formData: FormData) => {
+    return createSpotFromLookupAction(formData)
+  }
+
+  const submitDisabled =
+    !writeEnabled || !hasLookup || !state.name || !state.city
+
+  const submitLabel = useMemo(
+    () => (writeEnabled ? "Register Spot" : "DB mode required"),
+    [writeEnabled],
+  )
+
+  return (
+    <section
+      id="admin-new-spot"
+      aria-labelledby="admin-new-spot-heading"
+      className="space-y-6 animate-fade-in"
+    >
+      <header className="border-b border-outline-variant pb-5">
+        <span className="mb-1 block font-mono text-[10px] font-bold uppercase tracking-widest text-secondary">
+          Contribute to cartography
+        </span>
+        <h1
+          id="admin-new-spot-heading"
+          className="font-display text-2xl font-bold uppercase tracking-tight text-on-surface sm:text-3xl"
+        >
+          Register new obstacle
+        </h1>
+        <p className="mt-1.5 max-w-2xl text-xs text-secondary leading-relaxed">
+          Map your local ledges, stairs, DIYs, or pools. Provide accurate
+          metadata to help fellow skaters coordinate sessions safely.
+        </p>
+      </header>
+
+      <LatLonLookupPanel
+        onResult={handleLookup}
+        onError={handleError}
+        disabled={!writeEnabled}
+      />
+
+      <form
+        onSubmit={(e) => {
+          e.preventDefault()
+        }}
+        noValidate
+        className="space-y-8"
+      >
+        <SpotFormFields
+          state={state}
+          onChange={setState}
+          imageDisabled={!writeEnabled}
+        />
+        <SpotFormSubmit
+          state={state}
+          buildFormData={buildFormData}
+          action={handleAction}
+          redirectTo={(result) => `/admin/spots/${result.id}`}
+          label={submitLabel}
+          pendingLabel="Registering…"
+          disabled={submitDisabled}
+        />
+      </form>
+
+      {!writeEnabled ? (
+        <p className="rounded-lg border border-outline-variant bg-surface-container-low p-3 text-xs text-secondary">
+          Write actions are disabled in JSON mode. Set{" "}
+          <code className="rounded bg-surface-container px-1 py-0.5 font-mono">
+            SPOTS_DATA_SOURCE=db
+          </code>{" "}
+          to enable.
+        </p>
+      ) : null}
+
+      <button
+        type="button"
+        onClick={() => router.push("/admin/spots")}
+        className="rounded-lg border border-outline px-6 py-3 text-xs font-bold uppercase tracking-widest text-on-surface transition-all hover:bg-surface-container"
+      >
+        Back to spots
+      </button>
+    </section>
+  )
+}

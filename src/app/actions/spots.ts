@@ -72,6 +72,7 @@ export async function createSpotAction(formData: FormData): Promise<Spot> {
     address,
     type,
     features,
+    sports: [],
     image: imageUrl,
     imagePath,
     communityNote,
