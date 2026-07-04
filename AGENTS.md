@@ -1,46 +1,81 @@
-# open-spot-website
+# AGENTS.md
 
-Next.js 16 + React 19 + Drizzle + Supabase + Tailwind v4. See SPEC.md for
-the product spec, DESIGN.md for the color/typography tokens, and
-.env.example for the full env surface.
+Operating notes for AI coding agents working in this repo. Keep the file
+short — every line should be something an agent would otherwise miss.
 
-## Commands
+## Stack & layout
 
-- `pnpm` (not npm/yarn). Node 22, pnpm 11 (CI-pinned).
-- Dev / build: `pnpm dev`, `pnpm build`, `pnpm start`.
-- Verification order (matches CI): `pnpm typecheck` → `pnpm lint` → `pnpm test` → `pnpm db:apply`.
-- `pnpm test` is one-shot; `pnpm test:watch` for watch.
-- DB: `pnpm db:generate` (drizzle-kit diff), `pnpm db:push` (local), `pnpm db:migrate`, `pnpm db:seed`, `pnpm db:health`, `pnpm db:apply` / `pnpm db:deploy` (both run `src/db/apply-sql.ts`).
-- `.agents/` is gitignored — skill files there are local-only.
+- Next.js 16 App Router (RSC + cacheComponents) on the `app/` directory, React 19, Tailwind v4.
+- pnpm workspace (root only; no sibling packages — `pnpm-workspace.yaml` exists but `apps/` is absent).
+- Data layer: two interchangeable repository backends behind `src/lib/repositories/`
+  - `JsonSpotRepository` / `JsonEventRepository` / `JsonSavedSpotsRepository` read from `src/data/*.json`.
+  - `Drizzle*Repository` read from Postgres (PostGIS for spot geometry). Selected via `SPOTS_DATA_SOURCE` (`json` | `db`) in `src/lib/env.ts`.
+  - Async factory `getSpotRepositoryAsync()` does a runtime health check (`checkDbHealth` is wrapped in `"use cache"`) and falls back to JSON when the DB is missing or unhealthy — never throws.
+- Auth: Supabase (`@supabase/ssr`); session refresh happens in `src/proxy.ts` via `supabase.auth.getClaims()` (no per-request user fetch).
+- Storage: Supabase Storage bucket `spot-images` (env-overridable). `withImageUrls` in `src/lib/supabase/storage.ts` mints 1h signed URLs.
+- Weather: OpenWeather current + forecast, cached per-spot with Next.js `"use cache"` + `cacheTag` (`weather:spot:<id>`). Bust with `POST /api/weather/revalidate?spotId=…` (header `x-revalidate-secret: $REVALIDATE_SECRET`).
+- External geocoder: Nominatim (env: `NOMINATIM_URL`, `NOMINATIM_USER_AGENT`).
 
-## Architecture
+## Commands (run from repo root)
 
-- **Data source is a runtime switch.** `SPOTS_DATA_SOURCE=json` (default) reads `src/data/spots.json`; `=db` reads via Drizzle. `src/lib/repositories/index.ts` is the factory; it runs a DB health check and silently falls back to JSON on failure. Every server action and server page goes through the same `get*RepositoryAsync` accessor.
-- **Two repo implementations per resource** (`Spot`, `SportEvent`, `SavedSpots`) under `src/lib/repositories/`: `json-*.ts` and `drizzle-*.ts`. The interface files (`*-repository.ts`) are the source of truth.
-- **Auth lives only in `src/app/api/auth/*`.** No server actions for auth (SPEC §A.1). Session refresh is in `src/proxy.ts` (Next 16 proxy). Google OAuth only via `@supabase/ssr`.
-- **Weather uses Next 16 cache components** (`"use cache"` + `cacheTag` + `cacheLife`); see `src/lib/weather/weather-cached.ts`. Bust one spot with `POST /api/weather/revalidate?spotId=<id>` and header `x-revalidate-secret: <REVALIDATE_SECRET>`.
-- **Image upload:** `uploadSpotImage` writes to the bucket named by `SUPABASE_STORAGE_BUCKET_SPOTS` (default `spot-images`); the repo boundary calls `withImageUrls` to swap `imagePath` for a 1h signed URL.
-- **Migrations live in `supabase/migrations/`, not `drizzle/`.** `drizzle.config.ts` writes there. New schema → `pnpm db:generate`, then commit the generated SQL.
-- **Hotspots (high fan-in, edit with care):** `cn` (22), `error` (9), `getSpotRepositoryAsync` (8), `useUser` (8), `withImageUrls` (7), `createSupabaseServerClient` (7). Use `trace_path(..., direction="inbound")` before changing any of them.
+| Task | Command |
+| --- | --- |
+| Dev server | `pnpm dev` |
+| Lint | `pnpm lint` (eslint over `src/`) |
+| Typecheck | `pnpm typecheck` (`tsc --noEmit`) |
+| Unit tests | `pnpm test` (vitest run) / `pnpm test:watch` |
+| Build | `pnpm build` |
+| DB schema → migration | `pnpm db:generate` (drizzle-kit) |
+| Push schema to DB | `pnpm db:push` |
+| Apply migrations (CI/runtime) | `pnpm db:apply` or `pnpm db:deploy` — both run `src/db/apply-sql.ts`, which splits on `--> statement-breakpoint` and records applied IDs in a `schema_migrations` table |
+| Seed local DB | `pnpm db:seed` (writes from `src/data/*.json` into the `spots` / `sport_events` / `country_regions` tables) |
+| DB health probe | `pnpm db:health` (exit 0/1) |
+| Drizzle studio | `pnpm db:studio` |
 
-## Pitfalls
+CI order (`.github/workflows/ci.yml`): `typecheck` → `lint` → `test` → `pnpm db:apply` (only if `supabase/migrations/**` changed). Postgres URL is read as `DB_CONNETION_STRING` (intentional typo) with `SUPABASE_DIRECT_URL` as the preferred name — both still honored in `getDatabaseUrl()`.
 
-- **`getCurrentUser` from `@/lib/user` is a dev placeholder** (`{ id: 'dev' }`), not the authenticated user. The real one is `getServerUserFromCookies` in `@/lib/auth`; the protected-page guard is `requireUserOrRedirect` in `@/lib/auth/server`. `src/app/actions/spots.ts:80` and `src/app/actions/saved-spots.ts:9,26` currently import the wrong one — do not copy that pattern.
-- **Two accepted env names for the same value** (back-compat): `SUPABASE_SECRET_KEY` or `SUPABASE_SERVICE_ROLE_KEY`; `SUPABASE_DIRECT_URL` or `DB_CONNETION_STRING` (typo, intentional). See `src/lib/env.ts`.
-- **Map grid bbox is static** in `src/lib/spots/geo.ts` — computed once from `src/data/spots.json` and reused for every spot, so Drizzle-created spots project to the wrong cell. Treat as known until the bbox is recomputed per `filteredSpots`.
-- **`DrizzleSpotRepository.list` ignores `query.cursor`** — both branches order by `asc(spots.slug)` and the cursor never advances. `findById` / `findBySlug` are correct; do not rely on `list` cursor pagination.
-- **ESLint strips 27 React rules** in `eslint.config.mjs` (e.g. `react/prop-types`, `react/no-deprecated`). They were removed on purpose; do not re-enable without team sign-off.
-- **`MapTab` pan math is fragile** (`(50 - coords.x) * 2 * zoomLevel`) — works for the current viewport metrics but will break if the canvas dimensions change. Prefer measured-viewport math.
+## Repo-specific conventions
 
-## Knowledge graph (MCP)
+- Path alias `@/*` → `./src/*` (set in `tsconfig.json` and `vitest.config.ts`).
+- `@/lib/env` validates env at import time with Zod; do **not** `process.env` directly in app code — add a field to `EnvSchema` in `src/lib/env.ts` and default/optional-declare it there.
+- `src/proxy.ts` is the Next 16 `proxy.ts` (NOT `middleware.ts`) — refreshes the Supabase session cookie. It is intentionally a no-op when `NEXT_PUBLIC_SUPABASE_URL` or `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` is missing, so the app runs in dev without Supabase.
+- Dev placeholder user: `DEV_USER_ID = "dev"` (`src/lib/user.ts`). When Supabase is unconfigured, the cookie reader, sign-out, and saved-spots flows all collapse onto this dev user — do not gate dev-only UI behind "is signed in" without re-checking it through `useUser().id !== DEV_USER_ID`.
+- Logging: use the singleton `log` from `@/lib/log` (it is a no-op when `NODE_ENV === "test"`). Never call `console.*` directly in app code.
+- All server actions and `proxy.ts` must call `requireUser` / `requireUserOrRedirect` from `src/lib/auth/server.ts`. Throwing from `requireUser` is intentional — do not try/catch around it in pages.
+- `vitest.config.ts` aliases `server-only` → `./test/server-only.ts` (the file is empty) so tests can import server modules without the bundler guard firing.
+- The Map page is wired but commented out of `NAV_ITEMS` (`src/lib/nav.ts`). To re-enable, uncomment the `map` entry — the route, repository support, and components all exist.
+- Auth: `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (publishable, `sb_publishable_…`) and `SUPABASE_SECRET_KEY` (server-only, `sb_secret_…`). Legacy `anon` / `service_role` keys are no longer read.
+- The `repository` factory logs a warning on first call that captures *why* JSON was used (`db_not_configured` / `db_unhealthy`) — read those before assuming the DB is wired.
+- "use cache" is enabled in `next.config.mjs` (`cacheComponents: true`). New server-side data loaders that should hit the cache should follow the pattern in `src/lib/weather/weather-cached.ts` (declare `"use cache"`, set `cacheTag` + `cacheLife`).
+- Styling: monochrome design system in `src/app/globals.css` (`@theme` block). Tailwind tokens are `surface*`, `on-surface`, `primary`, `secondary`, `error`, `outline*`, etc. No color in UI states — see `DESIGN.md` for the full spec.
+- Accessibility: `eslint-plugin-jsx-a11y` is enabled; `pnpm lint` will fail on a11y regressions.
+- Type safety: `noUncheckedIndexedAccess`, `noUnusedLocals`, `noUnusedParameters` are all on. Watch out for array index access returning `T | undefined`.
 
-`codebase-memory-mcp` is wired globally; project key
-`Users-gabrielalfonso-Development-Personal-Projects-open-spot-website`.
-Workflow lives in `~/.config/opencode/AGENTS.md`. Re-run
-`index_repository` (mode `moderate`) after any PR that touches
-`src/lib/**`, `src/db/**`, `src/app/actions/**`, or adds a new route.
+## Data source switching (dev shortcut)
+
+For local dev with JSON only (no Postgres), set in `.env.local`:
+```
+SPOTS_DATA_SOURCE=json
+```
+The app then reads `src/data/spots.json` and `src/data/sport-events.json` directly. Set `SPOTS_DATA_SOURCE=db` to exercise the Drizzle path; the app will fall back to JSON automatically if `checkDbHealth()` fails.
+
+## Environment files
+
+- `.env.example` is the canonical source of truth — copy it to `.env.local` (git-ignored) for secrets.
+- CLI scripts under `src/db/` import `./load-env` first, which reads `.env.local` (overrides) then `.env`. The Next.js runtime reads env via `next dev` / `next build` directly, not via `load-env`.
 
 ## Testing
 
-- Vitest + happy-dom, `@testing-library/react` + `user-event`. Tests: `src/**/*.{test,spec}.{ts,tsx}`. Coverage is currently one file (`src/components/spot/SpotCard.test.tsx`); hook and repo layers are uncovered.
-- `server-only` is aliased to `test/server-only.ts` in `vitest.config.ts` so server modules can be imported in tests without pulling in the Next runtime.
+- 3 vitest specs exist: `src/lib/auth.test.ts`, `src/components/spot/SpotCard.test.tsx`, `src/app/api/auth/signout/route.test.ts`. Add new tests in the same `__tests__`-by-convention co-located form: `*.test.ts` / `*.test.tsx` next to the file under test. `vitest.setup.ts` pulls in `@testing-library/jest-dom/vitest`.
+- Tests use `happy-dom` and `useSyncExternalStore` server snapshot fallback — no real Supabase/Postgres needed for the unit suite.
+- Server actions and route handlers are tested through `vi.mock("@/lib/auth/server", …)` (see `route.test.ts` for the pattern).
+
+## Useful entrypoints (skim these before guessing)
+
+- `src/app/layout.tsx` — root layout; loads initial spots + weather + user on the server.
+- `src/lib/repositories/index.ts` — async factory + JSON fallback logic.
+- `src/lib/auth/server.ts` — `requireUser`, `requireUserOrRedirect`, `signInWithGoogle`, `signOut`, `originFromRequest`.
+- `src/lib/env.ts` — single source of env truth, plus `getDatabaseUrl()` resolution order.
+- `src/db/apply-sql.ts` — how migrations are applied at runtime (note: it splits on drizzle's `statement-breakpoint` marker because the live DB rejects multi-statement strings).
+- `src/proxy.ts` — session refresh.
+- `src/lib/weather/weather-cached.ts` + `weather-bundle.ts` — caching pattern to mimic for new server-side data loaders.
