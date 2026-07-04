@@ -21,22 +21,36 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const spots = useSpotsStore((s) => s.spots);
   const pathname = usePathname();
 
+  // The admin segment renders its own shell (`src/app/admin/layout.tsx`).
+  // Bail out early so the public header, search overlay, and mobile
+  // drawer are not double-rendered alongside the admin chrome.
+  const isAdminRoute = pathname?.startsWith('/admin') ?? false;
+
   // Close the search overlay on route change
   useEffect(() => {
     if (isSearchOpen) closeSearch();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname]);
 
-  useKeyboardShortcuts([
-    {
-      key: 'k',
-      cmdOrCtrl: true,
-      handler: e => {
-        e.preventDefault();
-        toggleSearch();
-      },
-    },
-  ]);
+  // Only bind the global Cmd/Ctrl+K search shortcut on public routes.
+  useKeyboardShortcuts(
+    isAdminRoute
+      ? []
+      : [
+          {
+            key: 'k',
+            cmdOrCtrl: true,
+            handler: e => {
+              e.preventDefault();
+              toggleSearch();
+            },
+          },
+        ],
+  );
+
+  if (isAdminRoute) {
+    return <>{children}</>;
+  }
 
   const handleSelectSpot = (spot: Spot) => {
     router.push(ROUTES.spot(spot.id));

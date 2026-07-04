@@ -1,8 +1,9 @@
 'use client';
 
-import { useCallback, useRef, type KeyboardEvent } from 'react';
+import { useCallback, useMemo, useRef, type KeyboardEvent } from 'react';
 import { usePathname } from 'next/navigation';
 import { NAV_ITEMS } from '@/lib/nav';
+import { useUser } from '@/hooks/useUser';
 import type { NavVariant } from '@/components/layout/NavLink';
 
 interface UseNavListOptions {
@@ -13,6 +14,14 @@ interface UseNavListOptions {
 export function useNavList({ variant, onSelect }: UseNavListOptions) {
   const pathname = usePathname();
   const listRef = useRef<HTMLDivElement>(null);
+  const user = useUser();
+
+  // Items flagged `adminOnly` are only shown to admins. Filter once per
+  // render; the user rarely changes mid-session, so this is cheap.
+  const navItems = useMemo(
+    () => NAV_ITEMS.filter((item) => !item.adminOnly || user.isAdmin),
+    [user.isAdmin],
+  );
 
   const handleSelect = useCallback(
     (path: string) => () => onSelect(path),
@@ -48,7 +57,7 @@ export function useNavList({ variant, onSelect }: UseNavListOptions) {
     [variant],
   );
 
-  return { pathname, listRef, handleSelect, handleKeyDown, navItems: NAV_ITEMS };
+  return { pathname, listRef, handleSelect, handleKeyDown, navItems };
 }
 
 interface RenderBadgeArgs {

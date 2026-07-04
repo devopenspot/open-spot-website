@@ -45,7 +45,7 @@ export interface Spot {
   updatedAt: string;
 }
 
-export type TabType = "explore" | "saved" | "map" | "post" | "events";
+export type TabType = "explore" | "saved" | "map" | "post" | "events" | "admin";
 
 export interface ExploreCategory {
   name: string;

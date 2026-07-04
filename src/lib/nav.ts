@@ -3,17 +3,19 @@ import {
   Compass,
   Heart,
   PlusCircle,
+  Shield,
   Trophy,
   type LucideIcon,
 } from "lucide-react";
 
 export const NAV_ITEMS: readonly {
   id: TabType;
-  path: "/" | "/map" | "/saved" | "/sport-events" | "/post";
+  path: "/" | "/map" | "/saved" | "/sport-events" | "/post" | "/admin";
   label: string;
   shortLabel: string;
   drawerLabel: string;
   Icon: LucideIcon;
+  adminOnly?: boolean;
 }[] = [
   {
     id: "explore",
@@ -54,6 +56,15 @@ export const NAV_ITEMS: readonly {
     shortLabel: "Post",
     drawerLabel: "Register Spot",
     Icon: PlusCircle,
+  },
+  {
+    id: "admin",
+    path: "/admin",
+    label: "Admin",
+    shortLabel: "Admin",
+    drawerLabel: "Admin",
+    Icon: Shield,
+    adminOnly: true,
   },
 ] as const;
 
