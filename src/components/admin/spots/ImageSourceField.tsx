@@ -21,9 +21,10 @@ interface ImageSourceFieldProps {
 }
 
 /**
- * The visual banner source field. Lifted out of the old `PostForm` so the
- * admin's create + edit forms can share the exact same control. Encapsulates
- * preset / URL / file-upload modes in a single accessible radiogroup.
+ * The visual banner source field. Extracted from the legacy public
+ * create-spot form so the admin's create + edit forms share the exact
+ * same control. Encapsulates preset / URL / file-upload modes in a
+ * single accessible radiogroup.
  */
 export function ImageSourceField({
   value,

@@ -56,6 +56,7 @@ export const NAV_ITEMS: readonly {
     shortLabel: "Post",
     drawerLabel: "Register Spot",
     Icon: PlusCircle,
+    adminOnly: true,
   },
   {
     id: "admin",

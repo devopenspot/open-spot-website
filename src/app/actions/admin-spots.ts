@@ -61,8 +61,8 @@ function defaultTypeFromLookup(raw: unknown): Spot["type"] | null {
 
 /**
  * Create a new spot from a lat/lon lookup + admin-edited form fields.
- * Used by `/admin/spots/new`. The public `/post` flow (which is being
- * replaced in Phase 7) called the simpler `createSpotAction`.
+ * Used by `/admin/spots/new`. The legacy public `/post` flow used the
+ * simpler `createSpotAction` (still wired into the spots-store).
  */
 export async function createSpotFromLookupAction(
   formData: FormData,

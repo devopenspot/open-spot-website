@@ -1,13 +1,13 @@
-import PostTab from '@/components/post/PostTab';
-import { requireUserOrRedirect } from '@/lib/auth/server';
+import { PostClosedNotice } from "@/components/post/PostClosedNotice";
+import { requireUserOrRedirect } from "@/lib/auth/server";
 
 export const metadata = {
-  title: 'Post a Spot',
+  title: "Post a Spot",
   description:
-    'Contribute to the cartography. Map your local ledges, stairs, DIYs, or pools.',
+    "Public spot submissions are paused. Use the admin dashboard to add a new spot to the directory.",
 };
 
 export default async function PostPage() {
-  await requireUserOrRedirect('/post');
-  return <PostTab />;
+  await requireUserOrRedirect("/post");
+  return <PostClosedNotice />;
 }
