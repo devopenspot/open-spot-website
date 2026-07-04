@@ -1,11 +1,18 @@
 import type { z } from "zod"
 import type { Spot, SpotType } from "@/lib/types"
 import type { SpotQuerySchema, NewSpotSchema, SpotPatchSchema } from "@/lib/schemas/spot"
+import type {
+  NewSportEventSchema,
+  SportEventPatchSchema,
+} from "@/lib/schemas/event"
 import type { SportDiscipline, SportEventTier } from "@/types/sport-events"
 
 export type SpotQuery = z.infer<typeof SpotQuerySchema>
 export type NewSpot = z.infer<typeof NewSpotSchema>
 export type SpotPatch = z.infer<typeof SpotPatchSchema>
+
+export type NewSportEvent = z.infer<typeof NewSportEventSchema>
+export type SportEventPatch = z.infer<typeof SportEventPatchSchema>
 
 export interface SpotListResult {
   items: readonly Spot[]

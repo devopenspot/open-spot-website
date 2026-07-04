@@ -1,5 +1,7 @@
 import type { SportEvent, SportDiscipline, SportEventTier } from "@/types/sport-events"
 import type {
+  NewSportEvent,
+  SportEventPatch,
   SportEventFacetCountry,
   SportEventFacetDiscipline,
   SportEventFacetTier,
@@ -29,4 +31,7 @@ export interface EventRepository {
   listCountries(): Promise<readonly SportEventFacetCountry[]>
   listTiers(): Promise<readonly SportEventFacetTier[]>
   listDisciplines(): Promise<readonly SportEventFacetDiscipline[]>
+  create(input: NewSportEvent): Promise<SportEvent>
+  update(id: string, patch: SportEventPatch): Promise<SportEvent>
+  delete(id: string): Promise<void>
 }

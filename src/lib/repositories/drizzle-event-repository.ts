@@ -1,6 +1,6 @@
 import { and, asc, eq, sql } from "drizzle-orm"
 import { drizzle } from "drizzle-orm/postgres-js"
-import { sportEvents, type SportEventRow } from "@/db/schema"
+import { sportEvents, type NewSportEventRow, type SportEventRow } from "@/db/schema"
 import type { SportEvent, SportEventTier, SportDiscipline } from "@/types/sport-events"
 import type {
   SportEventListResult,
@@ -8,6 +8,8 @@ import type {
 } from "./event-repository"
 import type { EventRepository } from "./event-repository"
 import type {
+  NewSportEvent,
+  SportEventPatch,
   SportEventFacetCountry,
   SportEventFacetDiscipline,
   SportEventFacetTier,
@@ -134,4 +136,88 @@ export class DrizzleEventRepository implements EventRepository {
       count: Number(r.count),
     }))
   }
+
+  async create(input: NewSportEvent): Promise<SportEvent> {
+    const slug = `${slugify(input.name)}-${Date.now()}`
+    const location =
+      typeof input.latitude === "number" && typeof input.longitude === "number"
+        ? ({ lat: input.latitude, lon: input.longitude } as unknown as SportEventRow["location"])
+        : null
+    const insertValues: NewSportEventRow = {
+      slug,
+      name: input.name,
+      shortName: input.shortName ?? null,
+      url: input.url,
+      image: input.image,
+      description: input.description,
+      sports: [...input.sports],
+      startDate: input.startDate,
+      endDate: input.endDate ?? null,
+      city: input.city,
+      country: input.country,
+      countryCode: input.countryCode ?? null,
+      venue: input.venue ?? null,
+      location,
+      tier: input.tier,
+      featured: input.featured ? "true" : null,
+    }
+    const [row] = await this.db
+      .insert(sportEvents)
+      .values(insertValues)
+      .returning()
+    if (!row) throw new Error("Insert returned no row")
+    return toEvent(row)
+  }
+
+  async update(id: string, patch: SportEventPatch): Promise<SportEvent> {
+    const values: Partial<NewSportEventRow> = {}
+    if (patch.name !== undefined) values.name = patch.name
+    if (patch.shortName !== undefined) values.shortName = patch.shortName
+    if (patch.url !== undefined) values.url = patch.url
+    if (patch.image !== undefined) values.image = patch.image
+    if (patch.description !== undefined) values.description = patch.description
+    if (patch.sports !== undefined) values.sports = [...patch.sports]
+    if (patch.startDate !== undefined) values.startDate = patch.startDate
+    if (patch.endDate !== undefined) values.endDate = patch.endDate
+    if (patch.city !== undefined) values.city = patch.city
+    if (patch.country !== undefined) values.country = patch.country
+    if (patch.countryCode !== undefined) values.countryCode = patch.countryCode
+    if (patch.venue !== undefined) values.venue = patch.venue
+    if (patch.tier !== undefined) values.tier = patch.tier
+    if (patch.featured !== undefined) {
+      values.featured = patch.featured ? "true" : null
+    }
+    if (patch.latitude !== undefined && patch.longitude !== undefined) {
+      values.location = {
+        lat: patch.latitude,
+        lon: patch.longitude,
+      } as unknown as SportEventRow["location"]
+    }
+
+    const [row] = await this.db
+      .update(sportEvents)
+      .set({
+        ...values,
+        updatedAt: new Date(),
+      })
+      .where(eq(sportEvents.id, id))
+      .returning()
+    if (!row) throw new Error(`Sport event not found: ${id}`)
+    return toEvent(row)
+  }
+
+  async delete(id: string): Promise<void> {
+    const result = await this.db
+      .delete(sportEvents)
+      .where(eq(sportEvents.id, id))
+      .returning({ id: sportEvents.id })
+    if (result.length === 0) throw new Error(`Sport event not found: ${id}`)
+  }
+}
+
+function slugify(s: string): string {
+  return s
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
 }

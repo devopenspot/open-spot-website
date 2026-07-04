@@ -76,3 +76,64 @@ export const SportEventQuerySchema = z
     limit: z.number().int().positive().max(200).default(50),
   })
   .strict();
+
+/**
+ * Fields a client supplies when creating a sport event. `slug`, `id`,
+ * `createdAt`, and `updatedAt` are server-derived and not part of the
+ * input contract.
+ */
+export const NewSportEventSchema = z
+  .object({
+    name: z.string().min(1),
+    shortName: z.string().optional(),
+    url: z.string().url(),
+    image: z.string().min(1),
+    description: z.string().default(""),
+    sports: z.array(SportDisciplineSchema).default([]),
+    startDate: z.string().min(1),
+    endDate: z.string().optional(),
+    city: z.string().min(1),
+    country: z.string().min(1),
+    countryCode: z.string().optional(),
+    venue: z.string().optional(),
+    latitude: z.number().min(-90).max(90).optional(),
+    longitude: z.number().min(-180).max(180).optional(),
+    tier: SportEventTierSchema,
+    featured: z.boolean().default(false),
+  })
+  .strict();
+
+/**
+ * Patch payload for editing a sport event. All fields are optional; only
+ * the keys present in the input are updated.
+ *
+ * `latitude` and `longitude` must both be set or both be omitted so the
+ * repository can decide whether to replace the geometry column.
+ */
+export const SportEventPatchSchema = z
+  .object({
+    name: z.string().min(1).optional(),
+    shortName: z.string().optional(),
+    url: z.string().url().optional(),
+    image: z.string().min(1).optional(),
+    description: z.string().optional(),
+    sports: z.array(SportDisciplineSchema).optional(),
+    startDate: z.string().min(1).optional(),
+    endDate: z.string().optional(),
+    city: z.string().min(1).optional(),
+    country: z.string().min(1).optional(),
+    countryCode: z.string().optional(),
+    venue: z.string().optional(),
+    latitude: z.number().min(-90).max(90).optional(),
+    longitude: z.number().min(-180).max(180).optional(),
+    tier: SportEventTierSchema.optional(),
+    featured: z.boolean().optional(),
+  })
+  .strict()
+  .refine(
+    (p) => (p.latitude === undefined) === (p.longitude === undefined),
+    {
+      message: "latitude and longitude must both be set or both be omitted",
+      path: ["latitude"],
+    },
+  );

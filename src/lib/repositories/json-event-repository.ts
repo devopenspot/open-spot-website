@@ -2,6 +2,8 @@ import sportEventsJson from "@/data/sport-events.json"
 import { SportEventSchema } from "@/lib/schemas/event"
 import type { SportEvent } from "@/types/sport-events"
 import type {
+  NewSportEvent,
+  SportEventPatch,
   SportEventFacetCountry,
   SportEventFacetDiscipline,
   SportEventFacetTier,
@@ -80,5 +82,20 @@ export class JsonEventRepository implements EventRepository {
       }
     }
     return [...counts.entries()].map(([name, count]) => ({ name, count })) as readonly SportEventFacetDiscipline[]
+  }
+
+  // The JSON mode is the read-only fallback (see `getEventRepositoryAsync`).
+  // All writes throw so the admin UI's `DataModeNotice` is the only way to
+  // reach this code path; callers should not catch and continue.
+  async create(_input: NewSportEvent): Promise<SportEvent> {
+    throw new Error("sport_events writes are not supported in JSON mode")
+  }
+
+  async update(_id: string, _patch: SportEventPatch): Promise<SportEvent> {
+    throw new Error("sport_events writes are not supported in JSON mode")
+  }
+
+  async delete(_id: string): Promise<void> {
+    throw new Error("sport_events writes are not supported in JSON mode")
   }
 }
