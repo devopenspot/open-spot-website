@@ -50,6 +50,7 @@ CI order (`.github/workflows/ci.yml`): `typecheck` → `lint` → `test` → `pn
 - Styling: monochrome design system in `src/app/globals.css` (`@theme` block). Tailwind tokens are `surface*`, `on-surface`, `primary`, `secondary`, `error`, `outline*`, etc. No color in UI states — see `DESIGN.md` for the full spec.
 - Accessibility: `eslint-plugin-jsx-a11y` is enabled; `pnpm lint` will fail on a11y regressions.
 - Type safety: `noUncheckedIndexedAccess`, `noUnusedLocals`, `noUnusedParameters` are all on. Watch out for array index access returning `T | undefined`.
+- Admin dashboard lives at `/admin/*` (overview, `/admin/spots` list + `/new` + `/[id]`, `/admin/events` list + `/new` + `/[id]`) — see SPEC.md §4 and §12 phases 4-6. Server actions in `src/app/actions/admin-*.ts` call `requireAdmin()` from `@/lib/auth/server`; the access gate is the `ADMIN_EMAILS` env (CSV, case-insensitive) with the dev placeholder `DEV_USER_ID` always treated as admin. The new create-spot flow is `lat/lon → GET /api/geocode/reverse (Nominatim) → edit auto-filled fields → save` (page `/admin/spots/new`); the admin layout renders `DataModeNotice` and disables write buttons (with `title="DB mode required"`) whenever `SPOTS_DATA_SOURCE=json`, matching the "JSON is the read-only fallback" rule in `src/lib/repositories/index.ts`. `src/app/robots.ts` disallows `/admin/` and `src/app/sitemap.ts` intentionally omits `/admin/*`.
 
 ## Data source switching (dev shortcut)
 

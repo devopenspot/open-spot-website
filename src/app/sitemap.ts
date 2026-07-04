@@ -16,6 +16,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE_URL}/sport-events`, lastModified: now, changeFrequency: 'weekly', priority: 0.7 },
   ];
 
+  // The /admin/* dashboard is intentionally absent: it's auth-gated by
+  // `requireAdminOrRedirect`, the layout sets `robots: { index: false,
+  // follow: false }`, and `src/app/robots.ts` disallows `/admin/` for all
+  // user-agents. We keep the static list hand-curated to public pages.
+
   const repo = await getSpotRepositoryAsync()
   const { items: spots } = await repo.list();
   const spotEntries: MetadataRoute.Sitemap = spots.map(spot => ({
