@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "leaflet/dist/leaflet.css";
 
 @theme {
   --color-surface: #f9f9f9;
@@ -93,6 +94,55 @@
   :target,
   *:focus-visible {
     scroll-margin-top: 80px;
+  }
+}
+
+@layer base {
+  /* Enforce DESIGN.md (0px corners, no shadows, monochrome) on Leaflet's chrome */
+  .leaflet-control-zoom a,
+  .leaflet-control-attribution,
+  .leaflet-bar a,
+  .leaflet-bar a:hover {
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+  .leaflet-control-zoom a,
+  .leaflet-bar a {
+    border-color: var(--color-outline-variant);
+    background-color: var(--color-surface);
+    color: var(--color-on-surface);
+  }
+  .leaflet-control-attribution {
+    background-color: var(--color-surface);
+    color: var(--color-secondary);
+    border-top: 1px solid var(--color-outline-variant);
+    border-left: 1px solid var(--color-outline-variant);
+  }
+  .leaflet-control-attribution a {
+    color: var(--color-on-surface);
+  }
+  .leaflet-container {
+    background: var(--color-surface-container);
+    font-family: var(--font-mono);
+  }
+
+  /* Custom divIcon pins — match DESIGN.md (0px corners, monochrome, no shadows) */
+  .leaflet-pin {
+    background: transparent;
+    border: 0;
+  }
+  .leaflet-pin > span {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: 0;
+    box-shadow: none;
+    border: 1px solid var(--color-outline);
+    background: var(--color-surface);
+  }
+  .leaflet-pin--active > span {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
   }
 }
 

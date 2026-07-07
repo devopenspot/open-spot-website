@@ -10,12 +10,6 @@ export const MAP_VIEWPORT_OFFSET_PX = {
   MOBILE: 160,
 } as const;
 
-export const MAP_ZOOM = {
-  MIN: 0.75,
-  MAX: 2.5,
-  STEP: 0.25,
-} as const;
-
 export const SEARCH_FOCUS_DELAY_MS = 150;
 
 export const STORAGE_KEY_VERSION = 'v2';

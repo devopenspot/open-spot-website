@@ -1,20 +1,25 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useSpotsStore } from "@/stores/spots-store";
 import { useWeather } from "@/components/layout/WeatherContext";
 import { useSavedSpots } from "@/hooks/useSavedSpots";
 import { useUser } from "@/hooks/useUser";
 import { useMapFilter } from "@/hooks/useMapFilter";
-import { MAP_VIEWPORT_OFFSET_PX, MAP_ZOOM } from "@/lib/constants";
+import { MAP_VIEWPORT_OFFSET_PX } from "@/lib/constants";
 import { ROUTES } from "@/lib/nav";
-import { getSpotGridCoordinates } from "@/lib/spots/geo";
-import { MapCanvas } from "./MapCanvas";
 import { MapSidebar } from "./MapSidebar";
 import { MapInfoPopup } from "./MapInfoPopup";
 import { MapLegend } from "./MapLegend";
 import type { Spot } from "@/lib/types";
+import type { LeafletCanvasHandle } from "./LeafletCanvas";
+
+const LeafletCanvas = dynamic(
+  () => import("./LeafletCanvas").then((m) => m.LeafletCanvas),
+  { ssr: false, loading: () => <div className="flex-1 border border-outline-variant bg-surface-container-low animate-pulse" /> },
+);
 
 export default function MapTab() {
   const router = useRouter();
@@ -24,19 +29,10 @@ export default function MapTab() {
   const { weather } = useWeather();
   const { region, country, filteredSpots } = useMapFilter(spots);
   const [activePin, setActivePin] = useState<Spot | null>(null);
-  const [zoomLevel, setZoomLevel] = useState<number>(1);
-  const [mapPan, setMapPan] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
-
-  const handleZoom = useCallback((direction: "in" | "out") => {
-    setZoomLevel((prev) => {
-      const next = direction === "in" ? prev + MAP_ZOOM.STEP : prev - MAP_ZOOM.STEP;
-      return Math.max(MAP_ZOOM.MIN, Math.min(MAP_ZOOM.MAX, next));
-    });
-  }, []);
+  const leafletRef = useRef<LeafletCanvasHandle | null>(null);
 
   const handleResetMap = useCallback(() => {
-    setZoomLevel(1);
-    setMapPan({ x: 0, y: 0 });
+    leafletRef.current?.fitBoundsToSpots();
     setActivePin(null);
   }, []);
 
@@ -44,17 +40,10 @@ export default function MapTab() {
     setActivePin((prev) => (prev?.id === spot.id ? null : spot));
   }, []);
 
-  const handleSidebarSelect = useCallback(
-    (spot: Spot) => {
-      setActivePin(spot);
-      const coords = getSpotGridCoordinates(spot);
-      setMapPan({
-        x: (50 - coords.x) * 2 * zoomLevel,
-        y: (50 - coords.y) * 2 * zoomLevel,
-      });
-    },
-    [zoomLevel],
-  );
+  const handleSidebarSelect = useCallback((spot: Spot) => {
+    setActivePin(spot);
+    leafletRef.current?.flyTo(spot);
+  }, []);
 
   const openSpot = useCallback(
     (spot: Spot) => router.push(ROUTES.spot(spot.id)),
@@ -85,16 +74,39 @@ export default function MapTab() {
       />
 
       <div className="flex-1 flex flex-col">
-        <MapCanvas
-          spots={filteredSpots}
-          activeId={activePin?.id ?? null}
-          gridTitle={gridTitle}
-          zoomLevel={zoomLevel}
-          mapPan={mapPan}
-          onZoom={handleZoom}
-          onReset={handleResetMap}
-          onTogglePin={handlePinToggle}
-        />
+        <div
+          id="map-canvas-container"
+          className="flex-1 border border-outline-variant rounded-2xl bg-surface-container-low overflow-hidden relative flex flex-col"
+        >
+          <div className="absolute top-4 left-4 right-4 z-10 flex items-center justify-between pointer-events-none">
+            <div className="flex items-center space-x-2 bg-surface/90 backdrop-blur-md px-3 py-1.5 rounded-lg border border-outline-variant shadow-sm pointer-events-auto">
+              <span
+                aria-hidden="true"
+                className="h-2 w-2 rounded-full bg-emerald-500 animate-ping"
+              />
+              <span className="font-mono text-[10px] font-bold tracking-wider text-on-surface uppercase">
+                {gridTitle} Active
+              </span>
+            </div>
+
+            <div className="flex items-center space-x-1 bg-surface/90 backdrop-blur-md p-1 rounded-lg border border-outline-variant shadow-sm pointer-events-auto">
+              <button
+                type="button"
+                onClick={handleResetMap}
+                className="px-2 py-1 text-[9px] font-mono font-bold tracking-wider uppercase text-primary hover:bg-surface-container rounded transition-all"
+              >
+                Reset view
+              </button>
+            </div>
+          </div>
+
+          <LeafletCanvas
+            ref={leafletRef}
+            spots={filteredSpots}
+            activeId={activePin?.id ?? null}
+            onTogglePin={handlePinToggle}
+          />
+        </div>
         <MapLegend />
       </div>
 

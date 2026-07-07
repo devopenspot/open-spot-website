@@ -6,6 +6,11 @@ import { getTerrainOptions } from "@/lib/spots"
 import { SPORT_DISCIPLINES, type SportDiscipline } from "@/types/sport-events"
 import { CROWD_LEVEL } from "@/lib/constants"
 import { ImageSourceField, type ImageSourceFieldValue } from "./ImageSourceField"
+import {
+  LatLonEditor,
+  type LatLonEditorMode,
+} from "./LatLonEditor"
+import type { ProjectedAddress } from "@/lib/geocode/project"
 import type { SpotType } from "@/lib/types"
 
 export interface SpotFormState {
@@ -29,6 +34,25 @@ interface SpotFormFieldsProps {
   onChange: (next: SpotFormState) => void
   errors?: Partial<Record<keyof SpotFormState, string>>
   imageDisabled?: boolean
+  /**
+   * Lat/lon editor behaviour. Defaults to `"preview"` (the edit-page
+   * contract: lookup shows a preview, does not overwrite address fields).
+   * Pass `"auto-fill"` from the new-spot page so a successful lookup
+   * populates city / country / address / citySlug through
+   * `onAutoFillResult`.
+   */
+  latLonMode?: LatLonEditorMode
+  /**
+   * Only used when `latLonMode === "auto-fill"`. Receives the projected
+   * address from a successful reverse-geocode so the parent can apply
+   * it to the form (mirrors the previous `applyAddress` helper in
+   * `AdminNewSpotForm`).
+   */
+  onAutoFillResult?: (address: ProjectedAddress) => void
+  /** Forwarded to the lat/lon editor for its API + validation errors. */
+  onError?: (message: string) => void
+  /** Disables the lat/lon editor + the "Look up" button (e.g. JSON mode). */
+  writeEnabled?: boolean
 }
 
 export function SpotFormFields({
@@ -36,6 +60,10 @@ export function SpotFormFields({
   onChange,
   errors,
   imageDisabled = false,
+  latLonMode = "preview",
+  onAutoFillResult,
+  onError,
+  writeEnabled = true,
 }: SpotFormFieldsProps) {
   const terrainOptions = getTerrainOptions()
   const nameId = useId()
@@ -80,6 +108,17 @@ export function SpotFormFields({
 
   return (
     <div className="space-y-8">
+      <LatLonEditor
+        lat={state.lat}
+        lon={state.lon}
+        mode={writeEnabled ? latLonMode : "read-only"}
+        onChange={(lat, lon) =>
+          onChange({ ...state, lat, lon })
+        }
+        onAutoFillResult={onAutoFillResult}
+        onError={onError}
+      />
+
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
         <div>
           <label

@@ -4,10 +4,6 @@ import { useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { showToast } from "@/hooks/useToast"
 import { createSpotFromLookupAction } from "@/app/actions/admin-spots"
-import {
-  LatLonLookupPanel,
-  type LatLonLookupResult,
-} from "@/components/admin/spots/LatLonLookupPanel"
 import { SpotFormFields, type SpotFormState } from "@/components/admin/spots/SpotFormFields"
 import { SpotFormSubmit } from "@/components/admin/spots/SpotFormSubmit"
 import type { ProjectedAddress } from "@/lib/geocode/project"
@@ -86,12 +82,6 @@ interface AdminNewSpotFormProps {
 export function AdminNewSpotForm({ writeEnabled }: AdminNewSpotFormProps) {
   const router = useRouter()
   const [state, setState] = useState<SpotFormState>(buildInitialState())
-  const [hasLookup, setHasLookup] = useState(false)
-
-  const handleLookup = (result: LatLonLookupResult) => {
-    setState((s) => applyAddress(s, result.address))
-    setHasLookup(true)
-  }
 
   const handleError = (message: string) => {
     showToast(message, "error")
@@ -102,7 +92,7 @@ export function AdminNewSpotForm({ writeEnabled }: AdminNewSpotFormProps) {
   }
 
   const submitDisabled =
-    !writeEnabled || !hasLookup || !state.name || !state.city
+    !writeEnabled || !state.name || !state.city
 
   const submitLabel = useMemo(
     () => (writeEnabled ? "Register Spot" : "DB mode required"),
@@ -131,12 +121,6 @@ export function AdminNewSpotForm({ writeEnabled }: AdminNewSpotFormProps) {
         </p>
       </header>
 
-      <LatLonLookupPanel
-        onResult={handleLookup}
-        onError={handleError}
-        disabled={!writeEnabled}
-      />
-
       <form
         onSubmit={(e) => {
           e.preventDefault()
@@ -148,6 +132,10 @@ export function AdminNewSpotForm({ writeEnabled }: AdminNewSpotFormProps) {
           state={state}
           onChange={setState}
           imageDisabled={!writeEnabled}
+          latLonMode="auto-fill"
+          onAutoFillResult={(address) => setState((s) => applyAddress(s, address))}
+          onError={handleError}
+          writeEnabled={writeEnabled}
         />
         <SpotFormSubmit
           state={state}

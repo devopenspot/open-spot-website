@@ -22,9 +22,29 @@ const geometryPoint = customType<{
     return `SRID=4326;POINT(${value.lon} ${value.lat})`
   },
   fromDriver(value) {
-    const match = /POINT\(([-\d.]+)\s+([-\d.]+)\)/.exec(value)
-    if (!match) return { lat: 0, lon: 0 }
-    return { lat: Number(match[2]), lon: Number(match[1]) }
+    // postgres-js returns a `geometry(Point, 4326)` column as hex-encoded
+    // EWKB (Extended Well-Known Binary). Accept that as the primary
+    // format, with a WKT/EWKT fallback for any other future driver.
+    if (typeof value === "string" && /^[0-9A-Fa-f]+$/.test(value) && value.length >= 50) {
+      // EWKB Point with SRID = 25 bytes = 50 hex chars.
+      // Layout: [0]=endian, [1..4]=type, [5..8]=SRID, [9..16]=X (lon), [17..24]=Y (lat)
+      const buf = Buffer.from(value, "hex")
+      const view = new DataView(buf.buffer, buf.byteOffset, buf.byteLength)
+      const lon = view.getFloat64(9, true)
+      const lat = view.getFloat64(17, true)
+      if (Number.isFinite(lat) && Number.isFinite(lon)) {
+        return { lat, lon }
+      }
+    }
+    // Fallback: WKT / EWKT ("POINT(<lon> <lat>)" or "SRID=4326;POINT(...)")
+    const match = /(?:SRID=\d+;)?POINT\s*\(\s*([-\d.eE]+)\s+([-\d.eE]+)\s*\)/i.exec(
+      value,
+    )
+    if (match) {
+      return { lat: Number(match[2]), lon: Number(match[1]) }
+    }
+    console.warn("geometryPoint.fromDriver: unparseable geometry", { value })
+    return { lat: 0, lon: 0 }
   },
 })
 

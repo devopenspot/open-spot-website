@@ -128,6 +128,8 @@ export function AdminEditSpotForm({ spot, writeEnabled }: AdminEditSpotFormProps
           state={state}
           onChange={setState}
           imageDisabled={!writeEnabled}
+          latLonMode="preview"
+          writeEnabled={writeEnabled}
         />
         <SpotFormSubmit
           state={state}
