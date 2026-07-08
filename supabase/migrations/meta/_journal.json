@@ -8,6 +8,13 @@
       "when": 1783023788049,
       "tag": "0000_0001_initial_schema",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1783536947933,
+      "tag": "0005_lookup_tables_and_dimensions",
+      "breakpoints": true
     }
   ]
 }

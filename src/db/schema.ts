@@ -186,7 +186,131 @@ export const profiles = pgTable("profiles", {
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
 })
+
+export const regions = pgTable(
+  "regions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    slug: text("slug").notNull().unique(),
+    name: text("name").notNull(),
+    description: text("description").notNull().default(""),
+    imageUrl: text("image_url"),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [index("regions_sort_order_idx").on(t.sortOrder)],
+)
+
+export const countries = pgTable(
+  "countries",
+  {
+    iso2: text("iso2").primaryKey(),
+    name: text("name").notNull().unique(),
+    iso3: text("iso3"),
+    regionId: uuid("region_id")
+      .notNull()
+      .references(() => regions.id, { onDelete: "restrict" }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [index("countries_region_idx").on(t.regionId)],
+)
+
+export const spotTypes = pgTable(
+  "spot_types",
+  {
+    slug: text("slug").primaryKey(),
+    name: text("name").notNull(),
+    sortOrder: integer("sort_order").notNull().default(0),
+  },
+  (t) => [index("spot_types_sort_order_idx").on(t.sortOrder)],
+)
+
+export const sportDisciplines = pgTable(
+  "sport_disciplines",
+  {
+    slug: text("slug").primaryKey(),
+    name: text("name").notNull(),
+    sortOrder: integer("sort_order").notNull().default(0),
+  },
+  (t) => [index("sport_disciplines_sort_order_idx").on(t.sortOrder)],
+)
+
+export const eventTiers = pgTable(
+  "event_tiers",
+  {
+    slug: text("slug").primaryKey(),
+    name: text("name").notNull(),
+    sortOrder: integer("sort_order").notNull().default(0),
+  },
+  (t) => [index("event_tiers_sort_order_idx").on(t.sortOrder)],
+)
+
+export const spotFeatures = pgTable("spot_features", {
+  slug: text("slug").primaryKey(),
+  name: text("name").notNull(),
+})
+
+export const spotSports = pgTable(
+  "spot_sports",
+  {
+    spotId: uuid("spot_id")
+      .notNull()
+      .references(() => spots.id, { onDelete: "cascade" }),
+    disciplineSlug: text("discipline_slug")
+      .notNull()
+      .references(() => sportDisciplines.slug, { onDelete: "restrict" }),
+  },
+  (t) => [
+    primaryKey({ columns: [t.spotId, t.disciplineSlug] }),
+    index("spot_sports_discipline_idx").on(t.disciplineSlug),
+  ],
+)
+
+export const spotFeatureLinks = pgTable(
+  "spot_feature_links",
+  {
+    spotId: uuid("spot_id")
+      .notNull()
+      .references(() => spots.id, { onDelete: "cascade" }),
+    featureSlug: text("feature_slug")
+      .notNull()
+      .references(() => spotFeatures.slug, { onDelete: "restrict" }),
+  },
+  (t) => [
+    primaryKey({ columns: [t.spotId, t.featureSlug] }),
+    index("spot_feature_links_feature_idx").on(t.featureSlug),
+  ],
+)
+
+export const eventSports = pgTable(
+  "event_sports",
+  {
+    eventId: uuid("event_id")
+      .notNull()
+      .references(() => sportEvents.id, { onDelete: "cascade" }),
+    disciplineSlug: text("discipline_slug")
+      .notNull()
+      .references(() => sportDisciplines.slug, { onDelete: "restrict" }),
+  },
+  (t) => [
+    primaryKey({ columns: [t.eventId, t.disciplineSlug] }),
+    index("event_sports_discipline_idx").on(t.disciplineSlug),
+  ],
+)
 
 export type SpotRow = typeof spots.$inferSelect
 export type NewSpotRow = typeof spots.$inferInsert
@@ -196,3 +320,22 @@ export type SavedSpotRow = typeof savedSpots.$inferSelect
 export type NewSavedSpotRow = typeof savedSpots.$inferInsert
 export type CountryRegionRow = typeof countryRegions.$inferSelect
 export type ProfileRow = typeof profiles.$inferSelect
+
+export type RegionRow = typeof regions.$inferSelect
+export type NewRegionRow = typeof regions.$inferInsert
+export type CountryRow = typeof countries.$inferSelect
+export type NewCountryRow = typeof countries.$inferInsert
+export type SpotTypeRow = typeof spotTypes.$inferSelect
+export type NewSpotTypeRow = typeof spotTypes.$inferInsert
+export type SportDisciplineRow = typeof sportDisciplines.$inferSelect
+export type NewSportDisciplineRow = typeof sportDisciplines.$inferInsert
+export type EventTierRow = typeof eventTiers.$inferSelect
+export type NewEventTierRow = typeof eventTiers.$inferInsert
+export type SpotFeatureRow = typeof spotFeatures.$inferSelect
+export type NewSpotFeatureRow = typeof spotFeatures.$inferInsert
+export type SpotSportRow = typeof spotSports.$inferSelect
+export type NewSpotSportRow = typeof spotSports.$inferInsert
+export type SpotFeatureLinkRow = typeof spotFeatureLinks.$inferSelect
+export type NewSpotFeatureLinkRow = typeof spotFeatureLinks.$inferInsert
+export type EventSportRow = typeof eventSports.$inferSelect
+export type NewEventSportRow = typeof eventSports.$inferInsert

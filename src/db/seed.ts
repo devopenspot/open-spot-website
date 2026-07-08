@@ -3,7 +3,138 @@ import spotsJson from "../data/spots.json"
 import sportEventsJson from "../data/sport-events.json"
 import postgres from "postgres"
 import { getDatabaseUrl } from "../lib/env"
-import { COUNTRY_TO_REGION } from "../data"
+import { COUNTRY_TO_REGION, REGIONS_DATA } from "../data"
+
+interface RegionSeed {
+  slug: string
+  name: string
+  description: string
+  imageUrl: string
+  sortOrder: number
+}
+
+interface CountrySeed {
+  iso2: string
+  name: string
+  iso3: string
+  region: string
+}
+
+interface TaxonomyEntry {
+  slug: string
+  name: string
+  sortOrder: number
+}
+
+const REGION_SEED: readonly RegionSeed[] = REGIONS_DATA.map((r, i) => ({
+  slug: r.name.toLowerCase(),
+  name: r.name,
+  description: r.desc,
+  imageUrl: r.image,
+  sortOrder: i,
+}))
+
+const COUNTRY_TO_ISO2: Readonly<Record<string, string>> = {
+  "United States": "US",
+  Canada: "CA",
+  Mexico: "MX",
+  Brazil: "BR",
+  Argentina: "AR",
+  Colombia: "CO",
+  Chile: "CL",
+  Peru: "PE",
+  France: "FR",
+  Germany: "DE",
+  "United Kingdom": "GB",
+  Italy: "IT",
+  Spain: "ES",
+  Netherlands: "NL",
+  Portugal: "PT",
+  Sweden: "SE",
+  Japan: "JP",
+  "South Korea": "KR",
+  China: "CN",
+  Thailand: "TH",
+  Singapore: "SG",
+  Indonesia: "ID",
+  Philippines: "PH",
+  Malaysia: "MY",
+}
+
+const COUNTRY_TO_ISO3: Readonly<Record<string, string>> = {
+  US: "USA", CA: "CAN", MX: "MEX", BR: "BRA", AR: "ARG", CO: "COL",
+  CL: "CHL", PE: "PER", FR: "FRA", DE: "DEU", GB: "GBR", IT: "ITA",
+  ES: "ESP", NL: "NLD", PT: "PRT", SE: "SWE", JP: "JPN", KR: "KOR",
+  CN: "CHN", TH: "THA", SG: "SGP", ID: "IDN", PH: "PHL", MY: "MYS",
+}
+
+function buildCountrySeed(): readonly CountrySeed[] {
+  const out: CountrySeed[] = []
+  for (const [name, region] of Object.entries(COUNTRY_TO_REGION)) {
+    const iso2 = COUNTRY_TO_ISO2[name]
+    if (!iso2) continue
+    out.push({
+      iso2,
+      name,
+      iso3: COUNTRY_TO_ISO3[iso2] ?? "",
+      region,
+    })
+  }
+  return out
+}
+
+const COUNTRY_SEED = buildCountrySeed()
+
+const SPOT_TYPE_SEED: readonly TaxonomyEntry[] = [
+  { slug: "plaza", name: "Plaza", sortOrder: 0 },
+  { slug: "diy", name: "DIY", sortOrder: 1 },
+  { slug: "stair", name: "Stair set", sortOrder: 2 },
+  { slug: "bowl", name: "Bowl", sortOrder: 3 },
+  { slug: "park", name: "Skatepark", sortOrder: 4 },
+  { slug: "ledges", name: "Ledges", sortOrder: 5 },
+  { slug: "pools", name: "Pools", sortOrder: 6 },
+]
+
+const SPORT_DISCIPLINE_SEED: readonly TaxonomyEntry[] = [
+  { slug: "skateboard", name: "Skateboard", sortOrder: 0 },
+  { slug: "bmx", name: "BMX", sortOrder: 1 },
+  { slug: "inline", name: "Inline", sortOrder: 2 },
+  { slug: "scooter", name: "Scooter", sortOrder: 3 },
+  { slug: "rollerblade", name: "Rollerblade", sortOrder: 4 },
+  { slug: "wakeboard", name: "Wakeboard", sortOrder: 5 },
+  { slug: "snowboard", name: "Snowboard", sortOrder: 6 },
+  { slug: "ski", name: "Ski", sortOrder: 7 },
+]
+
+const EVENT_TIER_SEED: readonly TaxonomyEntry[] = [
+  { slug: "world-tour", name: "World Tour", sortOrder: 0 },
+  { slug: "championship", name: "Championship", sortOrder: 1 },
+  { slug: "festival", name: "Festival", sortOrder: 2 },
+  { slug: "federation", name: "Federation", sortOrder: 3 },
+]
+
+const SPOT_FEATURE_SEED: readonly { slug: string; name: string }[] = [
+  { slug: "ledge", name: "Ledge" },
+  { slug: "rail", name: "Rail" },
+  { slug: "down-rail", name: "Down rail" },
+  { slug: "up-rail", name: "Up rail" },
+  { slug: "stairs", name: "Stairs" },
+  { slug: "hubba", name: "Hubba" },
+  { slug: "manual-pad", name: "Manual pad" },
+  { slug: "flat-bar", name: "Flat bar" },
+  { slug: "gap", name: "Gap" },
+  { slug: "pyramid", name: "Pyramid" },
+  { slug: "bank", name: "Bank" },
+  { slug: "wallride", name: "Wallride" },
+  { slug: "pole-jam", name: "Pole jam" },
+  { slug: "quarter-pipe", name: "Quarter pipe" },
+  { slug: "mini-ramp", name: "Mini ramp" },
+  { slug: "bowl", name: "Bowl" },
+  { slug: "pool", name: "Pool" },
+  { slug: "smooth-concrete", name: "Smooth concrete" },
+  { slug: "street", name: "Street" },
+  { slug: "slidebox", name: "Slidebox" },
+]
 
 interface RawAddress {
   city?: string
@@ -156,6 +287,104 @@ function pointWkt(lat: number, lon: number): string {
   return `SRID=4326;POINT(${lon} ${lat})`
 }
 
+async function seedRegions(sql: ReturnType<typeof postgres>) {
+  console.log("→ seeding regions")
+  for (const r of REGION_SEED) {
+    await sql`
+      insert into regions (slug, name, description, image_url, sort_order)
+      values (${r.slug}, ${r.name}, ${r.description}, ${r.imageUrl}, ${r.sortOrder})
+      on conflict (slug) do update set
+        name = excluded.name,
+        description = excluded.description,
+        image_url = excluded.image_url,
+        sort_order = excluded.sort_order,
+        updated_at = now()
+    `
+  }
+  console.log(`  ✓ ${REGION_SEED.length} regions`)
+}
+
+async function seedCountries(sql: ReturnType<typeof postgres>) {
+  console.log("→ seeding countries")
+  const regionRows = await sql<{ id: string; name: string }[]>`
+    select id, name from regions
+  `
+  const regionIdByName = new Map(regionRows.map((r) => [r.name, r.id]))
+  let count = 0
+  for (const c of COUNTRY_SEED) {
+    const regionId = regionIdByName.get(c.region)
+    if (!regionId) {
+      console.warn(`  ! skipping ${c.name}: region "${c.region}" not seeded`)
+      continue
+    }
+    await sql`
+      insert into countries (iso2, name, iso3, region_id)
+      values (${c.iso2}, ${c.name}, ${c.iso3 || null}, ${regionId})
+      on conflict (iso2) do update set
+        name = excluded.name,
+        iso3 = excluded.iso3,
+        region_id = excluded.region_id,
+        updated_at = now()
+    `
+    count++
+  }
+  console.log(`  ✓ ${count} countries`)
+}
+
+async function seedSpotTypes(sql: ReturnType<typeof postgres>) {
+  console.log("→ seeding spot_types")
+  for (const t of SPOT_TYPE_SEED) {
+    await sql`
+      insert into spot_types (slug, name, sort_order)
+      values (${t.slug}, ${t.name}, ${t.sortOrder})
+      on conflict (slug) do update set
+        name = excluded.name,
+        sort_order = excluded.sort_order
+    `
+  }
+  console.log(`  ✓ ${SPOT_TYPE_SEED.length} spot_types`)
+}
+
+async function seedSportDisciplines(sql: ReturnType<typeof postgres>) {
+  console.log("→ seeding sport_disciplines")
+  for (const d of SPORT_DISCIPLINE_SEED) {
+    await sql`
+      insert into sport_disciplines (slug, name, sort_order)
+      values (${d.slug}, ${d.name}, ${d.sortOrder})
+      on conflict (slug) do update set
+        name = excluded.name,
+        sort_order = excluded.sort_order
+    `
+  }
+  console.log(`  ✓ ${SPORT_DISCIPLINE_SEED.length} sport_disciplines`)
+}
+
+async function seedEventTiers(sql: ReturnType<typeof postgres>) {
+  console.log("→ seeding event_tiers")
+  for (const t of EVENT_TIER_SEED) {
+    await sql`
+      insert into event_tiers (slug, name, sort_order)
+      values (${t.slug}, ${t.name}, ${t.sortOrder})
+      on conflict (slug) do update set
+        name = excluded.name,
+        sort_order = excluded.sort_order
+    `
+  }
+  console.log(`  ✓ ${EVENT_TIER_SEED.length} event_tiers`)
+}
+
+async function seedSpotFeatures(sql: ReturnType<typeof postgres>) {
+  console.log("→ seeding spot_features")
+  for (const f of SPOT_FEATURE_SEED) {
+    await sql`
+      insert into spot_features (slug, name)
+      values (${f.slug}, ${f.name})
+      on conflict (slug) do update set name = excluded.name
+    `
+  }
+  console.log(`  ✓ ${SPOT_FEATURE_SEED.length} spot_features`)
+}
+
 async function seedCountryRegions(sql: ReturnType<typeof postgres>) {
   console.log("→ seeding country_regions")
   let count = 0
@@ -301,6 +530,12 @@ async function main() {
   if (!url) throw new Error("DATABASE_URL is not configured")
   const sql = postgres(url, { ssl: "require", max: 1, connect_timeout: 10 })
   try {
+    await seedRegions(sql)
+    await seedCountries(sql)
+    await seedSpotTypes(sql)
+    await seedSportDisciplines(sql)
+    await seedEventTiers(sql)
+    await seedSpotFeatures(sql)
     await seedCountryRegions(sql)
     await seedSpots(sql)
     await seedSportEvents(sql)
