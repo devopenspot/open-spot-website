@@ -7,6 +7,7 @@ import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { useRef } from "react";
 import type { Spot } from "@/lib/types";
 import type { CachedSpotWeather } from "@/lib/weather/weather-cached";
+import { WeatherIcon } from "@/components/spot/WeatherIcon";
 
 interface MapInfoPopupProps {
   spot: Spot;
@@ -28,6 +29,10 @@ export function MapInfoPopup({
   const panelRef = useRef<HTMLDivElement>(null);
   useFocusTrap(panelRef, true);
   useKeyboardShortcuts([{ key: "Escape", handler: onClose }]);
+
+  const w = weather[spot.id];
+  const current = w?.current;
+  const weatherIcon = w?.forecast[0]?.icon;
 
   return (
     <div
@@ -86,8 +91,11 @@ export function MapInfoPopup({
         </div>
         <div>
           <span className="block text-[8px] text-secondary">Air temp</span>
-          <span className="font-semibold text-on-surface">
-            {weather[spot.id]?.current ?? "—"}°C sunny
+          <span className="font-semibold text-on-surface flex items-center gap-1">
+            {weatherIcon ? (
+              <WeatherIcon name={weatherIcon} size={12} />
+            ) : null}
+            {current !== undefined ? `${current}°C` : "—"}
           </span>
         </div>
       </div>

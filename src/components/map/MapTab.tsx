@@ -24,6 +24,8 @@ const LeafletCanvas = dynamic(
   { ssr: false, loading: () => <div className="flex-1 border border-outline-variant bg-surface-container-low animate-pulse" /> },
 );
 
+const NEAR_YOU_INITIAL_ZOOM = 12;
+
 export default function MapTab() {
   const router = useRouter();
   const spots = useSpotsStore((s) => s.spots);
@@ -51,13 +53,15 @@ export default function MapTab() {
   }, [filteredSpots, userLatLon]);
 
   const sidebarSpots = useMemo(() => {
-    if (!userLatLon || status !== "granted") return orderedSpots;
+    if (!userLatLon || status !== "granted" || region !== null || country !== null) {
+      return orderedSpots;
+    }
     const origin = userLatLon;
     return orderedSpots.filter(
       (s) =>
         haversineMiles(origin.lat, origin.lon, s.location.lat, s.location.lon) <= radiusMiles,
     );
-  }, [orderedSpots, userLatLon, radiusMiles, status]);
+  }, [orderedSpots, userLatLon, radiusMiles, status, region, country]);
 
   const handleResetMap = useCallback(() => {
     leafletRef.current?.fitBoundsToSpots();
@@ -65,7 +69,11 @@ export default function MapTab() {
   }, []);
 
   const handlePinToggle = useCallback((spot: Spot) => {
-    setActivePin((prev) => (prev?.id === spot.id ? null : spot));
+    setActivePin((prev) => {
+      if (prev?.id === spot.id) return null;
+      leafletRef.current?.flyTo(spot);
+      return spot;
+    });
   }, []);
 
   const handleSidebarSelect = useCallback((spot: Spot) => {
@@ -82,18 +90,35 @@ export default function MapTab() {
     leafletRef.current?.fitRadius(milesToMeters(radiusMiles));
   }, [radiusMiles]);
 
-  useEffect(() => {
-    if (status !== "granted" || !location) return;
-    leafletRef.current?.fitRadius(milesToMeters(radiusMiles));
-  }, [status, location, radiusMiles]);
-
   const gridTitle = region
     ? country
       ? `${country} (${region})`
       : region
     : "Global grid";
 
-  const nearYou = status === "granted" && location !== null;
+  const nearYou =
+    status === "granted" &&
+    location !== null &&
+    region === null &&
+    country === null;
+
+  useEffect(() => {
+    if (!nearYou) return;
+    leafletRef.current?.fitRadius(milesToMeters(radiusMiles));
+  }, [nearYou, location, radiusMiles]);
+
+  useEffect(() => {
+    if (nearYou) return;
+    if (region === null && country === null) return;
+    leafletRef.current?.fitBoundsToSpots();
+  }, [nearYou, region, country]);
+
+  const initialCenter: [number, number] = nearYou && userLatLon
+    ? [userLatLon.lat, userLatLon.lon]
+    : sidebarSpots[0]
+      ? [sidebarSpots[0].location.lat, sidebarSpots[0].location.lon]
+      : [20, 0];
+  const initialZoom = nearYou ? NEAR_YOU_INITIAL_ZOOM : 2;
 
   return (
     <section
@@ -113,6 +138,7 @@ export default function MapTab() {
         userLocation={userLatLon}
         radiusMiles={nearYou ? radiusMiles : undefined}
         onRadiusChange={nearYou ? setRadiusMiles : undefined}
+        showRadiusChips={nearYou}
       />
 
       <div className="flex-1 flex flex-col">
@@ -149,9 +175,13 @@ export default function MapTab() {
             ref={leafletRef}
             spots={sidebarSpots}
             activeId={activePin?.id ?? null}
+            savedIds={savedIds}
+            weather={weather}
             onTogglePin={handlePinToggle}
             userLocation={location}
             radiusMeters={milesToMeters(radiusMiles)}
+            initialCenter={initialCenter}
+            initialZoom={initialZoom}
           />
         </div>
         <MapLegend />

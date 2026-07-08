@@ -130,19 +130,153 @@
   .leaflet-pin {
     background: transparent;
     border: 0;
-  }
-  .leaflet-pin > span {
-    display: block;
+    position: relative;
     width: 100%;
     height: 100%;
-    border-radius: 0;
-    box-shadow: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+  .leaflet-pin__square {
+    position: relative;
+    width: 24px;
+    height: 24px;
     border: 1px solid var(--color-outline);
     background: var(--color-surface);
+    color: var(--color-on-surface);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
   }
-  .leaflet-pin--active > span {
+  .leaflet-pin__glyph {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 0;
+  }
+  .leaflet-pin__label {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--color-on-surface);
+    background: var(--color-surface);
+    border: 1px solid var(--color-outline);
+    padding: 1px 4px;
+    max-width: 96px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    line-height: 1.1;
+  }
+
+  /* Active — invert, scale up, scout ring, info strip */
+  .leaflet-pin--active {
+    animation: leafletPinPulse 180ms ease-out 1;
+  }
+  .leaflet-pin--active .leaflet-pin__square {
+    width: 32px;
+    height: 32px;
     background: var(--color-primary);
     border-color: var(--color-primary);
+    color: var(--color-on-primary);
+    outline: 2px solid var(--color-outline-variant);
+    outline-offset: 2px;
+  }
+  .leaflet-pin--active .leaflet-pin__label {
+    color: var(--color-on-primary);
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+  }
+
+  /* Saved — corner notch */
+  .leaflet-pin--saved .leaflet-pin__square::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 6px;
+    height: 6px;
+    background: var(--color-surface);
+    border-left: 1px solid var(--color-outline);
+    border-bottom: 1px solid var(--color-outline);
+  }
+  .leaflet-pin--saved .leaflet-pin__square {
+    background: var(--color-primary);
+    color: var(--color-on-primary);
+    border-color: var(--color-primary);
+  }
+  .leaflet-pin--saved .leaflet-pin__label {
+    color: var(--color-on-primary);
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+  }
+
+  /* Active info strip — only on the active pin */
+  .leaflet-pin__info {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 6px;
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 2px;
+    box-sizing: border-box;
+  }
+  .leaflet-pin--active .leaflet-pin__info {
+    display: flex;
+  }
+  .leaflet-pin__weather {
+    display: flex;
+    align-items: center;
+    line-height: 0;
+    color: var(--color-on-primary);
+  }
+  .leaflet-pin__crowd {
+    display: inline-flex;
+    gap: 1px;
+    align-items: end;
+  }
+  .leaflet-pin__crowd i {
+    display: block;
+    width: 3px;
+    height: 3px;
+    background: transparent;
+    border: 1px solid var(--color-on-primary);
+    box-sizing: border-box;
+  }
+  .leaflet-pin__crowd i.on {
+    background: var(--color-on-primary);
+  }
+
+  /* Cluster chip — zoom-level summary */
+  .leaflet-cluster {
+    background: transparent;
+    border: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .leaflet-cluster__chip {
+    width: 28px;
+    height: 28px;
+    background: var(--color-primary);
+    color: var(--color-on-primary);
+    border: 1px solid var(--color-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
   }
 
   /* User-location pin — monochrome concentric dot (no shadows, hard corners) */
@@ -171,6 +305,29 @@
     left: 0;
     right: 0;
     background: var(--color-primary);
+  }
+  .leaflet-user-pin--nearby .leaflet-user-pin__ring {
+    animation: none;
+    border-style: dotted;
+    transform: scale(1.6);
+    opacity: 0.6;
+  }
+  .leaflet-user-pin--nearby::after {
+    content: "";
+    position: absolute;
+    inset: -6px;
+    border: 1px dotted var(--color-primary);
+    opacity: 0.6;
+    pointer-events: none;
+  }
+}
+
+@keyframes leafletPinPulse {
+  from {
+    transform: scale(0.85);
+  }
+  to {
+    transform: scale(1);
   }
 }
 

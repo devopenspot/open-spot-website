@@ -19,6 +19,7 @@ interface MapSidebarProps {
   userLocation?: LatLon | null;
   radiusMiles?: NearbyRadiusMiles;
   onRadiusChange?: (miles: NearbyRadiusMiles) => void;
+  showRadiusChips?: boolean;
 }
 
 function withinRadius(
@@ -37,9 +38,13 @@ export function MapSidebar({
   userLocation = null,
   radiusMiles,
   onRadiusChange,
+  showRadiusChips = true,
 }: MapSidebarProps) {
   const showChips =
-    userLocation !== null && radiusMiles !== undefined && onRadiusChange !== undefined;
+    showRadiusChips &&
+    userLocation !== null &&
+    radiusMiles !== undefined &&
+    onRadiusChange !== undefined;
 
   const visibleSpots = showChips && userLocation && radiusMiles
     ? spots.filter((s) => withinRadius(s, userLocation as LatLon, radiusMiles))
