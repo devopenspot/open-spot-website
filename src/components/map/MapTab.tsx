@@ -34,7 +34,6 @@ export default function MapTab() {
   const { location, status, radiusMiles, setRadiusMiles } = useUserLocation();
   const [activePin, setActivePin] = useState<Spot | null>(null);
   const leafletRef = useRef<LeafletCanvasHandle | null>(null);
-  const lastReCenteredStatus = useRef<string | null>(null);
 
   const userLatLon = useMemo(
     () => (location ? { lat: location.lat, lon: location.lon } : null),
@@ -79,15 +78,14 @@ export default function MapTab() {
     [router],
   );
 
+  const handleReCenter = useCallback(() => {
+    leafletRef.current?.fitRadius(milesToMeters(radiusMiles));
+  }, [radiusMiles]);
+
   useEffect(() => {
-    if (status !== "granted" || !location) {
-      lastReCenteredStatus.current = null;
-      return;
-    }
-    if (lastReCenteredStatus.current === status) return;
-    lastReCenteredStatus.current = status;
-    leafletRef.current?.flyToUserLocation();
-  }, [status, location]);
+    if (status !== "granted" || !location) return;
+    leafletRef.current?.fitRadius(milesToMeters(radiusMiles));
+  }, [status, location, radiusMiles]);
 
   const gridTitle = region
     ? country
@@ -134,7 +132,7 @@ export default function MapTab() {
             </div>
 
             <div className="flex items-center space-x-1 pointer-events-auto">
-              <NearbyControl />
+              <NearbyControl onReCenter={handleReCenter} />
               <div className="flex items-center space-x-1 bg-surface/90 backdrop-blur-md p-1 rounded-lg border border-outline-variant shadow-sm">
                 <button
                   type="button"

@@ -23,15 +23,23 @@ function tooltipFor(status: string, hasLocation: boolean): string {
   return "Use your location to find nearby spots.";
 }
 
-export function NearbyControl() {
+interface NearbyControlProps {
+  onReCenter?: () => void;
+}
+
+export function NearbyControl({ onReCenter }: NearbyControlProps = {}) {
   const { status, location, request, clear } = useUserLocation();
   const isRequesting = status === "requesting";
   const isGranted = status === "granted" && location !== null;
 
   const handleClick = useCallback(async () => {
     if (isRequesting) return;
+    if (isGranted) {
+      onReCenter?.();
+      return;
+    }
     await request();
-  }, [isRequesting, request]);
+  }, [isGranted, isRequesting, onReCenter, request]);
 
   const handleClear = useCallback(() => {
     clear();

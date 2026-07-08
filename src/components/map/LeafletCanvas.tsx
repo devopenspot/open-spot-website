@@ -15,6 +15,7 @@ const FOCUS_ZOOM = 13;
 const FLY_DURATION_SEC = 0.6;
 const FIT_PADDING: [number, number] = [40, 40];
 const USER_FOCUS_ZOOM = 12;
+const RADIUS_FIT_MAX_ZOOM = 16;
 
 const defaultIcon = L.divIcon({
   className: 'leaflet-pin leaflet-pin--default',
@@ -49,6 +50,7 @@ export interface LeafletCanvasHandle {
   flyTo: (spot: Spot) => void;
   fitBoundsToSpots: () => void;
   flyToUserLocation: () => void;
+  fitRadius: (radiusMeters: number) => void;
 }
 
 interface LeafletCanvasProps {
@@ -141,6 +143,28 @@ function MapController({
           USER_FOCUS_ZOOM,
           FLY_DURATION_SEC,
         );
+      },
+      fitRadius: (radiusMeters) => {
+        if (!userLocation) return;
+        if (!Number.isFinite(radiusMeters) || radiusMeters <= 0) return;
+        const center = L.latLng(userLocation.lat, userLocation.lon);
+        const bounds = center.toBounds(radiusMeters * 2);
+        try {
+          if (prefersReducedMotion()) {
+            map.fitBounds(bounds, {
+              padding: FIT_PADDING,
+              maxZoom: RADIUS_FIT_MAX_ZOOM,
+            });
+            return;
+          }
+          map.flyToBounds(bounds, {
+            padding: FIT_PADDING,
+            maxZoom: RADIUS_FIT_MAX_ZOOM,
+            duration: FLY_DURATION_SEC,
+          });
+        } catch {
+          map.setView([userLocation.lat, userLocation.lon], USER_FOCUS_ZOOM);
+        }
       },
     }),
     [map, spots, userLocation],
