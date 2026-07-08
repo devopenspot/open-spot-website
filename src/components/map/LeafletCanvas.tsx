@@ -19,7 +19,7 @@ import {
   useMapEvent,
 } from 'react-leaflet';
 import L from 'leaflet';
-import type { Spot, SpotType, WeatherIconName } from '@/lib/types';
+import type { Spot, WeatherIconName } from '@/lib/types';
 import type { CachedSpotWeather } from '@/lib/weather/weather-cached';
 import { weatherIconGlyph } from '@/components/spot/WeatherIcon';
 
@@ -31,23 +31,6 @@ const RADIUS_FIT_MAX_ZOOM = 16;
 
 const CLUSTER_ZOOM_MAX = 6;
 const LABEL_MAX_CHARS = 14;
-
-const SPOT_TYPE_GLYPHS: Record<SpotType, string> = {
-  Plaza:
-    '<rect x="4" y="4" width="16" height="16"/>',
-  DIY:
-    '<path d="M14.7 6.3a4 4 0 0 0-5.4 5.4l-6 6 2 2 6-6a4 4 0 0 0 5.4-5.4l-2.5 2.5-1.4-1.4 2.5-2.5z"/>',
-  Stair:
-    '<path d="M3 20h4v-4h4v-4h4v-4h4V4"/>',
-  Bowl:
-    '<circle cx="12" cy="12" r="8"/>',
-  Park:
-    '<path d="M12 3l4 5h-3v6h-2V8H8l4-5z"/><path d="M5 21h14"/>',
-  Ledges:
-    '<path d="M3 6h18"/><path d="M3 12h18"/><path d="M3 18h18"/>',
-  Pools:
-    '<path d="M12 3c4 4 6 7 6 10a6 6 0 0 1-12 0c0-3 2-6 6-10z"/>',
-};
 
 function escapeHtml(s: string): string {
   return s
@@ -71,8 +54,11 @@ function buildPinHTML(
   if (options.active) cls.push('leaflet-pin--active');
   else if (options.saved) cls.push('leaflet-pin--saved');
 
-  const glyph = SPOT_TYPE_GLYPHS[spot.type] ?? SPOT_TYPE_GLYPHS.Plaza;
   const label = escapeHtml(truncateLabel(spot.name));
+
+  const weatherHtml = options.weather
+    ? `<span class="leaflet-pin__weather">${weatherIconGlyph(options.weather, 10)}</span>`
+    : '';
 
   const crowdCells = Math.max(0, Math.min(3, Math.round(options.crowdLevel / 34)));
   const crowdHtml =
@@ -82,21 +68,12 @@ function buildPinHTML(
     ).join('') +
     '</span>';
 
-  const weatherHtml = options.weather
-    ? `<span class="leaflet-pin__weather">${weatherIconGlyph(options.weather, 8)}</span>`
-    : '';
-
   return (
     `<div class="${cls.join(' ')}">` +
     `<span class="leaflet-pin__square">` +
-    `<span class="leaflet-pin__glyph">` +
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" ` +
-    `width="12" height="12" fill="none" stroke="currentColor" ` +
-    `stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" ` +
-    `aria-hidden="true">${glyph}</svg>` +
-    `</span>` +
+    weatherHtml +
     (options.active
-      ? `<span class="leaflet-pin__info" aria-hidden="true">${weatherHtml}${crowdHtml}</span>`
+      ? `<span class="leaflet-pin__info" aria-hidden="true">${crowdHtml}</span>`
       : '') +
     `</span>` +
     `<span class="leaflet-pin__label">${label}</span>` +

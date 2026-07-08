@@ -9,13 +9,11 @@ import {
   type UserLocationStatus,
 } from "@/stores/user-location-store";
 
-const STALE_GRANT_MS = 10 * 60 * 1000;
 const POSITION_TIMEOUT_MS = 8000;
 
 export interface UseUserLocationResult {
   status: UserLocationStatus;
   location: UserLocation | null;
-  grantedAt: number | null;
   radiusMiles: NearbyRadiusMiles;
   radiusOptions: readonly NearbyRadiusMiles[];
   setRadiusMiles: (miles: NearbyRadiusMiles) => void;
@@ -35,7 +33,6 @@ function isValidRadius(value: number): value is NearbyRadiusMiles {
 export function useUserLocation(): UseUserLocationResult {
   const status = useUserLocationStore((s) => s.status);
   const location = useUserLocationStore((s) => s.location);
-  const grantedAt = useUserLocationStore((s) => s.grantedAt);
   const radiusMiles = useUserLocationStore((s) => s.radiusMiles);
   const setRadiusMilesRaw = useUserLocationStore((s) => s.setRadiusMiles);
   const setGranted = useUserLocationStore((s) => s.setGranted);
@@ -64,16 +61,6 @@ export function useUserLocation(): UseUserLocationResult {
     if (!geo) {
       setStatus("unavailable");
       return "unavailable";
-    }
-
-    const state = useUserLocationStore.getState();
-    const isFresh =
-      state.status === "granted" &&
-      state.grantedAt !== null &&
-      Date.now() - state.grantedAt < STALE_GRANT_MS &&
-      state.location !== null;
-    if (isFresh && state.location) {
-      return "granted";
     }
 
     setStatus("requesting");
@@ -108,7 +95,6 @@ export function useUserLocation(): UseUserLocationResult {
   return {
     status,
     location,
-    grantedAt,
     radiusMiles,
     radiusOptions: NEARBY_RADIUS_OPTIONS,
     setRadiusMiles,

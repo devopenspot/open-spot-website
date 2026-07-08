@@ -1,12 +1,14 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { Filter } from "lucide-react";
 import { getRegions } from "@/lib/spots";
-import { useUIStore } from "@/stores/ui-store";
 import type { MapFilter } from "@/hooks/useMapFilter";
 
 const regions = getRegions();
+
+interface RegionFilterProps extends MapFilter {
+  onAfterChange?: () => void;
+}
 
 export function RegionFilter({
   region,
@@ -14,9 +16,8 @@ export function RegionFilter({
   availableCountries,
   setRegion,
   setCountry,
-}: MapFilter) {
-  const router = useRouter();
-  const closeSearch = useUIStore((s) => s.closeSearch);
+  onAfterChange,
+}: RegionFilterProps) {
   return (
     <div className="space-y-3">
       <h3 className="font-display text-base font-bold uppercase tracking-wider text-on-surface flex items-center">
@@ -38,7 +39,10 @@ export function RegionFilter({
             key={r.name}
             label={r.name}
             active={region === r.name}
-            onClick={() => setRegion(region === r.name ? null : r.name)}
+            onClick={() => {
+              setRegion(region === r.name ? null : r.name);
+              onAfterChange?.();
+            }}
           />
         ))}
       </div>
@@ -55,12 +59,8 @@ export function RegionFilter({
               label={c}
               active={country === c}
               onClick={() => {
-                const willSelect = country !== c;
-                setCountry(willSelect ? c : null);
-                if (willSelect) {
-                  closeSearch();
-                  router.push("/map");
-                }
+                setCountry(country === c ? null : c);
+                onAfterChange?.();
               }}
               muted
             />

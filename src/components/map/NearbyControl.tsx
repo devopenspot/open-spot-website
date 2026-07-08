@@ -25,9 +25,15 @@ function tooltipFor(status: string, hasLocation: boolean): string {
 
 interface NearbyControlProps {
   onReCenter?: () => void;
+  onClear?: () => void;
+  active?: boolean;
 }
 
-export function NearbyControl({ onReCenter }: NearbyControlProps = {}) {
+export function NearbyControl({
+  onReCenter,
+  onClear,
+  active = false,
+}: NearbyControlProps = {}) {
   const { status, location, request, clear } = useUserLocation();
   const isRequesting = status === "requesting";
   const isGranted = status === "granted" && location !== null;
@@ -43,8 +49,9 @@ export function NearbyControl({ onReCenter }: NearbyControlProps = {}) {
 
   const handleClear = useCallback(() => {
     clear();
+    onClear?.();
     showToast("Location cleared — showing global grid.", "info");
-  }, [clear]);
+  }, [clear, onClear]);
 
   const Icon = isRequesting
     ? Loader2
@@ -66,6 +73,7 @@ export function NearbyControl({ onReCenter }: NearbyControlProps = {}) {
         title={tooltipFor(status, isGranted)}
         aria-label={tooltipFor(status, isGranted)}
         data-nearby-status={status}
+        data-nearby-active={active ? "true" : "false"}
         className="flex items-center space-x-1 px-2 py-1 text-[9px] font-mono font-bold tracking-wider uppercase text-primary hover:bg-surface-container rounded transition-all disabled:opacity-60 disabled:cursor-wait"
       >
         <Icon

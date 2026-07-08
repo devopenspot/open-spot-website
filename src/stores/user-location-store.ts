@@ -1,6 +1,5 @@
 import { create } from "zustand";
-import { devtools, persist } from "zustand/middleware";
-import { createJSONStorage } from "zustand/middleware";
+import { devtools } from "zustand/middleware";
 
 export const NEARBY_RADIUS_OPTIONS = [10, 25, 50, 100] as const;
 export type NearbyRadiusMiles = (typeof NEARBY_RADIUS_OPTIONS)[number];
@@ -22,7 +21,6 @@ export interface UserLocation {
 interface UserLocationState {
   status: UserLocationStatus;
   location: UserLocation | null;
-  grantedAt: number | null;
   radiusMiles: NearbyRadiusMiles;
   setGranted: (loc: UserLocation) => void;
   setStatus: (status: UserLocationStatus) => void;
@@ -32,39 +30,23 @@ interface UserLocationState {
 
 export const useUserLocationStore = create<UserLocationState>()(
   devtools(
-    persist(
-      (set) => ({
-        status: "idle",
-        location: null,
-        grantedAt: null,
-        radiusMiles: DEFAULT_NEARBY_RADIUS_MI,
-        setGranted: (loc) =>
-          set({
-            status: "granted",
-            location: loc,
-            grantedAt: Date.now(),
-          }),
-        setStatus: (status) => set({ status }),
-        setRadiusMiles: (miles) => set({ radiusMiles: miles }),
-        clear: () =>
-          set({
-            status: "idle",
-            location: null,
-            grantedAt: null,
-          }),
-      }),
-      {
-        name: "openspot-user-location-v1",
-        storage: createJSONStorage(() => sessionStorage),
-        skipHydration: true,
-        partialize: (s) => ({
-          status: s.status,
-          location: s.location,
-          grantedAt: s.grantedAt,
-          radiusMiles: s.radiusMiles,
+    (set) => ({
+      status: "idle",
+      location: null,
+      radiusMiles: DEFAULT_NEARBY_RADIUS_MI,
+      setGranted: (loc) =>
+        set({
+          status: "granted",
+          location: loc,
         }),
-      },
-    ),
+      setStatus: (status) => set({ status }),
+      setRadiusMiles: (miles) => set({ radiusMiles: miles }),
+      clear: () =>
+        set({
+          status: "idle",
+          location: null,
+        }),
+    }),
     {
       name: "UserLocationStore",
       enabled: process.env.NODE_ENV === "development",

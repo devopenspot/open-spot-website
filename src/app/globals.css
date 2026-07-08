@@ -156,6 +156,13 @@
     justify-content: center;
     line-height: 0;
   }
+  .leaflet-pin__weather {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 0;
+    color: inherit;
+  }
   .leaflet-pin__label {
     font-family: var(--font-mono);
     font-size: 9px;
@@ -230,12 +237,6 @@
   }
   .leaflet-pin--active .leaflet-pin__info {
     display: flex;
-  }
-  .leaflet-pin__weather {
-    display: flex;
-    align-items: center;
-    line-height: 0;
-    color: var(--color-on-primary);
   }
   .leaflet-pin__crowd {
     display: inline-flex;

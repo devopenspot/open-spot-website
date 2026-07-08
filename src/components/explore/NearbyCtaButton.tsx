@@ -39,7 +39,7 @@ export function NearbyCtaButton() {
     } else if (next === "granted") {
       showToast("Location ready — opening map.", "success");
     }
-    router.push(ROUTES.map);
+    router.push(`${ROUTES.map}?nearby=1`);
   }, [isRequesting, request, router]);
 
   const Icon = isRequesting ? Loader2 : MapPin;

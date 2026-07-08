@@ -64,7 +64,7 @@ describe("<MapSidebar> radius chips", () => {
     expect(active).toHaveAttribute("aria-checked", "true");
   });
 
-  it("filters spots to those within the chosen radius", () => {
+  it("renders every spot the parent passed in (no longer re-filters by radius)", () => {
     render(
       <MapSidebar
         spots={[NEARBY, MEDIUM, FAR]}
@@ -78,13 +78,13 @@ describe("<MapSidebar> radius chips", () => {
     );
     expect(screen.getByText("NEAR")).toBeInTheDocument();
     expect(screen.getByText("MEDIUM")).toBeInTheDocument();
-    expect(screen.queryByText("FAR")).toBeNull();
+    expect(screen.getByText("FAR")).toBeInTheDocument();
   });
 
-  it("shows an empty-state message when the radius filters everything out", () => {
+  it("shows the empty-state message when the parent passed no spots", () => {
     render(
       <MapSidebar
-        spots={[FAR]}
+        spots={[]}
         activeId={null}
         savedIds={new Set()}
         onSelect={vi.fn()}

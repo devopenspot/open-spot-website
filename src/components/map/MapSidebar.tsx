@@ -5,7 +5,7 @@ import { useCallback } from "react";
 import { cn } from "@/lib/cn";
 import type { Spot } from "@/lib/types";
 import type { LatLon } from "@/lib/spots/geo";
-import { getSpotDistanceLabel, haversineMiles } from "@/lib/spots/geo";
+import { getSpotDistanceLabel } from "@/lib/spots/geo";
 import {
   NEARBY_RADIUS_OPTIONS,
   type NearbyRadiusMiles,
@@ -20,14 +20,6 @@ interface MapSidebarProps {
   radiusMiles?: NearbyRadiusMiles;
   onRadiusChange?: (miles: NearbyRadiusMiles) => void;
   showRadiusChips?: boolean;
-}
-
-function withinRadius(
-  spot: Spot,
-  origin: LatLon,
-  radiusMiles: NearbyRadiusMiles,
-): boolean {
-  return haversineMiles(origin.lat, origin.lon, spot.location.lat, spot.location.lon) <= radiusMiles;
 }
 
 export function MapSidebar({
@@ -45,10 +37,6 @@ export function MapSidebar({
     userLocation !== null &&
     radiusMiles !== undefined &&
     onRadiusChange !== undefined;
-
-  const visibleSpots = showChips && userLocation && radiusMiles
-    ? spots.filter((s) => withinRadius(s, userLocation as LatLon, radiusMiles))
-    : spots;
 
   const handleChipClick = useCallback(
     (miles: NearbyRadiusMiles) => {
@@ -72,7 +60,7 @@ export function MapSidebar({
             className="bg-primary/10 px-2 py-0.5 text-[9px] font-mono font-semibold text-primary"
             aria-live="polite"
           >
-            {visibleSpots.length} spots active
+            {spots.length} spots active
           </span>
         </div>
         {showChips && radiusMiles && (
@@ -117,7 +105,7 @@ export function MapSidebar({
         aria-label="Filtered spots"
         className="flex-1 flex flex-row lg:flex-col overflow-x-auto lg:overflow-y-auto p-3 space-x-2 lg:space-x-0 lg:space-y-2 no-scrollbar snap-x lg:snap-none snap-mandatory"
       >
-        {visibleSpots.map((spot) => {
+        {spots.map((spot) => {
           const isHovered = activeId === spot.id;
           const isSaved = savedIds.has(spot.id);
           const distanceOrigin = showChips ? userLocation : null;
@@ -174,7 +162,7 @@ export function MapSidebar({
             </button>
           );
         })}
-        {visibleSpots.length === 0 && (
+        {spots.length === 0 && (
           <div className="p-6 text-center text-xs text-secondary font-mono">
             {showChips
               ? `No spots within ${radiusMiles} mi — expand the grid.`

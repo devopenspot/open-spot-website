@@ -1,13 +1,50 @@
-import { useMemo } from "react";
-import { useMapFilterStore } from "@/stores/map-filter-store";
+"use client";
+
+import { useCallback, useMemo } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { getRegions } from "@/lib/spots";
-import { COUNTRY_TO_REGION } from "@/data";
 import type { Spot } from "@/lib/types";
 
 const DEFAULT_REGION = "Americas";
 
+function slugify(value: string): string {
+  return value
+    .normalize("NFKD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
 function deriveRegion(spot: Spot): string {
-  return COUNTRY_TO_REGION[spot.country] ?? DEFAULT_REGION;
+  for (const r of getRegions()) {
+    if (r.countries.includes(spot.country)) return r.name;
+  }
+  return DEFAULT_REGION;
+}
+
+function buildSlugMaps(regions: ReturnType<typeof getRegions>): {
+  regionSlugToName: ReadonlyMap<string, string>;
+  countrySlugToName: ReadonlyMap<string, string>;
+  nameToRegionSlug: ReadonlyMap<string, string>;
+  nameToCountrySlug: ReadonlyMap<string, string>;
+} {
+  const regionSlugToName = new Map<string, string>();
+  const nameToRegionSlug = new Map<string, string>();
+  const countrySlugToName = new Map<string, string>();
+  const nameToCountrySlug = new Map<string, string>();
+  for (const r of regions) {
+    const rSlug = slugify(r.name);
+    regionSlugToName.set(rSlug, r.name);
+    nameToRegionSlug.set(r.name, rSlug);
+    for (const c of r.countries) {
+      const cSlug = slugify(c);
+      countrySlugToName.set(cSlug, c);
+      nameToCountrySlug.set(c, cSlug);
+    }
+  }
+  return { regionSlugToName, countrySlugToName, nameToRegionSlug, nameToCountrySlug };
 }
 
 export interface MapFilter {
@@ -21,51 +58,131 @@ export interface MapFilter {
   clearAll: () => void;
 }
 
-export function useMapFilter(spots: readonly Spot[]): MapFilter {
-  const region = useMapFilterStore((s) => s.region);
-  const country = useMapFilterStore((s) => s.country);
-  const setRegionState = useMapFilterStore((s) => s.setRegion);
-  const setCountry = useMapFilterStore((s) => s.setCountry);
-  const clearMapFilter = useMapFilterStore((s) => s.clearMapFilter);
+export interface UseMapFilterOptions {
+  /**
+   * When provided, setters navigate to this path (e.g. "/map") with the new
+   * query string instead of updating the current page's URL in place. Uses
+   * `router.push` when the current pathname differs from the target (so
+   * back-button returns to the origin page) and `router.replace` when already
+   * on the target path (no extra history entries).
+   */
+  targetPath?: string;
+}
+
+export function useMapFilter(
+  spots: readonly Spot[],
+  options: UseMapFilterOptions = {},
+): MapFilter {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const { targetPath } = options;
   const regions = useMemo(() => getRegions(), []);
 
+  const slugs = useMemo(() => buildSlugMaps(regions), [regions]);
+  const validRegionNames = useMemo(
+    () => new Set(regions.map((r) => r.name)),
+    [regions],
+  );
+  const validCountryNames = useMemo(
+    () => new Set(regions.flatMap((r) => r.countries)),
+    [regions],
+  );
+
+  const regionSlug = searchParams.get("region")?.toLowerCase() ?? null;
+  const countrySlug = searchParams.get("country")?.toLowerCase() ?? null;
+
+  const region = regionSlug ? slugs.regionSlugToName.get(regionSlug) ?? null : null;
+  const country = countrySlug
+    ? slugs.countrySlugToName.get(countrySlug) ?? null
+    : null;
+
+  const safeRegion =
+    region && validRegionNames.has(region) ? region : null;
+  const safeCountry =
+    country && validCountryNames.has(country) ? country : null;
+
   const availableCountries = useMemo(() => {
-    if (!region) {
+    if (!safeRegion) {
       return regions.flatMap((r) => r.countries);
     }
-    return regions.find((r) => r.name === region)?.countries ?? [];
-  }, [region, regions]);
+    return regions.find((r) => r.name === safeRegion)?.countries ?? [];
+  }, [safeRegion, regions]);
 
-  const setRegion = useMemo(() => {
-    return (name: string | null) => {
-      setRegionState(name);
+  const writeQuery = useCallback(
+    (next: { region: string | null; country: string | null }) => {
+      const params = new URLSearchParams(searchParams.toString());
+      const regionSlugValue = next.region ? slugs.nameToRegionSlug.get(next.region) ?? null : null;
+      const countrySlugValue = next.country
+        ? slugs.nameToCountrySlug.get(next.country) ?? null
+        : null;
+      if (regionSlugValue) params.set("region", regionSlugValue);
+      else params.delete("region");
+      if (countrySlugValue) params.set("country", countrySlugValue);
+      else params.delete("country");
+      const query = params.toString();
+      const destination = targetPath ?? pathname;
+      const url = query ? `${destination}?${query}` : destination;
+      const isCrossPageNavigation =
+        typeof targetPath === "string" && targetPath !== pathname;
+      if (isCrossPageNavigation) {
+        router.push(url, { scroll: false });
+      } else {
+        router.replace(url, { scroll: false });
+      }
+    },
+    [pathname, router, searchParams, slugs, targetPath],
+  );
+
+  const setRegion = useCallback(
+    (name: string | null) => {
       if (name === null) {
-        setCountry(null);
+        writeQuery({ region: null, country: null });
         return;
       }
-      const next = regions.find((r) => r.name === name);
-      if (!next) return;
-      if (country && !next.countries.includes(country)) setCountry(null);
-    };
-  }, [setRegionState, setCountry, regions, country]);
+      if (!validRegionNames.has(name)) return;
+      const regionEntry = regions.find((r) => r.name === name);
+      const nextCountry = safeCountry && regionEntry && !regionEntry.countries.includes(safeCountry)
+        ? null
+        : safeCountry;
+      writeQuery({ region: name, country: nextCountry });
+    },
+    [regions, safeCountry, validRegionNames, writeQuery],
+  );
+
+  const setCountry = useCallback(
+    (name: string | null) => {
+      if (name === null) {
+        writeQuery({ region: safeRegion, country: null });
+        return;
+      }
+      if (!validCountryNames.has(name)) return;
+      writeQuery({ region: safeRegion, country: name });
+    },
+    [safeRegion, validCountryNames, writeQuery],
+  );
+
+  const clearAll = useCallback(() => {
+    writeQuery({ region: null, country: null });
+  }, [writeQuery]);
 
   const filteredSpots = useMemo(() => {
-    if (!region) return spots.slice();
+    if (!safeRegion) return spots.slice();
     return spots.filter((spot) => {
-      if (deriveRegion(spot) !== region) return false;
-      if (country && spot.country !== country) return false;
+      if (deriveRegion(spot) !== safeRegion) return false;
+      if (safeCountry && spot.country !== safeCountry) return false;
       return true;
     });
-  }, [spots, region, country]);
+  }, [spots, safeRegion, safeCountry]);
 
   return {
-    region,
-    country,
+    region: safeRegion,
+    country: safeCountry,
     availableCountries,
     filteredSpots,
-    hasFilter: region !== null || country !== null,
+    hasFilter: safeRegion !== null || safeCountry !== null,
     setRegion,
     setCountry,
-    clearAll: clearMapFilter,
+    clearAll,
   };
 }

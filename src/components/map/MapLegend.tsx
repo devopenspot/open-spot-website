@@ -1,3 +1,14 @@
+const SAMPLE_GLYPH =
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="10" height="10" ' +
+  'fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" ' +
+  'stroke-linejoin="round" aria-hidden="true">' +
+  '<circle cx="12" cy="12" r="4"/>' +
+  '<path d="M12 2v2"/><path d="M12 20v2"/>' +
+  '<path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/>' +
+  '<path d="M2 12h2"/><path d="M20 12h2"/>' +
+  '<path d="m4.93 19.07 1.41-1.41"/><path d="m17.66 6.34 1.41-1.41"/>' +
+  "</svg>";
+
 export function MapLegend() {
   return (
     <div
@@ -9,9 +20,14 @@ export function MapLegend() {
       <span className="flex items-center space-x-1.5">
         <span
           aria-hidden="true"
-          className="inline-block h-2.5 w-2.5 border border-outline bg-surface"
-        />
-        <span className="text-secondary uppercase">Default</span>
+          className="inline-flex h-3.5 w-3.5 border border-outline bg-surface items-center justify-center text-on-surface"
+        >
+          <span
+            aria-hidden="true"
+            dangerouslySetInnerHTML={{ __html: SAMPLE_GLYPH }}
+          />
+        </span>
+        <span className="text-secondary uppercase">Weather</span>
       </span>
 
       <span className="flex items-center space-x-1.5">

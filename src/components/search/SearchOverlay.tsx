@@ -5,6 +5,7 @@ import { Search, X, MapPin, ArrowRight } from "lucide-react";
 import Image from "next/image";
 import { Overlay } from "@/components/feedback/Overlay";
 import { SEARCH_FOCUS_DELAY_MS } from "@/lib/constants";
+import { ROUTES } from "@/lib/nav";
 import { useUIStore } from "@/stores/ui-store";
 import type { Spot } from "@/lib/types";
 import { getSpotDistanceLabel } from "@/lib/spots/geo";
@@ -39,7 +40,7 @@ export function SearchOverlay({
     setRegion,
     setCountry,
     clearAll,
-  } = useMapFilter(spots);
+  } = useMapFilter(spots, { targetPath: ROUTES.map });
 
   useEffect(() => {
     if (isOpen) {
@@ -133,6 +134,7 @@ export function SearchOverlay({
                 setRegion={setRegion}
                 setCountry={setCountry}
                 clearAll={clearAll}
+                onAfterChange={onClose}
               />
             </div>
           ) : (

@@ -75,10 +75,8 @@ beforeEach(() => {
   useUserLocationStore.setState({
     status: "idle",
     location: null,
-    grantedAt: null,
     radiusMiles: 50,
   });
-  window.sessionStorage.clear();
 });
 
 describe("<NearbyCtaButton>", () => {
@@ -89,7 +87,7 @@ describe("<NearbyCtaButton>", () => {
     ).toBeInTheDocument();
   });
 
-  it("navigates to /map on click and persists the granted location", async () => {
+  it("navigates to /map?nearby=1 on click and persists the granted location", async () => {
     stubGeolocation({
       ok: true,
       coords: { latitude: 10, longitude: 20, accuracy: 5 },
@@ -98,21 +96,21 @@ describe("<NearbyCtaButton>", () => {
     render(<NearbyCtaButton />);
     await user.click(screen.getByRole("button", { name: /View Nearby/i }));
     await waitFor(() => {
-      expect(pushMock).toHaveBeenCalledWith("/map");
+      expect(pushMock).toHaveBeenCalledWith("/map?nearby=1");
     });
   });
 
-  it("navigates to /map even when the user denies the permission", async () => {
+  it("navigates to /map?nearby=1 even when the user denies the permission", async () => {
     stubGeolocation({ ok: false, code: 1 });
     const user = userEvent.setup();
     render(<NearbyCtaButton />);
     await user.click(screen.getByRole("button", { name: /View Nearby/i }));
     await waitFor(() => {
-      expect(pushMock).toHaveBeenCalledWith("/map");
+      expect(pushMock).toHaveBeenCalledWith("/map?nearby=1");
     });
   });
 
-  it("navigates to /map when geolocation is unavailable", async () => {
+  it("navigates to /map?nearby=1 when geolocation is unavailable", async () => {
     Object.defineProperty(window, "navigator", {
       value: {},
       configurable: true,
@@ -122,7 +120,7 @@ describe("<NearbyCtaButton>", () => {
     render(<NearbyCtaButton />);
     await user.click(screen.getByRole("button", { name: /View Nearby/i }));
     await waitFor(() => {
-      expect(pushMock).toHaveBeenCalledWith("/map");
+      expect(pushMock).toHaveBeenCalledWith("/map?nearby=1");
     });
   });
 

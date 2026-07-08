@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { act, renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook } from "@testing-library/react";
 import { useUserLocation } from "./useUserLocation";
 import { useUserLocationStore } from "@/stores/user-location-store";
 
@@ -65,11 +65,9 @@ function resetStore() {
     useUserLocationStore.setState({
       status: "idle",
       location: null,
-      grantedAt: null,
       radiusMiles: 50,
     });
   });
-  window.sessionStorage.clear();
   Object.defineProperty(window, "isSecureContext", {
     value: true,
     configurable: true,
@@ -99,7 +97,7 @@ describe("useUserLocation", () => {
     expect(typeof result.current.request).toBe("function");
   });
 
-  it("granted flow stores the location and timestamp", async () => {
+  it("granted flow stores the location", async () => {
     installGeolocationMock({
       ok: true,
       coords: { latitude: 40.7, longitude: -74.0, accuracy: 50 },
@@ -116,7 +114,6 @@ describe("useUserLocation", () => {
       lon: -74.0,
       accuracy: 50,
     });
-    expect(result.current.grantedAt).not.toBeNull();
   });
 
   it("maps PERMISSION_DENIED to denied status", async () => {
@@ -176,48 +173,6 @@ describe("useUserLocation", () => {
     expect(status).toBe("unavailable");
   });
 
-  it("re-prompts when the previous grant is stale (>=10 min)", async () => {
-    const { getCurrentPosition } = installGeolocationMock({
-      ok: true,
-      coords: { latitude: 1, longitude: 2, accuracy: 10 },
-    });
-    act(() => {
-      useUserLocationStore.setState({
-        status: "granted",
-        location: { lat: 0, lon: 0, accuracy: 0 },
-        grantedAt: Date.now() - 11 * 60 * 1000,
-        radiusMiles: 50,
-      });
-    });
-    const { result } = renderHook(() => useUserLocation());
-    await act(async () => {
-      await result.current.request();
-    });
-    expect(getCurrentPosition).toHaveBeenCalled();
-  });
-
-  it("does not re-prompt when the previous grant is fresh (<10 min)", async () => {
-    const { getCurrentPosition } = installGeolocationMock({
-      ok: true,
-      coords: { latitude: 1, longitude: 2, accuracy: 10 },
-    });
-    act(() => {
-      useUserLocationStore.setState({
-        status: "granted",
-        location: { lat: 10, lon: 20, accuracy: 5 },
-        grantedAt: Date.now() - 60_000,
-        radiusMiles: 50,
-      });
-    });
-    const { result } = renderHook(() => useUserLocation());
-    let status: string = "idle";
-    await act(async () => {
-      status = await result.current.request();
-    });
-    expect(status).toBe("granted");
-    expect(getCurrentPosition).not.toHaveBeenCalled();
-  });
-
   it("setRadiusMiles only accepts values in the allowed set", () => {
     const { result } = renderHook(() => useUserLocation());
     act(() => {
@@ -230,12 +185,11 @@ describe("useUserLocation", () => {
     expect(result.current.radiusMiles).toBe(25);
   });
 
-  it("clear() resets status, location, and grantedAt", () => {
+  it("clear() resets status and location", () => {
     act(() => {
       useUserLocationStore.setState({
         status: "granted",
         location: { lat: 1, lon: 2, accuracy: 5 },
-        grantedAt: Date.now(),
         radiusMiles: 50,
       });
     });
@@ -245,21 +199,5 @@ describe("useUserLocation", () => {
     });
     expect(result.current.status).toBe("idle");
     expect(result.current.location).toBeNull();
-    expect(result.current.grantedAt).toBeNull();
-  });
-
-  it("persists granted location to sessionStorage", async () => {
-    installGeolocationMock({
-      ok: true,
-      coords: { latitude: 12, longitude: 34, accuracy: 1 },
-    });
-    const { result } = renderHook(() => useUserLocation());
-    await act(async () => {
-      await result.current.request();
-    });
-    await waitFor(() => {
-      const raw = window.sessionStorage.getItem("openspot-user-location-v1");
-      expect(raw).not.toBeNull();
-    });
   });
 });
