@@ -15,6 +15,13 @@
       "when": 1783536947933,
       "tag": "0005_lookup_tables_and_dimensions",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1783542127234,
+      "tag": "0006_add_backfill_target_columns",
+      "breakpoints": true
     }
   ]
 }

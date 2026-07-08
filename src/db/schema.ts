@@ -1,4 +1,5 @@
 import {
+  boolean,
   customType,
   index,
   integer,
@@ -86,6 +87,9 @@ export const spots = pgTable(
     citySlug: text("city_slug").notNull(),
     address: text("address").notNull(),
     type: spotTypeEnum("type").notNull(),
+    typeSlug: text("type_slug").references(() => spotTypes.slug, {
+      onDelete: "restrict",
+    }),
     features: text("features").array().notNull().default([]),
     sports: text("sports").array().notNull().default([]),
     imageUrl: text("image_url").notNull(),
@@ -94,6 +98,9 @@ export const spots = pgTable(
     crowdLevel: integer("crowd_level").notNull().default(0),
     crowdLevelLabel: text("crowd_level_label").notNull().default(""),
     country: text("country").notNull().default(""),
+    countryCode: text("country_code").references(() => countries.iso2, {
+      onDelete: "restrict",
+    }),
     location: geometryPoint("location").notNull(),
     createdBy: uuid("created_by"),
     createdAt: timestamp("created_at", { withTimezone: true })
@@ -106,7 +113,9 @@ export const spots = pgTable(
   (t) => [
     uniqueIndex("spots_slug_unique").on(t.slug),
     index("spots_type_idx").on(t.type),
+    index("spots_type_slug_idx").on(t.typeSlug),
     index("spots_country_idx").on(t.country),
+    index("spots_country_code_idx").on(t.countryCode),
     index("spots_city_slug_idx").on(t.citySlug),
     index("spots_country_type_slug_idx").on(t.country, t.type, t.slug),
   ],
@@ -124,14 +133,26 @@ export const sportEvents = pgTable(
     description: text("description").notNull().default(""),
     sports: sportDisciplineEnum("sports").array().notNull().default([]),
     startDate: text("start_date").notNull(),
+    startAt: timestamp("start_at", { withTimezone: true }),
     endDate: text("end_date"),
+    endAt: timestamp("end_at", { withTimezone: true }),
     city: text("city").notNull(),
     country: text("country").notNull(),
     countryCode: text("country_code"),
+    countryCodeFk: text("country_code_fk").references(() => countries.iso2, {
+      onDelete: "restrict",
+    }),
     venue: text("venue"),
     location: geometryPoint("location"),
     tier: sportEventTierEnum("tier").notNull(),
+    tierSlug: text("tier_slug").references(() => eventTiers.slug, {
+      onDelete: "restrict",
+    }),
     featured: text("featured"),
+    featuredV2: boolean("featured_v2"),
+    createdBy: uuid("created_by").references(() => profiles.id, {
+      onDelete: "set null",
+    }),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -142,8 +163,11 @@ export const sportEvents = pgTable(
   (t) => [
     uniqueIndex("sport_events_slug_unique").on(t.slug),
     index("sport_events_country_idx").on(t.country),
+    index("sport_events_country_code_fk_idx").on(t.countryCodeFk),
     index("sport_events_tier_idx").on(t.tier),
+    index("sport_events_tier_slug_idx").on(t.tierSlug),
     index("sport_events_start_date_idx").on(t.startDate),
+    index("sport_events_start_at_idx").on(t.startAt),
   ],
 )
 
