@@ -2,6 +2,12 @@ import type { Spot } from "@/lib/types"
 
 const EARTH_RADIUS_KM = 6371
 const KM_TO_MILES = 0.621371
+const MILES_TO_METERS = 1609.344
+
+export interface LatLon {
+  lat: number
+  lon: number
+}
 
 export function haversineMiles(
   lat1: number,
@@ -30,14 +36,17 @@ export function formatDistanceMiles(miles: number): string {
   return `${Math.round(miles / 10) * 10} MILES AWAY`
 }
 
-export function getSpotDistanceLabel(spot: Spot): string {
-  const miles = haversineMiles(
-    REFERENCE_LAT,
-    REFERENCE_LON,
-    spot.location.lat,
-    spot.location.lon,
-  )
+export function getSpotDistanceLabel(spot: Spot, origin?: LatLon | null): string {
+  const useOrigin =
+    origin !== null && origin !== undefined && Number.isFinite(origin.lat) && Number.isFinite(origin.lon)
+  const lat = useOrigin ? origin.lat : REFERENCE_LAT
+  const lon = useOrigin ? origin.lon : REFERENCE_LON
+  const miles = haversineMiles(lat, lon, spot.location.lat, spot.location.lon)
   return formatDistanceMiles(miles)
+}
+
+export function milesToMeters(miles: number): number {
+  return miles * MILES_TO_METERS
 }
 
 export function hashToUnitInterval(s: string): number {

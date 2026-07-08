@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useSpotsStore } from "@/stores/spots-store";
@@ -8,11 +8,14 @@ import { useWeather } from "@/components/layout/WeatherContext";
 import { useSavedSpots } from "@/hooks/useSavedSpots";
 import { useUser } from "@/hooks/useUser";
 import { useMapFilter } from "@/hooks/useMapFilter";
+import { useUserLocation } from "@/hooks/useUserLocation";
 import { MAP_VIEWPORT_OFFSET_PX } from "@/lib/constants";
 import { ROUTES } from "@/lib/nav";
+import { haversineMiles, milesToMeters } from "@/lib/spots/geo";
 import { MapSidebar } from "./MapSidebar";
 import { MapInfoPopup } from "./MapInfoPopup";
 import { MapLegend } from "./MapLegend";
+import { NearbyControl } from "./NearbyControl";
 import type { Spot } from "@/lib/types";
 import type { LeafletCanvasHandle } from "./LeafletCanvas";
 
@@ -28,8 +31,34 @@ export default function MapTab() {
   const { savedIds, toggle: toggleSaved } = useSavedSpots(user.id);
   const { weather } = useWeather();
   const { region, country, filteredSpots } = useMapFilter(spots);
+  const { location, status, radiusMiles, setRadiusMiles } = useUserLocation();
   const [activePin, setActivePin] = useState<Spot | null>(null);
   const leafletRef = useRef<LeafletCanvasHandle | null>(null);
+  const lastReCenteredStatus = useRef<string | null>(null);
+
+  const userLatLon = useMemo(
+    () => (location ? { lat: location.lat, lon: location.lon } : null),
+    [location],
+  );
+
+  const orderedSpots = useMemo(() => {
+    if (!userLatLon) return filteredSpots;
+    const origin = userLatLon;
+    return [...filteredSpots].sort(
+      (a, b) =>
+        haversineMiles(origin.lat, origin.lon, a.location.lat, a.location.lon) -
+        haversineMiles(origin.lat, origin.lon, b.location.lat, b.location.lon),
+    );
+  }, [filteredSpots, userLatLon]);
+
+  const sidebarSpots = useMemo(() => {
+    if (!userLatLon || status !== "granted") return orderedSpots;
+    const origin = userLatLon;
+    return orderedSpots.filter(
+      (s) =>
+        haversineMiles(origin.lat, origin.lon, s.location.lat, s.location.lon) <= radiusMiles,
+    );
+  }, [orderedSpots, userLatLon, radiusMiles, status]);
 
   const handleResetMap = useCallback(() => {
     leafletRef.current?.fitBoundsToSpots();
@@ -50,11 +79,23 @@ export default function MapTab() {
     [router],
   );
 
+  useEffect(() => {
+    if (status !== "granted" || !location) {
+      lastReCenteredStatus.current = null;
+      return;
+    }
+    if (lastReCenteredStatus.current === status) return;
+    lastReCenteredStatus.current = status;
+    leafletRef.current?.flyToUserLocation();
+  }, [status, location]);
+
   const gridTitle = region
     ? country
       ? `${country} (${region})`
       : region
     : "Global grid";
+
+  const nearYou = status === "granted" && location !== null;
 
   return (
     <section
@@ -67,10 +108,13 @@ export default function MapTab() {
       <h1 className="visually-hidden">Spot Map</h1>
 
       <MapSidebar
-        spots={filteredSpots}
+        spots={orderedSpots}
         activeId={activePin?.id ?? null}
         savedIds={savedIds}
         onSelect={handleSidebarSelect}
+        userLocation={userLatLon}
+        radiusMiles={nearYou ? radiusMiles : undefined}
+        onRadiusChange={nearYou ? setRadiusMiles : undefined}
       />
 
       <div className="flex-1 flex flex-col">
@@ -82,29 +126,34 @@ export default function MapTab() {
             <div className="flex items-center space-x-2 bg-surface/90 backdrop-blur-md px-3 py-1.5 rounded-lg border border-outline-variant shadow-sm pointer-events-auto">
               <span
                 aria-hidden="true"
-                className="h-2 w-2 rounded-full bg-emerald-500 animate-ping"
+                className={`h-2 w-2 rounded-full ${nearYou ? "bg-primary" : "bg-emerald-500 animate-ping"}`}
               />
               <span className="font-mono text-[10px] font-bold tracking-wider text-on-surface uppercase">
-                {gridTitle} Active
+                {nearYou ? `Near you · ${gridTitle}` : `${gridTitle} Active`}
               </span>
             </div>
 
-            <div className="flex items-center space-x-1 bg-surface/90 backdrop-blur-md p-1 rounded-lg border border-outline-variant shadow-sm pointer-events-auto">
-              <button
-                type="button"
-                onClick={handleResetMap}
-                className="px-2 py-1 text-[9px] font-mono font-bold tracking-wider uppercase text-primary hover:bg-surface-container rounded transition-all"
-              >
-                Reset view
-              </button>
+            <div className="flex items-center space-x-1 pointer-events-auto">
+              <NearbyControl />
+              <div className="flex items-center space-x-1 bg-surface/90 backdrop-blur-md p-1 rounded-lg border border-outline-variant shadow-sm">
+                <button
+                  type="button"
+                  onClick={handleResetMap}
+                  className="px-2 py-1 text-[9px] font-mono font-bold tracking-wider uppercase text-primary hover:bg-surface-container rounded transition-all"
+                >
+                  Reset view
+                </button>
+              </div>
             </div>
           </div>
 
           <LeafletCanvas
             ref={leafletRef}
-            spots={filteredSpots}
+            spots={sidebarSpots}
             activeId={activePin?.id ?? null}
             onTogglePin={handlePinToggle}
+            userLocation={location}
+            radiusMeters={milesToMeters(radiusMiles)}
           />
         </div>
         <MapLegend />

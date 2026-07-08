@@ -144,6 +144,45 @@
     background: var(--color-primary);
     border-color: var(--color-primary);
   }
+
+  /* User-location pin — monochrome concentric dot (no shadows, hard corners) */
+  .leaflet-user-pin {
+    background: transparent;
+    border: 0;
+    position: relative;
+  }
+  .leaflet-user-pin__ring,
+  .leaflet-user-pin__dot {
+    position: absolute;
+    inset: 0;
+    box-shadow: none;
+  }
+  .leaflet-user-pin__ring {
+    border: 1px solid var(--color-primary);
+    background: transparent;
+    animation: leafletUserPing 2.5s cubic-bezier(0, 0, 0.2, 1) infinite;
+  }
+  .leaflet-user-pin__dot {
+    width: 8px;
+    height: 8px;
+    margin: auto;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--color-primary);
+  }
+}
+
+@keyframes leafletUserPing {
+  0% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  75%, 100% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
 }
 
 @layer utilities {

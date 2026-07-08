@@ -1,17 +1,57 @@
 "use client";
 
 import Image from "next/image";
+import { useCallback } from "react";
+import { cn } from "@/lib/cn";
 import type { Spot } from "@/lib/types";
-import { getSpotDistanceLabel } from "@/lib/spots/geo";
+import type { LatLon } from "@/lib/spots/geo";
+import { getSpotDistanceLabel, haversineMiles } from "@/lib/spots/geo";
+import {
+  NEARBY_RADIUS_OPTIONS,
+  type NearbyRadiusMiles,
+} from "@/stores/user-location-store";
 
 interface MapSidebarProps {
   spots: readonly Spot[];
   activeId: string | null;
   savedIds: Set<string>;
   onSelect: (spot: Spot) => void;
+  userLocation?: LatLon | null;
+  radiusMiles?: NearbyRadiusMiles;
+  onRadiusChange?: (miles: NearbyRadiusMiles) => void;
 }
 
-export function MapSidebar({ spots, activeId, savedIds, onSelect }: MapSidebarProps) {
+function withinRadius(
+  spot: Spot,
+  origin: LatLon,
+  radiusMiles: NearbyRadiusMiles,
+): boolean {
+  return haversineMiles(origin.lat, origin.lon, spot.location.lat, spot.location.lon) <= radiusMiles;
+}
+
+export function MapSidebar({
+  spots,
+  activeId,
+  savedIds,
+  onSelect,
+  userLocation = null,
+  radiusMiles,
+  onRadiusChange,
+}: MapSidebarProps) {
+  const showChips =
+    userLocation !== null && radiusMiles !== undefined && onRadiusChange !== undefined;
+
+  const visibleSpots = showChips && userLocation && radiusMiles
+    ? spots.filter((s) => withinRadius(s, userLocation as LatLon, radiusMiles))
+    : spots;
+
+  const handleChipClick = useCallback(
+    (miles: NearbyRadiusMiles) => {
+      onRadiusChange?.(miles);
+    },
+    [onRadiusChange],
+  );
+
   return (
     <aside
       id="map-sidebar"
@@ -23,10 +63,48 @@ export function MapSidebar({ spots, activeId, savedIds, onSelect }: MapSidebarPr
           <span className="font-mono text-[10px] font-bold tracking-widest text-secondary uppercase">
             Results
           </span>
-          <span className="bg-primary/10 px-2 py-0.5 text-[9px] font-mono font-semibold text-primary">
-            {spots.length} spots active
+          <span
+            className="bg-primary/10 px-2 py-0.5 text-[9px] font-mono font-semibold text-primary"
+            aria-live="polite"
+          >
+            {visibleSpots.length} spots active
           </span>
         </div>
+        {showChips && radiusMiles && (
+          <div
+            id="map-radius-chips"
+            role="radiogroup"
+            aria-label="Nearby radius in miles"
+            className="flex items-center space-x-1"
+          >
+            <span
+              aria-hidden="true"
+              className="font-mono text-[9px] font-bold tracking-widest text-secondary uppercase pr-1"
+            >
+              Radius
+            </span>
+            {NEARBY_RADIUS_OPTIONS.map((miles) => {
+              const active = miles === radiusMiles;
+              return (
+                <button
+                  key={miles}
+                  type="button"
+                  role="radio"
+                  aria-checked={active}
+                  onClick={() => handleChipClick(miles)}
+                  className={cn(
+                    "px-2 py-0.5 text-[9px] font-mono font-bold tracking-wider uppercase border transition-all",
+                    active
+                      ? "bg-primary text-on-primary border-primary"
+                      : "border-outline-variant text-secondary hover:border-outline hover:text-on-surface",
+                  )}
+                >
+                  {miles} mi
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       <div
@@ -34,9 +112,10 @@ export function MapSidebar({ spots, activeId, savedIds, onSelect }: MapSidebarPr
         aria-label="Filtered spots"
         className="flex-1 flex flex-row lg:flex-col overflow-x-auto lg:overflow-y-auto p-3 space-x-2 lg:space-x-0 lg:space-y-2 no-scrollbar snap-x lg:snap-none snap-mandatory"
       >
-        {spots.map((spot) => {
+        {visibleSpots.map((spot) => {
           const isHovered = activeId === spot.id;
           const isSaved = savedIds.has(spot.id);
+          const distanceOrigin = showChips ? userLocation : null;
           return (
             <button
               key={spot.id}
@@ -67,7 +146,7 @@ export function MapSidebar({ spots, activeId, savedIds, onSelect }: MapSidebarPr
                     {spot.type}
                   </span>
                   <span className="text-[8px] font-mono font-medium text-secondary">
-                    {getSpotDistanceLabel(spot)}
+                    {getSpotDistanceLabel(spot, distanceOrigin)}
                   </span>
                 </span>
                 <span className="block font-display text-xs font-bold uppercase tracking-wide truncate text-on-surface">
@@ -90,9 +169,11 @@ export function MapSidebar({ spots, activeId, savedIds, onSelect }: MapSidebarPr
             </button>
           );
         })}
-        {spots.length === 0 && (
+        {visibleSpots.length === 0 && (
           <div className="p-6 text-center text-xs text-secondary font-mono">
-            No locations match filter
+            {showChips
+              ? `No spots within ${radiusMiles} mi — expand the grid.`
+              : "No locations match filter"}
           </div>
         )}
       </div>

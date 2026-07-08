@@ -1,4 +1,5 @@
 export { useUIStore } from "./ui-store"
 export { useSpotsStore } from "./spots-store"
 export { useMapFilterStore } from "./map-filter-store"
+export { useUserLocationStore } from "./user-location-store"
 export { HydrationGate } from "./HydrationGate"

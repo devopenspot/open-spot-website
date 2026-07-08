@@ -11,6 +11,7 @@ import { useSavedSpots } from "@/hooks/useSavedSpots";
 import { useUser } from "@/hooks/useUser";
 import { ExploreSpotCard } from "@/components/spot/SpotCard";
 import { SectionHeader } from "./SectionHeader";
+import { NearbyCtaButton } from "./NearbyCtaButton";
 import { EventCard } from "@/components/sport-events/EventCard";
 import { EventFeaturedHero } from "@/components/sport-events/EventFeaturedHero";
 import type { Spot } from "@/lib/types";
@@ -43,7 +44,6 @@ export default function ExploreTab({ events, featured }: ExploreTabProps) {
     [router],
   );
   const openEvents = useCallback(() => router.push(ROUTES.events), [router]);
-  const openNearby = useCallback(() => router.push(ROUTES.map), [router]);
 
   return (
     <section
@@ -62,21 +62,7 @@ export default function ExploreTab({ events, featured }: ExploreTabProps) {
           }
           title="Browse Regions"
           titleId="regions-heading"
-          cta={
-            <button
-              id="view-all-events-link"
-              type="button"
-              onClick={openNearby}
-              className="group flex items-center space-x-1 text-xs font-semibold tracking-wider text-primary uppercase hover:underline"
-            >
-              <span>View Nearby</span>
-              <ChevronRight
-                size={14}
-                aria-hidden="true"
-                className="transition-transform group-hover:translate-x-0.5"
-              />
-            </button>
-          }
+          cta={<NearbyCtaButton />}
         />
 
         <div
