@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useMemo } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, type ReadonlyURLSearchParams } from "next/navigation";
 import { getRegions } from "@/lib/spots";
 import type { Spot } from "@/lib/types";
 
@@ -71,11 +71,11 @@ export interface UseMapFilterOptions {
 
 export function useMapFilter(
   spots: readonly Spot[],
+  searchParams: ReadonlyURLSearchParams,
   options: UseMapFilterOptions = {},
 ): MapFilter {
   const router = useRouter();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
   const { targetPath } = options;
   const regions = useMemo(() => getRegions(), []);
 

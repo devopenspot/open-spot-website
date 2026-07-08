@@ -3,6 +3,7 @@
 import { useDeferredValue, useEffect, useId, useRef, useState } from "react";
 import { Search, X, MapPin, ArrowRight } from "lucide-react";
 import Image from "next/image";
+import { useSearchParams } from "next/navigation";
 import { Overlay } from "@/components/feedback/Overlay";
 import { SEARCH_FOCUS_DELAY_MS } from "@/lib/constants";
 import { ROUTES } from "@/lib/nav";
@@ -31,6 +32,7 @@ export function SearchOverlay({
   const deferredQuery = useDeferredValue(query);
   const inputRef = useRef<HTMLInputElement>(null);
   const openSearch = useUIStore((s) => s.openSearch);
+  const searchParams = useSearchParams();
 
   const {
     region,
@@ -40,7 +42,7 @@ export function SearchOverlay({
     setRegion,
     setCountry,
     clearAll,
-  } = useMapFilter(spots, { targetPath: ROUTES.map });
+  } = useMapFilter(spots, searchParams, { targetPath: ROUTES.map });
 
   useEffect(() => {
     if (isOpen) {

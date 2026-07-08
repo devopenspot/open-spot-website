@@ -69,7 +69,7 @@ export default function ExploreTab({ events, featured }: ExploreTabProps) {
           id="regions-grid"
           className="grid grid-cols-1 gap-4 sm:grid-cols-3"
         >
-          {regions.map((region) => (
+          {regions.map((region, idx) => (
             <div
               key={region.name}
               className="group relative h-48 overflow-hidden rounded-xl bg-black border border-outline-variant shadow-sm"
@@ -83,6 +83,7 @@ export default function ExploreTab({ events, featured }: ExploreTabProps) {
                   src={region.image}
                   alt={region.name}
                   fill
+                  priority={idx === 0}
                   sizes="(min-width: 640px) 33vw, 100vw"
                   className="object-cover opacity-60 grayscale transition-transform duration-700 ease-out group-hover:scale-105"
                   referrerPolicy="no-referrer"

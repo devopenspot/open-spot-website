@@ -145,14 +145,21 @@ function prefersReducedMotion(): boolean {
 }
 
 function safeMapCall(map: L.Map, fn: () => void): void {
+  if (!map) return;
+  if (!map.getContainer()) return;
   map.whenReady(() => {
-    try {
-      fn();
-    } catch (err) {
-      if (process.env.NODE_ENV === "development") {
-        console.warn("[leaflet] safe call skipped:", err);
+    if (typeof window === "undefined") return;
+    window.requestAnimationFrame(() => {
+      try {
+        const size = map.getSize();
+        if (size.x === 0 || size.y === 0) return;
+        fn();
+      } catch (err) {
+        if (process.env.NODE_ENV === "development") {
+          console.warn("[leaflet] safe call skipped:", err);
+        }
       }
-    }
+    });
   });
 }
 

@@ -2,6 +2,7 @@
 
 import { Suspense } from 'react';
 import dynamic from 'next/dynamic';
+import { useSearchParams } from 'next/navigation';
 import { MapSkeleton } from './MapSkeleton';
 
 const MapTab = dynamic(
@@ -12,7 +13,13 @@ const MapTab = dynamic(
 export function MapPageClient() {
   return (
     <Suspense fallback={<MapSkeleton />}>
-      <MapTab />
+      <MapPageInner />
     </Suspense>
   );
+}
+
+function MapPageInner() {
+  const searchParams = useSearchParams();
+  const nearbyRequested = searchParams.get('nearby') === '1';
+  return <MapTab searchParams={searchParams} nearbyRequested={nearbyRequested} />;
 }

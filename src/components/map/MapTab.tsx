@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, type ReadonlyURLSearchParams } from "next/navigation";
 import { useSpotsStore } from "@/stores/spots-store";
 import { useWeather } from "@/components/layout/WeatherContext";
 import { useSavedSpots } from "@/hooks/useSavedSpots";
@@ -26,15 +26,18 @@ const LeafletCanvas = dynamic(
 
 const NEAR_YOU_INITIAL_ZOOM = 12;
 
-export default function MapTab() {
+interface MapTabProps {
+  searchParams: ReadonlyURLSearchParams;
+  nearbyRequested: boolean;
+}
+
+export default function MapTab({ searchParams, nearbyRequested }: MapTabProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const nearbyRequested = searchParams.get("nearby") === "1";
   const spots = useSpotsStore((s) => s.spots);
   const user = useUser();
   const { savedIds, toggle: toggleSaved } = useSavedSpots(user.id);
   const { weather } = useWeather();
-  const { region, country, filteredSpots } = useMapFilter(spots);
+  const { region, country, filteredSpots } = useMapFilter(spots, searchParams);
   const { location, status, radiusMiles, setRadiusMiles, request: requestLocation, clear: clearLocation } = useUserLocation();
   const [activePin, setActivePin] = useState<Spot | null>(null);
   const leafletRef = useRef<LeafletCanvasHandle | null>(null);

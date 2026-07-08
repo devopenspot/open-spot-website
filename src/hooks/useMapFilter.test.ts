@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { act, renderHook, type RenderHookResult } from "@testing-library/react";
-import { useMapFilter } from "./useMapFilter";
+import type { ReadonlyURLSearchParams } from "next/navigation";
+import { useMapFilter, type UseMapFilterOptions } from "./useMapFilter";
 import type { Spot } from "@/lib/types";
 
 const routerReplace = vi.fn();
@@ -9,7 +10,6 @@ let mockSearchParams = new URLSearchParams();
 let mockPathname = "/map";
 
 vi.mock("next/navigation", () => ({
-  useSearchParams: () => mockSearchParams,
   useRouter: () => ({ replace: routerReplace, push: routerPush }),
   usePathname: () => mockPathname,
 }));
@@ -42,9 +42,11 @@ const FR = makeSpot("fr-1", "France");
 const JP = makeSpot("jp-1", "Japan");
 
 function render(
-  options?: Parameters<typeof useMapFilter>[1],
+  options?: UseMapFilterOptions,
 ): RenderHookResult<ReturnType<typeof useMapFilter>, unknown> {
-  return renderHook(() => useMapFilter([US, FR, JP], options));
+  return renderHook(() =>
+    useMapFilter([US, FR, JP], mockSearchParams as unknown as ReadonlyURLSearchParams, options),
+  );
 }
 
 beforeEach(() => {
