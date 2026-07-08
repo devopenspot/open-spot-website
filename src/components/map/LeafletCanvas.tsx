@@ -167,17 +167,31 @@ function prefersReducedMotion(): boolean {
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
+function safeMapCall(map: L.Map, fn: () => void): void {
+  map.whenReady(() => {
+    try {
+      fn();
+    } catch (err) {
+      if (process.env.NODE_ENV === "development") {
+        console.warn("[leaflet] safe call skipped:", err);
+      }
+    }
+  });
+}
+
 function flyOrSetView(
   map: L.Map,
   target: L.LatLngExpression,
   zoom: number,
   duration: number,
 ): void {
-  if (prefersReducedMotion()) {
-    map.setView(target, zoom);
-    return;
-  }
-  map.flyTo(target, zoom, { duration });
+  safeMapCall(map, () => {
+    if (prefersReducedMotion()) {
+      map.setView(target, zoom);
+      return;
+    }
+    map.flyTo(target, zoom, { duration });
+  });
 }
 
 function flyBoundsOrSetView(
@@ -186,11 +200,13 @@ function flyBoundsOrSetView(
   padding: [number, number],
   duration: number,
 ): void {
-  if (prefersReducedMotion()) {
-    map.fitBounds(bounds, { padding });
-    return;
-  }
-  map.flyToBounds(bounds, { padding, duration });
+  safeMapCall(map, () => {
+    if (prefersReducedMotion()) {
+      map.fitBounds(bounds, { padding });
+      return;
+    }
+    map.flyToBounds(bounds, { padding, duration });
+  });
 }
 
 function MapController({
@@ -249,7 +265,7 @@ function MapController({
         if (!Number.isFinite(radiusMeters) || radiusMeters <= 0) return;
         const center = L.latLng(userLocation.lat, userLocation.lon);
         const bounds = center.toBounds(radiusMeters * 2);
-        try {
+        safeMapCall(map, () => {
           if (prefersReducedMotion()) {
             map.fitBounds(bounds, {
               padding: FIT_PADDING,
@@ -262,9 +278,7 @@ function MapController({
             maxZoom: RADIUS_FIT_MAX_ZOOM,
             duration: FLY_DURATION_SEC,
           });
-        } catch {
-          map.setView([userLocation.lat, userLocation.lon], USER_FOCUS_ZOOM);
-        }
+        });
       },
     }),
     [map, spots, userLocation],
@@ -277,13 +291,19 @@ function MapController({
     hasInitialFit.current = true;
     if (spots.length === 1) {
       const first = spots[0];
-      if (first) map.setView([first.location.lat, first.location.lon], FOCUS_ZOOM);
+      if (first) {
+        safeMapCall(map, () => {
+          map.setView([first.location.lat, first.location.lon], FOCUS_ZOOM);
+        });
+      }
       return;
     }
     const bounds: L.LatLngBoundsExpression = spots.map(
       (s) => [s.location.lat, s.location.lon] as [number, number],
     );
-    map.fitBounds(bounds, { padding: FIT_PADDING });
+    safeMapCall(map, () => {
+      map.fitBounds(bounds, { padding: FIT_PADDING });
+    });
   }, [map, spots, userLocation]);
 
   return null;
