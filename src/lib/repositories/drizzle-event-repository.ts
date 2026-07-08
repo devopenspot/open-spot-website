@@ -1,7 +1,18 @@
-import { and, asc, eq, sql } from "drizzle-orm"
+import { and, asc, eq, sql, type SQL } from "drizzle-orm"
 import { drizzle } from "drizzle-orm/postgres-js"
-import { sportEvents, type NewSportEventRow, type SportEventRow } from "@/db/schema"
-import type { SportEvent, SportEventTier, SportDiscipline } from "@/types/sport-events"
+import {
+  countries,
+  eventSports,
+  eventTiers,
+  sportDisciplines,
+  sportEvents,
+  type NewSportEventRow,
+} from "@/db/schema"
+import type {
+  SportEvent,
+  SportEventTier,
+  SportDiscipline,
+} from "@/types/sport-events"
 import type {
   SportEventListResult,
   SportEventQuery,
@@ -15,8 +26,47 @@ import type {
   SportEventFacetTier,
 } from "./types"
 
-function toEvent(row: SportEventRow): SportEvent {
-  const loc = row.location as { lat: number; lon: number } | null
+const sportsAgg = sql<string[]>`
+  coalesce(
+    (
+      select array_agg(sd.name order by sd.name)
+      from ${eventSports} es
+      join ${sportDisciplines} sd on sd.slug = es.discipline_slug
+      where es.event_id = ${sportEvents.id}
+    ),
+    '{}'::text[]
+  )
+`.as("sports")
+
+interface JoinedEventRow {
+  id: string
+  slug: string
+  name: string
+  shortName: string | null
+  url: string
+  image: string
+  description: string
+  sports: string[]
+  tier: string
+  startAt: Date
+  endAt: Date | null
+  city: string
+  country: string
+  countryCode: string | null
+  venue: string | null
+  location: { lat: number; lon: number } | null
+  featured: boolean
+  createdBy: string | null
+  createdAt: Date
+  updatedAt: Date
+}
+
+function dateOnly(d: Date | null): string {
+  if (!d) return ""
+  return d.toISOString().slice(0, 10)
+}
+
+function toEvent(row: JoinedEventRow): SportEvent {
   return {
     id: row.id,
     slug: row.slug,
@@ -26,54 +76,106 @@ function toEvent(row: SportEventRow): SportEvent {
     image: row.image,
     description: row.description,
     sports: row.sports as readonly SportDiscipline[],
-    startDate: row.startDate,
-    endDate: row.endDate ?? undefined,
+    startDate: dateOnly(row.startAt),
+    endDate: row.endAt ? dateOnly(row.endAt) : undefined,
     location: {
       city: row.city,
       country: row.country,
       countryCode: row.countryCode ?? undefined,
       venue: row.venue ?? undefined,
-      latitude: loc?.lat,
-      longitude: loc?.lon,
+      latitude: row.location?.lat,
+      longitude: row.location?.lon,
     },
     tier: row.tier as SportEventTier,
-    featured: row.featured === "true",
+    featured: row.featured,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   }
 }
 
+function sportDisciplineTitleToSlug(title: string): string {
+  return title.toLowerCase()
+}
+
 export class DrizzleEventRepository implements EventRepository {
   constructor(private readonly db: ReturnType<typeof drizzle>) {}
 
+  private selectJoined() {
+    return this.db
+      .select({
+        id: sportEvents.id,
+        slug: sportEvents.slug,
+        name: sportEvents.name,
+        shortName: sportEvents.shortName,
+        url: sportEvents.url,
+        image: sportEvents.image,
+        description: sportEvents.description,
+        sports: sportsAgg,
+        tier: eventTiers.slug,
+        startAt: sportEvents.startAt,
+        endAt: sportEvents.endAt,
+        city: sportEvents.city,
+        country: countries.name,
+        countryCode: sportEvents.countryCodeFk,
+        venue: sportEvents.venue,
+        location: sportEvents.location,
+        featured: sportEvents.featuredV2,
+        createdBy: sportEvents.createdBy,
+        createdAt: sportEvents.createdAt,
+        updatedAt: sportEvents.updatedAt,
+      })
+      .from(sportEvents)
+      .leftJoin(eventTiers, eq(eventTiers.slug, sportEvents.tierSlug))
+      .leftJoin(
+        countries,
+        eq(countries.iso2, sportEvents.countryCodeFk),
+      )
+      .$dynamic()
+  }
+
   async list(query?: SportEventQuery): Promise<SportEventListResult> {
     const limit = query?.limit ?? 50
-    const conditions = []
+    const conditions: SQL[] = []
     if (query?.country) conditions.push(eq(sportEvents.country, query.country))
-    if (query?.tier) conditions.push(eq(sportEvents.tier, query.tier))
-    if (query?.featured) conditions.push(eq(sportEvents.featured, "true"))
+    if (query?.tier)
+      conditions.push(eq(sportEvents.tierSlug, query.tier))
+    if (query?.featured)
+      conditions.push(eq(sportEvents.featuredV2, true))
     if (query?.discipline)
-      conditions.push(sql`${query.discipline} = ANY(${sportEvents.sports})`)
-    if (query?.from) conditions.push(sql`${sportEvents.startDate} >= ${query.from}`)
-    if (query?.to) conditions.push(sql`coalesce(${sportEvents.endDate}, ${sportEvents.startDate}) <= ${query.to}`)
+      conditions.push(
+        sql`${query.discipline.toLowerCase()} = (
+          select lower(sd.name) from ${eventSports} es
+          join ${sportDisciplines} sd on sd.slug = es.discipline_slug
+          where es.event_id = ${sportEvents.id} limit 1
+        )`,
+      )
+    if (query?.from)
+      conditions.push(sql`${sportEvents.startAt} >= ${query.from}::timestamptz`)
+    if (query?.to)
+      conditions.push(
+        sql`coalesce(${sportEvents.endAt}, ${sportEvents.startAt}) <= ${query.to}::timestamptz`,
+      )
     if (query?.q) {
       const like = `%${query.q.toLowerCase()}%`
       conditions.push(sql`(
         lower(coalesce(${sportEvents.name}, '')) like ${like}
         or lower(coalesce(${sportEvents.description}, '')) like ${like}
         or lower(coalesce(${sportEvents.city}, '')) like ${like}
-        or lower(coalesce(${sportEvents.country}, '')) like ${like}
+        or lower(coalesce(${countries.name}, '')) like ${like}
       )`)
     }
-    const where = conditions.length > 0 ? and(...conditions) : undefined
-    const baseQuery = this.db.select().from(sportEvents).$dynamic()
+    const where =
+      conditions.length > 0
+        ? and(...conditions.map((c) => c as SQL | undefined).filter(Boolean) as SQL[])
+        : undefined
+
     const rows = await (where
-      ? baseQuery.where(where)
-      : baseQuery
+      ? this.selectJoined().where(where)
+      : this.selectJoined()
     )
-      .orderBy(asc(sportEvents.startDate))
+      .orderBy(asc(sportEvents.startAt))
       .limit(limit + 1)
-    const items = rows.slice(0, limit).map(toEvent)
+    const items = (rows as unknown as JoinedEventRow[]).slice(0, limit).map(toEvent)
     const nextCursor =
       rows.length > limit
         ? (items[items.length - 1]?.startDate ?? null)
@@ -82,54 +184,58 @@ export class DrizzleEventRepository implements EventRepository {
   }
 
   async findById(id: string): Promise<SportEvent | null> {
-    const [row] = await this.db
-      .select()
-      .from(sportEvents)
+    const rows = await this.selectJoined()
       .where(eq(sportEvents.id, id))
       .limit(1)
+    const row = (rows as unknown as JoinedEventRow[])[0]
     return row ? toEvent(row) : null
   }
 
   async findFeatured(): Promise<SportEvent | null> {
-    const [row] = await this.db
-      .select()
-      .from(sportEvents)
-      .where(eq(sportEvents.featured, "true"))
+    const rows = await this.selectJoined()
+      .where(eq(sportEvents.featuredV2, true))
       .limit(1)
+    const row = (rows as unknown as JoinedEventRow[])[0]
     if (row) return toEvent(row)
-    const [first] = await this.db
-      .select()
-      .from(sportEvents)
-      .orderBy(asc(sportEvents.startDate))
+    const fallback = await this.selectJoined()
+      .orderBy(asc(sportEvents.startAt))
       .limit(1)
+    const first = (fallback as unknown as JoinedEventRow[])[0]
     return first ? toEvent(first) : null
   }
 
   async listCountries(): Promise<readonly SportEventFacetCountry[]> {
-    const rows = await this.db
-      .select({ name: sportEvents.country, count: sql<number>`count(*)::int` })
-      .from(sportEvents)
-      .groupBy(sportEvents.country)
-    return rows.map((r) => ({ name: r.name, count: Number(r.count) }))
+    const rows = await this.db.execute<{ country: string; count: string }>(sql`
+      select c.name as country, count(*)::int as count
+      from ${sportEvents} se
+      join ${countries} c on c.iso2 = se.country_code_fk
+      group by c.name
+      order by c.name
+    `)
+    return rows.map((r) => ({ name: r.country, count: Number(r.count) }))
   }
 
   async listTiers(): Promise<readonly SportEventFacetTier[]> {
-    const rows = await this.db
-      .select({ name: sportEvents.tier, count: sql<number>`count(*)::int` })
-      .from(sportEvents)
-      .groupBy(sportEvents.tier)
+    const rows = await this.db.execute<{ tier: string; count: string }>(sql`
+      select et.slug as tier, count(*)::int as count
+      from ${sportEvents} se
+      join ${eventTiers} et on et.slug = se.tier_slug
+      group by et.slug
+      order by et.slug
+    `)
     return rows.map((r) => ({
-      name: r.name as SportEventTier,
+      name: r.tier as SportEventTier,
       count: Number(r.count),
     }))
   }
 
   async listDisciplines(): Promise<readonly SportEventFacetDiscipline[]> {
     const rows = await this.db.execute<{ name: string; count: string }>(sql`
-      select s, count(*)::int as count
-      from ${sportEvents}, unnest(${sportEvents.sports}) as s
-      group by s
-      order by s
+      select sd.name, count(*)::int as count
+      from ${eventSports} es
+      join ${sportDisciplines} sd on sd.slug = es.discipline_slug
+      group by sd.name
+      order by sd.name
     `)
     return rows.map((r) => ({
       name: r.name as SportDiscipline,
@@ -137,13 +243,34 @@ export class DrizzleEventRepository implements EventRepository {
     }))
   }
 
+  private async syncEventSports(
+    eventId: string,
+    disciplines: readonly SportDiscipline[],
+  ): Promise<void> {
+    await this.db
+      .delete(eventSports)
+      .where(eq(eventSports.eventId, eventId))
+    if (disciplines.length === 0) return
+    const slugs = disciplines.map(sportDisciplineTitleToSlug)
+    await this.db
+      .insert(eventSports)
+      .values(
+        slugs.map((disciplineSlug) => ({ eventId, disciplineSlug })),
+      )
+  }
+
   async create(input: NewSportEvent): Promise<SportEvent> {
+    const id = crypto.randomUUID()
     const slug = `${slugify(input.name)}-${Date.now()}`
+    const startAtTsql = `${input.startDate} 00:00:00+00`
+    const endAtTsql = input.endDate ? `${input.endDate} 00:00:00+00` : null
     const location =
       typeof input.latitude === "number" && typeof input.longitude === "number"
-        ? ({ lat: input.latitude, lon: input.longitude } as unknown as SportEventRow["location"])
+        ? ({ lat: input.latitude, lon: input.longitude } as unknown as NewSportEventRow["location"])
         : null
+
     const insertValues: NewSportEventRow = {
+      id,
       slug,
       name: input.name,
       shortName: input.shortName ?? null,
@@ -153,57 +280,96 @@ export class DrizzleEventRepository implements EventRepository {
       sports: [...input.sports],
       startDate: input.startDate,
       endDate: input.endDate ?? null,
+      startAt: sql`${startAtTsql}::timestamptz` as unknown as Date,
+      endAt: endAtTsql
+        ? (sql`${endAtTsql}::timestamptz` as unknown as Date)
+        : null,
       city: input.city,
       country: input.country,
       countryCode: input.countryCode ?? null,
+      countryCodeFk: input.countryCode
+        ? (input.countryCode as unknown as NewSportEventRow["countryCodeFk"])
+        : (sql<string | null>`(select iso2 from ${countries} where name = ${input.country} limit 1)` as unknown as string),
       venue: input.venue ?? null,
       location,
-      tier: input.tier,
+      tier: input.tier as unknown as NewSportEventRow["tier"],
+      tierSlug: input.tier,
       featured: input.featured ? "true" : null,
+      featuredV2: input.featured,
+      createdBy: null,
     }
     const [row] = await this.db
       .insert(sportEvents)
       .values(insertValues)
       .returning()
     if (!row) throw new Error("Insert returned no row")
-    return toEvent(row)
+    await this.syncEventSports(id, input.sports)
+    const reloaded = await this.findById(id)
+    if (!reloaded) throw new Error("Event not found after insert")
+    return reloaded
   }
 
   async update(id: string, patch: SportEventPatch): Promise<SportEvent> {
-    const values: Partial<NewSportEventRow> = {}
-    if (patch.name !== undefined) values.name = patch.name
-    if (patch.shortName !== undefined) values.shortName = patch.shortName
-    if (patch.url !== undefined) values.url = patch.url
-    if (patch.image !== undefined) values.image = patch.image
-    if (patch.description !== undefined) values.description = patch.description
-    if (patch.sports !== undefined) values.sports = [...patch.sports]
-    if (patch.startDate !== undefined) values.startDate = patch.startDate
-    if (patch.endDate !== undefined) values.endDate = patch.endDate
-    if (patch.city !== undefined) values.city = patch.city
-    if (patch.country !== undefined) values.country = patch.country
-    if (patch.countryCode !== undefined) values.countryCode = patch.countryCode
-    if (patch.venue !== undefined) values.venue = patch.venue
-    if (patch.tier !== undefined) values.tier = patch.tier
+    const setValues: Record<string, unknown> = {
+      updatedAt: new Date(),
+    }
+    if (patch.name !== undefined) setValues.name = patch.name
+    if (patch.shortName !== undefined) setValues.shortName = patch.shortName
+    if (patch.url !== undefined) setValues.url = patch.url
+    if (patch.image !== undefined) setValues.image = patch.image
+    if (patch.description !== undefined) setValues.description = patch.description
+    if (patch.sports !== undefined) setValues.sports = [...patch.sports]
+    if (patch.startDate !== undefined) {
+      setValues.startDate = patch.startDate
+      setValues.startAt =
+        sql`${patch.startDate} 00:00:00+00::timestamptz` as unknown as Date
+    }
+    if (patch.endDate !== undefined) {
+      setValues.endDate = patch.endDate
+      if (patch.endDate === null || patch.endDate === "") {
+        setValues.endAt = null
+      } else {
+        setValues.endAt =
+          sql`${patch.endDate} 00:00:00+00::timestamptz` as unknown as Date
+      }
+    }
+    if (patch.city !== undefined) setValues.city = patch.city
+    if (patch.country !== undefined) setValues.country = patch.country
+    if (patch.countryCode !== undefined) {
+      setValues.countryCode = patch.countryCode
+      setValues.countryCodeFk = patch.countryCode as unknown as NewSportEventRow["countryCodeFk"]
+    } else if (patch.country !== undefined) {
+      setValues.countryCodeFk =
+        sql<string | null>`(select iso2 from ${countries} where name = ${patch.country} limit 1)` as unknown as string
+    }
+    if (patch.venue !== undefined) setValues.venue = patch.venue
+    if (patch.tier !== undefined) {
+      setValues.tier = patch.tier as unknown as NewSportEventRow["tier"]
+      setValues.tierSlug = patch.tier
+    }
     if (patch.featured !== undefined) {
-      values.featured = patch.featured ? "true" : null
+      setValues.featured = patch.featured ? "true" : null
+      setValues.featuredV2 = patch.featured
     }
     if (patch.latitude !== undefined && patch.longitude !== undefined) {
-      values.location = {
+      setValues.location = {
         lat: patch.latitude,
         lon: patch.longitude,
-      } as unknown as SportEventRow["location"]
+      } as unknown as NewSportEventRow["location"]
     }
 
     const [row] = await this.db
       .update(sportEvents)
-      .set({
-        ...values,
-        updatedAt: new Date(),
-      })
+      .set(setValues as Partial<NewSportEventRow>)
       .where(eq(sportEvents.id, id))
       .returning()
     if (!row) throw new Error(`Sport event not found: ${id}`)
-    return toEvent(row)
+    if (patch.sports !== undefined) {
+      await this.syncEventSports(id, patch.sports)
+    }
+    const reloaded = await this.findById(id)
+    if (!reloaded) throw new Error(`Sport event not found: ${id}`)
+    return reloaded
   }
 
   async delete(id: string): Promise<void> {

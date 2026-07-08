@@ -1,8 +1,18 @@
-import { and, asc, desc, eq, ilike, inArray, isNotNull, sql } from "drizzle-orm"
+import { and, asc, eq, inArray, sql, type SQL } from "drizzle-orm"
 import { drizzle } from "drizzle-orm/postgres-js"
-import { spots, type NewSpotRow, type SpotRow } from "@/db/schema"
+import {
+  countries,
+  regions,
+  spotFeatureLinks,
+  spotFeatures,
+  spotSports,
+  spotTypes,
+  spots,
+  type NewSpotRow,
+  type SpotRow,
+} from "@/db/schema"
 import type { SportDiscipline } from "@/types/sport-events"
-import type { Spot, SpotLocation, SpotType } from "@/lib/types"
+import type { Spot, SpotType } from "@/lib/types"
 import type {
   NewSpot,
   SpotListResult,
@@ -10,10 +20,13 @@ import type {
   SpotQuery,
 } from "./types"
 import type { SpotRepository } from "./spot-repository"
-import { hashToUnitInterval } from "@/lib/spots/geo"
-import { withImageUrls, type SpotWithImagePath } from "@/lib/supabase/storage"
+import { withImageUrls } from "@/lib/supabase/storage"
+import {
+  joinedSpotSelect,
+  rowToSpotWithImagePath,
+  type JoinedSpotRow,
+} from "./spot-query"
 
-const DEFAULT_REGION = "Americas"
 const EARTH_RADIUS_METERS = 6_371_000
 
 function haversineMeters(
@@ -31,30 +44,16 @@ function haversineMeters(
   return 2 * EARTH_RADIUS_METERS * Math.asin(Math.sqrt(a))
 }
 
-function toRawSpot(row: SpotRow): SpotWithImagePath {
-  return {
-    spot: {
-      id: row.id,
-      slug: row.slug,
-      name: row.name,
-      city: row.city,
-      citySlug: row.citySlug,
-      address: row.address,
-      type: row.type as SpotType,
-      features: row.features as readonly string[],
-      sports: row.sports as readonly SportDiscipline[],
-      image: row.imagePath ?? row.imageUrl,
-      communityNote: row.communityNote,
-      crowdLevel: row.crowdLevel,
-      crowdLevelLabel: row.crowdLevelLabel,
-      country: row.country,
-      location: row.location as SpotLocation,
-      createdBy: row.createdBy,
-      createdAt: row.createdAt.toISOString(),
-      updatedAt: row.updatedAt.toISOString(),
-    },
-    imagePath: row.imagePath,
-  }
+function spotTypeTitleToSlug(title: SpotType): string {
+  return title.toLowerCase()
+}
+
+function sportDisciplineTitleToSlug(title: string): string {
+  return title.toLowerCase()
+}
+
+function featureTitleToSlug(title: string): string {
+  return title.toLowerCase().replace(/\s+/g, "-")
 }
 
 export class DrizzleSpotRepository implements SpotRepository {
@@ -62,8 +61,9 @@ export class DrizzleSpotRepository implements SpotRepository {
 
   async list(query?: SpotQuery): Promise<SpotListResult> {
     const limit = query?.limit ?? 50
-    const conditions = []
-    if (query?.type) conditions.push(eq(spots.type, query.type))
+    const conditions: SQL[] = []
+    if (query?.type)
+      conditions.push(eq(spots.type, query.type as SpotRow["type"]))
     if (query?.country) conditions.push(eq(spots.country, query.country))
     if (query?.city) conditions.push(eq(spots.citySlug, query.city))
     if (query?.ids && query.ids.length > 0)
@@ -75,13 +75,23 @@ export class DrizzleSpotRepository implements SpotRepository {
         or lower(coalesce(${spots.city}, '')) like ${like}
         or lower(coalesce(${spots.address}, '')) like ${like}
         or lower(coalesce(${spots.country}, '')) like ${like}
-        or exists (select 1 from unnest(${spots.features}) f where lower(f) like ${like})
+        or exists (
+          select 1 from ${spotFeatureLinks} sfl
+          join ${spotFeatures} sf on sf.slug = sfl.feature_slug
+          where sfl.spot_id = ${spots.id} and lower(sf.name) like ${like}
+        )
       )`)
     }
-    const where = conditions.length > 0 ? and(...conditions) : undefined
+    const where =
+      conditions.length > 0
+        ? and(
+            ...conditions
+              .map((c) => c as SQL | undefined)
+              .filter(Boolean) as SQL[],
+          )
+        : undefined
 
-    // Apply PostGIS bbox + ST_DWithin for nearby.
-    let baseQuery = this.db.select().from(spots).$dynamic()
+    let baseQuery = joinedSpotSelect(this.db)
     if (query?.near) {
       const point = sql`ST_SetSRID(ST_MakePoint(${query.near.lon}, ${query.near.lat}), 4326)`
       baseQuery = baseQuery.where(
@@ -92,10 +102,12 @@ export class DrizzleSpotRepository implements SpotRepository {
       ? baseQuery.where(where)
       : baseQuery
     )
-      .orderBy(query?.cursor ? asc(spots.slug) : asc(spots.slug))
+      .orderBy(asc(spots.slug))
       .limit(limit + 1)
 
-    const raws = rows.slice(0, limit).map(toRawSpot)
+    const raws = (rows as unknown as JoinedSpotRow[])
+      .slice(0, limit)
+      .map(rowToSpotWithImagePath)
     let items = await withImageUrls(raws)
     if (query?.near) {
       items = items
@@ -119,24 +131,22 @@ export class DrizzleSpotRepository implements SpotRepository {
   }
 
   async findById(id: string): Promise<Spot | null> {
-    const [row] = await this.db
-      .select()
-      .from(spots)
+    const rows = await joinedSpotSelect(this.db)
       .where(eq(spots.id, id))
       .limit(1)
+    const row = (rows as unknown as JoinedSpotRow[])[0]
     if (!row) return null
-    const [spot] = await withImageUrls([toRawSpot(row)])
+    const [spot] = await withImageUrls([rowToSpotWithImagePath(row)])
     return spot ?? null
   }
 
   async findBySlug(slug: string): Promise<Spot | null> {
-    const [row] = await this.db
-      .select()
-      .from(spots)
+    const rows = await joinedSpotSelect(this.db)
       .where(eq(spots.slug, slug))
       .limit(1)
+    const row = (rows as unknown as JoinedSpotRow[])[0]
     if (!row) return null
-    const [spot] = await withImageUrls([toRawSpot(row)])
+    const [spot] = await withImageUrls([rowToSpotWithImagePath(row)])
     return spot ?? null
   }
 
@@ -146,24 +156,29 @@ export class DrizzleSpotRepository implements SpotRepository {
     radiusMeters: number
   }): Promise<readonly Spot[]> {
     const point = sql`ST_SetSRID(ST_MakePoint(${params.lon}, ${params.lat}), 4326)`
-    const rows = await this.db
-      .select()
-      .from(spots)
-      .where(
-        sql`ST_DWithin(${spots.location}, ${point}, ${params.radiusMeters})`,
-      )
+    const rows = await joinedSpotSelect(this.db)
+      .where(sql`ST_DWithin(${spots.location}, ${point}, ${params.radiusMeters})`)
       .limit(200)
-    return withImageUrls(rows.map(toRawSpot))
+    return withImageUrls(
+      (rows as unknown as JoinedSpotRow[]).map(rowToSpotWithImagePath),
+    )
   }
 
-  async listCountries(): Promise<readonly { name: string; region: string; count: number }[]> {
-    const rows = await this.db.execute<{ country: string; region: string; count: string }>(sql`
-      select s.country, coalesce(cr.region, ${DEFAULT_REGION}) as region, count(*)::int as count
+  async listCountries(): Promise<
+    readonly { name: string; region: string; count: number }[]
+  > {
+    const rows = await this.db.execute<{
+      country: string
+      region: string
+      count: string
+    }>(sql`
+      select c.name as country, r.name as region, count(*)::int as count
       from ${spots} s
-      left join country_regions cr on cr.country = s.country
+      join ${countries} c on c.iso2 = s.country_code
+      join ${regions} r on r.id = c.region_id
       where s.country <> ''
-      group by s.country, coalesce(cr.region, ${DEFAULT_REGION})
-      order by s.country
+      group by c.name, r.name
+      order by c.name
     `)
     return rows.map((r) => ({
       name: r.country,
@@ -182,25 +197,35 @@ export class DrizzleSpotRepository implements SpotRepository {
   }
 
   async listTypes(): Promise<readonly { name: SpotType; count: number }[]> {
-    const rows = await this.db
-      .select({ name: spots.type, count: sql<number>`count(*)::int` })
-      .from(spots)
-      .groupBy(spots.type)
-    return rows.map((r) => ({ name: r.name as SpotType, count: Number(r.count) }))
+    const rows = await this.db.execute<{ type: string; count: string }>(sql`
+      select st.name as type, count(*)::int as count
+      from ${spots} s
+      join ${spotTypes} st on st.slug = s.type_slug
+      group by st.name
+      order by st.name
+    `)
+    return rows.map((r) => ({
+      name: r.type as SpotType,
+      count: Number(r.count),
+    }))
   }
 
   async listRegions(): Promise<
     readonly { name: string; countryCount: number; spotCount: number }[]
   > {
-    const rows = await this.db.execute<{ region: string; country_count: string; spot_count: string }>(sql`
+    const rows = await this.db.execute<{
+      region: string
+      country_count: string
+      spot_count: string
+    }>(sql`
       select
-        coalesce(cr.region, ${DEFAULT_REGION}) as region,
-        count(distinct s.country)::int as country_count,
-        count(*)::int as spot_count
-      from ${spots} s
-      left join country_regions cr on cr.country = s.country
-      where s.country <> ''
-      group by coalesce(cr.region, ${DEFAULT_REGION})
+        r.name as region,
+        count(distinct c.iso2)::int as country_count,
+        count(s.id)::int as spot_count
+      from ${regions} r
+      join ${countries} c on c.region_id = r.id
+      left join ${spots} s on s.country_code = c.iso2
+      group by r.name
     `)
     return rows.map((r) => ({
       name: r.region,
@@ -209,15 +234,55 @@ export class DrizzleSpotRepository implements SpotRepository {
     }))
   }
 
+  private async syncSpotSports(
+    spotId: string,
+    disciplines: readonly SportDiscipline[],
+  ): Promise<void> {
+    await this.db.delete(spotSports).where(eq(spotSports.spotId, spotId))
+    if (disciplines.length === 0) return
+    const slugs = disciplines.map(sportDisciplineTitleToSlug)
+    await this.db
+      .insert(spotSports)
+      .values(slugs.map((disciplineSlug) => ({ spotId, disciplineSlug })))
+  }
+
+  private async syncSpotFeatures(
+    spotId: string,
+    features: readonly string[],
+  ): Promise<void> {
+    await this.db
+      .delete(spotFeatureLinks)
+      .where(eq(spotFeatureLinks.spotId, spotId))
+    if (features.length === 0) return
+    const known = new Set(
+      (
+        await this.db
+          .select({ slug: spotFeatures.slug })
+          .from(spotFeatures)
+      ).map((r) => r.slug),
+    )
+    const slugs = features
+      .map(featureTitleToSlug)
+      .filter((slug) => known.has(slug))
+    if (slugs.length === 0) return
+    await this.db
+      .insert(spotFeatureLinks)
+      .values(slugs.map((featureSlug) => ({ spotId, featureSlug })))
+  }
+
   async create(input: NewSpot): Promise<Spot> {
+    const id = input.id ?? crypto.randomUUID()
+    const typeSlug = spotTypeTitleToSlug(input.type)
     const insertValues: NewSpotRow = {
-      id: input.id ?? crypto.randomUUID(),
+      id,
       slug: `${input.citySlug}-${Date.now()}`,
       name: input.name.toUpperCase(),
       city: input.city,
-      citySlug: input.citySlug ?? input.city.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+      citySlug:
+        input.citySlug ?? input.city.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
       address: input.address,
       type: input.type,
+      typeSlug,
       features: [...input.features],
       sports: [...input.sports],
       imageUrl: input.image,
@@ -226,6 +291,8 @@ export class DrizzleSpotRepository implements SpotRepository {
       crowdLevel: input.crowdLevel,
       crowdLevelLabel: input.crowdLevelLabel,
       country: input.country,
+      countryCode:
+        sql<string | null>`(select iso2 from ${countries} where name = ${input.country} limit 1)` as unknown as string,
       location: input.location as unknown as SpotRow["location"],
       createdBy: input.createdBy,
     }
@@ -234,34 +301,68 @@ export class DrizzleSpotRepository implements SpotRepository {
       .values(insertValues)
       .returning()
     if (!row) throw new Error("Insert returned no row")
-    const [spot] = await withImageUrls([toRawSpot(row)])
+    await this.syncSpotSports(id, input.sports)
+    await this.syncSpotFeatures(id, input.features)
+    const [spot] = await withImageUrls([
+      rowToSpotWithImagePath(row as unknown as JoinedSpotRow),
+    ])
     if (!spot) throw new Error("withImageUrls returned no spot")
     return spot
   }
 
   async update(id: string, patch: SpotPatch): Promise<Spot> {
+    const setValues: Record<string, unknown> = {
+      updatedAt: new Date(),
+    }
+    if (patch.name !== undefined) setValues.name = patch.name.toUpperCase()
+    if (patch.city !== undefined) setValues.city = patch.city
+    if (patch.citySlug !== undefined) setValues.citySlug = patch.citySlug
+    if (patch.address !== undefined) setValues.address = patch.address
+    if (patch.type !== undefined) {
+      setValues.type = patch.type
+      setValues.typeSlug = spotTypeTitleToSlug(patch.type)
+    }
+    if (patch.features !== undefined)
+      setValues.features = [...patch.features]
+    if (patch.sports !== undefined) setValues.sports = [...patch.sports]
+    if (patch.image !== undefined) setValues.imageUrl = patch.image
+    if (patch.communityNote !== undefined)
+      setValues.communityNote = patch.communityNote
+    if (patch.crowdLevel !== undefined) setValues.crowdLevel = patch.crowdLevel
+    if (patch.crowdLevelLabel !== undefined)
+      setValues.crowdLevelLabel = patch.crowdLevelLabel
+    if (patch.country !== undefined) {
+      setValues.country = patch.country
+      setValues.countryCode =
+        sql<string | null>`(select iso2 from ${countries} where name = ${patch.country} limit 1)` as unknown as string
+    }
+    if (patch.location !== undefined)
+      setValues.location = patch.location as unknown as SpotRow["location"]
+
     const [row] = await this.db
       .update(spots)
-      .set({
-        ...patch,
-        updatedAt: new Date(),
-      })
+      .set(setValues as Partial<NewSpotRow>)
       .where(eq(spots.id, id))
       .returning()
     if (!row) throw new Error(`Spot not found: ${id}`)
-    const [spot] = await withImageUrls([toRawSpot(row)])
+    if (patch.sports !== undefined) {
+      await this.syncSpotSports(id, patch.sports)
+    }
+    if (patch.features !== undefined) {
+      await this.syncSpotFeatures(id, patch.features)
+    }
+    const [spot] = await withImageUrls([
+      rowToSpotWithImagePath(row as unknown as JoinedSpotRow),
+    ])
     if (!spot) throw new Error(`Spot not found: ${id}`)
     return spot
   }
 
   async delete(id: string): Promise<void> {
-    const result = await this.db.delete(spots).where(eq(spots.id, id)).returning({ id: spots.id })
+    const result = await this.db
+      .delete(spots)
+      .where(eq(spots.id, id))
+      .returning({ id: spots.id })
     if (result.length === 0) throw new Error(`Spot not found: ${id}`)
   }
 }
-
-// Suppress unused import warnings while keeping the symbols for future use.
-void hashToUnitInterval
-void isNotNull
-void ilike
-void desc

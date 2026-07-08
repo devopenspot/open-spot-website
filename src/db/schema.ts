@@ -11,6 +11,7 @@ import {
   uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core"
+import { relations } from "drizzle-orm"
 
 const geometryPoint = customType<{
   data: { lat: number; lon: number }
@@ -335,6 +336,85 @@ export const eventSports = pgTable(
     index("event_sports_discipline_idx").on(t.disciplineSlug),
   ],
 )
+
+export const spotsRelations = relations(spots, ({ one, many }) => ({
+  type: one(spotTypes, {
+    fields: [spots.typeSlug],
+    references: [spotTypes.slug],
+  }),
+  country: one(countries, {
+    fields: [spots.countryCode],
+    references: [countries.iso2],
+  }),
+  sports: many(spotSports),
+  features: many(spotFeatureLinks),
+}))
+
+export const sportEventsRelations = relations(sportEvents, ({ one, many }) => ({
+  tier: one(eventTiers, {
+    fields: [sportEvents.tierSlug],
+    references: [eventTiers.slug],
+  }),
+  country: one(countries, {
+    fields: [sportEvents.countryCodeFk],
+    references: [countries.iso2],
+  }),
+  sports: many(eventSports),
+  creator: one(profiles, {
+    fields: [sportEvents.createdBy],
+    references: [profiles.id],
+  }),
+}))
+
+export const countriesRelations = relations(countries, ({ one, many }) => ({
+  region: one(regions, {
+    fields: [countries.regionId],
+    references: [regions.id],
+  }),
+  spots: many(spots),
+  events: many(sportEvents),
+}))
+
+export const regionsRelations = relations(regions, ({ many }) => ({
+  countries: many(countries),
+}))
+
+export const spotSportsRelations = relations(spotSports, ({ one }) => ({
+  spot: one(spots, { fields: [spotSports.spotId], references: [spots.id] }),
+  discipline: one(sportDisciplines, {
+    fields: [spotSports.disciplineSlug],
+    references: [sportDisciplines.slug],
+  }),
+}))
+
+export const spotFeatureLinksRelations = relations(
+  spotFeatureLinks,
+  ({ one }) => ({
+    spot: one(spots, {
+      fields: [spotFeatureLinks.spotId],
+      references: [spots.id],
+    }),
+    feature: one(spotFeatures, {
+      fields: [spotFeatureLinks.featureSlug],
+      references: [spotFeatures.slug],
+    }),
+  }),
+)
+
+export const eventSportsRelations = relations(eventSports, ({ one }) => ({
+  event: one(sportEvents, {
+    fields: [eventSports.eventId],
+    references: [sportEvents.id],
+  }),
+  discipline: one(sportDisciplines, {
+    fields: [eventSports.disciplineSlug],
+    references: [sportDisciplines.slug],
+  }),
+}))
+
+export const savedSpotsRelations = relations(savedSpots, ({ one }) => ({
+  spot: one(spots, { fields: [savedSpots.spotId], references: [spots.id] }),
+}))
 
 export type SpotRow = typeof spots.$inferSelect
 export type NewSpotRow = typeof spots.$inferInsert

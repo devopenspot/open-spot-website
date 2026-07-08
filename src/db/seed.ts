@@ -131,7 +131,7 @@ const SPOT_FEATURE_SEED: readonly { slug: string; name: string }[] = [
   { slug: "mini-ramp", name: "Mini ramp" },
   { slug: "bowl", name: "Bowl" },
   { slug: "pool", name: "Pool" },
-  { slug: "smooth-concrete", name: "Smooth concrete" },
+  { slug: "smooth-concrete", name: "Smooth Concrete" },
   { slug: "street", name: "Street" },
   { slug: "slidebox", name: "Slidebox" },
 ]

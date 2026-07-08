@@ -1,10 +1,13 @@
 import { and, count, desc, eq, sql } from "drizzle-orm"
 import { drizzle } from "drizzle-orm/postgres-js"
 import { savedSpots, spots } from "@/db/schema"
-import type { SportDiscipline } from "@/types/sport-events"
-import type { Spot } from "@/lib/types"
 import type { SavedSpotWithDetails } from "@/types/saved-spot"
 import type { SavedSpotsListResult, SavedSpotsRepository } from "./saved-spots-repository"
+import {
+  joinedSpotSelect,
+  rowToSpot,
+  type JoinedSpotRow,
+} from "./spot-query"
 
 export class DrizzleSavedSpotsRepository implements SavedSpotsRepository {
   constructor(private readonly db: ReturnType<typeof drizzle>) {}
@@ -19,22 +22,41 @@ export class DrizzleSavedSpotsRepository implements SavedSpotsRepository {
       conditions.push(sql`${savedSpots.createdAt} < ${opts.cursor}`)
     }
     const rows = await this.db
-      .select({
-        ss: savedSpots,
-        spot: spots,
-      })
+      .select({ ss: savedSpots })
       .from(savedSpots)
       .innerJoin(spots, eq(savedSpots.spotId, spots.id))
       .where(and(...conditions))
       .orderBy(desc(savedSpots.createdAt))
       .limit(limit + 1)
+
     const slice = rows.slice(0, limit)
-    const items: SavedSpotWithDetails[] = slice.map((r) => ({
-      userId: r.ss.userId,
-      spotId: r.ss.spotId,
-      createdAt: r.ss.createdAt.toISOString(),
-      spot: rowToSpot(r.spot),
-    }))
+    const spotIds = slice.map((r) => r.ss.spotId)
+    if (spotIds.length === 0) {
+      return { items: [], nextCursor: null }
+    }
+
+    const joined = await joinedSpotSelect(this.db).where(
+      sql`${spots.id} = ANY(${sql.raw(`ARRAY[${spotIds
+        .map((id) => `'${id}'`)
+        .join(",")}]::uuid[]`)})`,
+    )
+    const joinedById = new Map(
+      (joined as unknown as JoinedSpotRow[]).map((r) => [r.id, r]),
+    )
+
+    const items: SavedSpotWithDetails[] = slice
+      .map((r) => {
+        const joinedRow = joinedById.get(r.ss.spotId)
+        if (!joinedRow) return null
+        return {
+          userId: r.ss.userId,
+          spotId: r.ss.spotId,
+          createdAt: r.ss.createdAt.toISOString(),
+          spot: rowToSpot(joinedRow),
+        }
+      })
+      .filter((x): x is SavedSpotWithDetails => x !== null)
+
     const nextCursor =
       rows.length > limit
         ? (items[items.length - 1]?.createdAt ?? null)
@@ -72,30 +94,5 @@ export class DrizzleSavedSpotsRepository implements SavedSpotsRepository {
       .from(savedSpots)
       .where(eq(savedSpots.spotId, spotId))
     return Number(row?.x ?? 0)
-  }
-}
-
-type SpotRow = typeof spots.$inferSelect
-
-function rowToSpot(row: SpotRow): Spot {
-  return {
-    id: row.id,
-    slug: row.slug,
-    name: row.name,
-    city: row.city,
-    citySlug: row.citySlug,
-    address: row.address,
-    type: row.type as Spot["type"],
-    features: row.features as readonly string[],
-    sports: row.sports as readonly SportDiscipline[],
-    image: row.imagePath ? row.imagePath : row.imageUrl,
-    communityNote: row.communityNote,
-    crowdLevel: row.crowdLevel,
-    crowdLevelLabel: row.crowdLevelLabel,
-    country: row.country,
-    location: row.location as Spot["location"],
-    createdBy: row.createdBy,
-    createdAt: row.createdAt.toISOString(),
-    updatedAt: row.updatedAt.toISOString(),
   }
 }
