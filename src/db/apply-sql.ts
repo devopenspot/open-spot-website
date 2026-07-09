@@ -41,7 +41,7 @@ async function main() {
       // Split on drizzle's `--> statement-breakpoint` so each statement
       // is sent separately (the live DB rejects multi-statement strings).
       const statements = body
-        .split("--> statement-breakpoint")
+        .split(/^[ \t]*--> statement-breakpoint[ \t]*$/m)
         .map((s) => s.trim())
         .filter(Boolean)
       await sql.begin(async (tx) => {

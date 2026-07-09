@@ -3,7 +3,7 @@ import spotsJson from "../data/spots.json"
 import sportEventsJson from "../data/sport-events.json"
 import postgres from "postgres"
 import { getDatabaseUrl } from "../lib/env"
-import { COUNTRY_TO_REGION, REGIONS_DATA } from "../data"
+import { COUNTRY_NAME_OVERRIDES, COUNTRY_TO_REGION, REGIONS_DATA } from "../data"
 
 interface RegionSeed {
   slug: string
@@ -136,6 +136,24 @@ const SPOT_FEATURE_SEED: readonly { slug: string; name: string }[] = [
   { slug: "slidebox", name: "Slidebox" },
 ]
 
+// Valid feature slugs the seed will actually link to. Derived from the
+// lookup table above so any future edit to SPOT_FEATURE_SEED flows
+// through automatically. Nominatim's `spot_types` strings can include
+// OSM place/category noise (e.g. "place", "town", "yes") that doesn't
+// map to a real spot feature — we drop those rather than FK-fail on
+// insert. See SPEC-DATA-MODEL.md D23.
+const FEATURE_SLUG_SET: ReadonlySet<string> = new Set(
+  SPOT_FEATURE_SEED.map((f) => f.slug),
+)
+
+function toFeatureSlug(name: string): string {
+  return name.toLowerCase().replace(/\s+/g, "-")
+}
+
+function normalizeCountryName(name: string): string {
+  return COUNTRY_NAME_OVERRIDES[name] ?? name
+}
+
 interface RawAddress {
   city?: string
   town?: string
@@ -199,9 +217,12 @@ function pickFeatures(
   }
   const used = TYPE_PRIORITY.find((p) => p.type === usedType)
   const filtered = spotTypes.filter((t) => !used || !used.match.test(t))
-  for (const t of filtered) base.push(titleCase(t))
-  if (base.length === 0) base.push("Smooth Concrete")
-  if (!base.includes("Smooth Concrete")) base.push("Smooth Concrete")
+  for (const t of filtered) {
+    const slug = toFeatureSlug(titleCase(t))
+    if (FEATURE_SLUG_SET.has(slug)) base.push(slug)
+  }
+  if (base.length === 0) base.push("smooth-concrete")
+  if (!base.includes("smooth-concrete")) base.push("smooth-concrete")
   return base.slice(0, 5)
 }
 
@@ -401,7 +422,7 @@ async function seedSpots(sql: ReturnType<typeof postgres>) {
     const type = pickType(entry.spot_types)
     const crowdLevel = Math.floor((hash("crowd:" + id) % 1000) / 10)
     const rawCountry = entry.address?.country ?? ""
-    const country = rawCountry
+    const country = normalizeCountryName(rawCountry)
     const name = entry.name.toUpperCase()
     const city = pickCity(entry)
     const citySlug = entry.city_slug ?? city.toLowerCase().replace(/[^a-z0-9]+/g, "-")
@@ -441,8 +462,8 @@ async function seedSpots(sql: ReturnType<typeof postgres>) {
     `
     const spotId = row?.id
     if (spotId) {
-      for (const feature of features) {
-        const featureSlug = feature.toLowerCase().replace(/\s+/g, "-")
+      for (const featureSlug of features) {
+        if (!FEATURE_SLUG_SET.has(featureSlug)) continue
         await sql`
           insert into spot_feature_links (spot_id, feature_slug)
           values (${spotId}, ${featureSlug})
@@ -492,7 +513,7 @@ async function seedSportEvents(sql: ReturnType<typeof postgres>) {
       event.location.countryCode ??
       (
         await sql<{ iso2: string }[]>`
-          select iso2 from countries where name = ${event.location.country} limit 1
+          select iso2 from countries where name = ${normalizeCountryName(event.location.country)} limit 1
         `
       )[0]?.iso2 ??
       null

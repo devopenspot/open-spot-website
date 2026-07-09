@@ -39,6 +39,7 @@ CI order (`.github/workflows/ci.yml`): `install --frozen-lockfile` → `typechec
 - **Zod schemas in `src/lib/schemas/` are the single source of truth** for input shapes — `NewSpotSchema`, `SpotPatchSchema`, `NewSportEventSchema`, `SportEventPatchSchema`. They're `.strict()`; unknown keys throw. Server actions parse with `.parse(...)` (throws on invalid).
 - **Cache Components is on** (`cacheComponents: true` in `next.config.mjs`). `src/lib/db/health.ts` uses the `"use cache"` directive + `cacheTag` / `cacheLife`. Mutations call `revalidateTag("spots" | "sport-events" | "saved-spots:<userId>" | "weather:spot:<id>", "max")` plus `revalidatePath(...)`.
 - **Public/legacy env var renames are tracked in `src/lib/env.ts` comments.** When in doubt, read the comments there — they're a checklist of name changes from SPEC §E.4.
+- **Dimension reads are data-source-aware.** `src/data.ts` (`REGIONS_DATA`, `COUNTRY_TO_REGION`, `COUNTRY_NAME_OVERRIDES`, `TERRAIN_OPTIONS`) is the **JSON-mode fallback + seed bootstrap** (it seeds `regions`/`countries`/`spot_types` via `src/db/seed.ts`). In DB mode, the spot/event repositories read the dimension tables directly (`listCountries`/`listRegions`/`listTypes` join `regions`/`countries`/`spot_types`). Server components that need dimension data in DB mode call the **data-source-aware helpers** in `src/lib/spots.ts` (e.g. `getTerrainOptionsFromSource()`) which return DB-backed values in DB mode and the `src/data.ts` constants in JSON mode, then pass the result to client components as props. `src/data.ts` is the seed source of truth, not a live read.
 
 ## Database & migrations
 
@@ -74,5 +75,5 @@ CI order (`.github/workflows/ci.yml`): `install --frozen-lockfile` → `typechec
 - Auth / Supabase / DB plumbing: `src/lib/{auth,supabase,db,repositories,env,admin,user}/`
 - Drizzle schema + CLI: `src/db/`
 - Client state: `src/stores/*` (Zustand) + `src/components/layout/SpotsProvider.tsx`
-- Static data (categories, regions, presets): `src/data.ts` + `src/data/*.json`
+- Static data (categories, regions, presets): `src/data.ts` + `src/data/*.json` — **JSON-mode fallback + seed bootstrap only** (see the data-source-aware dimension note under Architecture). In DB mode, live dimension reads come from `regions`/`countries`/`spot_types`.
 - Local repo skills (auto-loaded): `.agents/skills/` — `next-cache-components`, `next-best-practices`, `supabase`, `drizzle`, `composition-patterns`, `react-best-practices`, `frontend-design`, `accessibility`, `seo` are the most relevant here. `SPEC.md` and `DESIGN.md` are the canonical product/design references.

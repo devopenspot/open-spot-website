@@ -7,6 +7,7 @@ import { createSpotFromLookupAction } from "@/app/actions/admin-spots"
 import { SpotFormFields, type SpotFormState } from "@/components/admin/spots/SpotFormFields"
 import { SpotFormSubmit } from "@/components/admin/spots/SpotFormSubmit"
 import type { ProjectedAddress } from "@/lib/geocode/project"
+import type { TerrainOption } from "@/lib/types"
 import type { SportDiscipline } from "@/types/sport-events"
 
 const FEATURE_DEFAULTS = ["Smooth Concrete"]
@@ -77,9 +78,10 @@ function buildFormData(state: SpotFormState): FormData {
 
 interface AdminNewSpotFormProps {
   writeEnabled: boolean
+  terrainOptions: readonly TerrainOption[]
 }
 
-export function AdminNewSpotForm({ writeEnabled }: AdminNewSpotFormProps) {
+export function AdminNewSpotForm({ writeEnabled, terrainOptions }: AdminNewSpotFormProps) {
   const router = useRouter()
   const [state, setState] = useState<SpotFormState>(buildInitialState())
 
@@ -136,6 +138,7 @@ export function AdminNewSpotForm({ writeEnabled }: AdminNewSpotFormProps) {
           onAutoFillResult={(address) => setState((s) => applyAddress(s, address))}
           onError={handleError}
           writeEnabled={writeEnabled}
+          terrainOptions={terrainOptions}
         />
         <SpotFormSubmit
           state={state}

@@ -1,30 +1,43 @@
 {
-  "id": "9195b2c3-8836-4135-9c13-70f50e0249e1",
+  "id": "56db4406-6e25-4846-9a34-ee59c20a3145",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
-    "public.country_regions": {
-      "name": "country_regions",
+    "public.countries": {
+      "name": "countries",
       "schema": "",
       "columns": {
-        "country": {
-          "name": "country",
+        "iso2": {
+          "name": "iso2",
           "type": "text",
           "primaryKey": true,
           "notNull": true
         },
-        "region": {
-          "name": "region",
+        "name": {
+          "name": "name",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "iso2": {
-          "name": "iso2",
+        "iso3": {
+          "name": "iso3",
           "type": "text",
           "primaryKey": false,
           "notNull": false
+        },
+        "region_id": {
+          "name": "region_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
         },
         "updated_at": {
           "name": "updated_at",
@@ -35,11 +48,157 @@
         }
       },
       "indexes": {
-        "country_regions_region_idx": {
-          "name": "country_regions_region_idx",
+        "countries_region_idx": {
+          "name": "countries_region_idx",
           "columns": [
             {
-              "expression": "region",
+              "expression": "region_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "countries_region_id_regions_id_fk": {
+          "name": "countries_region_id_regions_id_fk",
+          "tableFrom": "countries",
+          "tableTo": "regions",
+          "columnsFrom": [
+            "region_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "countries_name_unique": {
+          "name": "countries_name_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "name"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.event_sports": {
+      "name": "event_sports",
+      "schema": "",
+      "columns": {
+        "event_id": {
+          "name": "event_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "discipline_slug": {
+          "name": "discipline_slug",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "event_sports_discipline_idx": {
+          "name": "event_sports_discipline_idx",
+          "columns": [
+            {
+              "expression": "discipline_slug",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "event_sports_event_id_sport_events_id_fk": {
+          "name": "event_sports_event_id_sport_events_id_fk",
+          "tableFrom": "event_sports",
+          "tableTo": "sport_events",
+          "columnsFrom": [
+            "event_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "event_sports_discipline_slug_sport_disciplines_slug_fk": {
+          "name": "event_sports_discipline_slug_sport_disciplines_slug_fk",
+          "tableFrom": "event_sports",
+          "tableTo": "sport_disciplines",
+          "columnsFrom": [
+            "discipline_slug"
+          ],
+          "columnsTo": [
+            "slug"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "event_sports_event_id_discipline_slug_pk": {
+          "name": "event_sports_event_id_discipline_slug_pk",
+          "columns": [
+            "event_id",
+            "discipline_slug"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.event_tiers": {
+      "name": "event_tiers",
+      "schema": "",
+      "columns": {
+        "slug": {
+          "name": "slug",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sort_order": {
+          "name": "sort_order",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        }
+      },
+      "indexes": {
+        "event_tiers_sort_order_idx": {
+          "name": "event_tiers_sort_order_idx",
+          "columns": [
+            {
+              "expression": "sort_order",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -93,12 +252,109 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
         }
       },
       "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.regions": {
+      "name": "regions",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "slug": {
+          "name": "slug",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "image_url": {
+          "name": "image_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sort_order": {
+          "name": "sort_order",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "regions_sort_order_idx": {
+          "name": "regions_sort_order_idx",
+          "columns": [
+            {
+              "expression": "sort_order",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "regions_slug_unique": {
+          "name": "regions_slug_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "slug"
+          ]
+        }
+      },
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
@@ -194,6 +450,54 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+    "public.sport_disciplines": {
+      "name": "sport_disciplines",
+      "schema": "",
+      "columns": {
+        "slug": {
+          "name": "slug",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sort_order": {
+          "name": "sort_order",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        }
+      },
+      "indexes": {
+        "sport_disciplines_sort_order_idx": {
+          "name": "sport_disciplines_sort_order_idx",
+          "columns": [
+            {
+              "expression": "sort_order",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.sport_events": {
       "name": "sport_events",
       "schema": "",
@@ -242,23 +546,15 @@
           "notNull": true,
           "default": "''"
         },
-        "sports": {
-          "name": "sports",
-          "type": "sport_discipline[]",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'{}'"
-        },
-        "start_date": {
-          "name": "start_date",
-          "type": "text",
+        "start_at": {
+          "name": "start_at",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true
         },
-        "end_date": {
-          "name": "end_date",
-          "type": "text",
+        "end_at": {
+          "name": "end_at",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
         },
@@ -268,17 +564,11 @@
           "primaryKey": false,
           "notNull": true
         },
-        "country": {
-          "name": "country",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
         "country_code": {
           "name": "country_code",
           "type": "text",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "venue": {
           "name": "venue",
@@ -292,16 +582,22 @@
           "primaryKey": false,
           "notNull": false
         },
-        "tier": {
-          "name": "tier",
-          "type": "sport_event_tier",
-          "typeSchema": "public",
+        "tier_slug": {
+          "name": "tier_slug",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         },
         "featured": {
           "name": "featured",
-          "type": "text",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "uuid",
           "primaryKey": false,
           "notNull": false
         },
@@ -336,11 +632,11 @@
           "method": "btree",
           "with": {}
         },
-        "sport_events_country_idx": {
-          "name": "sport_events_country_idx",
+        "sport_events_country_code_idx": {
+          "name": "sport_events_country_code_idx",
           "columns": [
             {
-              "expression": "country",
+              "expression": "country_code",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -351,11 +647,11 @@
           "method": "btree",
           "with": {}
         },
-        "sport_events_tier_idx": {
-          "name": "sport_events_tier_idx",
+        "sport_events_tier_slug_idx": {
+          "name": "sport_events_tier_slug_idx",
           "columns": [
             {
-              "expression": "tier",
+              "expression": "tier_slug",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -366,11 +662,276 @@
           "method": "btree",
           "with": {}
         },
-        "sport_events_start_date_idx": {
-          "name": "sport_events_start_date_idx",
+        "sport_events_start_at_idx": {
+          "name": "sport_events_start_at_idx",
           "columns": [
             {
-              "expression": "start_date",
+              "expression": "start_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "sport_events_country_code_countries_iso2_fk": {
+          "name": "sport_events_country_code_countries_iso2_fk",
+          "tableFrom": "sport_events",
+          "tableTo": "countries",
+          "columnsFrom": [
+            "country_code"
+          ],
+          "columnsTo": [
+            "iso2"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "sport_events_tier_slug_event_tiers_slug_fk": {
+          "name": "sport_events_tier_slug_event_tiers_slug_fk",
+          "tableFrom": "sport_events",
+          "tableTo": "event_tiers",
+          "columnsFrom": [
+            "tier_slug"
+          ],
+          "columnsTo": [
+            "slug"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "sport_events_created_by_profiles_id_fk": {
+          "name": "sport_events_created_by_profiles_id_fk",
+          "tableFrom": "sport_events",
+          "tableTo": "profiles",
+          "columnsFrom": [
+            "created_by"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.spot_feature_links": {
+      "name": "spot_feature_links",
+      "schema": "",
+      "columns": {
+        "spot_id": {
+          "name": "spot_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "feature_slug": {
+          "name": "feature_slug",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "spot_feature_links_feature_idx": {
+          "name": "spot_feature_links_feature_idx",
+          "columns": [
+            {
+              "expression": "feature_slug",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "spot_feature_links_spot_id_spots_id_fk": {
+          "name": "spot_feature_links_spot_id_spots_id_fk",
+          "tableFrom": "spot_feature_links",
+          "tableTo": "spots",
+          "columnsFrom": [
+            "spot_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "spot_feature_links_feature_slug_spot_features_slug_fk": {
+          "name": "spot_feature_links_feature_slug_spot_features_slug_fk",
+          "tableFrom": "spot_feature_links",
+          "tableTo": "spot_features",
+          "columnsFrom": [
+            "feature_slug"
+          ],
+          "columnsTo": [
+            "slug"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "spot_feature_links_spot_id_feature_slug_pk": {
+          "name": "spot_feature_links_spot_id_feature_slug_pk",
+          "columns": [
+            "spot_id",
+            "feature_slug"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.spot_features": {
+      "name": "spot_features",
+      "schema": "",
+      "columns": {
+        "slug": {
+          "name": "slug",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.spot_sports": {
+      "name": "spot_sports",
+      "schema": "",
+      "columns": {
+        "spot_id": {
+          "name": "spot_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "discipline_slug": {
+          "name": "discipline_slug",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "spot_sports_discipline_idx": {
+          "name": "spot_sports_discipline_idx",
+          "columns": [
+            {
+              "expression": "discipline_slug",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "spot_sports_spot_id_spots_id_fk": {
+          "name": "spot_sports_spot_id_spots_id_fk",
+          "tableFrom": "spot_sports",
+          "tableTo": "spots",
+          "columnsFrom": [
+            "spot_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "spot_sports_discipline_slug_sport_disciplines_slug_fk": {
+          "name": "spot_sports_discipline_slug_sport_disciplines_slug_fk",
+          "tableFrom": "spot_sports",
+          "tableTo": "sport_disciplines",
+          "columnsFrom": [
+            "discipline_slug"
+          ],
+          "columnsTo": [
+            "slug"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "spot_sports_spot_id_discipline_slug_pk": {
+          "name": "spot_sports_spot_id_discipline_slug_pk",
+          "columns": [
+            "spot_id",
+            "discipline_slug"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.spot_types": {
+      "name": "spot_types",
+      "schema": "",
+      "columns": {
+        "slug": {
+          "name": "slug",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sort_order": {
+          "name": "sort_order",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        }
+      },
+      "indexes": {
+        "spot_types_sort_order_idx": {
+          "name": "spot_types_sort_order_idx",
+          "columns": [
+            {
+              "expression": "sort_order",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -430,19 +991,11 @@
           "primaryKey": false,
           "notNull": true
         },
-        "type": {
-          "name": "type",
-          "type": "spot_type",
-          "typeSchema": "public",
+        "type_slug": {
+          "name": "type_slug",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
-        },
-        "features": {
-          "name": "features",
-          "type": "text[]",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'{}'"
         },
         "image_url": {
           "name": "image_url",
@@ -477,12 +1030,11 @@
           "notNull": true,
           "default": "''"
         },
-        "country": {
-          "name": "country",
+        "country_code": {
+          "name": "country_code",
           "type": "text",
           "primaryKey": false,
-          "notNull": true,
-          "default": "''"
+          "notNull": true
         },
         "location": {
           "name": "location",
@@ -527,11 +1079,11 @@
           "method": "btree",
           "with": {}
         },
-        "spots_type_idx": {
-          "name": "spots_type_idx",
+        "spots_type_slug_idx": {
+          "name": "spots_type_slug_idx",
           "columns": [
             {
-              "expression": "type",
+              "expression": "type_slug",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -542,11 +1094,11 @@
           "method": "btree",
           "with": {}
         },
-        "spots_country_idx": {
-          "name": "spots_country_idx",
+        "spots_country_code_idx": {
+          "name": "spots_country_code_idx",
           "columns": [
             {
-              "expression": "country",
+              "expression": "country_code",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -571,36 +1123,36 @@
           "concurrently": false,
           "method": "btree",
           "with": {}
-        },
-        "spots_country_type_slug_idx": {
-          "name": "spots_country_type_slug_idx",
-          "columns": [
-            {
-              "expression": "country",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "type",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "slug",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
         }
       },
-      "foreignKeys": {},
+      "foreignKeys": {
+        "spots_type_slug_spot_types_slug_fk": {
+          "name": "spots_type_slug_spot_types_slug_fk",
+          "tableFrom": "spots",
+          "tableTo": "spot_types",
+          "columnsFrom": [
+            "type_slug"
+          ],
+          "columnsTo": [
+            "slug"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "spots_country_code_countries_iso2_fk": {
+          "name": "spots_country_code_countries_iso2_fk",
+          "tableFrom": "spots",
+          "tableTo": "countries",
+          "columnsFrom": [
+            "country_code"
+          ],
+          "columnsTo": [
+            "iso2"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
@@ -608,45 +1160,7 @@
       "isRLSEnabled": false
     }
   },
-  "enums": {
-    "public.sport_discipline": {
-      "name": "sport_discipline",
-      "schema": "public",
-      "values": [
-        "Skateboard",
-        "BMX",
-        "Inline",
-        "Scooter",
-        "Rollerblade",
-        "Wakeboard",
-        "Snowboard",
-        "Ski"
-      ]
-    },
-    "public.sport_event_tier": {
-      "name": "sport_event_tier",
-      "schema": "public",
-      "values": [
-        "world-tour",
-        "championship",
-        "festival",
-        "federation"
-      ]
-    },
-    "public.spot_type": {
-      "name": "spot_type",
-      "schema": "public",
-      "values": [
-        "Plaza",
-        "DIY",
-        "Stair",
-        "Bowl",
-        "Park",
-        "Ledges",
-        "Pools"
-      ]
-    }
-  },
+  "enums": {},
   "schemas": {},
   "sequences": {},
   "roles": {},

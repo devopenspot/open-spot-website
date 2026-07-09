@@ -1,11 +1,18 @@
 import { getSpotsDataSource } from "@/lib/env"
+import { getTerrainOptionsFromSource } from "@/lib/spots/source"
 import { AdminNewSpotForm } from "./AdminNewSpotForm"
 
 export const metadata = {
   title: "Admin · New spot",
 }
 
-export default function AdminNewSpotPage() {
+export default async function AdminNewSpotPage() {
   const writeEnabled = getSpotsDataSource() === "db"
-  return <AdminNewSpotForm writeEnabled={writeEnabled} />
+  const terrainOptions = await getTerrainOptionsFromSource()
+  return (
+    <AdminNewSpotForm
+      writeEnabled={writeEnabled}
+      terrainOptions={terrainOptions}
+    />
+  )
 }

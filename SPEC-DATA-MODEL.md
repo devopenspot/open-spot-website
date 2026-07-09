@@ -202,7 +202,7 @@ migration `0002_rls_policies.sql`:
 | 2 | **Backfill.** New nullable / default-backed columns on `spots` (`type_slug`, `country_code`) and `sport_events` (`tier_slug`, `country_code`, `start_at`, `end_at`, `featured`, `created_by`). Backfill from old columns (enum→slug, country name→iso2, `start_date text`→`start_at timestamptz`, `featured text`→bool, feature array→join rows, sport array→join rows). Add the `sport_events_with_status` view. RLS unchanged. | `pnpm typecheck && pnpm lint` green; a fresh DB seeded via `pnpm db:apply && pnpm db:seed` exposes both old and new columns populated. | **done** |
 | 3 | **Repository cutover.** Repositories (`DrizzleSpotRepository`, `DrizzleEventRepository`, `DrizzleSavedSpotsRepository`, JSON variants) read the new shape; `NewSpotSchema` / `SpotPatchSchema` / `NewSportEventSchema` / `SportEventPatchSchema` switch to the new field names; types (`SpotLocation`, `SportEventLocation`) unify. | `pnpm typecheck && pnpm lint && pnpm test && pnpm build` green; manual smoke test against the public UI. | **done (compat layer — D15)** |
 | 4 | **Column drop + enum drop.** Migration drops the old `spots.type` enum, `spots.features`/`sports` text[], `spots.country` text, `sport_events.tier` enum, `sport_events.sports` enum[], `sport_events.start_date`/`end_date`/`featured` text, `sport_events.country` text, and the `country_regions` table + its enums. | `pnpm db:apply` runs cleanly on a fresh DB; `git grep country_regions` returns zero hits; `pnpm test` green. | **done** |
-| 5 | **`src/data.ts` cleanup.** `REGIONS_DATA` / `COUNTRY_TO_REGION` / `COUNTRY_NAME_OVERRIDES` / `TERRAIN_OPTIONS` become DB-backed reads in DB mode; JSON mode keeps the current shape and maps to the new typed domain. Update AGENTS.md. | `pnpm typecheck && pnpm lint && pnpm test` green. | not started |
+| 5 | **`src/data.ts` cleanup.** `REGIONS_DATA` / `COUNTRY_TO_REGION` / `COUNTRY_NAME_OVERRIDES` / `TERRAIN_OPTIONS` become DB-backed reads in DB mode; JSON mode keeps the current shape and maps to the new typed domain. Update AGENTS.md. | `pnpm typecheck && pnpm lint && pnpm test` green. | **done (admin form scope — D21/D22)** |
 
 ### 5.1 CI order
 
@@ -245,10 +245,14 @@ so CI's `db:apply` step will run it.
 | D18 | `featured` text→boolean is migrated by adding a temp column `featured_v2`, backfilling, then in Phase 4 the legacy text `featured` is DROPPED first and `featured_v2` is RENAMEd to `featured` (preserves data; the boolean `USING` cast would be wrong because the legacy text is `'true'`/`'false'` and a bare `USING featured::boolean` maps any non-empty string to `true`) | A single `ALTER TABLE ... ALTER COLUMN ... TYPE boolean USING (featured = 'true')` would also work but requires knowing the exact `USING` clause; the temp-name approach is uniform with the other renames and keeps the data-migration story consistent. | In-place `ALTER COLUMN TYPE boolean USING (featured = 'true')` |
 | D19 | Phase 4 is hand-written, not drizzle-generated | Drizzle's auto-diff produces destructive `DROP COLUMN` + `ADD COLUMN` for the `country_code_fk`→`country_code` and `featured_v2`→`featured` renames (since the JS field names differ and drizzle doesn't detect the rename), and a wrong `ALTER COLUMN ... SET DATA TYPE boolean` on the legacy text `featured` (which would corrupt `'false'` rows). The hand-written 0008 does safe `ALTER TABLE ... RENAME COLUMN` (preserves data, preserves indexes' column references), drops the legacy columns in the correct order, replaces the view to reference the renamed columns, and drops the enums + `country_regions`. The Drizzle snapshot for 0008 is the re-baseline (D11 resolution): it's the *post-Phase-4* schema state, so the next `db:generate` is a no-op (`No schema changes, nothing to migrate`). | Trust drizzle's auto-generated diff |
 | D20 | `git grep country_regions` returns zero hits in the **active** source tree (`src/`, `AGENTS.md`); the historical SQL migrations (`0000` creates the table, `0002` adds RLS, `0008` drops it) and `SPEC-DATA-MODEL.md` legitimately reference the name as part of the schema's documented lifecycle | The table is documented in the migration history and the spec; rewriting history would be misleading. The Phase 4 intent — "no live code uses the table" — is met. | Rewriting historical migrations to scrub the name |
+| D21 | Phase 5 ships the **admin form** data-source-aware refactor (the curation surface): the admin spot form receives `terrainOptions` as a prop, and the server pages call `getTerrainOptionsFromSource()` to read DB-backed `spot_types` in DB mode or the curated `TERRAIN_OPTIONS` constant in JSON mode | The admin taxonomy is the highest-value dimension read (admins curate it). The repos' facet endpoints (`listTypes`/`listRegions`/`listCountries`) were already DB-backed in Phase 3. The public map region's region→country mapping (`getRegions()` used by `RegionFilter`/`useMapFilter`/`ExploreTab`) continues to read from `src/data.ts` because those are client components that bundle the constants; migrating them requires a server→client prop refactor and is deferred to §8.1. | Migrate everything to DB-backed reads in one pass |
+| D22 | `getTerrainOptionsFromSource` lives in a **separate server-only module** (`src/lib/spots/source.ts`), not alongside the client-safe constants in `src/lib/spots.ts` | When the helper was added to `src/lib/spots.ts` alongside the constants, its import of `getSpotRepositoryAsync` → `getDbClient` → `server-only` made the entire `src/lib/spots.ts` module server-only, which broke every client component that imports the constants (`useMapFilter`, `SpotsProvider`, `AppShell`, etc.) — the Turbopack build failed resolving `server-only` in the client bundle. Splitting the module keeps `src/lib/spots.ts` client-safe (constants only) and confines the server chain to a file only server components import. This is the standard Next.js split for "data-source-aware helpers that must not leak into the client bundle." | Keep everything in one file and add a `// eslint-disable` for the server-only import |
+| D23 | The migration history is **collapsed to a single file** (`supabase/migrations/0000_initial_data_model.sql`) — the entire data model in one DDL, with `-- statement-breakpoint` separators, the `sport_events_with_status` view, and the full RLS policy set (dimensions public-read; spots owner-write; sport_events service-role-write; saved_spots/profiles owner). The drizzle journal and snapshot are re-baselined to this single entry (`meta/0000_snapshot.json` is the post-Phase-4 schema state, so `pnpm db:generate` is a no-op). | The historical 9-file sequence served its purpose but the multi-file design had a latent ordering flaw: the backfill in `0007_backfill_and_view.sql` sets `spots.type_slug` from the legacy enum, but the FK to `spot_types` requires the lookup table to be populated — and the lookups are populated by the TypeScript seed (`pnpm db:seed`) which runs **after** `pnpm db:apply`. Applying `0005` (creates empty lookups) then `0007` (backfill with FK) against a DB that had previously-seeded rows triggered `Key (type_slug)=(stair) is not present in table "spot_types"`. The single consolidated migration removes the multi-file ordering risk entirely: the DB is either fresh (0 rows → backfill no-op) or the TS seed populates the lookups before any user query. The collapse also matches the original directive ("only keep the seed with the new structure and the most updated migration including on the whole new data model"). Operational step: Supabase Dashboard → Project Settings → Database → Reset Database, then `pnpm db:apply && pnpm db:seed`. | Keep the 9-file history; populate the lookups via a pre-`db:apply` script |
 
 ## 8. Open questions for follow-up specs
 
 1. **Consumer cutover (D15 follow-up).** Rename `SportEvent.startDate`/`endDate` → `startAt`/`endAt`, flatten `event.location.{city,country,countryCode,venue,latitude,longitude}` to top-level `city`/`country`/`countryCode`/`venue`/`location:{lat,lon}`, and stop deriving the old `startDate`/`endDate`/`location.*` fields in the Drizzle + JSON repositories. Touches `EventFormFields`, `AdminNewEventForm`, `AdminEditEventForm`, `EventTable`, `src/lib/sport-events/{status,loader}.ts`, `src/components/sport-events/*`, and `src/data/sport-events.json`. Pure rename + flatten; no schema change.
+2. **Public map region → DB-backed (D21 follow-up).** `getRegions()` in `src/lib/spots.ts` is used by the client components `RegionFilter`, `useMapFilter`, and `ExploreTab` for the public map's region→country picker. Today it returns the `src/data.ts` `REGIONS_DATA` constant (bundled into the client). To make it DB-backed in DB mode, the map page (server component) should call a data-source-aware `getRegionsFromSource()` (queries `regions` + `countries`) and pass the result as a prop to the client components. The seed keeps the DB and the constant in agreement, so there's no current drift, but a future admin-added country won't show up in the public map until this is migrated.
 2. Map weather "layer" — defer until weather persistence is a real product
    ask.
 3. Image galleries for spots and events — defer per SPEC §2.
@@ -275,17 +279,27 @@ its own numbering.)
 
 ### 9.2 Edited (this spec, all phases)
 
-**Phase 1 (additive):**
+**Migration history (consolidated — D23):** the entire data model lives in
+**one** SQL file: `supabase/migrations/0000_initial_data_model.sql` (schema
+DDL + `sport_events_with_status` view + full RLS policy set, every
+statement separated by `--> statement-breakpoint`). The drizzle journal
+has a single entry pointing to it; the snapshot at
+`supabase/migrations/meta/0000_snapshot.json` is the post-Phase-4 schema
+state, so `pnpm db:generate` is a no-op (`No schema changes, nothing to
+migrate`). The historical 9-file sequence (0000–0008) and the
+intermediate snapshots were deleted. The TypeScript seed
+(`src/db/seed.ts`) remains the single source of truth for the dimension
+and content data.
+
+**Phase 1 (additive new tables):**
 ```
 src/db/schema.ts        # + regions, countries, spot_types, sport_disciplines, event_tiers, spot_features, spot_sports, spot_feature_links, event_sports, profiles.updated_at
 src/db/seed.ts          # + seedRegions, seedCountries, seedSpotTypes, seedSportDisciplines, seedEventTiers, seedSpotFeatures
 ```
 
-**Phase 2 (backfill):**
+**Phase 2 (backfill columns on existing tables):**
 ```
 src/db/schema.ts        # + spots.typeSlug, spots.countryCode, sport_events.tierSlug, sport_events.countryCodeFk, sport_events.startAt, sport_events.endAt, sport_events.featuredV2, sport_events.createdBy (+ indexes)
-supabase/migrations/0006_add_backfill_target_columns.sql
-supabase/migrations/0007_backfill_and_view.sql
 ```
 
 **Phase 3 (compat-layer repository cutover — D15):**
@@ -298,16 +312,49 @@ src/lib/repositories/drizzle-saved-spots-repository.ts # use shared spot mapper
 src/db/seed.ts                                 # fix "Smooth concrete" -> "Smooth Concrete"
 ```
 
-**Phase 4 (column drop + enum drop + rename + re-baseline — D11, D18–D20):**
+**Phase 4 (column drop + enum drop + rename — D11, D18–D20):**
 ```
 src/db/schema.ts                                   # remove spotTypeEnum/sportDisciplineEnum/sportEventTierEnum, countryRegions table, all legacy columns; rename countryCodeFk->countryCode, featuredV2->featured; update relations()
 src/lib/repositories/drizzle-spot-repository.ts    # stop dual-writing legacy columns; reload via findById() after insert/update
 src/lib/repositories/drizzle-event-repository.ts   # stop dual-writing legacy columns; references to countryCode (renamed) and featured (renamed)
 src/db/seed.ts                                     # remove seedCountryRegions; rewrite seedSpots/seedSportEvents for new columns + spot_sports/spot_feature_links/event_sports
-supabase/migrations/0008_drop_legacy_and_rename.sql  # NEW: DROP legacy text columns, RENAME temp columns, replace view, DROP country_regions, DROP enums
-supabase/migrations/meta/_journal.json              # add 0008 entry; re-baseline complete (D11 resolved)
-supabase/migrations/meta/0008_snapshot.json         # NEW: post-Phase-4 schema snapshot (replaces the stale 0006 snapshot's diff)
 AGENTS.md                                          # update RLS line: country_regions -> regions/countries/spot_types/sport_disciplines/event_tiers/spot_features
+```
+
+**Phase 5 (`src/data.ts` cleanup — admin form scope — D21, D22):**
+```
+src/lib/spots.ts                                   # keep client-safe (constants only); remove getTerrainOptionsFromSource
+src/lib/spots/source.ts                            # NEW: server-only getTerrainOptionsFromSource (data-source-aware: DB spot_types in DB mode, TERRAIN_OPTIONS constant in JSON mode)
+src/components/admin/spots/SpotFormFields.tsx      # accept terrainOptions as a prop (no longer call getTerrainOptions)
+src/app/admin/spots/new/page.tsx                   # server page: await getTerrainOptionsFromSource, pass to form
+src/app/admin/spots/new/AdminNewSpotForm.tsx       # accept + forward terrainOptions prop
+src/app/admin/spots/[id]/page.tsx                  # server page: await getTerrainOptionsFromSource, pass to form
+src/app/admin/spots/[id]/AdminEditSpotForm.tsx     # accept + forward terrainOptions prop
+test/server-only.ts                                # NEW: stub for the server-only package (resolves the transitive server-only import from useMapFilter.test via getSpotRepositoryAsync)
+AGENTS.md                                          # document the data-source-aware dimension pattern (D21)
+```
+
+**Migration consolidation (D23):**
+```
+# Deleted (historical 9-file sequence + intermediate snapshots)
+supabase/migrations/0000_0001_initial_schema.sql
+supabase/migrations/0001_postgis_indexes_and_search.sql
+supabase/migrations/0002_rls_policies.sql
+supabase/migrations/0003_profile_avatar.sql
+supabase/migrations/0004_spot_sports.sql
+supabase/migrations/0005_lookup_tables_and_dimensions.sql
+supabase/migrations/0006_add_backfill_target_columns.sql
+supabase/migrations/0007_backfill_and_view.sql
+supabase/migrations/0008_drop_legacy_and_rename.sql
+supabase/migrations/meta/0000_snapshot.json   # old
+supabase/migrations/meta/0005_snapshot.json
+supabase/migrations/meta/0006_snapshot.json
+supabase/migrations/meta/0008_snapshot.json
+
+# New (single consolidated migration + re-baselined journal)
+supabase/migrations/0000_initial_data_model.sql    # the entire data model: schema DDL + view + RLS
+supabase/migrations/meta/0000_snapshot.json        # post-Phase-4 schema state (re-baselined)
+supabase/migrations/meta/_journal.json             # single entry: idx 0, tag "0000_initial_data_model"
 ```
 
 ### 9.3 Deferred to later phases
@@ -323,12 +370,25 @@ AGENTS.md                                          # update RLS line: country_re
 - `src/lib/types.ts` / `src/types/sport-events.ts` — unify location shape;
   rename `startDate`/`endDate` → `startAt`/`endAt`; `featured: boolean` is
   already boolean (Phase 3.5 consumer cutover).
-- `src/data.ts` — `REGIONS_DATA` / `COUNTRY_TO_REGION` /
-  `COUNTRY_NAME_OVERRIDES` / `TERRAIN_OPTIONS` move to DB-backed reads
-  (Phase 5).
-- `src/lib/geocode/project.ts` / `classify.ts` — use the new lookup tables
-  (Phase 5).
+- `src/data.ts` — `REGIONS_DATA` / `COUNTRY_TO_REGION` / `COUNTRY_NAME_OVERRIDES` /
+  `TERRAIN_OPTIONS` move to DB-backed reads. **Done for the admin form**
+  (D21); the public map region's region→country mapping
+  (`getRegions()` used by `RegionFilter`/`useMapFilter`/`ExploreTab`)
+  remains constant-backed pending a server→client prop refactor (see §8.1).
+- `src/lib/geocode/project.ts` / `classify.ts` — the geocode reverse route
+  is admin-only and projects Nominatim into a stable shape; the
+  `classifySpotType` heuristic maps to the `SpotType` title and the consumer
+  (`admin-spots.ts`) maps the title to a slug via the
+  `spotTypeTitleToSlug` helper in the Drizzle repo. No DB query needed
+  inside the classifier; the taxonomy table is the source of truth and the
+  consumer validates against it implicitly. No follow-up.
 - `sport_events.created_by` — currently always `null` on insert (no
   admin-user wiring). A future change should set it to the admin's
   `user.id` in `createEventAction` and thread it through the
   `NewSportEvent` type.
+- **Public map region → DB-backed (D21 follow-up)** — the public map's
+  region→country picker (`RegionFilter`, `useMapFilter`, `ExploreTab`)
+  still reads `REGIONS_DATA` from the client bundle. A future
+  server→client prop refactor (the map page fetches via
+  `getSpotRepositoryAsync().listRegions()` and passes the result down)
+  would make it DB-backed. Tracked in §8.1.

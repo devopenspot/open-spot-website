@@ -2,7 +2,6 @@
 
 import { useId } from "react"
 import { Tag, Plus } from "lucide-react"
-import { getTerrainOptions } from "@/lib/spots"
 import { SPORT_DISCIPLINES, type SportDiscipline } from "@/types/sport-events"
 import { CROWD_LEVEL } from "@/lib/constants"
 import { ImageSourceField, type ImageSourceFieldValue } from "./ImageSourceField"
@@ -11,7 +10,7 @@ import {
   type LatLonEditorMode,
 } from "./LatLonEditor"
 import type { ProjectedAddress } from "@/lib/geocode/project"
-import type { SpotType } from "@/lib/types"
+import type { SpotType, TerrainOption } from "@/lib/types"
 
 export interface SpotFormState {
   name: string
@@ -53,6 +52,13 @@ interface SpotFormFieldsProps {
   onError?: (message: string) => void
   /** Disables the lat/lon editor + the "Look up" button (e.g. JSON mode). */
   writeEnabled?: boolean
+  /**
+   * The available spot types for the type dropdown. The server page
+   * fetches this from the data source (DB-backed `spot_types` in DB
+   * mode, or the curated `TERRAIN_OPTIONS` in JSON mode) via
+   * `getTerrainOptionsFromSource()` and passes it down.
+   */
+  terrainOptions: readonly TerrainOption[]
 }
 
 export function SpotFormFields({
@@ -64,8 +70,8 @@ export function SpotFormFields({
   onAutoFillResult,
   onError,
   writeEnabled = true,
+  terrainOptions,
 }: SpotFormFieldsProps) {
-  const terrainOptions = getTerrainOptions()
   const nameId = useId()
   const typeId = useId()
   const cityId = useId()
