@@ -1,4 +1,3 @@
-import { getSpotsDataSource } from "@/lib/env"
 import { AdminNewEventForm } from "./AdminNewEventForm"
 
 export const metadata = {
@@ -6,6 +5,5 @@ export const metadata = {
 }
 
 export default function AdminNewEventPage() {
-  const writeEnabled = getSpotsDataSource() === "db"
-  return <AdminNewEventForm writeEnabled={writeEnabled} />
+  return <AdminNewEventForm />
 }

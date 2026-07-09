@@ -48,11 +48,10 @@ function buildFormData(state: SpotFormState): FormData {
 
 interface AdminEditSpotFormProps {
   spot: Spot
-  writeEnabled: boolean
   terrainOptions: readonly TerrainOption[]
 }
 
-export function AdminEditSpotForm({ spot, writeEnabled, terrainOptions }: AdminEditSpotFormProps) {
+export function AdminEditSpotForm({ spot, terrainOptions }: AdminEditSpotFormProps) {
   const router = useRouter()
   const [state, setState] = useState<SpotFormState>(stateFromSpot(spot))
 
@@ -128,9 +127,7 @@ export function AdminEditSpotForm({ spot, writeEnabled, terrainOptions }: AdminE
         <SpotFormFields
           state={state}
           onChange={setState}
-          imageDisabled={!writeEnabled}
           latLonMode="preview"
-          writeEnabled={writeEnabled}
           terrainOptions={terrainOptions}
         />
         <SpotFormSubmit
@@ -138,21 +135,11 @@ export function AdminEditSpotForm({ spot, writeEnabled, terrainOptions }: AdminE
           buildFormData={buildFormData}
           action={handleAction}
           redirectTo={() => `/admin/spots/${spot.id}`}
-          label={writeEnabled ? "Save changes" : "DB mode required"}
+          label="Save changes"
           pendingLabel="Saving…"
-          disabled={!writeEnabled}
+          disabled={false}
         />
       </form>
-
-      {!writeEnabled ? (
-        <p className="rounded-lg border border-outline-variant bg-surface-container-low p-3 text-xs text-secondary">
-          Write actions are disabled in JSON mode. Set{" "}
-          <code className="rounded bg-surface-container px-1 py-0.5 font-mono">
-            SPOTS_DATA_SOURCE=db
-          </code>{" "}
-          to enable.
-        </p>
-      ) : null}
 
       <button
         type="button"

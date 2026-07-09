@@ -50,17 +50,6 @@ export interface Spot {
 
 export type TabType = "explore" | "saved" | "map" | "post" | "events" | "admin";
 
-export interface ExploreCategory {
-  name: string;
-  image: string;
-}
-
-export interface LegendaryTerrain {
-  name: string;
-  desc: string;
-  image: string;
-}
-
 export interface Region {
   name: string;
   desc: string;

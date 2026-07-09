@@ -10,10 +10,9 @@ import type { Spot } from "@/lib/types"
 
 interface SpotTableProps {
   spots: readonly Spot[]
-  writeEnabled: boolean
 }
 
-export function SpotTable({ spots, writeEnabled }: SpotTableProps) {
+export function SpotTable({ spots }: SpotTableProps) {
   const router = useRouter()
   const [pendingDelete, setPendingDelete] = useState<Spot | null>(null)
 
@@ -85,9 +84,7 @@ export function SpotTable({ spots, writeEnabled }: SpotTableProps) {
                     <button
                       type="button"
                       onClick={() => setPendingDelete(spot)}
-                      disabled={!writeEnabled}
-                      title={writeEnabled ? undefined : "DB mode required"}
-                      className="inline-flex items-center gap-1 rounded border border-outline-variant px-2 py-1 font-mono text-[10px] font-bold uppercase tracking-widest text-secondary hover:text-error disabled:opacity-50"
+                      className="inline-flex items-center gap-1 rounded border border-outline-variant px-2 py-1 font-mono text-[10px] font-bold uppercase tracking-widest text-secondary hover:text-error"
                     >
                       <Trash2 size={10} aria-hidden="true" />
                       Delete

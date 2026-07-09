@@ -6,6 +6,7 @@ import { env } from '@/lib/env';
 import { getSpotRepositoryAsync, getSavedSpotsRepositoryAsync } from '@/lib/repositories';
 import { getWeatherForAllSpots } from '@/lib/weather/weather-bundle';
 import { getServerUserFromCookies } from '@/lib/auth';
+import { getRegionsForClient } from '@/lib/data/regions';
 import { SpotsProvider } from '@/components/layout/SpotsProvider';
 import './globals.css';
 
@@ -87,11 +88,13 @@ export default function RootLayout({
 }
 
 async function RootDataProviders({ children }: { children: React.ReactNode }) {
-  const [spotsResult, initialWeather, initialUser] = await Promise.all([
-    getSpotRepositoryAsync(),
-    getWeatherForAllSpots(),
-    getServerUserFromCookies(),
-  ]);
+  const [spotsResult, initialWeather, initialUser, initialRegions] =
+    await Promise.all([
+      getSpotRepositoryAsync(),
+      getWeatherForAllSpots(),
+      getServerUserFromCookies(),
+      getRegionsForClient(),
+    ]);
   const { items: initialSpots } = await spotsResult.list();
   const initialSavedSpots =
     initialUser.id === 'dev'
@@ -104,6 +107,7 @@ async function RootDataProviders({ children }: { children: React.ReactNode }) {
   return (
     <SpotsProvider
       initialSpots={initialSpots}
+      initialRegions={initialRegions}
       initialWeather={initialWeather}
       initialUser={initialUser}
       initialSavedSpots={initialSavedSpots}

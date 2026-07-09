@@ -65,10 +65,9 @@ function buildFormData(state: EventFormState): FormData {
 
 interface AdminEditEventFormProps {
   event: SportEvent
-  writeEnabled: boolean
 }
 
-export function AdminEditEventForm({ event, writeEnabled }: AdminEditEventFormProps) {
+export function AdminEditEventForm({ event }: AdminEditEventFormProps) {
   const router = useRouter()
   const [state, setState] = useState<EventFormState>(stateFromEvent(event))
 
@@ -147,21 +146,11 @@ export function AdminEditEventForm({ event, writeEnabled }: AdminEditEventFormPr
           buildFormData={buildFormData}
           action={handleAction}
           redirectTo={() => `/admin/events/${event.id}`}
-          label={writeEnabled ? "Save changes" : "DB mode required"}
+          label="Save changes"
           pendingLabel="Saving…"
-          disabled={!writeEnabled}
+          disabled={false}
         />
       </form>
-
-      {!writeEnabled ? (
-        <p className="rounded-lg border border-outline-variant bg-surface-container-low p-3 text-xs text-secondary">
-          Write actions are disabled in JSON mode. Set{" "}
-          <code className="rounded bg-surface-container px-1 py-0.5 font-mono">
-            SPOTS_DATA_SOURCE=db
-          </code>{" "}
-          to enable.
-        </p>
-      ) : null}
 
       <button
         type="button"

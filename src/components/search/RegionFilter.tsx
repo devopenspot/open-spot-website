@@ -1,10 +1,8 @@
 "use client";
 
 import { Filter } from "lucide-react";
-import { getRegions } from "@/lib/spots";
+import { useSpotsStore } from "@/stores/spots-store";
 import type { MapFilter } from "@/hooks/useMapFilter";
-
-const regions = getRegions();
 
 interface RegionFilterProps extends MapFilter {
   onAfterChange?: () => void;
@@ -18,6 +16,8 @@ export function RegionFilter({
   setCountry,
   onAfterChange,
 }: RegionFilterProps) {
+  const regions = useSpotsStore((s) => s.regions);
+
   return (
     <div className="space-y-3">
       <h3 className="font-display text-base font-bold uppercase tracking-wider text-on-surface flex items-center">

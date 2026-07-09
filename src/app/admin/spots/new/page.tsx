@@ -1,5 +1,5 @@
-import { getSpotsDataSource } from "@/lib/env"
-import { getTerrainOptionsFromSource } from "@/lib/spots/source"
+import { getSpotRepositoryAsync } from "@/lib/repositories"
+import type { TerrainOption } from "@/lib/types"
 import { AdminNewSpotForm } from "./AdminNewSpotForm"
 
 export const metadata = {
@@ -7,12 +7,11 @@ export const metadata = {
 }
 
 export default async function AdminNewSpotPage() {
-  const writeEnabled = getSpotsDataSource() === "db"
-  const terrainOptions = await getTerrainOptionsFromSource()
-  return (
-    <AdminNewSpotForm
-      writeEnabled={writeEnabled}
-      terrainOptions={terrainOptions}
-    />
-  )
+  const repo = await getSpotRepositoryAsync()
+  const facets = await repo.listTypes()
+  const terrainOptions: readonly TerrainOption[] = facets.map((f) => ({
+    value: f.name,
+    label: f.name,
+  }))
+  return <AdminNewSpotForm terrainOptions={terrainOptions} />
 }

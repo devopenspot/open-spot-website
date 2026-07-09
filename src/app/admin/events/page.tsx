@@ -1,6 +1,5 @@
 import Link from "next/link"
 import { Plus } from "lucide-react"
-import { getSpotsDataSource } from "@/lib/env"
 import { getEventRepositoryAsync } from "@/lib/repositories"
 import { EventTable } from "@/components/admin/events/EventTable"
 import { EventTableFilters } from "@/components/admin/events/EventTableFilters"
@@ -32,7 +31,6 @@ export default async function AdminEventsPage({ searchParams }: AdminEventsPageP
     country: country || undefined,
     limit: 100,
   })
-  const writeEnabled = getSpotsDataSource() === "db"
 
   return (
     <section
@@ -67,7 +65,7 @@ export default async function AdminEventsPage({ searchParams }: AdminEventsPageP
       </header>
 
       <EventTableFilters />
-      <EventTable events={result.items} writeEnabled={writeEnabled} />
+      <EventTable events={result.items} />
     </section>
   )
 }

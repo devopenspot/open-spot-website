@@ -1,6 +1,5 @@
 import Link from "next/link"
 import { Plus } from "lucide-react"
-import { getSpotsDataSource } from "@/lib/env"
 import { getSpotRepositoryAsync } from "@/lib/repositories"
 import { SpotTable } from "@/components/admin/spots/SpotTable"
 import { SpotTableFilters } from "@/components/admin/spots/SpotTableFilters"
@@ -31,7 +30,6 @@ export default async function AdminSpotsPage({ searchParams }: AdminSpotsPagePro
     country: country || undefined,
     limit: 100,
   })
-  const writeEnabled = getSpotsDataSource() === "db"
 
   return (
     <section
@@ -66,7 +64,7 @@ export default async function AdminSpotsPage({ searchParams }: AdminSpotsPagePro
       </header>
 
       <SpotTableFilters />
-      <SpotTable spots={result.items} writeEnabled={writeEnabled} />
+      <SpotTable spots={result.items} />
     </section>
   )
 }

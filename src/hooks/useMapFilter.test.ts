@@ -2,7 +2,8 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { act, renderHook, type RenderHookResult } from "@testing-library/react";
 import type { ReadonlyURLSearchParams } from "next/navigation";
 import { useMapFilter, type UseMapFilterOptions } from "./useMapFilter";
-import type { Spot } from "@/lib/types";
+import { useSpotsStore } from "@/stores/spots-store";
+import type { Spot, Region } from "@/lib/types";
 
 const routerReplace = vi.fn();
 const routerPush = vi.fn();
@@ -13,6 +14,51 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ replace: routerReplace, push: routerPush }),
   usePathname: () => mockPathname,
 }));
+
+const TEST_REGIONS: readonly Region[] = [
+  {
+    name: "Americas",
+    desc: "The birthplace of modern street skating.",
+    count: "1.2k Spots",
+    image: "https://example.com/americas.png",
+    link: "/map?region=americas",
+    countries: ["United States", "Canada", "Mexico", "Brazil", "Argentina"],
+  },
+  {
+    name: "Europe",
+    desc: "Marble plazas and historic architecture.",
+    count: "840 Spots",
+    image: "https://example.com/europe.png",
+    link: "/map?region=europe",
+    countries: [
+      "France",
+      "Germany",
+      "United Kingdom",
+      "Italy",
+      "Spain",
+      "Netherlands",
+      "Portugal",
+      "Sweden",
+    ],
+  },
+  {
+    name: "Asia",
+    desc: "Infinite concrete possibilities.",
+    count: "620 Spots",
+    image: "https://example.com/asia.png",
+    link: "/map?region=asia",
+    countries: [
+      "Japan",
+      "South Korea",
+      "China",
+      "Thailand",
+      "Singapore",
+      "Indonesia",
+      "Philippines",
+      "Malaysia",
+    ],
+  },
+];
 
 function makeSpot(id: string, country: string): Spot {
   return {
@@ -54,6 +100,7 @@ beforeEach(() => {
   routerPush.mockReset();
   mockSearchParams = new URLSearchParams();
   mockPathname = "/map";
+  useSpotsStore.setState({ regions: TEST_REGIONS, spots: [] });
 });
 
 describe("useMapFilter", () => {

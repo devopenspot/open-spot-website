@@ -10,7 +10,6 @@ import type { SportEvent } from "@/types/sport-events"
 
 interface EventTableProps {
   events: readonly SportEvent[]
-  writeEnabled: boolean
 }
 
 const TIER_LABEL: Record<string, string> = {
@@ -20,7 +19,7 @@ const TIER_LABEL: Record<string, string> = {
   federation: "Federation",
 }
 
-export function EventTable({ events, writeEnabled }: EventTableProps) {
+export function EventTable({ events }: EventTableProps) {
   const router = useRouter()
   const [pendingDelete, setPendingDelete] = useState<SportEvent | null>(null)
 
@@ -105,9 +104,7 @@ export function EventTable({ events, writeEnabled }: EventTableProps) {
                     <button
                       type="button"
                       onClick={() => setPendingDelete(event)}
-                      disabled={!writeEnabled}
-                      title={writeEnabled ? undefined : "DB mode required"}
-                      className="inline-flex items-center gap-1 rounded border border-outline-variant px-2 py-1 font-mono text-[10px] font-bold uppercase tracking-widest text-secondary hover:text-error disabled:opacity-50"
+                      className="inline-flex items-center gap-1 rounded border border-outline-variant px-2 py-1 font-mono text-[10px] font-bold uppercase tracking-widest text-secondary hover:text-error"
                     >
                       <Trash2 size={10} aria-hidden="true" />
                       Delete

@@ -1,8 +1,6 @@
 import type { Metadata } from "next"
 import { requireAdminOrRedirect } from "@/lib/auth/server"
-import { getSpotsDataSource } from "@/lib/env"
 import { AdminShell } from "@/components/admin/AdminShell"
-import { DataModeNotice } from "@/components/admin/DataModeNotice"
 
 export const metadata: Metadata = {
   title: "Admin",
@@ -16,11 +14,5 @@ export default async function AdminLayout({
   children: React.ReactNode
 }) {
   await requireAdminOrRedirect("/admin")
-  const isJsonMode = getSpotsDataSource() === "json"
-  return (
-    <>
-      <DataModeNotice isJsonMode={isJsonMode} />
-      <AdminShell>{children}</AdminShell>
-    </>
-  )
+  return <AdminShell>{children}</AdminShell>
 }

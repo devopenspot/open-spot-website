@@ -4,7 +4,6 @@ import { useCallback, useMemo } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { ChevronRight, Award, Globe } from "lucide-react";
-import { getRegions } from "@/lib/spots";
 import { ROUTES } from "@/lib/nav";
 import { useSpotsStore } from "@/stores/spots-store";
 import { useSavedSpots } from "@/hooks/useSavedSpots";
@@ -27,9 +26,9 @@ interface ExploreTabProps {
 export default function ExploreTab({ events, featured }: ExploreTabProps) {
   const router = useRouter();
   const spots = useSpotsStore((s) => s.spots);
+  const regions = useSpotsStore((s) => s.regions);
   const user = useUser();
   const { savedIds, toggle: toggleSaved } = useSavedSpots(user.id);
-  const regions = useMemo(() => getRegions(), []);
 
   const spotlightSpots = useMemo(() => spots.slice(0, 6), [spots]);
   const shelfEvents = useMemo(() => {

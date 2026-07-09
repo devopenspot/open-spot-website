@@ -2,10 +2,8 @@
 
 import { useCallback, useMemo } from "react";
 import { usePathname, useRouter, type ReadonlyURLSearchParams } from "next/navigation";
-import { getRegions } from "@/lib/spots";
+import { useSpotsStore } from "@/stores/spots-store";
 import type { Spot } from "@/lib/types";
-
-const DEFAULT_REGION = "Americas";
 
 function slugify(value: string): string {
   return value
@@ -17,14 +15,7 @@ function slugify(value: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
-function deriveRegion(spot: Spot): string {
-  for (const r of getRegions()) {
-    if (r.countries.includes(spot.country)) return r.name;
-  }
-  return DEFAULT_REGION;
-}
-
-function buildSlugMaps(regions: ReturnType<typeof getRegions>): {
+function buildSlugMaps(regions: ReadonlyArray<{ name: string; countries: readonly string[] }>): {
   regionSlugToName: ReadonlyMap<string, string>;
   countrySlugToName: ReadonlyMap<string, string>;
   nameToRegionSlug: ReadonlyMap<string, string>;
@@ -77,7 +68,7 @@ export function useMapFilter(
   const router = useRouter();
   const pathname = usePathname();
   const { targetPath } = options;
-  const regions = useMemo(() => getRegions(), []);
+  const regions = useSpotsStore((s) => s.regions);
 
   const slugs = useMemo(() => buildSlugMaps(regions), [regions]);
   const validRegionNames = useMemo(
@@ -169,11 +160,12 @@ export function useMapFilter(
   const filteredSpots = useMemo(() => {
     if (!safeRegion) return spots.slice();
     return spots.filter((spot) => {
-      if (deriveRegion(spot) !== safeRegion) return false;
+      const regionEntry = regions.find((r) => r.countries.includes(spot.country));
+      if (regionEntry?.name !== safeRegion) return false;
       if (safeCountry && spot.country !== safeCountry) return false;
       return true;
     });
-  }, [spots, safeRegion, safeCountry]);
+  }, [spots, safeRegion, safeCountry, regions]);
 
   return {
     region: safeRegion,

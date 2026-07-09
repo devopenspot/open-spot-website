@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { showToast } from "@/hooks/useToast"
 import { createSpotFromLookupAction } from "@/app/actions/admin-spots"
@@ -77,11 +77,10 @@ function buildFormData(state: SpotFormState): FormData {
 }
 
 interface AdminNewSpotFormProps {
-  writeEnabled: boolean
   terrainOptions: readonly TerrainOption[]
 }
 
-export function AdminNewSpotForm({ writeEnabled, terrainOptions }: AdminNewSpotFormProps) {
+export function AdminNewSpotForm({ terrainOptions }: AdminNewSpotFormProps) {
   const router = useRouter()
   const [state, setState] = useState<SpotFormState>(buildInitialState())
 
@@ -93,13 +92,7 @@ export function AdminNewSpotForm({ writeEnabled, terrainOptions }: AdminNewSpotF
     return createSpotFromLookupAction(formData)
   }
 
-  const submitDisabled =
-    !writeEnabled || !state.name || !state.city
-
-  const submitLabel = useMemo(
-    () => (writeEnabled ? "Register Spot" : "DB mode required"),
-    [writeEnabled],
-  )
+  const submitDisabled = !state.name || !state.city
 
   return (
     <section
@@ -133,11 +126,9 @@ export function AdminNewSpotForm({ writeEnabled, terrainOptions }: AdminNewSpotF
         <SpotFormFields
           state={state}
           onChange={setState}
-          imageDisabled={!writeEnabled}
           latLonMode="auto-fill"
           onAutoFillResult={(address) => setState((s) => applyAddress(s, address))}
           onError={handleError}
-          writeEnabled={writeEnabled}
           terrainOptions={terrainOptions}
         />
         <SpotFormSubmit
@@ -145,21 +136,11 @@ export function AdminNewSpotForm({ writeEnabled, terrainOptions }: AdminNewSpotF
           buildFormData={buildFormData}
           action={handleAction}
           redirectTo={(result) => `/admin/spots/${result.id}`}
-          label={submitLabel}
+          label="Register Spot"
           pendingLabel="Registering…"
           disabled={submitDisabled}
         />
       </form>
-
-      {!writeEnabled ? (
-        <p className="rounded-lg border border-outline-variant bg-surface-container-low p-3 text-xs text-secondary">
-          Write actions are disabled in JSON mode. Set{" "}
-          <code className="rounded bg-surface-container px-1 py-0.5 font-mono">
-            SPOTS_DATA_SOURCE=db
-          </code>{" "}
-          to enable.
-        </p>
-      ) : null}
 
       <button
         type="button"

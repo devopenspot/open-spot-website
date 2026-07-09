@@ -66,9 +66,6 @@ const EnvSchema = z
     // admin (see `isAdminUser` in `@/lib/admin`).
     ADMIN_EMAILS: z.string().default(""),
 
-    // Data source
-    SPOTS_DATA_SOURCE: z.enum(["json", "db"]).default("json"),
-
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"),
@@ -87,10 +84,6 @@ function readEnv() {
 }
 
 export const env = readEnv()
-
-export function getSpotsDataSource(): "json" | "db" {
-  return env.SPOTS_DATA_SOURCE === "db" ? "db" : "json"
-}
 
 /**
  * Postgres URL used by the runtime Drizzle client + the apply-sql runner.

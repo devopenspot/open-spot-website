@@ -32,7 +32,6 @@ interface SpotFormFieldsProps {
   state: SpotFormState
   onChange: (next: SpotFormState) => void
   errors?: Partial<Record<keyof SpotFormState, string>>
-  imageDisabled?: boolean
   /**
    * Lat/lon editor behaviour. Defaults to `"preview"` (the edit-page
    * contract: lookup shows a preview, does not overwrite address fields).
@@ -50,13 +49,10 @@ interface SpotFormFieldsProps {
   onAutoFillResult?: (address: ProjectedAddress) => void
   /** Forwarded to the lat/lon editor for its API + validation errors. */
   onError?: (message: string) => void
-  /** Disables the lat/lon editor + the "Look up" button (e.g. JSON mode). */
-  writeEnabled?: boolean
   /**
    * The available spot types for the type dropdown. The server page
-   * fetches this from the data source (DB-backed `spot_types` in DB
-   * mode, or the curated `TERRAIN_OPTIONS` in JSON mode) via
-   * `getTerrainOptionsFromSource()` and passes it down.
+   * fetches this from the `spot_types` DB table via `repo.listTypes()`
+   * and passes it down.
    */
   terrainOptions: readonly TerrainOption[]
 }
@@ -65,11 +61,9 @@ export function SpotFormFields({
   state,
   onChange,
   errors,
-  imageDisabled = false,
   latLonMode = "preview",
   onAutoFillResult,
   onError,
-  writeEnabled = true,
   terrainOptions,
 }: SpotFormFieldsProps) {
   const nameId = useId()
@@ -117,7 +111,7 @@ export function SpotFormFields({
       <LatLonEditor
         lat={state.lat}
         lon={state.lon}
-        mode={writeEnabled ? latLonMode : "read-only"}
+        mode={latLonMode}
         onChange={(lat, lon) =>
           onChange({ ...state, lat, lon })
         }
@@ -223,7 +217,6 @@ export function SpotFormFields({
       <ImageSourceField
         value={state.image}
         onChange={(v) => update("image", v)}
-        disabled={imageDisabled}
       />
 
       <fieldset

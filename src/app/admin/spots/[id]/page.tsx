@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation"
-import { getSpotsDataSource } from "@/lib/env"
 import { getSpotRepositoryAsync } from "@/lib/repositories"
-import { getTerrainOptionsFromSource } from "@/lib/spots/source"
+import type { TerrainOption } from "@/lib/types"
 import { AdminEditSpotForm } from "./AdminEditSpotForm"
 
 export const metadata = {
@@ -17,13 +16,10 @@ export default async function AdminEditSpotPage({ params }: AdminEditSpotPagePro
   const repo = await getSpotRepositoryAsync()
   const spot = await repo.findById(id)
   if (!spot) notFound()
-  const writeEnabled = getSpotsDataSource() === "db"
-  const terrainOptions = await getTerrainOptionsFromSource()
-  return (
-    <AdminEditSpotForm
-      spot={spot}
-      writeEnabled={writeEnabled}
-      terrainOptions={terrainOptions}
-    />
-  )
+  const facets = await repo.listTypes()
+  const terrainOptions: readonly TerrainOption[] = facets.map((f) => ({
+    value: f.name,
+    label: f.name,
+  }))
+  return <AdminEditSpotForm spot={spot} terrainOptions={terrainOptions} />
 }
