@@ -45,11 +45,16 @@ const EnvSchema = z
     NEXT_PUBLIC_SUPABASE_URL: z.string().url().optional(),
     NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: z.string().optional(),
 
-    // Supabase Postgres. The code name is DB_CONNETION_STRING (typo, kept for
-    // back-compat with the CI workflow and any operator that already set it);
-    // SUPABASE_DIRECT_URL (SPEC §E.4) is the preferred name and wins if both
-    // are set. SUPABASE_DATABASE_URL is the pooled connection (pgBouncer
-    // port 6543) — documented but not read by the runtime today.
+    // Supabase Postgres.
+    //   SUPABASE_DATABASE_URL — pgBouncer Transaction pooler (port 6543).
+    //     The runtime reads this first. IPv4-only, designed for serverless,
+    //     and DNS-resolvable from Vercel. Required on Vercel.
+    //   SUPABASE_DIRECT_URL — direct connection (port 5432). Fallback for
+    //     operators who point at the direct endpoint (the Vercel function
+    //     network cannot resolve `db.<project>.supabase.co`, so this
+    //     hostname will not work from Vercel — use it only from a local
+    //     machine or a long-lived server).
+    //   DB_CONNETION_STRING — legacy typo, kept for CI back-compat.
     SUPABASE_DIRECT_URL: z.string().optional(),
     DB_CONNETION_STRING: z.string().optional(),
     SUPABASE_DATABASE_URL: z.string().optional(),
@@ -88,17 +93,23 @@ export const env = readEnv()
  * Postgres URL used by the runtime Drizzle client + the dev-console scripts
  * (`db:seed`, `db:apply`, `db:health`).
  *
- * Single source of connection: `SUPABASE_DIRECT_URL` is set in both local
- * dev and Vercel to the same value (dev and prod share the Supabase
- * project). The build is DB-free and never calls this.
+ * Single source of connection: `SUPABASE_DATABASE_URL` is the pgBouncer
+ * Transaction pooler (port 6543), set in both local dev and Vercel to the
+ * same value. The pooler is IPv4-only and DNS-resolves from the Vercel
+ * function network; the direct hostname (`db.<project>.supabase.co`,
+ * port 5432) is not reachable from Vercel.
+ *
+ * The build is DB-free and never calls this.
  *
  * Resolution order:
- *   1. SUPABASE_DIRECT_URL (port 5432, direct — the only runtime URL)
- *   2. DB_CONNETION_STRING (legacy typo, kept for CI / existing operators)
- *   3. DATABASE_URL (optional escape hatch for non-Supabase setups)
+ *   1. SUPABASE_DATABASE_URL (port 6543, pgBouncer pooler — runtime default)
+ *   2. SUPABASE_DIRECT_URL   (port 5432, direct — operator override)
+ *   3. DB_CONNETION_STRING   (legacy typo, kept for CI / existing operators)
+ *   4. DATABASE_URL          (optional escape hatch for non-Supabase setups)
  */
 export function getDatabaseUrl(): string | null {
   return (
+    env.SUPABASE_DATABASE_URL ??
     env.SUPABASE_DIRECT_URL ??
     env.DB_CONNETION_STRING ??
     env.DATABASE_URL ??

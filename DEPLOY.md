@@ -1,6 +1,6 @@
 # Deploying to Vercel
 
-The runtime is fully dynamic and reads exclusively from Postgres via Drizzle. The build is DB-free, so the only thing that has to be reachable at request time is the `SUPABASE_DIRECT_URL` Postgres endpoint.
+The runtime is fully dynamic and reads exclusively from Postgres via Drizzle. The build is DB-free, so the only thing that has to be reachable at request time is the `SUPABASE_DATABASE_URL` Postgres endpoint (the pgBouncer Transaction pooler).
 
 ## 1. Vercel env vars
 
@@ -8,7 +8,7 @@ Set the following in **Project Settings → Environment Variables** for the **Pr
 
 | Var | Required | Source | Notes |
 | --- | --- | --- | --- |
-| `SUPABASE_DIRECT_URL` | yes | Supabase dashboard → Settings → Database → Connection string → **Direct connection** | Port 5432 (NOT the 6543 pooler). Same value you set in `.env.local` — dev and prod share the Supabase project. |
+| `SUPABASE_DATABASE_URL` | yes | Supabase dashboard → Settings → Database → Connection string → **Transaction pooler** (port 6543) | The pgBouncer Transaction pooler. IPv4-only, designed for serverless, and DNS-resolves from the Vercel function network. Same value you set in `.env.local` — dev and prod share the Supabase project. |
 | `NEXT_PUBLIC_SUPABASE_URL` | yes | Supabase dashboard → Settings → API | Public project URL. |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | yes | Supabase dashboard → Settings → API → **Publishable key** | Browser-safe `sb_publishable_…` key. Replaces the legacy `anon` JWT. |
 | `SUPABASE_SECRET_KEY` | yes (admin) | Supabase dashboard → Settings → API → **Secret key** | Server-only `sb_secret_…` key. Used by `getAdminClient()` for `public.profiles` upserts. NEVER prefix with `NEXT_PUBLIC_`. |
@@ -18,14 +18,18 @@ Set the following in **Project Settings → Environment Variables** for the **Pr
 | `ADMIN_EMAILS` | recommended | You choose | CSV of admin Google-auth emails. Without this, the dev placeholder user is the only admin. |
 | `SUPABASE_STORAGE_BUCKET_SPOTS` | optional | — | Defaults to `spot-images`. Set only if you renamed the bucket. |
 
-Legacy / optional:
+Optional / fallback:
 
+- `SUPABASE_DIRECT_URL` — direct endpoint (port 5432). Kept as a fallback for operators who point at it from a non-Vercel environment. The Vercel function network cannot resolve `db.<project>.supabase.co`, so do not rely on this from Vercel.
 - `DB_CONNETION_STRING` — legacy typo, kept for CI back-compat. Not needed on Vercel.
 - `DATABASE_URL` — optional escape hatch. Not needed on Vercel.
-- `SUPABASE_DATABASE_URL` — pgBouncer pooler (port 6543). Not read by the runtime today; documented only.
 - `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` — legacy names. Replaced by `NEXT_PUBLIC_SUPABASE_URL` + `SUPABASE_SECRET_KEY`. Not read by the runtime.
 
 > Do **not** set `REVALIDATE_SECRET` — the weather revalidate route was removed when we moved to fully dynamic rendering.
+
+### Why the pooler (and not the direct endpoint)?
+
+The direct hostname `db.<project>.supabase.co` (port 5432) is intended for trusted environments with IP allow-listing (your laptop, a long-lived server). The Vercel function network cannot resolve that hostname (`getaddrinfo ENOTFOUND db.<project>.supabase.co`). The pooler hostname `aws-0-<region>.pooler.supabase.com` (port 6543) is on different infrastructure — IPv4-only, designed for serverless, and DNS-resolves from Vercel. Same Postgres, same RLS, same schema — just a different endpoint. The `postgres-js` client config (`prepare: false`, `ssl: "require"`) is already pooler-compatible.
 
 ## 2. Supabase Storage bucket
 
@@ -57,16 +61,17 @@ The `spot-images` bucket is **not** provisioned by this repo. Create it once in 
 
 1. Push to the branch Vercel watches (default: `main`).
 2. Vercel runs `pnpm build`. The build is DB-free — no env vars are needed for the build to succeed.
-3. On the first request, the Vercel function connects to `SUPABASE_DIRECT_URL` and serves the page. The function's egress must be able to reach the Supabase direct endpoint (port 5432).
+3. On the first request, the Vercel function connects to `SUPABASE_DATABASE_URL` (the pooler) and serves the page. The function's egress must be able to reach the Supabase pooler endpoint (port 6543, hostname `aws-0-<region>.pooler.supabase.com`).
 4. Smoke-test `/`, `/explore`, `/map`, `/saved`, `/sport-events`, `/spots/<id>`, `/admin`, `/sitemap.xml`.
 
 ## 4. Local dev vs Vercel
 
 Both environments set the same env vars to the same values:
 
-- `.env.local` is gitignored. Set `SUPABASE_DIRECT_URL` and the four Supabase keys there.
+- `.env.local` is gitignored. Set `SUPABASE_DATABASE_URL` and the four Supabase keys there.
 - Vercel env vars mirror `.env.local`.
-- `pnpm db:seed`, `pnpm db:apply`, `pnpm db:health` read the same `SUPABASE_DIRECT_URL` (via `getDatabaseUrl()` in `src/lib/env.ts`). Run them from the dev console only — they are not part of the build or deploy pipeline.
+- `pnpm db:seed`, `pnpm db:apply`, `pnpm db:health` read the same `SUPABASE_DATABASE_URL` (via `getDatabaseUrl()` in `src/lib/env.ts`). Run them from the dev console only — they are not part of the build or deploy pipeline.
+- For local migrations that benefit from the direct endpoint (DDL via `drizzle-kit`), set `SUPABASE_DIRECT_URL` or `DATABASE_URL` in `.env.local` — those are read by `drizzle.config.ts` directly, not by `getDatabaseUrl()`.
 
 ## 5. If you need to reset
 
