@@ -21,6 +21,7 @@ import type {
 } from "./types"
 import type { SpotRepository } from "./spot-repository"
 import { withImageUrls } from "@/lib/supabase/storage"
+import { pickFallbackImage } from "@/lib/spots"
 import {
   joinedSpotSelect,
   rowToSpotWithImagePath,
@@ -282,7 +283,9 @@ export class DrizzleSpotRepository implements SpotRepository {
         input.citySlug ?? input.city.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
       address: input.address,
       typeSlug,
-      imageUrl: input.image,
+      imageUrl: input.imagePath
+        ? input.image
+        : input.image || pickFallbackImage(id),
       imagePath: input.imagePath ?? null,
       communityNote: input.communityNote,
       crowdLevel: input.crowdLevel,
@@ -315,7 +318,9 @@ export class DrizzleSpotRepository implements SpotRepository {
     if (patch.type !== undefined) {
       setValues.typeSlug = spotTypeTitleToSlug(patch.type)
     }
-    if (patch.image !== undefined) setValues.imageUrl = patch.image
+    if (patch.image !== undefined) {
+      setValues.imageUrl = patch.image || pickFallbackImage(id)
+    }
     if (patch.communityNote !== undefined)
       setValues.communityNote = patch.communityNote
     if (patch.crowdLevel !== undefined) setValues.crowdLevel = patch.crowdLevel
