@@ -4,7 +4,7 @@ import Image from "next/image"
 import { useEffect, useId, useRef, useState } from "react"
 import { Check, Image as ImageIcon, Upload, X } from "lucide-react"
 import { cn } from "@/lib/cn"
-import { getPresetImages } from "@/lib/spots"
+import { useSpotsStore } from "@/stores/spots-store"
 
 const MAX_UPLOAD_BYTES = 5 * 1024 * 1024
 
@@ -31,7 +31,7 @@ export function ImageSourceField({
   onChange,
   disabled = false,
 }: ImageSourceFieldProps) {
-  const presetImages = getPresetImages()
+  const presetImages = useSpotsStore((s) => s.presetImages)
   const fileId = useId()
   const imageId = useId()
   const previewUrlRef = useRef<string | null>(null)

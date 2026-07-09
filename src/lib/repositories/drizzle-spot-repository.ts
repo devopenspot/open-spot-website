@@ -1,5 +1,6 @@
 import { and, asc, eq, inArray, sql, type SQL } from "drizzle-orm"
 import { drizzle } from "drizzle-orm/postgres-js"
+import { cacheTag, cacheLife } from "next/cache"
 import {
   countries,
   regions,
@@ -21,7 +22,8 @@ import type {
 } from "./types"
 import type { SpotRepository } from "./spot-repository"
 import { withImageUrls } from "@/lib/supabase/storage"
-import { pickFallbackImage } from "@/lib/spots"
+import { pickFallbackImage } from "@/lib/spot-fallback"
+import { getPresetImagesRepositoryAsync } from "./index"
 import {
   joinedSpotSelect,
   rowToSpotWithImagePath,
@@ -55,6 +57,15 @@ function sportDisciplineTitleToSlug(title: string): string {
 
 function featureTitleToSlug(title: string): string {
   return title.toLowerCase().replace(/\s+/g, "-")
+}
+
+async function getCachedPresetImageUrls(): Promise<readonly { url: string }[]> {
+  "use cache"
+  cacheTag("preset-images")
+  cacheLife({ revalidate: 60, stale: 60, expire: 600 })
+  const repo = await getPresetImagesRepositoryAsync()
+  const rows = await repo.list()
+  return rows.map((r) => ({ url: r.url }))
 }
 
 export class DrizzleSpotRepository implements SpotRepository {
@@ -285,7 +296,7 @@ export class DrizzleSpotRepository implements SpotRepository {
       typeSlug,
       imageUrl: input.imagePath
         ? input.image
-        : input.image || pickFallbackImage(id),
+        : input.image || pickFallbackImage(id, await getCachedPresetImageUrls()),
       imagePath: input.imagePath ?? null,
       communityNote: input.communityNote,
       crowdLevel: input.crowdLevel,
@@ -319,7 +330,8 @@ export class DrizzleSpotRepository implements SpotRepository {
       setValues.typeSlug = spotTypeTitleToSlug(patch.type)
     }
     if (patch.image !== undefined) {
-      setValues.imageUrl = patch.image || pickFallbackImage(id)
+      setValues.imageUrl =
+        patch.image || pickFallbackImage(id, await getCachedPresetImageUrls())
     }
     if (patch.communityNote !== undefined)
       setValues.communityNote = patch.communityNote

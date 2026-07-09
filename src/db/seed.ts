@@ -1,319 +1,34 @@
 import "./load-env"
-import spotsJson from "../data/spots.json"
-import sportEventsJson from "../data/sport-events.json"
 import postgres from "postgres"
 import { getDatabaseUrl } from "../lib/env"
-import { COUNTRY_NAME_OVERRIDES, COUNTRY_TO_REGION, REGIONS_DATA } from "../data"
+import { log } from "../lib/log"
+import {
+  EVENT_TIER_SEED,
+  FEATURE_SLUG_SET,
+  SPORT_DISCIPLINE_SEED,
+  SPOT_FEATURE_SEED,
+  SPOT_TYPE_SEED,
+} from "./seed-data/taxonomy"
+import { REGION_SEED } from "./seed-data/regions"
+import { buildCountrySeed, type CountrySeed } from "./seed-data/countries"
+import { PRESET_IMAGE_SEED } from "./seed-data/preset-images"
+import { SOURCE_SPOTS } from "./seed-data/spots"
+import { SOURCE_SPORT_EVENTS } from "./seed-data/sport-events"
 
-interface RegionSeed {
-  slug: string
-  name: string
-  description: string
-  imageUrl: string
-  sortOrder: number
-}
-
-interface CountrySeed {
-  iso2: string
-  name: string
-  iso3: string
-  region: string
-}
-
-interface TaxonomyEntry {
-  slug: string
-  name: string
-  sortOrder: number
-}
-
-const REGION_SEED: readonly RegionSeed[] = REGIONS_DATA.map((r, i) => ({
-  slug: r.name.toLowerCase(),
-  name: r.name,
-  description: r.desc,
-  imageUrl: r.image,
-  sortOrder: i,
-}))
-
-const COUNTRY_TO_ISO2: Readonly<Record<string, string>> = {
-  "United States": "US",
-  Canada: "CA",
-  Mexico: "MX",
-  Brazil: "BR",
-  Argentina: "AR",
-  Colombia: "CO",
-  Chile: "CL",
-  Peru: "PE",
-  France: "FR",
-  Germany: "DE",
-  "United Kingdom": "GB",
-  Italy: "IT",
-  Spain: "ES",
-  Netherlands: "NL",
-  Portugal: "PT",
-  Sweden: "SE",
-  Japan: "JP",
-  "South Korea": "KR",
-  China: "CN",
-  Thailand: "TH",
-  Singapore: "SG",
-  Indonesia: "ID",
-  Philippines: "PH",
-  Malaysia: "MY",
-}
-
-const COUNTRY_TO_ISO3: Readonly<Record<string, string>> = {
-  US: "USA", CA: "CAN", MX: "MEX", BR: "BRA", AR: "ARG", CO: "COL",
-  CL: "CHL", PE: "PER", FR: "FRA", DE: "DEU", GB: "GBR", IT: "ITA",
-  ES: "ESP", NL: "NLD", PT: "PRT", SE: "SWE", JP: "JPN", KR: "KOR",
-  CN: "CHN", TH: "THA", SG: "SGP", ID: "IDN", PH: "PHL", MY: "MYS",
-}
-
-function buildCountrySeed(): readonly CountrySeed[] {
-  const out: CountrySeed[] = []
-  for (const [name, region] of Object.entries(COUNTRY_TO_REGION)) {
-    const iso2 = COUNTRY_TO_ISO2[name]
-    if (!iso2) continue
-    out.push({
-      iso2,
-      name,
-      iso3: COUNTRY_TO_ISO3[iso2] ?? "",
-      region,
-    })
-  }
-  return out
-}
-
-const COUNTRY_SEED = buildCountrySeed()
-
-const SPOT_TYPE_SEED: readonly TaxonomyEntry[] = [
-  { slug: "plaza", name: "Plaza", sortOrder: 0 },
-  { slug: "diy", name: "DIY", sortOrder: 1 },
-  { slug: "stair", name: "Stair", sortOrder: 2 },
-  { slug: "bowl", name: "Bowl", sortOrder: 3 },
-  { slug: "park", name: "Park", sortOrder: 4 },
-  { slug: "ledges", name: "Ledges", sortOrder: 5 },
-  { slug: "pools", name: "Pools", sortOrder: 6 },
-]
-
-const SPORT_DISCIPLINE_SEED: readonly TaxonomyEntry[] = [
-  { slug: "skateboard", name: "Skateboard", sortOrder: 0 },
-  { slug: "bmx", name: "BMX", sortOrder: 1 },
-  { slug: "inline", name: "Inline", sortOrder: 2 },
-  { slug: "scooter", name: "Scooter", sortOrder: 3 },
-  { slug: "rollerblade", name: "Rollerblade", sortOrder: 4 },
-  { slug: "wakeboard", name: "Wakeboard", sortOrder: 5 },
-  { slug: "snowboard", name: "Snowboard", sortOrder: 6 },
-  { slug: "ski", name: "Ski", sortOrder: 7 },
-]
-
-const EVENT_TIER_SEED: readonly TaxonomyEntry[] = [
-  { slug: "world-tour", name: "World Tour", sortOrder: 0 },
-  { slug: "championship", name: "Championship", sortOrder: 1 },
-  { slug: "festival", name: "Festival", sortOrder: 2 },
-  { slug: "federation", name: "Federation", sortOrder: 3 },
-]
-
-const SPOT_FEATURE_SEED: readonly { slug: string; name: string }[] = [
-  { slug: "ledge", name: "Ledge" },
-  { slug: "rail", name: "Rail" },
-  { slug: "down-rail", name: "Down rail" },
-  { slug: "up-rail", name: "Up rail" },
-  { slug: "stairs", name: "Stairs" },
-  { slug: "hubba", name: "Hubba" },
-  { slug: "manual-pad", name: "Manual pad" },
-  { slug: "flat-bar", name: "Flat bar" },
-  { slug: "gap", name: "Gap" },
-  { slug: "pyramid", name: "Pyramid" },
-  { slug: "bank", name: "Bank" },
-  { slug: "wallride", name: "Wallride" },
-  { slug: "pole-jam", name: "Pole jam" },
-  { slug: "quarter-pipe", name: "Quarter pipe" },
-  { slug: "mini-ramp", name: "Mini ramp" },
-  { slug: "bowl", name: "Bowl" },
-  { slug: "pool", name: "Pool" },
-  { slug: "smooth-concrete", name: "Smooth Concrete" },
-  { slug: "street", name: "Street" },
-  { slug: "slidebox", name: "Slidebox" },
-]
-
-// Valid feature slugs the seed will actually link to. Derived from the
-// lookup table above so any future edit to SPOT_FEATURE_SEED flows
-// through automatically. Nominatim's `spot_types` strings can include
-// OSM place/category noise (e.g. "place", "town", "yes") that doesn't
-// map to a real spot feature — we drop those rather than FK-fail on
-// insert. See SPEC-DATA-MODEL.md D23.
-const FEATURE_SLUG_SET: ReadonlySet<string> = new Set(
-  SPOT_FEATURE_SEED.map((f) => f.slug),
-)
-
-function toFeatureSlug(name: string): string {
-  return name.toLowerCase().replace(/\s+/g, "-")
-}
-
-function normalizeCountryName(name: string): string {
-  return COUNTRY_NAME_OVERRIDES[name] ?? name
-}
-
-interface RawAddress {
-  city?: string
-  town?: string
-  village?: string
-  suburb?: string
-  county?: string
-  state?: string
-  country?: string
-  [key: string]: string | undefined
-}
-
-interface RawSpot {
-  slug?: string
-  city_slug?: string
-  country_slug?: string
-  place_id: number
-  lat: string
-  lon: string
-  address?: RawAddress
-  display_name?: string
-  name: string
-  spot_types?: string[]
-}
-
-const SOURCE_SPOTS = spotsJson as RawSpot[]
-
-const TYPE_PRIORITY: readonly { match: RegExp; type: string }[] = [
-  { match: /\bbowl\b/i, type: "Bowl" },
-  { match: /\bpools?\b/i, type: "Pools" },
-  { match: /\bledges?\b/i, type: "Ledges" },
-  { match: /^diy$/i, type: "DIY" },
-  { match: /\bstairs?\b/i, type: "Stair" },
-  { match: /\bslidebox\b/i, type: "Stair" },
-  { match: /\bskatepark\b/i, type: "Park" },
-  { match: /\brail\b/i, type: "Plaza" },
-  { match: /\bstreet\b/i, type: "Plaza" },
-  { match: /mini\s*ramp/i, type: "Bowl" },
-]
-
-function pickType(spotTypes: readonly string[] | undefined): string {
-  if (!spotTypes || spotTypes.length === 0) return "Plaza"
-  for (const { match, type } of TYPE_PRIORITY) {
-    const hit = spotTypes.find((t) => match.test(t))
-    if (hit) return type
-  }
-  return "Plaza"
-}
-
-function titleCase(s: string): string {
-  return s.replace(/\b\w/g, (c) => c.toUpperCase())
-}
-
-function pickFeatures(
-  spotTypes: readonly string[] | undefined,
-  usedType: string,
-): string[] {
-  const base: string[] = []
-  if (!spotTypes) {
-    base.push("Smooth Concrete")
-    return base
-  }
-  const used = TYPE_PRIORITY.find((p) => p.type === usedType)
-  const filtered = spotTypes.filter((t) => !used || !used.match.test(t))
-  for (const t of filtered) {
-    const slug = toFeatureSlug(titleCase(t))
-    if (FEATURE_SLUG_SET.has(slug)) base.push(slug)
-  }
-  if (base.length === 0) base.push("smooth-concrete")
-  if (!base.includes("smooth-concrete")) base.push("smooth-concrete")
-  return base.slice(0, 5)
-}
-
-const CROWD_LABELS: Record<"low" | "mid" | "high", readonly string[]> = {
-  low: ["Low", "Mid", "High"],
-  mid: ["Low", "Mid", "High"],
-  high: ["Low", "Mid", "High"],
-}
-void CROWD_LABELS
-
-function hash(s: string): number {
-  let h = 0
-  for (let i = 0; i < s.length; i++) {
-    h = (h * 31 + s.charCodeAt(i)) | 0
-  }
-  return Math.abs(h)
-}
-
-function buildCrowdLabel(level: number, seed: string): string {
-  const pools: Record<"low" | "mid" | "high", readonly string[]> = {
-    low: [
-      "Low (Spill Check Required)",
-      "Low (Security Active)",
-      "Low (Always Open)",
-      "Low (Quiet Hours)",
-    ],
-    mid: [
-      "Moderate (Prime Time: 5PM - 7PM)",
-      "Moderate (Best at Night)",
-      "Moderate (Prime Time: 3PM - 6PM)",
-      "Moderate (Schoolyard Spot)",
-    ],
-    high: [
-      "High (Prime Time: 2PM - 6PM)",
-      "High (Vibrant Skate Community)",
-      "High (Community Hub)",
-      "High (Busy)",
-    ],
-  }
-  const tier = level > 70 ? "high" : level > 40 ? "mid" : "low"
-  const pool = pools[tier]
-  const idx = Math.floor((hash(seed) % 1000) / 1000 * pool.length)
-  return pool[idx]!
-}
-
-function buildCommunityNote(entry: RawSpot, type: string, id: string): string {
-  const a = entry.address ?? {}
-  const city =
-    a.city ||
-    a.town ||
-    a.suburb ||
-    a.state ||
-    a.country ||
-    entry.display_name?.split(",")[0]?.trim() ||
-    ""
-  const handle = "@" + id.split("-").slice(0, 2).join("")
-  const intros = ["Local intel", "Community intel", "Scout report", "Field notes"]
-  const intro = intros[Math.floor((hash(id) % 1000) / 1000 * intros.length)]
-  const when =
-    type === "Park"
-      ? "open hours"
-      : type === "Bowl" || type === "Pools"
-        ? "early morning sessions"
-        : "low-traffic windows"
-  return `${intro} from ${city}: ride it during ${when}. — ${handle}`
-}
-
-function pickCity(entry: RawSpot): string {
-  const a = entry.address ?? {}
-  return (
-    a.city ||
-    a.town ||
-    a.village ||
-    a.suburb ||
-    a.county ||
-    a.state ||
-    entry.display_name?.split(",")[0]?.trim() ||
-    ""
-  )
-}
+// ─── Helpers ────────────────────────────────────────────────────────
 
 function pointWkt(lat: number, lon: number): string {
   return `SRID=4326;POINT(${lon} ${lat})`
 }
 
-async function seedRegions(sql: ReturnType<typeof postgres>) {
-  console.log("→ seeding regions")
+// ─── Dimension seeds ────────────────────────────────────────────────
+
+async function seedRegions(sql: ReturnType<typeof postgres>): Promise<void> {
+  log.info("seed.regions.start")
   for (const r of REGION_SEED) {
     await sql`
       insert into regions (slug, name, description, image_url, sort_order)
-      values (${r.slug}, ${r.name}, ${r.description}, ${r.imageUrl}, ${r.sortOrder})
+      values (${r.slug}, ${r.name}, ${r.desc}, ${r.image}, ${0})
       on conflict (slug) do update set
         name = excluded.name,
         description = excluded.description,
@@ -322,20 +37,23 @@ async function seedRegions(sql: ReturnType<typeof postgres>) {
         updated_at = now()
     `
   }
-  console.log(`  ✓ ${REGION_SEED.length} regions`)
+  log.info("seed.regions.done", { count: REGION_SEED.length })
 }
 
-async function seedCountries(sql: ReturnType<typeof postgres>) {
-  console.log("→ seeding countries")
+async function seedCountries(
+  sql: ReturnType<typeof postgres>,
+): Promise<void> {
+  log.info("seed.countries.start")
+  const countries: readonly CountrySeed[] = buildCountrySeed()
   const regionRows = await sql<{ id: string; name: string }[]>`
     select id, name from regions
   `
   const regionIdByName = new Map(regionRows.map((r) => [r.name, r.id]))
   let count = 0
-  for (const c of COUNTRY_SEED) {
+  for (const c of countries) {
     const regionId = regionIdByName.get(c.region)
     if (!regionId) {
-      console.warn(`  ! skipping ${c.name}: region "${c.region}" not seeded`)
+      log.warn("seed.countries.skip_no_region", { country: c.name })
       continue
     }
     await sql`
@@ -349,11 +67,11 @@ async function seedCountries(sql: ReturnType<typeof postgres>) {
     `
     count++
   }
-  console.log(`  ✓ ${count} countries`)
+  log.info("seed.countries.done", { count })
 }
 
-async function seedSpotTypes(sql: ReturnType<typeof postgres>) {
-  console.log("→ seeding spot_types")
+async function seedSpotTypes(sql: ReturnType<typeof postgres>): Promise<void> {
+  log.info("seed.spot_types.start")
   for (const t of SPOT_TYPE_SEED) {
     await sql`
       insert into spot_types (slug, name, sort_order)
@@ -363,11 +81,13 @@ async function seedSpotTypes(sql: ReturnType<typeof postgres>) {
         sort_order = excluded.sort_order
     `
   }
-  console.log(`  ✓ ${SPOT_TYPE_SEED.length} spot_types`)
+  log.info("seed.spot_types.done", { count: SPOT_TYPE_SEED.length })
 }
 
-async function seedSportDisciplines(sql: ReturnType<typeof postgres>) {
-  console.log("→ seeding sport_disciplines")
+async function seedSportDisciplines(
+  sql: ReturnType<typeof postgres>,
+): Promise<void> {
+  log.info("seed.sport_disciplines.start")
   for (const d of SPORT_DISCIPLINE_SEED) {
     await sql`
       insert into sport_disciplines (slug, name, sort_order)
@@ -377,11 +97,11 @@ async function seedSportDisciplines(sql: ReturnType<typeof postgres>) {
         sort_order = excluded.sort_order
     `
   }
-  console.log(`  ✓ ${SPORT_DISCIPLINE_SEED.length} sport_disciplines`)
+  log.info("seed.sport_disciplines.done", { count: SPORT_DISCIPLINE_SEED.length })
 }
 
-async function seedEventTiers(sql: ReturnType<typeof postgres>) {
-  console.log("→ seeding event_tiers")
+async function seedEventTiers(sql: ReturnType<typeof postgres>): Promise<void> {
+  log.info("seed.event_tiers.start")
   for (const t of EVENT_TIER_SEED) {
     await sql`
       insert into event_tiers (slug, name, sort_order)
@@ -391,60 +111,67 @@ async function seedEventTiers(sql: ReturnType<typeof postgres>) {
         sort_order = excluded.sort_order
     `
   }
-  console.log(`  ✓ ${EVENT_TIER_SEED.length} event_tiers`)
+  log.info("seed.event_tiers.done", { count: EVENT_TIER_SEED.length })
 }
 
-async function seedSpotFeatures(sql: ReturnType<typeof postgres>) {
-  console.log("→ seeding spot_features")
+async function seedSpotFeatures(
+  sql: ReturnType<typeof postgres>,
+): Promise<void> {
+  log.info("seed.spot_features.start")
   for (const f of SPOT_FEATURE_SEED) {
     await sql`
       insert into spot_features (slug, name)
       values (${f.slug}, ${f.name})
-      on conflict (slug) do update set name = excluded.name
+      on conflict (slug) do update set
+        name = excluded.name
     `
   }
-  console.log(`  ✓ ${SPOT_FEATURE_SEED.length} spot_features`)
+  log.info("seed.spot_features.done", { count: SPOT_FEATURE_SEED.length })
 }
 
-async function seedSpots(sql: ReturnType<typeof postgres>) {
-  console.log("→ seeding spots")
-  const DEFAULT_PRESET_IMAGES = [
-    "https://lh3.googleusercontent.com/aida-public/AB6AXuAzOoxxgf8dF_dffEyj1reX-fHjpbmdOzHCKt48IV55g3OcOejsIT9MtaySQEK0hVzvIpPegtGd03j4neTRFC5WGxsEvj5OLJpKfFMhwXdXIY2YAjpD2xwCUOFNv_jCUBDs7mrLeq2J28upIy9Q7fq5m46ytFrpE8efxEcvW-3Bdb4uiMD6QOxExLVPlkQMkRDVmB2DxRfKq8E3Y0pko6HLf3oSNBxhmT5BnVuJ8tSMUEgWQuk_WElNP9xvvc9URbMql80pPwHFxf9P",
-    "https://lh3.googleusercontent.com/aida-public/AB6AXuA6GHeF7oipibYvoiyBsC4TPFku7ffQmv6y0B5AvgdhgAmG9pI0BlJLe8-ayJLMlAtDAWwUGu4FAwabH8HuELRowJ3IeEJOlgw4xvg0_RP_eRKPr5eESG5TxVwONEulq3jToyCXr01mrPooWxd_LZyIm1ZjLx-q5OyZPARNZVw0jmm6gY0B_2wuE2kir3siF7K3C7ntb79Rqd-JOHOOpenTRYBWA1KQLZ_r4WVgfahEkzWayr4xRHIqIgYUCuuxsceSaEpXp8segQIg",
-    "https://lh3.googleusercontent.com/aida-public/AB6AXuCrY2kzLB1jQqPxx87OqENxBTnqO00sGNmmbFTu7AVZ6r19NZg7MF3fdWdWnI6gGfw_ffMIMDY_Gspts-w017UN_NrCfiVCFhy5StEGoec3EzYvqmTmbz4lzOgjKciS7RV27IOlPVKHiEzli-wdFgHIurqHwm2HE4kDZQEjudqZODIx-_RyULGF_RgAiTpitlMRoYMh6eCL773msOXd0D2xWpsxVBURfxsElH5AvNf3rqCohSNZhAbWwTXOJZZxwY3ShaMJiJ95FWS2",
-    "https://lh3.googleusercontent.com/aida-public/AB6AXuBFcsJ_InsjM_V2ZhdORVirVciKPJ2Uqt5Jii3nfPULenttPQ0cUQzaa_C0Yc_NrAv1eAnHIeR8S04LjqVjCQuleF60loO-Mh7UEOwa--QIQwv3VaR_P4gt5B7jfu-3GeKqm5Rf-NV8q0xJxL_FX9JZR0_YLkAMpHPWfXRNDr5THXJbJawrNxG5oJYPI2YICMJAFHJPsYpbPdVHU8lTuqhXRgmObg3ZuVD7VNiZ6NjRXmQfSSW7vx2q43JFz7ckBgTcpMPRzkp67YMT",
-  ]
-  let count = 0
-  for (const entry of SOURCE_SPOTS) {
-    const id = entry.slug ?? String(entry.place_id)
-    const lat = Number(entry.lat)
-    const lon = Number(entry.lon)
-    const type = pickType(entry.spot_types)
-    const crowdLevel = Math.floor((hash("crowd:" + id) % 1000) / 10)
-    const rawCountry = entry.address?.country ?? ""
-    const country = normalizeCountryName(rawCountry)
-    const name = entry.name.toUpperCase()
-    const city = pickCity(entry)
-    const citySlug = entry.city_slug ?? city.toLowerCase().replace(/[^a-z0-9]+/g, "-")
-    const slug = entry.slug ?? id
-    const imageIdx = (hash(id) % 1000) / 1000 * DEFAULT_PRESET_IMAGES.length
-    const imageUrl = DEFAULT_PRESET_IMAGES[Math.floor(imageIdx)] ?? DEFAULT_PRESET_IMAGES[0]!
-    const address = entry.display_name ?? entry.name
-    const features = pickFeatures(entry.spot_types, type)
-    const crowdLevelLabel = buildCrowdLabel(crowdLevel, id)
-    const communityNote = buildCommunityNote(entry, type, id)
+async function seedPresetImages(
+  sql: ReturnType<typeof postgres>,
+): Promise<void> {
+  log.info("seed.preset_images.start")
+  for (const p of PRESET_IMAGE_SEED) {
+    await sql`
+      insert into preset_images (slug, name, url, sort_order)
+      values (${p.slug}, ${p.name}, ${p.url}, ${p.sortOrder})
+      on conflict (slug) do update set
+        name = excluded.name,
+        url = excluded.url,
+        sort_order = excluded.sort_order,
+        updated_at = now()
+    `
+  }
+  log.info("seed.preset_images.done", { count: PRESET_IMAGE_SEED.length })
+}
+// ─── Content seeds ────────────────────────────────────────────────
 
+async function seedSpots(sql: ReturnType<typeof postgres>): Promise<void> {
+  log.info("seed.spots.start")
+  let count = 0
+  for (const spot of SOURCE_SPOTS) {
+    if (!spot.id || !spot.citySlug) {
+      log.warn("seed.spots.skip_no_id", { name: spot.name })
+      continue
+    }
+    const slug = spot.id
+    const citySlug = spot.citySlug
     const [row] = await sql<{ id: string }[]>`
       insert into spots (
         id, slug, name, city, city_slug, address, type_slug,
         image_url, community_note, crowd_level, crowd_level_label,
-        country_code, location
+        country_code, location, created_by
       ) values (
-        gen_random_uuid(), ${slug}, ${name}, ${city}, ${citySlug}, ${address},
-        ${type.toLowerCase()},
-        ${imageUrl}, ${communityNote}, ${crowdLevel}, ${crowdLevelLabel},
-        (select iso2 from countries where name = ${country} limit 1),
-        ${pointWkt(lat, lon)}::geometry
+        gen_random_uuid(), ${slug}, ${spot.name}, ${spot.city},
+        ${citySlug}, ${spot.address},
+        ${spot.type.toLowerCase()},
+        ${spot.image}, ${spot.communityNote}, ${spot.crowdLevel},
+        ${spot.crowdLevelLabel},
+        (select iso2 from countries where name = ${spot.country} limit 1),
+        ${pointWkt(spot.location.lat, spot.location.lon)}::geometry,
+        ${spot.createdBy ?? null}
       )
       on conflict (slug) do update set
         name = excluded.name,
@@ -462,7 +189,7 @@ async function seedSpots(sql: ReturnType<typeof postgres>) {
     `
     const spotId = row?.id
     if (spotId) {
-      for (const featureSlug of features) {
+      for (const featureSlug of spot.features) {
         if (!FEATURE_SLUG_SET.has(featureSlug)) continue
         await sql`
           insert into spot_feature_links (spot_id, feature_slug)
@@ -470,69 +197,43 @@ async function seedSpots(sql: ReturnType<typeof postgres>) {
           on conflict do nothing
         `
       }
+      for (const sport of spot.sports) {
+        const slug = sport.toLowerCase()
+        await sql`
+          insert into spot_sports (spot_id, discipline_slug)
+          values (${spotId}, ${slug})
+          on conflict do nothing
+        `
+      }
     }
     count++
   }
-  console.log(`  ✓ ${count} spots`)
+  log.info("seed.spots.done", { count })
 }
 
-async function seedSportEvents(sql: ReturnType<typeof postgres>) {
-  console.log("→ seeding sport_events")
-  const SOURCE_EVENTS = sportEventsJson as Array<{
-    id: string
-    name: string
-    shortName?: string
-    url: string
-    image: string
-    description: string
-    sports: string[]
-    startDate: string
-    endDate?: string
-    location: {
-      city: string
-      country: string
-      countryCode?: string
-      venue?: string
-      latitude?: number
-      longitude?: number
-    }
-    tier: string
-    featured?: boolean
-  }>
+async function seedSportEvents(
+  sql: ReturnType<typeof postgres>,
+): Promise<void> {
+  log.info("seed.sport_events.start")
   let count = 0
-  for (const event of SOURCE_EVENTS) {
-    const lat = event.location.latitude
-    const lon = event.location.longitude
+  for (const event of SOURCE_SPORT_EVENTS) {
     const location =
-      typeof lat === "number" && typeof lon === "number"
-        ? pointWkt(lat, lon)
+      typeof event.latitude === "number" && typeof event.longitude === "number"
+        ? pointWkt(event.latitude, event.longitude)
         : null
     const startAt = `${event.startDate} 00:00:00+00`
     const endAt = event.endDate ? `${event.endDate} 00:00:00+00` : null
-    const countryCode =
-      event.location.countryCode ??
-      (
-        await sql<{ iso2: string }[]>`
-          select iso2 from countries where name = ${normalizeCountryName(event.location.country)} limit 1
-        `
-      )[0]?.iso2 ??
-      null
-    if (!countryCode) {
-      console.warn(
-        `  ! skipping ${event.name}: country "${event.location.country}" not found`,
-      )
-      continue
-    }
     const [row] = await sql<{ id: string }[]>`
       insert into sport_events (
         id, slug, name, short_name, url, image, description,
         start_at, end_at, city, country_code, venue,
         location, tier_slug, featured
       ) values (
-        gen_random_uuid(), ${event.id}, ${event.name}, ${event.shortName ?? null},
+        gen_random_uuid(), ${event.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")},
+        ${event.name}, ${event.shortName ?? null},
         ${event.url}, ${event.image}, ${event.description},
         ${startAt}::timestamptz, ${endAt}::timestamptz,
-        ${event.location.city}, ${countryCode}, ${event.location.venue ?? null},
+        ${event.city}, ${event.countryCode ?? null}, ${event.venue ?? null},
         ${location}::geometry, ${event.tier}, ${event.featured ?? false}
       )
       on conflict (slug) do update set
@@ -564,8 +265,11 @@ async function seedSportEvents(sql: ReturnType<typeof postgres>) {
     }
     count++
   }
-  console.log(`  ✓ ${count} sport_events`)
+  log.info("seed.sport_events.done", { count })
 }
+
+
+// ─── Orchestrator ───────────────────────────────────────────────────
 
 async function main() {
   const url = getDatabaseUrl()
@@ -578,9 +282,10 @@ async function main() {
     await seedSportDisciplines(sql)
     await seedEventTiers(sql)
     await seedSpotFeatures(sql)
+    await seedPresetImages(sql)
     await seedSpots(sql)
     await seedSportEvents(sql)
-    console.log("✓ seed complete")
+    log.info("seed.complete")
   } finally {
     await sql.end({ timeout: 5 })
   }

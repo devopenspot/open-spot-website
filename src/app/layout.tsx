@@ -3,7 +3,11 @@ import { Suspense } from 'react';
 import { Inter, Archivo_Narrow } from 'next/font/google';
 import { cn } from '@/lib/cn';
 import { env } from '@/lib/env';
-import { getSpotRepositoryAsync, getSavedSpotsRepositoryAsync } from '@/lib/repositories';
+import {
+  getSpotRepositoryAsync,
+  getSavedSpotsRepositoryAsync,
+  getPresetImagesRepositoryAsync,
+} from '@/lib/repositories';
 import { getWeatherForAllSpots } from '@/lib/weather/weather-bundle';
 import { getServerUserFromCookies } from '@/lib/auth';
 import { getRegionsForClient } from '@/lib/data/regions';
@@ -88,14 +92,21 @@ export default function RootLayout({
 }
 
 async function RootDataProviders({ children }: { children: React.ReactNode }) {
-  const [spotsResult, initialWeather, initialUser, initialRegions] =
+  const [spotsResult, initialWeather, initialUser, initialRegions, presetImagesRepo] =
     await Promise.all([
       getSpotRepositoryAsync(),
       getWeatherForAllSpots(),
       getServerUserFromCookies(),
       getRegionsForClient(),
+      getPresetImagesRepositoryAsync(),
     ]);
   const { items: initialSpots } = await spotsResult.list();
+  const initialPresetImages = (await presetImagesRepo.list()).map((p) => ({
+    id: p.id,
+    slug: p.slug,
+    name: p.name,
+    url: p.url,
+  }));
   const initialSavedSpots =
     initialUser.id === 'dev'
       ? []
@@ -108,6 +119,7 @@ async function RootDataProviders({ children }: { children: React.ReactNode }) {
     <SpotsProvider
       initialSpots={initialSpots}
       initialRegions={initialRegions}
+      initialPresetImages={initialPresetImages}
       initialWeather={initialWeather}
       initialUser={initialUser}
       initialSavedSpots={initialSavedSpots}

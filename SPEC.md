@@ -1,6 +1,6 @@
 ---
 spec: Single Source of Truth (DB-Only) Refactor
-status: Approved (plan), pending implementation
+status: Phase 1 implemented; Phase 2 planned (§14)
 owner: TBD
 target release: TBD
 last updated: 2026-07-09
@@ -438,9 +438,112 @@ src/components/admin/common/KeyValueGrid.tsx
 ## 13. Open questions for follow-up specs
 
 1. **Make the async factories sync.** After this refactor, the async signature is vestigial. A follow-up can change `getSpotRepositoryAsync` → `getSpotRepository` and drop the `await` at all 26 call sites.
-2. **Rewrite `seed.ts` to skip `src/data/*.json`.** Insert spots/events directly from typed constants. Drops the JSON dependency entirely.
-3. **Move `DEFAULT_PRESET_IMAGES` to a `preset_images` DB table.** Currently bundled; a DB table would let admins curate presets. Not needed today.
+2. **Rewrite `seed.ts` to skip `src/data/*.json`.** Insert spots/events directly from typed constants. Drops the JSON dependency entirely. → **Addressed in Phase 2 (§14).**
+3. **Move `DEFAULT_PRESET_IMAGES` to a `preset_images` DB table.** Currently bundled; a DB table would let admins curate presets. Not needed today. → **Addressed in Phase 2 (§14).**
 4. **Add a `regions.display_count` column** if static display strings are preferred over live counts. Not needed today.
 5. **Cache `getRegionsForClient()`** with the `"use cache"` directive (like `checkDbHealth()`), since regions change rarely. The current `SpotsProvider` hydration pattern means the query runs once per request, but a cache would let it be reused across server components in the same render.
 
 These are explicitly out of scope for this spec.
+
+---
+
+## 14. Phase 2 — Complete the refactor (drop JSON, move presets to DB)
+
+Phase 1 collapsed the **runtime** read path to a single Drizzle pipeline. Phase 2 finishes the work on the **seed** and **admin UI** sides so the data layer has zero JSON and zero bundled UI config for image presets.
+
+### 14.1 What's still hardcoded / JSON-based after Phase 1
+
+- `src/data/spots.json` — 381 lines of raw Nominatim OSM dumps, the seed's input.
+- `src/data/sport-events.json` — 102 lines, same shape.
+- `src/data.ts` — `REGIONS_DATA`, `COUNTRY_TO_REGION`, `COUNTRY_NAME_OVERRIDES`, `DEFAULT_PRESET_IMAGES`. The first three are seed bootstrap; the last is bundled UI config.
+- `src/db/seed.ts:411` — a local `DEFAULT_PRESET_IMAGES` array of URL strings that **duplicates** `src/data.ts`.
+- `src/db/seed.ts:37,64` — `COUNTRY_TO_ISO2`, `COUNTRY_TO_ISO3` (24 countries each), inlined in the 591-line seed.
+- `src/db/seed.ts:88-137` — four taxonomy arrays (`SPOT_TYPE_SEED`, `SPORT_DISCIPLINE_SEED`, `EVENT_TIER_SEED`, `SPOT_FEATURE_SEED`), inlined.
+- `src/components/admin/events/EventTable.tsx:15` — `TIER_LABEL` hardcoded map that duplicates the `event_tiers.name` DB column.
+
+### 14.2 Phase 2 goals
+
+1. **No JSON in the data layer.** `spots.json` + `sport-events.json` deleted. The 11 base spots + 5 base events are typed TS constants.
+2. **No bundled UI config for image presets.** `DEFAULT_PRESET_IMAGES` deleted. A new `preset_images` DB table is the single source.
+3. **`seed.ts` reads as a sequence of clear steps.** Shrinks from 591 to ~200 lines via `src/db/seed-data/`.
+
+### 14.3 Phase 2 decisions
+
+| # | Decision | Rationale |
+|---|---|---|
+| D16 | **Drop both JSON files.** Insert the 11 spot rows + 5 event rows from typed TS constants. | Single shape for all seed data. Type-checked. No `as RawSpot[]` casts. |
+| D17 | **Hand-curate the 11 base spots as TS constants.** No Nominatim re-pull. | The OSM `place_id` values are outdated; the seed already overrides most fields via derivation. Curating once is the same effort as re-pulling and gives full control. |
+| D18 | **New `preset_images` DB table.** `id uuid pk`, `slug text unique`, `name text`, `url text`, `sort_order integer`, timestamps. Public read + owner-only write RLS. | Mirrors `spot_types` / `event_tiers`. Admin-curatable in a follow-up. |
+| D19 | **`getPresetImages()` and `pickFallbackImage()` become async.** Read from the preset images repo. | The Drizzle spot repo is already async. The `useSpotsStore` carries the list (hydrated at root). |
+| D20 | **No admin UI for `preset_images` in Phase 2.** Seed inserts the 4 rows. Admin CRUD is a follow-up. | Keeps Phase 2 scoped to the data-layer refactor. |
+| D21 | **`ImageSourceField` reads presets from `useSpotsStore`.** Extend the store with a `presetImages` slice. | Same delivery mechanism as spots + regions. No new context. |
+| D22 | **Move taxonomies + ISO maps to `src/db/seed-data/`.** One file per concern. | The 591-line `seed.ts` becomes a navigable top-level. |
+| D23 | **New migration `0001_preset_images.sql`.** Single CREATE TABLE + RLS. | The repo's policy is "one migration per change" tracked in `schema_migrations`. The next migration is 0001. |
+
+### 14.4 Phase 2 file checklist
+
+**New (10):**
+- `supabase/migrations/0001_preset_images.sql`
+- `src/lib/repositories/preset-images-repository.ts` (interface)
+- `src/lib/repositories/drizzle-preset-images-repository.ts` (impl)
+- `src/db/seed-data/taxonomy.ts` (4 `*_SEED` arrays + `FEATURE_SLUG_SET`)
+- `src/db/seed-data/iso-codes.ts` (`COUNTRY_TO_ISO2/3` + `COUNTRY_NAME_OVERRIDES`)
+- `src/db/seed-data/regions.ts` (region seed rows)
+- `src/db/seed-data/countries.ts` (`buildCountrySeed()`)
+- `src/db/seed-data/preset-images.ts` (4 preset image rows)
+- `src/db/seed-data/spots.ts` (11 hand-curated `NewSpot` consts)
+- `src/db/seed-data/sport-events.ts` (5 hand-curated `NewSportEvent` consts)
+
+**Delete (5):**
+- `src/data/spots.json`
+- `src/data/sport-events.json`
+- `src/data.ts`
+- `src/data/` (empty dir)
+- `src/lib/spots.ts` (after `getPresetImages` and `pickFallbackImage` migrate)
+
+**Edit (~11):**
+- `src/db/schema.ts` — add `presetImages` table
+- `src/db/seed.ts` — shrink to ~200-line orchestrator
+- `src/lib/repositories/index.ts` — add `getPresetImagesRepositoryAsync()`
+- `src/lib/repositories/drizzle-spot-repository.ts` — `pickFallbackImage` async
+- `src/stores/spots-store.ts` — add `presetImages` slice
+- `src/components/layout/SpotsProvider.tsx` — add `initialPresetImages` prop
+- `src/app/layout.tsx` — fetch presets in `RootDataProviders`
+- `src/components/admin/spots/ImageSourceField.tsx` — read from store
+- `src/db/backfill-empty-spot-images.ts` — async `pickFallbackImage`
+- `AGENTS.md` — update data + preset images sections
+- `SPEC.md` — this section
+
+### 14.5 Phase 2 phased implementation
+
+| Phase | Scope | Exit criteria |
+|---|---|---|
+| P2.1 | **Schema + migration.** Add `presetImages` to `src/db/schema.ts`. Create `0001_preset_images.sql`. | `pnpm typecheck` green. |
+| P2.2 | **Repo.** Add interface, Drizzle impl, factory. | `pnpm typecheck` green. |
+| P2.3 | **Store + layout.** Extend `useSpotsStore` + `SpotsProvider` + `RootDataProviders`. | `pnpm typecheck` green. |
+| P2.4 | **Client consumers.** `ImageSourceField` reads from store. Drop `getPresetImages` from `src/lib/spots.ts`. | `pnpm typecheck && pnpm test` green. |
+| P2.5 | **Drizzle spot repo + backfill.** `pickFallbackImage` becomes async. | `pnpm typecheck && pnpm test` green. |
+| P2.6 | **Seed rewrite.** Create `src/db/seed-data/`. `seed.ts` shrinks to ~200 lines. | `pnpm typecheck` green. |
+| P2.7 | **Spots/events as typed constants.** Write the 11 + 5 rows by hand. Delete JSON files + `src/data.ts` + `src/data/` dir. | `pnpm typecheck && pnpm test` green. `git grep spots.json` returns zero hits. |
+| P2.8 | **Drop `src/lib/spots.ts`.** | `pnpm typecheck && pnpm test` green. |
+| P2.9 | **AGENTS.md + SPEC.md.** This section is the spec update. AGENTS.md is updated to reflect the final state. | Docs match the post-Phase-2 reality. |
+
+### 14.6 Phase 2 risks
+
+| Risk | Mitigation |
+|---|---|
+| Hand-curating 11 + 5 rows is tedious | Read the current rows from the deployed DB with `select *` and transcribe. No data loss. |
+| `pickFallbackImage` async breaks callers | The Drizzle spot repo's `create()`/`update()` are already async. The backfill script is the only other caller. |
+| `preset_images` RLS misaligned | Mirror `spot_types` / `event_tiers` policies. Verify with anon key. |
+| Deleting `src/data.ts` breaks hidden callers | `git grep` for `getPresetImages` and `DEFAULT_PRESET_IMAGES` before deletion. |
+| `src/lib/spots.ts` `hashToUnitInterval` used by `geo.ts` | Verify import chain. `geo.ts` is standalone math. |
+| New migration `0001` conflicts with `0000` on a fresh DB | `apply-sql.ts` records applied migrations in `schema_migrations`. No conflict. |
+| `useSpotsStore` growing to 4 slices becomes unwieldy | Acceptable. Each slice has a clear owner. Rename to `useReferenceDataStore` is a cosmetic follow-up. |
+
+### 14.7 Phase 2 follow-up open questions
+
+1. **Admin UI for `preset_images`.** Add `/admin/presets` with list/new/edit/delete. Mirrors `AdminSpotsPage`.
+2. **Rename `useSpotsStore` → `useReferenceDataStore`.** Cosmetic.
+3. **Cache `getRegionsForClient()` with `"use cache"`.** Still open from §13.5.
+4. **Make the async factories sync.** Still open from §13.1.
+5. **Add `regions.display_count` column.** Still open from §13.4.

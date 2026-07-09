@@ -65,6 +65,8 @@ export interface Country {
 }
 
 export interface PresetImage {
+  id?: string;
+  slug?: string;
   name: string;
   url: string;
 }

@@ -231,6 +231,25 @@ export const spotFeatures = pgTable("spot_features", {
   name: text("name").notNull(),
 })
 
+export const presetImages = pgTable(
+  "preset_images",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    slug: text("slug").notNull().unique(),
+    name: text("name").notNull(),
+    url: text("url").notNull(),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdBy: uuid("created_by"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [index("preset_images_sort_order_idx").on(t.sortOrder)],
+)
+
 export const spotSports = pgTable(
   "spot_sports",
   {
@@ -384,3 +403,5 @@ export type SpotFeatureLinkRow = typeof spotFeatureLinks.$inferSelect
 export type NewSpotFeatureLinkRow = typeof spotFeatureLinks.$inferInsert
 export type EventSportRow = typeof eventSports.$inferSelect
 export type NewEventSportRow = typeof eventSports.$inferInsert
+export type PresetImageRow = typeof presetImages.$inferSelect
+export type NewPresetImageRow = typeof presetImages.$inferInsert
