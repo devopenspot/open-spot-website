@@ -4,17 +4,7 @@ import { useId, useState, useTransition } from "react"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { Search } from "lucide-react"
 import { cn } from "@/lib/cn"
-import type { SpotType } from "@/lib/types"
-
-const TYPES: readonly { value: SpotType; label: string }[] = [
-  { value: "Plaza", label: "Plaza" },
-  { value: "DIY", label: "DIY" },
-  { value: "Stair", label: "Stair" },
-  { value: "Bowl", label: "Bowl" },
-  { value: "Park", label: "Park" },
-  { value: "Ledges", label: "Ledges" },
-  { value: "Pools", label: "Pools" },
-]
+import { useSpotsStore } from "@/stores/spots-store"
 
 export function SpotTableFilters() {
   const qId = useId()
@@ -24,14 +14,13 @@ export function SpotTableFilters() {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const [, startTransition] = useTransition()
+  const spotTypes = useSpotsStore((s) => s.spotTypes)
 
   const [q, setQ] = useState(searchParams.get("q") ?? "")
-  const [type, setType] = useState<SpotType | "">(
-    (searchParams.get("type") as SpotType | null) ?? "",
-  )
+  const [type, setType] = useState<string>(searchParams.get("type") ?? "")
   const [country, setCountry] = useState(searchParams.get("country") ?? "")
 
-  const emit = (next: { q: string; type: SpotType | ""; country: string }) => {
+  const emit = (next: { q: string; type: string; country: string }) => {
     const sp = new URLSearchParams()
     if (next.q) sp.set("q", next.q)
     if (next.type) sp.set("type", next.type)
@@ -81,7 +70,7 @@ export function SpotTableFilters() {
           id={typeId}
           value={type}
           onChange={(e) => {
-            const value = e.target.value as SpotType | ""
+            const value = e.target.value
             setType(value)
             emit({ q, type: value, country })
           }}
@@ -91,9 +80,9 @@ export function SpotTableFilters() {
           )}
         >
           <option value="">All types</option>
-          {TYPES.map((t) => (
-            <option key={t.value} value={t.value}>
-              {t.label}
+          {spotTypes.map((t) => (
+            <option key={t.slug} value={t.slug}>
+              {t.name}
             </option>
           ))}
         </select>

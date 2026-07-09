@@ -6,7 +6,7 @@ import { updateSpotAction } from "@/app/actions/admin-spots"
 import { SpotFormFields, type SpotFormState } from "@/components/admin/spots/SpotFormFields"
 import { SpotFormSubmit } from "@/components/admin/spots/SpotFormSubmit"
 import type { SportDiscipline } from "@/types/sport-events"
-import type { Spot, TerrainOption } from "@/lib/types"
+import type { Spot, SpotTypeEntity } from "@/lib/types"
 
 function stateFromSpot(spot: Spot): SpotFormState {
   return {
@@ -16,7 +16,7 @@ function stateFromSpot(spot: Spot): SpotFormState {
     address: spot.address,
     country: spot.country,
     countryCode: spot.countryCode,
-    type: spot.type,
+    type: spot.typeSlug,
     features: [...spot.features],
     sports: [...spot.sports] as SportDiscipline[],
     communityNote: spot.communityNote,
@@ -50,10 +50,10 @@ function buildFormData(state: SpotFormState): FormData {
 
 interface AdminEditSpotFormProps {
   spot: Spot
-  terrainOptions: readonly TerrainOption[]
+  spotTypes: readonly SpotTypeEntity[]
 }
 
-export function AdminEditSpotForm({ spot, terrainOptions }: AdminEditSpotFormProps) {
+export function AdminEditSpotForm({ spot, spotTypes }: AdminEditSpotFormProps) {
   const router = useRouter()
   const [state, setState] = useState<SpotFormState>(stateFromSpot(spot))
 
@@ -130,7 +130,7 @@ export function AdminEditSpotForm({ spot, terrainOptions }: AdminEditSpotFormPro
           state={state}
           onChange={setState}
           latLonMode="preview"
-          terrainOptions={terrainOptions}
+          spotTypes={spotTypes}
         />
         <SpotFormSubmit
           state={state}

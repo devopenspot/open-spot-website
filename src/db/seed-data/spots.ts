@@ -11,7 +11,6 @@
 // change a row, edit the literal below and re-run `pnpm db:seed`.
 
 import type { NewSpot } from "@/lib/repositories/types"
-import type { SpotType } from "@/lib/types"
 import type { SportDiscipline } from "@/types/sport-events"
 import { PRESET_IMAGE_SEED } from "./preset-images"
 
@@ -51,14 +50,14 @@ function crowdLabel(level: number, id: string): string {
   return pool[idx]!
 }
 
-function communityNote(city: string, type: SpotType, id: string): string {
+function communityNote(city: string, type: string, id: string): string {
   const handle = "@" + id.split("-").slice(0, 2).join("")
   const intros = ["Local intel", "Community intel", "Scout report", "Field notes"]
   const intro = intros[hash(id) % intros.length]
   const when =
-    type === "Park"
+    type === "park"
       ? "open hours"
-      : type === "Bowl" || type === "Pools"
+      : type === "bowl" || type === "pools"
         ? "early morning sessions"
         : "low-traffic windows"
   return `${intro} from ${city}: ride it during ${when}. — ${handle}`
@@ -83,7 +82,7 @@ interface SpotRow {
   name: string
   city: string
   address: string
-  type: SpotType
+  type: string
   features: readonly string[]
   sports: readonly SportDiscipline[]
   country: string
@@ -97,7 +96,7 @@ const ROWS: readonly SpotRow[] = [
     name: "Place Louis Pradel",
     city: "Lyon",
     address: "Place Louis Pradel, Lyon, France",
-    type: "Plaza",
+    type: "plaza",
     features: ["smooth-concrete"],
     sports: SKATE,
     country: "France",
@@ -109,7 +108,7 @@ const ROWS: readonly SpotRow[] = [
     name: "Bercy Skatepark",
     city: "Paris",
     address: "Quai de Bercy, Paris 12e Arrondissement, France",
-    type: "Park",
+    type: "park",
     features: ["rail", "slidebox", "mini-ramp", "street", "smooth-concrete"],
     sports: SKATE,
     country: "France",
@@ -121,7 +120,7 @@ const ROWS: readonly SpotRow[] = [
     name: "Dogshit Spot",
     city: "Berlin",
     address: "Marchlewskistraße, Friedrichshain, Berlin, Germany",
-    type: "Ledges",
+    type: "ledges",
     features: ["street", "smooth-concrete"],
     sports: SKATE,
     country: "Germany",
@@ -133,7 +132,7 @@ const ROWS: readonly SpotRow[] = [
     name: "Skatepark de la 4 Sur",
     city: "Medellín",
     address: "Comuna 15 - Guayabal, Perímetro Urbano Medellín, Antioquia, Colombia",
-    type: "Park",
+    type: "park",
     features: ["rail", "street", "smooth-concrete"],
     sports: SKATE,
     country: "Colombia",
@@ -145,7 +144,7 @@ const ROWS: readonly SpotRow[] = [
     name: "Viga Skatepark",
     city: "Envigado",
     address: "Avenida Las Vegas, Envigado, Antioquia, Colombia",
-    type: "Park",
+    type: "park",
     features: ["rail", "smooth-concrete"],
     sports: SKATE,
     country: "Colombia",
@@ -157,7 +156,7 @@ const ROWS: readonly SpotRow[] = [
     name: "Skatepark Zipaquira",
     city: "Zipaquirá",
     address: "Carrera 15, Zipaquirá, Cundinamarca, Colombia",
-    type: "Bowl",
+    type: "bowl",
     features: ["rail", "slidebox", "smooth-concrete"],
     sports: SKATE,
     country: "Colombia",
@@ -169,7 +168,7 @@ const ROWS: readonly SpotRow[] = [
     name: "Skatepark Sopó",
     city: "Sopó",
     address: "Calle 3 Sur, Sopó, Cundinamarca, Colombia",
-    type: "Bowl",
+    type: "bowl",
     features: ["rail", "slidebox", "street", "smooth-concrete"],
     sports: SKATE,
     country: "Colombia",
@@ -181,7 +180,7 @@ const ROWS: readonly SpotRow[] = [
     name: "Skatepark TEP Émile Lepeu",
     city: "Paris",
     address: "Rue Émile Lepeu, Quartier de la Roquette, Paris 11e Arrondissement, France",
-    type: "Park",
+    type: "park",
     features: ["rail", "smooth-concrete"],
     sports: SKATE,
     country: "France",
@@ -193,7 +192,7 @@ const ROWS: readonly SpotRow[] = [
     name: "Skatepark Ponte della Musica",
     city: "Roma",
     address: "Ponte della Musica, Flaminio, Roma, Italy",
-    type: "Plaza",
+    type: "plaza",
     features: ["rail", "slidebox", "smooth-concrete"],
     sports: SKATE,
     country: "Italy",
@@ -205,7 +204,7 @@ const ROWS: readonly SpotRow[] = [
     name: "Skatepark Carrera 52 Plaza de Toros",
     city: "Cali",
     address: "Carrera 52, Unidad Deportiva Alberto Galindo, Cali, Valle del Cauca, Colombia",
-    type: "Park",
+    type: "park",
     features: ["rail", "smooth-concrete"],
     sports: SKATE,
     country: "Colombia",
@@ -217,7 +216,7 @@ const ROWS: readonly SpotRow[] = [
     name: "Skatepark Parque de Las Ruedas",
     city: "Medellín",
     address: "Calle 50E Sur, San Antonio de Prado, Medellín, Antioquia, Colombia",
-    type: "Park",
+    type: "park",
     features: ["rail", "smooth-concrete"],
     sports: SKATE,
     country: "Colombia",

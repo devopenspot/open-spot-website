@@ -12,7 +12,7 @@ import {
   type SpotRow,
 } from "@/db/schema"
 import type { SportDiscipline } from "@/types/sport-events"
-import type { Spot, SpotType } from "@/lib/types"
+import type { Spot } from "@/lib/types"
 import type {
   NewSpot,
   SpotListResult,
@@ -46,10 +46,6 @@ function haversineMeters(
   return 2 * EARTH_RADIUS_METERS * Math.asin(Math.sqrt(a))
 }
 
-function spotTypeTitleToSlug(title: SpotType): string {
-  return title.toLowerCase()
-}
-
 function sportDisciplineTitleToSlug(title: string): string {
   return title.toLowerCase()
 }
@@ -70,8 +66,7 @@ export class DrizzleSpotRepository implements SpotRepository {
   async list(query?: SpotQuery): Promise<SpotListResult> {
     const limit = query?.limit ?? 50
     const conditions: SQL[] = []
-    if (query?.type)
-      conditions.push(eq(spots.typeSlug, spotTypeTitleToSlug(query.type)))
+    if (query?.type) conditions.push(eq(spots.typeSlug, query.type))
     if (query?.country)
       conditions.push(eq(countries.name, query.country))
     if (query?.city) conditions.push(eq(spots.citySlug, query.city))
@@ -204,7 +199,7 @@ export class DrizzleSpotRepository implements SpotRepository {
       .map((c) => ({ name: c.name, count: c.count }))
   }
 
-  async listTypes(): Promise<readonly { name: SpotType; count: number }[]> {
+  async listTypes(): Promise<readonly { name: string; count: number }[]> {
     const rows = await this.db.execute<{ type: string; count: string }>(sql`
       select st.name as type, count(*)::int as count
       from ${spots} s
@@ -213,9 +208,23 @@ export class DrizzleSpotRepository implements SpotRepository {
       order by st.name
     `)
     return rows.map((r) => ({
-      name: r.type as SpotType,
+      name: r.type,
       count: Number(r.count),
     }))
+  }
+
+  async listAllSpotTypes(): Promise<
+    readonly { slug: string; name: string; sortOrder: number }[]
+  > {
+    const rows = await this.db
+      .select({
+        slug: spotTypes.slug,
+        name: spotTypes.name,
+        sortOrder: spotTypes.sortOrder,
+      })
+      .from(spotTypes)
+      .orderBy(asc(spotTypes.sortOrder), asc(spotTypes.name))
+    return rows
   }
 
   async listRegions(): Promise<
@@ -280,7 +289,6 @@ export class DrizzleSpotRepository implements SpotRepository {
 
   async create(input: NewSpot): Promise<Spot> {
     const id = input.id ?? crypto.randomUUID()
-    const typeSlug = spotTypeTitleToSlug(input.type)
     const insertValues: NewSpotRow = {
       id,
       slug: `${input.citySlug}-${Date.now()}`,
@@ -289,7 +297,7 @@ export class DrizzleSpotRepository implements SpotRepository {
       citySlug:
         input.citySlug ?? input.city.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
       address: input.address,
-      typeSlug,
+      typeSlug: input.type,
       imageUrl: input.imagePath
         ? input.image
         : input.image || pickFallbackImage(id, await getPresetImageUrls()),
@@ -324,7 +332,7 @@ export class DrizzleSpotRepository implements SpotRepository {
     if (patch.citySlug !== undefined) setValues.citySlug = patch.citySlug
     if (patch.address !== undefined) setValues.address = patch.address
     if (patch.type !== undefined) {
-      setValues.typeSlug = spotTypeTitleToSlug(patch.type)
+      setValues.typeSlug = patch.type
     }
     if (patch.image !== undefined) {
       setValues.imageUrl =

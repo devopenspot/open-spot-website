@@ -10,7 +10,7 @@ import {
   spots,
 } from "@/db/schema"
 import type { SportDiscipline } from "@/types/sport-events"
-import type { Spot, SpotLocation, SpotType } from "@/lib/types"
+import type { Spot, SpotLocation } from "@/lib/types"
 import type { SpotWithImagePath } from "@/lib/supabase/storage"
 
 export const sportsAgg = sql<string[]>`
@@ -45,6 +45,7 @@ export interface JoinedSpotRow {
   citySlug: string
   address: string
   type: string
+  typeSlug: string
   features: string[]
   sports: string[]
   imageUrl: string
@@ -72,6 +73,7 @@ export function joinedSpotSelect(
       citySlug: spots.citySlug,
       address: spots.address,
       type: spotTypes.name,
+      typeSlug: spotTypes.slug,
       features: featuresAgg,
       sports: sportsAgg,
       imageUrl: spots.imageUrl,
@@ -100,7 +102,8 @@ export function rowToSpot(row: JoinedSpotRow): Spot {
     city: row.city,
     citySlug: row.citySlug,
     address: row.address,
-    type: row.type as SpotType,
+    type: row.type,
+    typeSlug: row.typeSlug,
     features: row.features,
     sports: row.sports as readonly SportDiscipline[],
     image: row.imagePath ?? row.imageUrl,

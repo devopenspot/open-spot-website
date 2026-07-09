@@ -1,5 +1,5 @@
 import type { z } from "zod"
-import type { Spot, SpotType } from "@/lib/types"
+import type { Spot } from "@/lib/types"
 import type { SpotQuerySchema, NewSpotSchema, SpotPatchSchema } from "@/lib/schemas/spot"
 import type {
   NewSportEventSchema,
@@ -31,7 +31,7 @@ export interface SpotFacetCountryForRegion {
 }
 
 export interface SpotFacetType {
-  name: SpotType
+  name: string
   count: number
 }
 

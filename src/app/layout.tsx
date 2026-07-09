@@ -12,6 +12,7 @@ import {
 import { getWeatherForAllSpots } from '@/lib/weather/weather-bundle';
 import { getServerUserFromCookies } from '@/lib/auth';
 import { getRegionsForClient } from '@/lib/data/regions';
+import { getSpotTypesForClient } from '@/lib/data/spot-types';
 import { SpotsProvider } from '@/components/layout/SpotsProvider';
 import './globals.css';
 
@@ -94,12 +95,13 @@ export default function RootLayout({
 
 async function RootDataProviders({ children }: { children: React.ReactNode }) {
   await connection();
-  const [spotsResult, initialWeather, initialUser, initialRegions, presetImagesRepo] =
+  const [spotsResult, initialWeather, initialUser, initialRegions, initialSpotTypes, presetImagesRepo] =
     await Promise.all([
       getSpotRepositoryAsync(),
       getWeatherForAllSpots(),
       getServerUserFromCookies(),
       getRegionsForClient(),
+      getSpotTypesForClient(),
       getPresetImagesRepositoryAsync(),
     ]);
   const { items: initialSpots } = await spotsResult.list();
@@ -122,6 +124,7 @@ async function RootDataProviders({ children }: { children: React.ReactNode }) {
       initialSpots={initialSpots}
       initialRegions={initialRegions}
       initialPresetImages={initialPresetImages}
+      initialSpotTypes={initialSpotTypes}
       initialWeather={initialWeather}
       initialUser={initialUser}
       initialSavedSpots={initialSavedSpots}

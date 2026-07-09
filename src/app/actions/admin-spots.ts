@@ -42,6 +42,27 @@ function readSports(form: FormData): SportDiscipline[] {
 }
 
 /**
+ * Cached lookup of the current set of valid `spot_types` slugs. Used
+ * to validate incoming `type` values from forms before they reach the
+ * repository (the DB has a FK with `onDelete: "restrict"`, but we'd
+ * rather throw a clean error than surface a constraint violation).
+ */
+async function getValidSpotTypeSlugs(): Promise<ReadonlySet<string>> {
+  const repo = await getSpotRepositoryAsync()
+  const rows = await repo.listAllSpotTypes()
+  return new Set(rows.map((r) => r.slug))
+}
+
+function assertValidSpotType(
+  type: string,
+  validSlugs: ReadonlySet<string>,
+): void {
+  if (!validSlugs.has(type)) {
+    throw new Error(`Unknown spot type: ${type}`)
+  }
+}
+
+/**
  * Reverse-geocoded address returned by `/api/geocode/reverse`. Embedded
  * in the action so the form can be auto-populated on the new-spot page
  * without a second round trip.
@@ -54,7 +75,7 @@ export type LookupAddress = ProjectedAddress
  * classifier server-side and returns the default spot type. The admin
  * can override it on the form.
  */
-function defaultTypeFromLookup(raw: unknown): Spot["type"] | null {
+function defaultTypeFromLookup(raw: unknown): string | null {
   if (!raw || typeof raw !== "object") return null
   return classifySpotType(raw as Parameters<typeof classifySpotType>[0])
 }
@@ -91,7 +112,7 @@ export async function createSpotFromLookupAction(
   const city = strField(formData, "city")
   const name = strField(formData, "name")
   const address = strField(formData, "address")
-  const type = (strField(formData, "type") || "Plaza") as Spot["type"]
+  const type = strField(formData, "type")
   const imageUrl = strField(formData, "imageUrl")
   const country = strField(formData, "country")
   const countryCode = strField(formData, "countryCode").toUpperCase()
@@ -104,6 +125,9 @@ export async function createSpotFromLookupAction(
   const providedCitySlug = strField(formData, "citySlug") || deriveCitySlug(city)
   const lat = numberField(formData, "lat")
   const lon = numberField(formData, "lon")
+
+  const validSpotTypeSlugs = await getValidSpotTypeSlugs()
+  assertValidSpotType(type, validSpotTypeSlugs)
 
   const input = {
     id: providedId,
@@ -144,7 +168,8 @@ export async function updateSpotAction(
   if (text("city")) patch.city = text("city")
   if (text("citySlug")) patch.citySlug = text("citySlug")
   if (text("address")) patch.address = text("address")
-  if (text("type")) patch.type = text("type")
+  const incomingType = text("type")
+  if (incomingType) patch.type = incomingType
   if (text("imageUrl")) patch.image = text("imageUrl")
   if (text("country")) patch.country = text("country")
   const countryCode = strField(formData, "countryCode").toUpperCase()
@@ -169,6 +194,11 @@ export async function updateSpotAction(
     }
   }
 
+  if (incomingType) {
+    const validSpotTypeSlugs = await getValidSpotTypeSlugs()
+    assertValidSpotType(incomingType, validSpotTypeSlugs)
+  }
+
   const parsed = SpotPatchSchema.parse(patch)
   const repo = await getSpotRepositoryAsync()
   const spot = await repo.update(id, parsed)
@@ -188,10 +218,13 @@ export async function deleteSpotAction(id: string): Promise<void> {
 /**
  * Exposed so the new-spot page can run the Nominatim → SpotType mapping
  * server-side without re-implementing the heuristic on the client.
+ * Returns the spot type slug (e.g. "plaza"); falls back to "plaza"
+ * (the first row seeded by `src/db/seed-data/taxonomy.ts`) if the
+ * classifier yields nothing.
  */
 export async function defaultSpotTypeForLookup(
   rawNominatim: unknown,
-): Promise<Spot["type"]> {
+): Promise<string> {
   await requireAdmin()
-  return defaultTypeFromLookup(rawNominatim) ?? "Plaza"
+  return defaultTypeFromLookup(rawNominatim) ?? "plaza"
 }

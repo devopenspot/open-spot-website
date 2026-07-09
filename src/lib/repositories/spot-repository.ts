@@ -9,6 +9,9 @@ export interface SpotRepository {
   listCountries(): Promise<readonly { name: string; region: string; count: number }[]>
   listCountriesForRegion(region: string): Promise<readonly { name: string; count: number }[]>
   listTypes(): Promise<readonly { name: Spot['type']; count: number }[]>
+  listAllSpotTypes(): Promise<
+    readonly { slug: string; name: string; sortOrder: number }[]
+  >
   listRegions(): Promise<readonly { name: string; countryCount: number; spotCount: number }[]>
   create(input: NewSpot): Promise<Spot>
   update(id: string, patch: SpotPatch): Promise<Spot>

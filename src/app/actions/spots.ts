@@ -53,7 +53,7 @@ export async function createSpotAction(formData: FormData): Promise<Spot> {
   const city = strField(formData, "city")
   const name = strField(formData, "name")
   const address = strField(formData, "address")
-  const type = strField(formData, "type") as Spot["type"]
+  const type = strField(formData, "type")
   const imageUrl = strField(formData, "imageUrl")
   const country = strField(formData, "country")
   const communityNote = strField(formData, "communityNote")

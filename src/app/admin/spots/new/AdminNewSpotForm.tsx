@@ -7,13 +7,12 @@ import { createSpotFromLookupAction } from "@/app/actions/admin-spots"
 import { SpotFormFields, type SpotFormState } from "@/components/admin/spots/SpotFormFields"
 import { SpotFormSubmit } from "@/components/admin/spots/SpotFormSubmit"
 import type { ProjectedAddress } from "@/lib/geocode/project"
-import type { TerrainOption } from "@/lib/types"
+import type { SpotTypeEntity } from "@/lib/types"
 import type { SportDiscipline } from "@/types/sport-events"
 
 const FEATURE_DEFAULTS = ["Smooth Concrete"]
-const INITIAL_TYPE = "Plaza" as const
 
-function buildInitialState(): SpotFormState {
+function buildInitialState(initialTypeSlug: string): SpotFormState {
   return {
     name: "",
     city: "",
@@ -21,7 +20,7 @@ function buildInitialState(): SpotFormState {
     address: "",
     country: "",
     countryCode: "",
-    type: INITIAL_TYPE,
+    type: initialTypeSlug,
     features: [...FEATURE_DEFAULTS],
     sports: [],
     communityNote: "",
@@ -80,12 +79,18 @@ function buildFormData(state: SpotFormState): FormData {
 }
 
 interface AdminNewSpotFormProps {
-  terrainOptions: readonly TerrainOption[]
+  spotTypes: readonly SpotTypeEntity[]
+  initialTypeSlug: string | null
 }
 
-export function AdminNewSpotForm({ terrainOptions }: AdminNewSpotFormProps) {
+export function AdminNewSpotForm({
+  spotTypes,
+  initialTypeSlug,
+}: AdminNewSpotFormProps) {
   const router = useRouter()
-  const [state, setState] = useState<SpotFormState>(buildInitialState())
+  const [state, setState] = useState<SpotFormState>(
+    buildInitialState(initialTypeSlug ?? ""),
+  )
 
   const handleError = (message: string) => {
     showToast(message, "error")
@@ -132,7 +137,7 @@ export function AdminNewSpotForm({ terrainOptions }: AdminNewSpotFormProps) {
           latLonMode="auto-fill"
           onAutoFillResult={(address) => setState((s) => applyAddress(s, address))}
           onError={handleError}
-          terrainOptions={terrainOptions}
+          spotTypes={spotTypes}
         />
         <SpotFormSubmit
           state={state}

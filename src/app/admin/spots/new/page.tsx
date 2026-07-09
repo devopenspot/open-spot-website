@@ -1,5 +1,5 @@
 import { getSpotRepositoryAsync } from "@/lib/repositories"
-import type { TerrainOption } from "@/lib/types"
+import type { SpotTypeEntity } from "@/lib/types"
 import { AdminNewSpotForm } from "./AdminNewSpotForm"
 
 export const metadata = {
@@ -8,10 +8,16 @@ export const metadata = {
 
 export default async function AdminNewSpotPage() {
   const repo = await getSpotRepositoryAsync()
-  const facets = await repo.listTypes()
-  const terrainOptions: readonly TerrainOption[] = facets.map((f) => ({
-    value: f.name,
-    label: f.name,
+  const spotTypes = await repo.listAllSpotTypes()
+  const spotTypeOptions: readonly SpotTypeEntity[] = spotTypes.map((t) => ({
+    slug: t.slug,
+    name: t.name,
   }))
-  return <AdminNewSpotForm terrainOptions={terrainOptions} />
+  const initialTypeSlug = spotTypeOptions[0]?.slug ?? null
+  return (
+    <AdminNewSpotForm
+      spotTypes={spotTypeOptions}
+      initialTypeSlug={initialTypeSlug}
+    />
+  )
 }

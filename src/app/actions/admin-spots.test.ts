@@ -47,7 +47,8 @@ const createdSpot = {
   city: "Lyon",
   citySlug: "lyon",
   address: "10 Rue de la République",
-  type: "Plaza" as const,
+  type: "Plaza",
+  typeSlug: "plaza",
   features: ["Smooth Concrete"],
   sports: ["Skateboard"] as const,
   image: "https://example.com/img.png",
@@ -64,6 +65,7 @@ const createdSpot = {
 let createMock: ReturnType<typeof vi.fn>
 let updateMock: ReturnType<typeof vi.fn>
 let deleteMock: ReturnType<typeof vi.fn>
+let listAllSpotTypesMock: ReturnType<typeof vi.fn>
 
 beforeEach(() => {
   vi.resetAllMocks()
@@ -71,10 +73,20 @@ beforeEach(() => {
   createMock = vi.fn().mockResolvedValue(createdSpot)
   updateMock = vi.fn().mockResolvedValue({ ...createdSpot, name: "UPDATED" })
   deleteMock = vi.fn().mockResolvedValue(undefined)
+  listAllSpotTypesMock = vi.fn().mockResolvedValue([
+    { slug: "plaza", name: "Plaza", sortOrder: 0 },
+    { slug: "diy", name: "DIY", sortOrder: 1 },
+    { slug: "stair", name: "Stair", sortOrder: 2 },
+    { slug: "bowl", name: "Bowl", sortOrder: 3 },
+    { slug: "park", name: "Park", sortOrder: 4 },
+    { slug: "ledges", name: "Ledges", sortOrder: 5 },
+    { slug: "pools", name: "Pools", sortOrder: 6 },
+  ])
   getSpotRepositoryAsyncMock.mockResolvedValue({
     create: createMock,
     update: updateMock,
     delete: deleteMock,
+    listAllSpotTypes: listAllSpotTypesMock,
   })
   uploadSpotImageMock.mockResolvedValue({
     path: "spots/abc/photo.jpg",
@@ -95,7 +107,7 @@ describe("createSpotFromLookupAction", () => {
       ["name", "Test"],
       ["city", "Lyon"],
       ["address", "10 Rue"],
-      ["type", "Plaza"],
+      ["type", "plaza"],
       ["imageUrl", "https://example.com/img.png"],
       ["lat", "45.7"],
       ["lon", "4.8"],
@@ -109,7 +121,7 @@ describe("createSpotFromLookupAction", () => {
       ["name", "Test Spot"],
       ["city", "Lyon"],
       ["address", "10 Rue de la République"],
-      ["type", "Plaza"],
+      ["type", "plaza"],
       ["imageUrl", "https://example.com/img.png"],
       ["features", "Smooth Concrete,Red Curb"],
       ["sports", "Skateboard"],
@@ -129,7 +141,7 @@ describe("createSpotFromLookupAction", () => {
       name: "Test Spot",
       city: "Lyon",
       address: "10 Rue de la République",
-      type: "Plaza",
+      type: "plaza",
       image: "https://example.com/img.png",
       features: ["Smooth Concrete", "Red Curb"],
       sports: ["Skateboard", "BMX"],
@@ -143,12 +155,28 @@ describe("createSpotFromLookupAction", () => {
     expect(revalidatePathMock).toHaveBeenCalledWith("/admin/spots")
   })
 
+  it("rejects an unknown spot type before writing", async () => {
+    const fd = makeFormData([
+      ["name", "Test Spot"],
+      ["city", "Lyon"],
+      ["address", "10 Rue"],
+      ["type", "not-a-real-type"],
+      ["imageUrl", "https://example.com/img.png"],
+      ["lat", "45.7"],
+      ["lon", "4.8"],
+    ])
+    await expect(createSpotFromLookupAction(fd)).rejects.toThrow(
+      "Unknown spot type",
+    )
+    expect(createMock).not.toHaveBeenCalled()
+  })
+
   it("normalizes a lowercase countryCode from the form to uppercase ISO", async () => {
     const fd = makeFormData([
       ["name", "Tokyo Spot"],
       ["city", "Tokyo"],
       ["address", "Aomi"],
-      ["type", "Park"],
+      ["type", "park"],
       ["imageUrl", "https://example.com/img.png"],
       ["country", "Japon"],
       ["countryCode", "jp"],
@@ -167,7 +195,7 @@ describe("createSpotFromLookupAction", () => {
       ["name", "Test"],
       ["city", "Lyon"],
       ["address", "10 Rue"],
-      ["type", "Plaza"],
+      ["type", "plaza"],
       ["imageUrl", "https://example.com/img.png"],
       ["lat", "45.7"],
       ["lon", "4.8"],

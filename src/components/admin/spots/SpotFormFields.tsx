@@ -10,7 +10,7 @@ import {
   type LatLonEditorMode,
 } from "./LatLonEditor"
 import type { ProjectedAddress } from "@/lib/geocode/project"
-import type { SpotType, TerrainOption } from "@/lib/types"
+import type { SpotTypeEntity } from "@/lib/types"
 
 export interface SpotFormState {
   name: string
@@ -19,7 +19,7 @@ export interface SpotFormState {
   address: string
   country: string
   countryCode: string
-  type: SpotType
+  type: string
   features: string[]
   sports: SportDiscipline[]
   communityNote: string
@@ -52,10 +52,10 @@ interface SpotFormFieldsProps {
   onError?: (message: string) => void
   /**
    * The available spot types for the type dropdown. The server page
-   * fetches this from the `spot_types` DB table via `repo.listTypes()`
-   * and passes it down.
+   * fetches this from the `spot_types` DB table via
+   * `repo.listAllSpotTypes()` and passes it down.
    */
-  terrainOptions: readonly TerrainOption[]
+  spotTypes: readonly SpotTypeEntity[]
 }
 
 export function SpotFormFields({
@@ -65,7 +65,7 @@ export function SpotFormFields({
   latLonMode = "preview",
   onAutoFillResult,
   onError,
-  terrainOptions,
+  spotTypes,
 }: SpotFormFieldsProps) {
   const nameId = useId()
   const typeId = useId()
@@ -149,12 +149,12 @@ export function SpotFormFields({
           <select
             id={typeId}
             value={state.type}
-            onChange={(e) => update("type", e.target.value as SpotType)}
+            onChange={(e) => update("type", e.target.value)}
             className="w-full rounded-lg border border-outline-variant bg-surface-bright p-3 text-xs font-medium text-on-surface shadow-sm focus:border-outline focus:outline-none"
           >
-            {terrainOptions.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label.toUpperCase()}
+            {spotTypes.map((opt) => (
+              <option key={opt.slug} value={opt.slug}>
+                {opt.name.toUpperCase()}
               </option>
             ))}
           </select>

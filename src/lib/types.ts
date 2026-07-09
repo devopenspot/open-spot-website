@@ -13,14 +13,18 @@ export interface SpotForecast {
   temp: number;
 }
 
-export type SpotType =
-  | "Plaza"
-  | "DIY"
-  | "Stair"
-  | "Bowl"
-  | "Park"
-  | "Ledges"
-  | "Pools";
+/**
+ * Canonical identifier for a spot category. The set of valid values is
+ * the `spot_types` DB table; the value itself is the row's `slug`
+ * (e.g. "plaza", "bowl"). The display name (e.g. "Plaza") is read from
+ * `SpotTypeEntity` (sourced from the same table).
+ */
+export type SpotType = string;
+
+export interface SpotTypeEntity {
+  slug: string;
+  name: string;
+}
 
 export interface SpotLocation {
   lat: number;
@@ -34,7 +38,8 @@ export interface Spot {
   city: string;
   citySlug: string;
   address: string;
-  type: SpotType;
+  type: string;
+  typeSlug: string;
   features: readonly string[];
   sports: readonly SportDiscipline[];
   image: string;
@@ -70,9 +75,4 @@ export interface PresetImage {
   slug?: string;
   name: string;
   url: string;
-}
-
-export interface TerrainOption {
-  value: SpotType;
-  label: string;
 }

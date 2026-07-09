@@ -13,6 +13,7 @@ function makeSpot(id: string, lat: number, lon: number): Spot {
     citySlug: "city",
     address: "1 Main St",
     type: "Plaza",
+    typeSlug: "plaza",
     features: ["Smooth Concrete"],
     sports: [],
     image: "https://example.com/img.png",

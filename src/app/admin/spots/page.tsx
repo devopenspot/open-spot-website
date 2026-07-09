@@ -3,7 +3,6 @@ import { Plus } from "lucide-react"
 import { getSpotRepositoryAsync } from "@/lib/repositories"
 import { SpotTable } from "@/components/admin/spots/SpotTable"
 import { SpotTableFilters } from "@/components/admin/spots/SpotTableFilters"
-import type { SpotType } from "@/lib/types"
 
 interface AdminSpotsPageProps {
   searchParams: Promise<{
@@ -20,7 +19,7 @@ export const metadata = {
 export default async function AdminSpotsPage({ searchParams }: AdminSpotsPageProps) {
   const params = await searchParams
   const q = (params.q ?? "").trim()
-  const type: SpotType | undefined = (params.type as SpotType | undefined) || undefined
+  const type = (params.type ?? "").trim() || undefined
   const country = (params.country ?? "").trim()
 
   const repo = await getSpotRepositoryAsync()

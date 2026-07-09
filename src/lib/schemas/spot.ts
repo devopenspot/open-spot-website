@@ -1,15 +1,12 @@
 import { z } from "zod";
 import { SportDisciplineSchema } from "./event";
 
-export const SpotTypeSchema = z.enum([
-  "Plaza",
-  "DIY",
-  "Stair",
-  "Bowl",
-  "Park",
-  "Ledges",
-  "Pools",
-]);
+/**
+ * Spot category identifier. The set of valid values lives in the
+ * `spot_types` DB table — the runtime server action validates the
+ * incoming string against that set. This schema only enforces "non-empty".
+ */
+export const SpotTypeSchema = z.string().min(1);
 
 export const SpotLocationSchema = z.object({
   lat: z.number(),
