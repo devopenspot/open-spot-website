@@ -88,9 +88,9 @@ const COUNTRY_SEED = buildCountrySeed()
 const SPOT_TYPE_SEED: readonly TaxonomyEntry[] = [
   { slug: "plaza", name: "Plaza", sortOrder: 0 },
   { slug: "diy", name: "DIY", sortOrder: 1 },
-  { slug: "stair", name: "Stair set", sortOrder: 2 },
+  { slug: "stair", name: "Stair", sortOrder: 2 },
   { slug: "bowl", name: "Bowl", sortOrder: 3 },
-  { slug: "park", name: "Skatepark", sortOrder: 4 },
+  { slug: "park", name: "Park", sortOrder: 4 },
   { slug: "ledges", name: "Ledges", sortOrder: 5 },
   { slug: "pools", name: "Pools", sortOrder: 6 },
 ]
