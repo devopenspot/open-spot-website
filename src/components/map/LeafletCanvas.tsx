@@ -20,7 +20,7 @@ import {
 } from 'react-leaflet';
 import L from 'leaflet';
 import type { Spot, WeatherIconName } from '@/lib/types';
-import type { CachedSpotWeather } from '@/lib/weather/weather-cached';
+import type { SpotWeather } from '@/lib/weather/weather-cached';
 import { weatherIconGlyph } from '@/components/spot/WeatherIcon';
 
 const FOCUS_ZOOM = 13;
@@ -105,7 +105,7 @@ function pinSize(active: boolean): { size: [number, number]; anchor: [number, nu
   return { size: [24, 38], anchor: [12, 12] };
 }
 
-function pickWeatherName(spot: Spot, weather: Record<string, CachedSpotWeather> | undefined): WeatherIconName | null {
+function pickWeatherName(spot: Spot, weather: Record<string, SpotWeather> | undefined): WeatherIconName | null {
   if (!weather) return null;
   const w = weather[spot.id];
   if (!w) return null;
@@ -130,7 +130,7 @@ interface LeafletCanvasProps {
   spots: readonly Spot[];
   activeId: string | null;
   savedIds?: ReadonlySet<string>;
-  weather?: Record<string, CachedSpotWeather>;
+  weather?: Record<string, SpotWeather>;
   onTogglePin: (spot: Spot) => void;
   userLocation?: LeafletUserLocation | null;
   radiusMeters?: number;
@@ -312,7 +312,7 @@ function buildRenderedMarkers(
   spots: readonly Spot[],
   activeId: string | null,
   savedIds: ReadonlySet<string>,
-  weather: Record<string, CachedSpotWeather> | undefined,
+  weather: Record<string, SpotWeather> | undefined,
   zoom: number,
 ): RenderedMarker[] {
   if (zoom <= CLUSTER_ZOOM_MAX && spots.length > 1) {
@@ -352,7 +352,7 @@ function makeMarker(
   spot: Spot,
   activeId: string | null,
   savedIds: ReadonlySet<string>,
-  weather: Record<string, CachedSpotWeather> | undefined,
+  weather: Record<string, SpotWeather> | undefined,
 ): RenderedMarker {
   const active = spot.id === activeId;
   const saved = !active && savedIds.has(spot.id);

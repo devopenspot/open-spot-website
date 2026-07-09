@@ -1,6 +1,6 @@
 "use server"
 
-import { revalidatePath, revalidateTag } from "next/cache"
+import { revalidatePath } from "next/cache"
 import { log } from "@/lib/log"
 import { requireAdmin } from "@/lib/auth/server"
 import { getSpotRepositoryAsync } from "@/lib/repositories"
@@ -126,7 +126,7 @@ export async function createSpotFromLookupAction(
   const parsed = NewSpotSchema.parse(input)
   const repo = await getSpotRepositoryAsync()
   const spot = await repo.create(parsed)
-  revalidateTag("spots", "max")
+  revalidatePath("/admin/spots")
   return spot
 }
 
@@ -168,8 +168,8 @@ export async function updateSpotAction(
   const parsed = SpotPatchSchema.parse(patch)
   const repo = await getSpotRepositoryAsync()
   const spot = await repo.update(id, parsed)
-  revalidateTag("spots", "max")
   revalidatePath(`/spots/${id}`)
+  revalidatePath("/admin/spots")
   return spot
 }
 
@@ -177,8 +177,8 @@ export async function deleteSpotAction(id: string): Promise<void> {
   await requireAdmin()
   const repo = await getSpotRepositoryAsync()
   await repo.delete(id)
-  revalidateTag("spots", "max")
   revalidatePath("/admin/spots")
+  revalidatePath("/")
 }
 
 /**
@@ -191,5 +191,3 @@ export async function defaultSpotTypeForLookup(
   await requireAdmin()
   return defaultTypeFromLookup(rawNominatim) ?? "Plaza"
 }
-
-void revalidatePath

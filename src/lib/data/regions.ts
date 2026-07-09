@@ -1,5 +1,6 @@
 import "server-only"
 import { asc, eq } from "drizzle-orm"
+import { connection } from "next/server"
 import { getDbClient } from "@/lib/db/client"
 import { getSpotRepositoryAsync } from "@/lib/repositories"
 import { countries, regions } from "@/db/schema"
@@ -27,6 +28,7 @@ function formatCount(spotCount: number): string {
  * spots store.
  */
 export async function getRegionsForClient(): Promise<readonly Region[]> {
+  await connection()
   const { db } = getDbClient()
   const rows = await db
     .select({

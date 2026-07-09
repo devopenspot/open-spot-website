@@ -1,11 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
-import { revalidatePath, revalidateTag } from "next/cache"
+import { revalidatePath } from "next/cache"
 import { DEV_USER_ID, type User } from "@/lib/user"
 
 const requireAdminMock = vi.fn()
 const getSpotRepositoryAsyncMock = vi.fn()
 const uploadSpotImageMock = vi.fn()
-const revalidateTagMock = vi.fn()
 const revalidatePathMock = vi.fn()
 
 vi.mock("@/lib/auth/server", () => ({
@@ -21,11 +20,9 @@ vi.mock("@/lib/supabase/storage", () => ({
 }))
 
 vi.mock("next/cache", () => ({
-  revalidateTag: (...args: unknown[]) => revalidateTagMock(...args),
   revalidatePath: (...args: unknown[]) => revalidatePathMock(...args),
 }))
 
-void revalidateTag
 void revalidatePath
 
 import {
@@ -107,7 +104,7 @@ describe("createSpotFromLookupAction", () => {
     expect(getSpotRepositoryAsyncMock).not.toHaveBeenCalled()
   })
 
-  it("creates a spot with the parsed input and bumps spots cache", async () => {
+  it("creates a spot with the parsed input and revalidates affected paths", async () => {
     const fd = makeFormData([
       ["name", "Test Spot"],
       ["city", "Lyon"],
@@ -139,7 +136,7 @@ describe("createSpotFromLookupAction", () => {
       createdBy: adminUser.id,
     })
     expect(parsed?.citySlug).toBe("lyon")
-    expect(revalidateTagMock).toHaveBeenCalledWith("spots", "max")
+    expect(revalidatePathMock).toHaveBeenCalledWith("/admin/spots")
   })
 
   it("omits the file upload path when no file is present", async () => {
@@ -183,8 +180,8 @@ describe("updateSpotAction", () => {
       crowdLevel: 85,
       crowdLevelLabel: "High (Busy)",
     })
-    expect(revalidateTagMock).toHaveBeenCalledWith("spots", "max")
     expect(revalidatePathMock).toHaveBeenCalledWith("/spots/spot-1")
+    expect(revalidatePathMock).toHaveBeenCalledWith("/admin/spots")
   })
 
   it("threads the sports array when present", async () => {
@@ -206,10 +203,10 @@ describe("deleteSpotAction", () => {
     expect(getSpotRepositoryAsyncMock).not.toHaveBeenCalled()
   })
 
-  it("deletes the spot and bumps the spots cache", async () => {
+  it("deletes the spot and revalidates the affected paths", async () => {
     await deleteSpotAction("spot-1")
     expect(deleteMock).toHaveBeenCalledWith("spot-1")
-    expect(revalidateTagMock).toHaveBeenCalledWith("spots", "max")
     expect(revalidatePathMock).toHaveBeenCalledWith("/admin/spots")
+    expect(revalidatePathMock).toHaveBeenCalledWith("/")
   })
 })

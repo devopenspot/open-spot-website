@@ -16,9 +16,6 @@ const EnvSchema = z
       .default("https://openweathermap.org/payload/api/media/file"),
     API_KEY_WEATHER: z.string().default(""),
 
-    // Weather cache busting
-    REVALIDATE_SECRET: z.string().default(""),
-
     // Nominatim
     NOMINATIM_URL: z
       .string()
@@ -28,10 +25,12 @@ const EnvSchema = z
       .string()
       .default("open-spot-website/1.0 (contact@example.com)"),
 
-    // Postgres — local docker default; Supabase overrides below.
-    DATABASE_URL: z
-      .string()
-      .default("postgresql://dev:dev@localhost:5432/app"),
+    // Postgres — single source of connection for dev and Vercel. The
+    // runtime (Drizzle client), the build (none), and the dev-console
+    // scripts (`db:seed`, `db:apply`, `db:health`) all read through
+    // `getDatabaseUrl()`, which resolves `SUPABASE_DIRECT_URL` first.
+    // No docker default — local dev points at the same Supabase project.
+    DATABASE_URL: z.string().optional(),
 
     // Supabase server-only admin key (`sb_secret_...`). Used only for
     // server-side admin operations (e.g. upserting into `profiles` with
@@ -86,12 +85,17 @@ function readEnv() {
 export const env = readEnv()
 
 /**
- * Postgres URL used by the runtime Drizzle client + the apply-sql runner.
+ * Postgres URL used by the runtime Drizzle client + the dev-console scripts
+ * (`db:seed`, `db:apply`, `db:health`).
+ *
+ * Single source of connection: `SUPABASE_DIRECT_URL` is set in both local
+ * dev and Vercel to the same value (dev and prod share the Supabase
+ * project). The build is DB-free and never calls this.
  *
  * Resolution order:
- *   1. SUPABASE_DIRECT_URL (SPEC §E.4 preferred name)
- *   2. DB_CONNETION_STRING (typo, kept for CI / existing operator setups)
- *   3. DATABASE_URL (local docker default)
+ *   1. SUPABASE_DIRECT_URL (port 5432, direct — the only runtime URL)
+ *   2. DB_CONNETION_STRING (legacy typo, kept for CI / existing operators)
+ *   3. DATABASE_URL (optional escape hatch for non-Supabase setups)
  */
 export function getDatabaseUrl(): string | null {
   return (

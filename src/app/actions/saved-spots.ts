@@ -1,6 +1,6 @@
 "use server"
 
-import { revalidatePath, revalidateTag } from "next/cache"
+import { revalidatePath } from "next/cache"
 import { requireUser } from "@/lib/auth/server"
 import { getSavedSpotsRepositoryAsync, getSpotRepositoryAsync } from "@/lib/repositories"
 import { log } from "@/lib/log"
@@ -17,7 +17,6 @@ export async function toggleSavedAction(spotId: string): Promise<boolean> {
   } else {
     await repo.save(user.id, spotId)
   }
-  revalidateTag(`saved-spots:${user.id}`, "max")
   revalidatePath("/saved")
   return !isSaved
 }

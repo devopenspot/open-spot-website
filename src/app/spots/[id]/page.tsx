@@ -1,20 +1,16 @@
 import { notFound } from 'next/navigation';
+import { connection } from 'next/server';
 import type { Metadata } from 'next';
 import { getSpotRepositoryAsync } from '@/lib/repositories';
 import { getSpotDistanceLabel } from '@/lib/spots/geo';
 import { SpotDetailsFullPage } from '@/components/spot/SpotDetailsFullPage';
-
-export async function generateStaticParams() {
-  const repo = await getSpotRepositoryAsync();
-  const { items } = await repo.list();
-  return items.map(spot => ({ id: spot.id }));
-}
 
 export async function generateMetadata({
   params,
 }: {
   params: Promise<{ id: string }>;
 }): Promise<Metadata> {
+  await connection();
   const { id } = await params;
   const spot = await (await getSpotRepositoryAsync()).findById(id);
   if (!spot) {
@@ -36,6 +32,7 @@ export default async function SpotPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  await connection();
   const { id } = await params;
   const spot = await (await getSpotRepositoryAsync()).findById(id);
   if (!spot) {

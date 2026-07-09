@@ -2,7 +2,7 @@
 
 import { useEffect, type ReactNode } from 'react';
 import type { Spot, Region, PresetImage } from '@/lib/types';
-import type { CachedSpotWeather } from '@/lib/weather/weather-cached';
+import type { SpotWeather } from '@/lib/weather/weather-cached';
 import type { User } from '@/lib/user';
 import { useSpotsStore } from '@/stores/spots-store';
 import { HydrationGate } from '@/stores/HydrationGate';
@@ -25,7 +25,7 @@ export function SpotsProvider({
   initialSpots: readonly Spot[];
   initialRegions: readonly Region[];
   initialPresetImages: readonly PresetImage[];
-  initialWeather: Record<string, CachedSpotWeather>;
+  initialWeather: Record<string, SpotWeather>;
   initialUser: User;
   initialSavedSpots?: readonly SavedSpot[];
 }) {

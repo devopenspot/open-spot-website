@@ -10,13 +10,13 @@ import { cn } from "@/lib/cn";
 import { CROWD_LEVEL } from "@/lib/constants";
 import { getSpotDistanceLabel } from "@/lib/spots/geo";
 import type { Spot } from "@/lib/types";
-import type { CachedSpotWeather } from "@/lib/weather/weather-cached";
+import type { SpotWeather } from "@/lib/weather/weather-cached";
 
 interface SpotDetailsContentProps {
   spot: Spot;
   isSaved: boolean;
   onToggleSave: (id: string) => void;
-  weather?: CachedSpotWeather;
+  weather?: SpotWeather;
 }
 
 export function SpotDetailsContent({

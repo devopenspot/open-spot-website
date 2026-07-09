@@ -1,6 +1,5 @@
 import { and, asc, eq, inArray, sql, type SQL } from "drizzle-orm"
 import { drizzle } from "drizzle-orm/postgres-js"
-import { cacheTag, cacheLife } from "next/cache"
 import {
   countries,
   regions,
@@ -59,10 +58,7 @@ function featureTitleToSlug(title: string): string {
   return title.toLowerCase().replace(/\s+/g, "-")
 }
 
-async function getCachedPresetImageUrls(): Promise<readonly { url: string }[]> {
-  "use cache"
-  cacheTag("preset-images")
-  cacheLife({ revalidate: 60, stale: 60, expire: 600 })
+async function getPresetImageUrls(): Promise<readonly { url: string }[]> {
   const repo = await getPresetImagesRepositoryAsync()
   const rows = await repo.list()
   return rows.map((r) => ({ url: r.url }))
@@ -296,7 +292,7 @@ export class DrizzleSpotRepository implements SpotRepository {
       typeSlug,
       imageUrl: input.imagePath
         ? input.image
-        : input.image || pickFallbackImage(id, await getCachedPresetImageUrls()),
+        : input.image || pickFallbackImage(id, await getPresetImageUrls()),
       imagePath: input.imagePath ?? null,
       communityNote: input.communityNote,
       crowdLevel: input.crowdLevel,
@@ -331,7 +327,7 @@ export class DrizzleSpotRepository implements SpotRepository {
     }
     if (patch.image !== undefined) {
       setValues.imageUrl =
-        patch.image || pickFallbackImage(id, await getCachedPresetImageUrls())
+        patch.image || pickFallbackImage(id, await getPresetImageUrls())
     }
     if (patch.communityNote !== undefined)
       setValues.communityNote = patch.communityNote

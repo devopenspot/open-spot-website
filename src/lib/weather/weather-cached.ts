@@ -1,16 +1,15 @@
-import { cacheLife, cacheTag } from "next/cache"
 import { fetchCurrentWeather } from "./weather-current"
 import { fetchForecast } from "./weather-forecast"
 import { mapCurrentWeather, mapForecast } from "./mappers"
 import type { SpotForecast } from "@/lib/types"
 
-export interface CachedSpotWeather {
+export interface SpotWeather {
 	current: number
 	forecast: SpotForecast[]
 	fetchedAt: number
 }
 
-export async function getCachedSpotWeather({
+export async function getSpotWeather({
 	spotId,
 	latitude,
 	longitude,
@@ -18,15 +17,7 @@ export async function getCachedSpotWeather({
 	spotId: string
 	latitude: number
 	longitude: number
-}): Promise<CachedSpotWeather> {
-	"use cache"
-	cacheTag("weather", `weather:spot:${spotId}`)
-	cacheLife({
-		revalidate: 300,
-		stale: 300,
-		expire: 3600,
-	})
-
+}): Promise<SpotWeather> {
 	const [current, forecast] = await Promise.all([
 		fetchCurrentWeather({ latitude, longitude }),
 		fetchForecast({ latitude, longitude }),

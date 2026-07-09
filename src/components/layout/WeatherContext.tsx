@@ -1,11 +1,11 @@
 'use client';
 
 import { createContext, useCallback, useContext, useMemo, type ReactNode } from 'react';
-import type { CachedSpotWeather } from '@/lib/weather/weather-cached';
+import type { SpotWeather } from '@/lib/weather/weather-cached';
 
 interface WeatherContextValue {
-  weather: Record<string, CachedSpotWeather>;
-  getWeather: (id: string) => CachedSpotWeather | undefined;
+  weather: Record<string, SpotWeather>;
+  getWeather: (id: string) => SpotWeather | undefined;
 }
 
 const WeatherCtx = createContext<WeatherContextValue | null>(null);
@@ -14,7 +14,7 @@ export function WeatherProvider({
   initialWeather,
   children,
 }: {
-  initialWeather: Record<string, CachedSpotWeather>;
+  initialWeather: Record<string, SpotWeather>;
   children: ReactNode;
 }) {
   const getWeather = useCallback(

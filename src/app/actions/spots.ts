@@ -1,6 +1,5 @@
 "use server"
 
-import { revalidateTag } from "next/cache"
 import { log } from "@/lib/log"
 import { NewSpotSchema } from "@/lib/schemas/spot"
 import { getSpotRepositoryAsync } from "@/lib/repositories"
@@ -86,6 +85,5 @@ export async function createSpotAction(formData: FormData): Promise<Spot> {
   const parsed = NewSpotSchema.parse(input)
   const repo = await getSpotRepositoryAsync()
   const spot = await repo.create(parsed)
-  revalidateTag("spots", "max")
   return spot
 }

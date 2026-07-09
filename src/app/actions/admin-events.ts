@@ -1,6 +1,6 @@
 "use server"
 
-import { revalidatePath, revalidateTag } from "next/cache"
+import { revalidatePath } from "next/cache"
 import { log } from "@/lib/log"
 import { requireAdmin } from "@/lib/auth/server"
 import { getEventRepositoryAsync } from "@/lib/repositories"
@@ -56,8 +56,8 @@ export async function createEventAction(formData: FormData): Promise<SportEvent>
   const parsed = NewSportEventSchema.parse(input)
   const repo = await getEventRepositoryAsync()
   const event = await repo.create(parsed)
-  revalidateTag("sport-events", "max")
   revalidatePath("/sport-events")
+  revalidatePath("/admin/events")
   return event
 }
 
@@ -93,8 +93,8 @@ export async function updateEventAction(
   const parsed = SportEventPatchSchema.parse(patch)
   const repo = await getEventRepositoryAsync()
   const event = await repo.update(id, parsed)
-  revalidateTag("sport-events", "max")
   revalidatePath("/sport-events")
+  revalidatePath("/admin/events")
   return event
 }
 
@@ -102,10 +102,8 @@ export async function deleteEventAction(id: string): Promise<void> {
   await requireAdmin()
   const repo = await getEventRepositoryAsync()
   await repo.delete(id)
-  revalidateTag("sport-events", "max")
   revalidatePath("/sport-events")
   revalidatePath("/admin/events")
 }
 
-void revalidatePath
 void log

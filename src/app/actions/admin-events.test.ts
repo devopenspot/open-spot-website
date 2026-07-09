@@ -3,7 +3,6 @@ import { DEV_USER_ID, type User } from "@/lib/user"
 
 const requireAdminMock = vi.fn()
 const getEventRepositoryAsyncMock = vi.fn()
-const revalidateTagMock = vi.fn()
 const revalidatePathMock = vi.fn()
 
 vi.mock("@/lib/auth/server", () => ({
@@ -15,7 +14,6 @@ vi.mock("@/lib/repositories", () => ({
 }))
 
 vi.mock("next/cache", () => ({
-  revalidateTag: (...args: unknown[]) => revalidateTagMock(...args),
   revalidatePath: (...args: unknown[]) => revalidatePathMock(...args),
 }))
 
@@ -98,7 +96,7 @@ describe("createEventAction", () => {
     expect(getEventRepositoryAsyncMock).not.toHaveBeenCalled()
   })
 
-  it("creates an event with the parsed input and bumps the cache", async () => {
+  it("creates an event with the parsed input and revalidates the affected paths", async () => {
     const fd = makeFormData([
       ["name", "World Skate Games 2026"],
       ["shortName", "WSG26"],
@@ -141,8 +139,8 @@ describe("createEventAction", () => {
       tier: "championship",
       featured: true,
     })
-    expect(revalidateTagMock).toHaveBeenCalledWith("sport-events", "max")
     expect(revalidatePathMock).toHaveBeenCalledWith("/sport-events")
+    expect(revalidatePathMock).toHaveBeenCalledWith("/admin/events")
   })
 
   it("omits the sports array when not provided", async () => {
@@ -184,7 +182,8 @@ describe("updateEventAction", () => {
       name: "Renamed",
       tier: "federation",
     })
-    expect(revalidateTagMock).toHaveBeenCalledWith("sport-events", "max")
+    expect(revalidatePathMock).toHaveBeenCalledWith("/sport-events")
+    expect(revalidatePathMock).toHaveBeenCalledWith("/admin/events")
   })
 
   it("threads the sports array when present", async () => {
@@ -216,10 +215,9 @@ describe("deleteEventAction", () => {
     expect(getEventRepositoryAsyncMock).not.toHaveBeenCalled()
   })
 
-  it("deletes the event and bumps the cache", async () => {
+  it("deletes the event and revalidates the affected paths", async () => {
     await deleteEventAction("event-1")
     expect(deleteMock).toHaveBeenCalledWith("event-1")
-    expect(revalidateTagMock).toHaveBeenCalledWith("sport-events", "max")
     expect(revalidatePathMock).toHaveBeenCalledWith("/sport-events")
     expect(revalidatePathMock).toHaveBeenCalledWith("/admin/events")
   })

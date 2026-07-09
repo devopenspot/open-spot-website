@@ -1,12 +1,12 @@
 import type { MetadataRoute } from 'next';
+import { connection } from 'next/server';
 import { env } from '@/lib/env';
 import { getSpotRepositoryAsync } from '@/lib/repositories';
-
-export const dynamic = 'force-static';
 
 const BASE_URL = env.APP_URL;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  await connection();
   const now = new Date();
   const staticEntries: MetadataRoute.Sitemap = [
     { url: `${BASE_URL}/`, lastModified: now, changeFrequency: 'daily', priority: 1 },

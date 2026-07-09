@@ -6,12 +6,12 @@ import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { useRef } from "react";
 import type { Spot } from "@/lib/types";
-import type { CachedSpotWeather } from "@/lib/weather/weather-cached";
+import type { SpotWeather } from "@/lib/weather/weather-cached";
 import { WeatherIcon } from "@/components/spot/WeatherIcon";
 
 interface MapInfoPopupProps {
   spot: Spot;
-  weather: Record<string, CachedSpotWeather>;
+  weather: Record<string, SpotWeather>;
   isSaved: boolean;
   onClose: () => void;
   onOpen: (spot: Spot) => void;

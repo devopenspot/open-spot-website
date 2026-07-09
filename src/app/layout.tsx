@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { Suspense } from 'react';
+import { connection } from 'next/server';
 import { Inter, Archivo_Narrow } from 'next/font/google';
 import { cn } from '@/lib/cn';
 import { env } from '@/lib/env';
@@ -92,6 +93,7 @@ export default function RootLayout({
 }
 
 async function RootDataProviders({ children }: { children: React.ReactNode }) {
+  await connection();
   const [spotsResult, initialWeather, initialUser, initialRegions, presetImagesRepo] =
     await Promise.all([
       getSpotRepositoryAsync(),
