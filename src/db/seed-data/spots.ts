@@ -9,10 +9,10 @@
 // Edit a row's literal fields here, then run `pnpm db:seed` to
 // update the row in place (`on conflict (slug) do update`).
 
-import type { NewSpot } from "@/lib/repositories/types"
-import type { SportDiscipline } from "@/types/sport-events"
+import type { NewSpot } from "@/lib/repositories/types";
+import type { SportDiscipline } from "@/types/sport-events";
 
-const SKATE: readonly SportDiscipline[] = ["Skateboard"]
+const SKATE: readonly SportDiscipline[] = ["Skateboard"];
 
 export const SOURCE_SPOTS: readonly NewSpot[] = [
   {
@@ -24,8 +24,10 @@ export const SOURCE_SPOTS: readonly NewSpot[] = [
     type: "plaza",
     features: ["smooth-concrete"],
     sports: [...SKATE],
-    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuBFcsJ_InsjM_V2ZhdORVirVciKPJ2Uqt5Jii3nfPULenttPQ0cUQzaa_C0Yc_NrAv1eAnHIeR8S04LjqVjCQuleF60loO-Mh7UEOwa--QIQwv3VaR_P4gt5B7jfu-3GeKqm5Rf-NV8q0xJxL_FX9JZR0_YLkAMpHPWfXRNDr5THXJbJawrNxG5oJYPI2YICMJAFHJPsYpbPdVHU8lTuqhXRgmObg3ZuVD7VNiZ6NjRXmQfSSW7vx2q43JFz7ckBgTcpMPRzkp67YMT",
-    communityNote: "Field notes from Lyon: ride it during low-traffic windows. — @placelouis",
+    image:
+      "https://lh3.googleusercontent.com/aida-public/AB6AXuBFcsJ_InsjM_V2ZhdORVirVciKPJ2Uqt5Jii3nfPULenttPQ0cUQzaa_C0Yc_NrAv1eAnHIeR8S04LjqVjCQuleF60loO-Mh7UEOwa--QIQwv3VaR_P4gt5B7jfu-3GeKqm5Rf-NV8q0xJxL_FX9JZR0_YLkAMpHPWfXRNDr5THXJbJawrNxG5oJYPI2YICMJAFHJPsYpbPdVHU8lTuqhXRgmObg3ZuVD7VNiZ6NjRXmQfSSW7vx2q43JFz7ckBgTcpMPRzkp67YMT",
+    communityNote:
+      "Field notes from Lyon: ride it during low-traffic windows. — @placelouis",
     crowdLevel: 28,
     crowdLevelLabel: "Low (Quiet Hours)",
     country: "France",
@@ -41,8 +43,10 @@ export const SOURCE_SPOTS: readonly NewSpot[] = [
     type: "park",
     features: ["rail", "slidebox", "mini-ramp", "street", "smooth-concrete"],
     sports: [...SKATE],
-    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuBFcsJ_InsjM_V2ZhdORVirVciKPJ2Uqt5Jii3nfPULenttPQ0cUQzaa_C0Yc_NrAv1eAnHIeR8S04LjqVjCQuleF60loO-Mh7UEOwa--QIQwv3VaR_P4gt5B7jfu-3GeKqm5Rf-NV8q0xJxL_FX9JZR0_YLkAMpHPWfXRNDr5THXJbJawrNxG5oJYPI2YICMJAFHJPsYpbPdVHU8lTuqhXRgmObg3ZuVD7VNiZ6NjRXmQfSSW7vx2q43JFz7ckBgTcpMPRzkp67YMT",
-    communityNote: "Local intel from Paris: ride it during open hours. — @bercyskatepark",
+    image:
+      "https://lh3.googleusercontent.com/aida-public/AB6AXuBFcsJ_InsjM_V2ZhdORVirVciKPJ2Uqt5Jii3nfPULenttPQ0cUQzaa_C0Yc_NrAv1eAnHIeR8S04LjqVjCQuleF60loO-Mh7UEOwa--QIQwv3VaR_P4gt5B7jfu-3GeKqm5Rf-NV8q0xJxL_FX9JZR0_YLkAMpHPWfXRNDr5THXJbJawrNxG5oJYPI2YICMJAFHJPsYpbPdVHU8lTuqhXRgmObg3ZuVD7VNiZ6NjRXmQfSSW7vx2q43JFz7ckBgTcpMPRzkp67YMT",
+    communityNote:
+      "Local intel from Paris: ride it during open hours. — @bercyskatepark",
     crowdLevel: 90,
     crowdLevelLabel: "High (Busy)",
     country: "France",
@@ -58,8 +62,10 @@ export const SOURCE_SPOTS: readonly NewSpot[] = [
     type: "ledges",
     features: ["street", "smooth-concrete"],
     sports: [...SKATE],
-    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuCrY2kzLB1jQqPxx87OqENxBTnqO00sGNmmbFTu7AVZ6r19NZg7MF3fdWdWnI6gGfw_ffMIMDY_Gspts-w017UN_NrCfiVCFhy5StEGoec3EzYvqmTmbz4lzOgjKciS7RV27IOlPVKHiEzli-wdFgHIurqHwm2HE4kDZQEjudqZODIx-_RyULGF_RgAiTpitlMRoYMh6eCL773msOXd0D2xWpsxVBURfxsElH5AvNf3rqCohSNZhAbWwTXOJZZxwY3ShaMJiJ95FWS2",
-    communityNote: "Field notes from Berlin: ride it during low-traffic windows. — @dogshitspot",
+    image:
+      "https://lh3.googleusercontent.com/aida-public/AB6AXuCrY2kzLB1jQqPxx87OqENxBTnqO00sGNmmbFTu7AVZ6r19NZg7MF3fdWdWnI6gGfw_ffMIMDY_Gspts-w017UN_NrCfiVCFhy5StEGoec3EzYvqmTmbz4lzOgjKciS7RV27IOlPVKHiEzli-wdFgHIurqHwm2HE4kDZQEjudqZODIx-_RyULGF_RgAiTpitlMRoYMh6eCL773msOXd0D2xWpsxVBURfxsElH5AvNf3rqCohSNZhAbWwTXOJZZxwY3ShaMJiJ95FWS2",
+    communityNote:
+      "Field notes from Berlin: ride it during low-traffic windows. — @dogshitspot",
     crowdLevel: 74,
     crowdLevelLabel: "High (Community Hub)",
     country: "Germany",
@@ -71,12 +77,15 @@ export const SOURCE_SPOTS: readonly NewSpot[] = [
     name: "SKATEPARK DE LA 4 SUR",
     city: "Medellín",
     citySlug: "medell-n",
-    address: "Comuna 15 - Guayabal, Perímetro Urbano Medellín, Antioquia, Colombia",
+    address:
+      "Comuna 15 - Guayabal, Perímetro Urbano Medellín, Antioquia, Colombia",
     type: "park",
     features: ["rail", "street", "smooth-concrete"],
     sports: [...SKATE],
-    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuCrY2kzLB1jQqPxx87OqENxBTnqO00sGNmmbFTu7AVZ6r19NZg7MF3fdWdWnI6gGfw_ffMIMDY_Gspts-w017UN_NrCfiVCFhy5StEGoec3EzYvqmTmbz4lzOgjKciS7RV27IOlPVKHiEzli-wdFgHIurqHwm2HE4kDZQEjudqZODIx-_RyULGF_RgAiTpitlMRoYMh6eCL773msOXd0D2xWpsxVBURfxsElH5AvNf3rqCohSNZhAbWwTXOJZZxwY3ShaMJiJ95FWS2",
-    communityNote: "Scout report from Medellín: ride it during open hours. — @skateparkde",
+    image:
+      "https://lh3.googleusercontent.com/aida-public/AB6AXuCrY2kzLB1jQqPxx87OqENxBTnqO00sGNmmbFTu7AVZ6r19NZg7MF3fdWdWnI6gGfw_ffMIMDY_Gspts-w017UN_NrCfiVCFhy5StEGoec3EzYvqmTmbz4lzOgjKciS7RV27IOlPVKHiEzli-wdFgHIurqHwm2HE4kDZQEjudqZODIx-_RyULGF_RgAiTpitlMRoYMh6eCL773msOXd0D2xWpsxVBURfxsElH5AvNf3rqCohSNZhAbWwTXOJZZxwY3ShaMJiJ95FWS2",
+    communityNote:
+      "Scout report from Medellín: ride it during open hours. — @skateparkde",
     crowdLevel: 26,
     crowdLevelLabel: "Low (Always Open)",
     country: "Colombia",
@@ -92,8 +101,10 @@ export const SOURCE_SPOTS: readonly NewSpot[] = [
     type: "park",
     features: ["rail", "smooth-concrete"],
     sports: [...SKATE],
-    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuCrY2kzLB1jQqPxx87OqENxBTnqO00sGNmmbFTu7AVZ6r19NZg7MF3fdWdWnI6gGfw_ffMIMDY_Gspts-w017UN_NrCfiVCFhy5StEGoec3EzYvqmTmbz4lzOgjKciS7RV27IOlPVKHiEzli-wdFgHIurqHwm2HE4kDZQEjudqZODIx-_RyULGF_RgAiTpitlMRoYMh6eCL773msOXd0D2xWpsxVBURfxsElH5AvNf3rqCohSNZhAbWwTXOJZZxwY3ShaMJiJ95FWS2",
-    communityNote: "Local intel from Envigado: ride it during open hours. — @vigaskatepark",
+    image:
+      "https://lh3.googleusercontent.com/aida-public/AB6AXuCrY2kzLB1jQqPxx87OqENxBTnqO00sGNmmbFTu7AVZ6r19NZg7MF3fdWdWnI6gGfw_ffMIMDY_Gspts-w017UN_NrCfiVCFhy5StEGoec3EzYvqmTmbz4lzOgjKciS7RV27IOlPVKHiEzli-wdFgHIurqHwm2HE4kDZQEjudqZODIx-_RyULGF_RgAiTpitlMRoYMh6eCL773msOXd0D2xWpsxVBURfxsElH5AvNf3rqCohSNZhAbWwTXOJZZxwY3ShaMJiJ95FWS2",
+    communityNote:
+      "Local intel from Envigado: ride it during open hours. — @vigaskatepark",
     crowdLevel: 74,
     crowdLevelLabel: "High (Community Hub)",
     country: "Colombia",
@@ -109,8 +120,10 @@ export const SOURCE_SPOTS: readonly NewSpot[] = [
     type: "bowl",
     features: ["rail", "slidebox", "smooth-concrete"],
     sports: [...SKATE],
-    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuCrY2kzLB1jQqPxx87OqENxBTnqO00sGNmmbFTu7AVZ6r19NZg7MF3fdWdWnI6gGfw_ffMIMDY_Gspts-w017UN_NrCfiVCFhy5StEGoec3EzYvqmTmbz4lzOgjKciS7RV27IOlPVKHiEzli-wdFgHIurqHwm2HE4kDZQEjudqZODIx-_RyULGF_RgAiTpitlMRoYMh6eCL773msOXd0D2xWpsxVBURfxsElH5AvNf3rqCohSNZhAbWwTXOJZZxwY3ShaMJiJ95FWS2",
-    communityNote: "Community intel from Zipaquirá: ride it during early morning sessions. — @skateparkzipaquira",
+    image:
+      "https://lh3.googleusercontent.com/aida-public/AB6AXuCrY2kzLB1jQqPxx87OqENxBTnqO00sGNmmbFTu7AVZ6r19NZg7MF3fdWdWnI6gGfw_ffMIMDY_Gspts-w017UN_NrCfiVCFhy5StEGoec3EzYvqmTmbz4lzOgjKciS7RV27IOlPVKHiEzli-wdFgHIurqHwm2HE4kDZQEjudqZODIx-_RyULGF_RgAiTpitlMRoYMh6eCL773msOXd0D2xWpsxVBURfxsElH5AvNf3rqCohSNZhAbWwTXOJZZxwY3ShaMJiJ95FWS2",
+    communityNote:
+      "Community intel from Zipaquirá: ride it during early morning sessions. — @skateparkzipaquira",
     crowdLevel: 94,
     crowdLevelLabel: "High (Community Hub)",
     country: "Colombia",
@@ -126,8 +139,10 @@ export const SOURCE_SPOTS: readonly NewSpot[] = [
     type: "bowl",
     features: ["rail", "slidebox", "street", "smooth-concrete"],
     sports: [...SKATE],
-    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuBFcsJ_InsjM_V2ZhdORVirVciKPJ2Uqt5Jii3nfPULenttPQ0cUQzaa_C0Yc_NrAv1eAnHIeR8S04LjqVjCQuleF60loO-Mh7UEOwa--QIQwv3VaR_P4gt5B7jfu-3GeKqm5Rf-NV8q0xJxL_FX9JZR0_YLkAMpHPWfXRNDr5THXJbJawrNxG5oJYPI2YICMJAFHJPsYpbPdVHU8lTuqhXRgmObg3ZuVD7VNiZ6NjRXmQfSSW7vx2q43JFz7ckBgTcpMPRzkp67YMT",
-    communityNote: "Local intel from Sopó: ride it during early morning sessions. — @skateparksopo",
+    image:
+      "https://lh3.googleusercontent.com/aida-public/AB6AXuBFcsJ_InsjM_V2ZhdORVirVciKPJ2Uqt5Jii3nfPULenttPQ0cUQzaa_C0Yc_NrAv1eAnHIeR8S04LjqVjCQuleF60loO-Mh7UEOwa--QIQwv3VaR_P4gt5B7jfu-3GeKqm5Rf-NV8q0xJxL_FX9JZR0_YLkAMpHPWfXRNDr5THXJbJawrNxG5oJYPI2YICMJAFHJPsYpbPdVHU8lTuqhXRgmObg3ZuVD7VNiZ6NjRXmQfSSW7vx2q43JFz7ckBgTcpMPRzkp67YMT",
+    communityNote:
+      "Local intel from Sopó: ride it during early morning sessions. — @skateparksopo",
     crowdLevel: 48,
     crowdLevelLabel: "Moderate (Schoolyard Spot)",
     country: "Colombia",
@@ -139,12 +154,15 @@ export const SOURCE_SPOTS: readonly NewSpot[] = [
     name: "SKATEPARK TEP ÉMILE LEPEU",
     city: "Paris",
     citySlug: "paris",
-    address: "Rue Émile Lepeu, Quartier de la Roquette, Paris 11e Arrondissement, France",
+    address:
+      "Rue Émile Lepeu, Quartier de la Roquette, Paris 11e Arrondissement, France",
     type: "park",
     features: ["rail", "smooth-concrete"],
     sports: [...SKATE],
-    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuA6GHeF7oipibYvoiyBsC4TPFku7ffQmv6y0B5AvgdhgAmG9pI0BlJLe8-ayJLMlAtDAWwUGu4FAwabH8HuELRowJ3IeEJOlgw4xvg0_RP_eRKPr5eESG5TxVwONEulq3jToyCXr01mrPooWxd_LZyIm1ZjLx-q5OyZPARNZVw0jmm6gY0B_2wuE2kir3siF7K3C7ntb79Rqd-JOHOOpenTRYBWA1KQLZ_r4WVgfahEkzWayr4xRHIqIgYUCuuxsceSaEpXp8segQIg",
-    communityNote: "Community intel from Paris: ride it during open hours. — @skateparktep",
+    image:
+      "https://lh3.googleusercontent.com/aida-public/AB6AXuA6GHeF7oipibYvoiyBsC4TPFku7ffQmv6y0B5AvgdhgAmG9pI0BlJLe8-ayJLMlAtDAWwUGu4FAwabH8HuELRowJ3IeEJOlgw4xvg0_RP_eRKPr5eESG5TxVwONEulq3jToyCXr01mrPooWxd_LZyIm1ZjLx-q5OyZPARNZVw0jmm6gY0B_2wuE2kir3siF7K3C7ntb79Rqd-JOHOOpenTRYBWA1KQLZ_r4WVgfahEkzWayr4xRHIqIgYUCuuxsceSaEpXp8segQIg",
+    communityNote:
+      "Community intel from Paris: ride it during open hours. — @skateparktep",
     crowdLevel: 28,
     crowdLevelLabel: "Low (Security Active)",
     country: "France",
@@ -160,8 +178,10 @@ export const SOURCE_SPOTS: readonly NewSpot[] = [
     type: "plaza",
     features: ["rail", "slidebox", "smooth-concrete"],
     sports: [...SKATE],
-    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuAzOoxxgf8dF_dffEyj1reX-fHjpbmdOzHCKt48IV55g3OcOejsIT9MtaySQEK0hVzvIpPegtGd03j4neTRFC5WGxsEvj5OLJpKfFMhwXdXIY2YAjpD2xwCUOFNv_jCUBDs7mrLeq2J28upIy9Q7fq5m46ytFrpE8efxEcvW-3Bdb4uiMD6QOxExLVPlkQMkRDVmB2DxRfKq8E3Y0pko6HLf3oSNBxhmT5BnVuJ8tSMUEgWQuk_WElNP9xvvc9URbMql80pPwHFxf9P",
-    communityNote: "Community intel from Roma: ride it during low-traffic windows. — @skateparkponte",
+    image:
+      "https://lh3.googleusercontent.com/aida-public/AB6AXuAzOoxxgf8dF_dffEyj1reX-fHjpbmdOzHCKt48IV55g3OcOejsIT9MtaySQEK0hVzvIpPegtGd03j4neTRFC5WGxsEvj5OLJpKfFMhwXdXIY2YAjpD2xwCUOFNv_jCUBDs7mrLeq2J28upIy9Q7fq5m46ytFrpE8efxEcvW-3Bdb4uiMD6QOxExLVPlkQMkRDVmB2DxRfKq8E3Y0pko6HLf3oSNBxhmT5BnVuJ8tSMUEgWQuk_WElNP9xvvc9URbMql80pPwHFxf9P",
+    communityNote:
+      "Community intel from Roma: ride it during low-traffic windows. — @skateparkponte",
     crowdLevel: 82,
     crowdLevelLabel: "High (Prime Time: 2PM - 6PM)",
     country: "Italy",
@@ -173,12 +193,15 @@ export const SOURCE_SPOTS: readonly NewSpot[] = [
     name: "SKATEPARK CARRERA 52 PLAZA DE TOROS",
     city: "Cali",
     citySlug: "cali",
-    address: "Carrera 52, Unidad Deportiva Alberto Galindo, Cali, Valle del Cauca, Colombia",
+    address:
+      "Carrera 52, Unidad Deportiva Alberto Galindo, Cali, Valle del Cauca, Colombia",
     type: "park",
     features: ["rail", "smooth-concrete"],
     sports: [...SKATE],
-    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuAzOoxxgf8dF_dffEyj1reX-fHjpbmdOzHCKt48IV55g3OcOejsIT9MtaySQEK0hVzvIpPegtGd03j4neTRFC5WGxsEvj5OLJpKfFMhwXdXIY2YAjpD2xwCUOFNv_jCUBDs7mrLeq2J28upIy9Q7fq5m46ytFrpE8efxEcvW-3Bdb4uiMD6QOxExLVPlkQMkRDVmB2DxRfKq8E3Y0pko6HLf3oSNBxhmT5BnVuJ8tSMUEgWQuk_WElNP9xvvc9URbMql80pPwHFxf9P",
-    communityNote: "Scout report from Cali: ride it during open hours. — @skateparkcarrera",
+    image:
+      "https://lh3.googleusercontent.com/aida-public/AB6AXuAzOoxxgf8dF_dffEyj1reX-fHjpbmdOzHCKt48IV55g3OcOejsIT9MtaySQEK0hVzvIpPegtGd03j4neTRFC5WGxsEvj5OLJpKfFMhwXdXIY2YAjpD2xwCUOFNv_jCUBDs7mrLeq2J28upIy9Q7fq5m46ytFrpE8efxEcvW-3Bdb4uiMD6QOxExLVPlkQMkRDVmB2DxRfKq8E3Y0pko6HLf3oSNBxhmT5BnVuJ8tSMUEgWQuk_WElNP9xvvc9URbMql80pPwHFxf9P",
+    communityNote:
+      "Scout report from Cali: ride it during open hours. — @skateparkcarrera",
     crowdLevel: 10,
     crowdLevelLabel: "Low (Spill Check Required)",
     country: "Colombia",
@@ -190,16 +213,19 @@ export const SOURCE_SPOTS: readonly NewSpot[] = [
     name: "SKATEPARK PARQUE DE LAS RUEDAS",
     city: "Medellín",
     citySlug: "medell-n",
-    address: "Calle 50E Sur, San Antonio de Prado, Medellín, Antioquia, Colombia",
+    address:
+      "Calle 50E Sur, San Antonio de Prado, Medellín, Antioquia, Colombia",
     type: "park",
     features: ["rail", "smooth-concrete"],
     sports: [...SKATE],
-    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuAzOoxxgf8dF_dffEyj1reX-fHjpbmdOzHCKt48IV55g3OcOejsIT9MtaySQEK0hVzvIpPegtGd03j4neTRFC5WGxsEvj5OLJpKfFMhwXdXIY2YAjpD2xwCUOFNv_jCUBDs7mrLeq2J28upIy9Q7fq5m46ytFrpE8efxEcvW-3Bdb4uiMD6QOxExLVPlkQMkRDVmB2DxRfKq8E3Y0pko6HLf3oSNBxhmT5BnVuJ8tSMUEgWQuk_WElNP9xvvc9URbMql80pPwHFxf9P",
-    communityNote: "Scout report from Medellín: ride it during open hours. — @skateparkparque",
+    image:
+      "https://lh3.googleusercontent.com/aida-public/AB6AXuAzOoxxgf8dF_dffEyj1reX-fHjpbmdOzHCKt48IV55g3OcOejsIT9MtaySQEK0hVzvIpPegtGd03j4neTRFC5WGxsEvj5OLJpKfFMhwXdXIY2YAjpD2xwCUOFNv_jCUBDs7mrLeq2J28upIy9Q7fq5m46ytFrpE8efxEcvW-3Bdb4uiMD6QOxExLVPlkQMkRDVmB2DxRfKq8E3Y0pko6HLf3oSNBxhmT5BnVuJ8tSMUEgWQuk_WElNP9xvvc9URbMql80pPwHFxf9P",
+    communityNote:
+      "Scout report from Medellín: ride it during open hours. — @skateparkparque",
     crowdLevel: 63,
     crowdLevelLabel: "Moderate (Prime Time: 5PM - 7PM)",
     country: "Colombia",
     location: { lat: 6.1768804, lon: -75.6550942 },
     createdBy: null,
   },
-]
+];

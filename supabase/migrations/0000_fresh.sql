@@ -8,6 +8,16 @@
 -- `src/db/seed.ts` script is the single source of truth for the
 -- dimension and content data; this file is pure schema.
 --
+-- Idempotency: every table, the view, and each storage policy are
+-- dropped via `… IF EXISTS` before being (re)created. Re-running
+-- `pnpm db:apply` on a populated DB is safe — it wipes the schema
+-- and rebuilds it from this single file.
+--
+-- Validations: DB-level CHECK constraints on every domain table
+-- enforce length checks, `crowd_level BETWEEN 0 AND 100`, ISO code
+-- formats, and the email format. The runtime Zod schemas in
+-- `src/lib/schemas/` are the application-side mirror.
+--
 -- Every statement is separated by the statement-breakpoint marker
 -- (see src/db/apply-sql.ts).
 
@@ -19,13 +29,15 @@ CREATE EXTENSION IF NOT EXISTS postgis;
 --> statement-breakpoint
 
 -- ─── regions ────────────────────────────────────────────────────────
+DROP TABLE IF EXISTS "regions" CASCADE;
+--> statement-breakpoint
 CREATE TABLE "regions" (
   "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-  "slug" text NOT NULL,
-  "name" text NOT NULL,
+  "slug" text NOT NULL CHECK (length("slug") > 0),
+  "name" text NOT NULL CHECK (length("name") > 0),
   "description" text DEFAULT '' NOT NULL,
   "image_url" text,
-  "sort_order" integer DEFAULT 0 NOT NULL,
+  "sort_order" integer DEFAULT 0 NOT NULL CHECK ("sort_order" >= 0),
   "created_at" timestamp with time zone DEFAULT now() NOT NULL,
   "updated_at" timestamp with time zone DEFAULT now() NOT NULL,
   CONSTRAINT "regions_slug_unique" UNIQUE("slug")
@@ -36,10 +48,12 @@ CREATE INDEX "regions_sort_order_idx" ON "regions" USING btree ("sort_order");
 --> statement-breakpoint
 
 -- ─── countries ──────────────────────────────────────────────────────
+DROP TABLE IF EXISTS "countries" CASCADE;
+--> statement-breakpoint
 CREATE TABLE "countries" (
-  "iso2" text PRIMARY KEY NOT NULL,
-  "name" text NOT NULL,
-  "iso3" text,
+  "iso2" text PRIMARY KEY NOT NULL CHECK ("iso2" ~ '^[A-Z]{2}$'),
+  "name" text NOT NULL CHECK (length("name") > 0),
+  "iso3" text CHECK ("iso3" IS NULL OR "iso3" ~ '^[A-Z]{3}$'),
   "region_id" uuid NOT NULL REFERENCES "regions"("id") ON DELETE restrict ON UPDATE no action,
   "created_at" timestamp with time zone DEFAULT now() NOT NULL,
   "updated_at" timestamp with time zone DEFAULT now() NOT NULL,
@@ -51,10 +65,12 @@ CREATE INDEX "countries_region_idx" ON "countries" USING btree ("region_id");
 --> statement-breakpoint
 
 -- ─── spot_types ─────────────────────────────────────────────────────
+DROP TABLE IF EXISTS "spot_types" CASCADE;
+--> statement-breakpoint
 CREATE TABLE "spot_types" (
-  "slug" text PRIMARY KEY NOT NULL,
-  "name" text NOT NULL,
-  "sort_order" integer DEFAULT 0 NOT NULL
+  "slug" text PRIMARY KEY NOT NULL CHECK (length("slug") > 0),
+  "name" text NOT NULL CHECK (length("name") > 0),
+  "sort_order" integer DEFAULT 0 NOT NULL CHECK ("sort_order" >= 0)
 );
 --> statement-breakpoint
 
@@ -62,10 +78,12 @@ CREATE INDEX "spot_types_sort_order_idx" ON "spot_types" USING btree ("sort_orde
 --> statement-breakpoint
 
 -- ─── sport_disciplines ──────────────────────────────────────────────
+DROP TABLE IF EXISTS "sport_disciplines" CASCADE;
+--> statement-breakpoint
 CREATE TABLE "sport_disciplines" (
-  "slug" text PRIMARY KEY NOT NULL,
-  "name" text NOT NULL,
-  "sort_order" integer DEFAULT 0 NOT NULL
+  "slug" text PRIMARY KEY NOT NULL CHECK (length("slug") > 0),
+  "name" text NOT NULL CHECK (length("name") > 0),
+  "sort_order" integer DEFAULT 0 NOT NULL CHECK ("sort_order" >= 0)
 );
 --> statement-breakpoint
 
@@ -73,10 +91,12 @@ CREATE INDEX "sport_disciplines_sort_order_idx" ON "sport_disciplines" USING btr
 --> statement-breakpoint
 
 -- ─── event_tiers ────────────────────────────────────────────────────
+DROP TABLE IF EXISTS "event_tiers" CASCADE;
+--> statement-breakpoint
 CREATE TABLE "event_tiers" (
-  "slug" text PRIMARY KEY NOT NULL,
-  "name" text NOT NULL,
-  "sort_order" integer DEFAULT 0 NOT NULL
+  "slug" text PRIMARY KEY NOT NULL CHECK (length("slug") > 0),
+  "name" text NOT NULL CHECK (length("name") > 0),
+  "sort_order" integer DEFAULT 0 NOT NULL CHECK ("sort_order" >= 0)
 );
 --> statement-breakpoint
 
@@ -84,9 +104,11 @@ CREATE INDEX "event_tiers_sort_order_idx" ON "event_tiers" USING btree ("sort_or
 --> statement-breakpoint
 
 -- ─── spot_features ──────────────────────────────────────────────────
+DROP TABLE IF EXISTS "spot_features" CASCADE;
+--> statement-breakpoint
 CREATE TABLE "spot_features" (
-  "slug" text PRIMARY KEY NOT NULL,
-  "name" text NOT NULL
+  "slug" text PRIMARY KEY NOT NULL CHECK (length("slug") > 0),
+  "name" text NOT NULL CHECK (length("name") > 0)
 );
 --> statement-breakpoint
 
@@ -96,12 +118,14 @@ CREATE TABLE "spot_features" (
 -- the Drizzle spot repo uses as the deterministic fallback when a
 -- spot has no image.
 
+DROP TABLE IF EXISTS "preset_images" CASCADE;
+--> statement-breakpoint
 CREATE TABLE "preset_images" (
   "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-  "slug" text NOT NULL,
-  "name" text NOT NULL,
-  "url" text NOT NULL,
-  "sort_order" integer DEFAULT 0 NOT NULL,
+  "slug" text NOT NULL CHECK (length("slug") > 0),
+  "name" text NOT NULL CHECK (length("name") > 0),
+  "url" text NOT NULL CHECK (length("url") > 0),
+  "sort_order" integer DEFAULT 0 NOT NULL CHECK ("sort_order" >= 0),
   "created_by" uuid,
   "created_at" timestamp with time zone DEFAULT now() NOT NULL,
   "updated_at" timestamp with time zone DEFAULT now() NOT NULL,
@@ -113,10 +137,12 @@ CREATE INDEX "preset_images_sort_order_idx" ON "preset_images" USING btree ("sor
 --> statement-breakpoint
 
 -- ─── profiles ───────────────────────────────────────────────────────
+DROP TABLE IF EXISTS "profiles" CASCADE;
+--> statement-breakpoint
 CREATE TABLE "profiles" (
   "id" uuid PRIMARY KEY NOT NULL,
-  "display_name" text NOT NULL,
-  "email" text NOT NULL,
+  "display_name" text NOT NULL CHECK (length("display_name") > 0),
+  "email" text NOT NULL CHECK ("email" ~ '^[^@\s]+@[^@\s]+\.[^@\s]+$'),
   "initials" text DEFAULT '' NOT NULL,
   "created_at" timestamp with time zone DEFAULT now() NOT NULL,
   "updated_at" timestamp with time zone DEFAULT now() NOT NULL
@@ -124,20 +150,22 @@ CREATE TABLE "profiles" (
 --> statement-breakpoint
 
 -- ─── spots ──────────────────────────────────────────────────────────
+DROP TABLE IF EXISTS "spots" CASCADE;
+--> statement-breakpoint
 CREATE TABLE "spots" (
   "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-  "slug" text NOT NULL,
-  "name" text NOT NULL,
-  "city" text NOT NULL,
-  "city_slug" text NOT NULL,
-  "address" text NOT NULL,
+  "slug" text NOT NULL CHECK (length("slug") > 0),
+  "name" text NOT NULL CHECK (length("name") > 0),
+  "city" text NOT NULL CHECK (length("city") > 0),
+  "city_slug" text NOT NULL CHECK (length("city_slug") > 0),
+  "address" text NOT NULL CHECK (length("address") > 0),
   "type_slug" text NOT NULL REFERENCES "spot_types"("slug") ON DELETE restrict ON UPDATE no action,
-  "image_url" text NOT NULL,
+  "image_url" text NOT NULL CHECK (length("image_url") > 0),
   "image_path" text,
   "community_note" text DEFAULT '' NOT NULL,
-  "crowd_level" integer DEFAULT 0 NOT NULL,
-  "crowd_level_label" text DEFAULT '' NOT NULL,
-  "country_code" text NOT NULL REFERENCES "countries"("iso2") ON DELETE restrict ON UPDATE no action,
+  "crowd_level" integer DEFAULT 0 NOT NULL CHECK ("crowd_level" BETWEEN 0 AND 100),
+  "crowd_level_label" text DEFAULT '' NOT NULL CHECK (length("crowd_level_label") > 0),
+  "country_code" text NOT NULL REFERENCES "countries"("iso2") ON DELETE restrict ON UPDATE no action CHECK ("country_code" ~ '^[A-Z]{2}$'),
   "location" geometry(Point, 4326) NOT NULL,
   "created_by" uuid,
   "created_at" timestamp with time zone DEFAULT now() NOT NULL,
@@ -154,21 +182,23 @@ CREATE INDEX "spots_city_slug_idx" ON "spots" USING btree ("city_slug");
 --> statement-breakpoint
 
 -- ─── sport_events ───────────────────────────────────────────────────
+DROP TABLE IF EXISTS "sport_events" CASCADE;
+--> statement-breakpoint
 CREATE TABLE "sport_events" (
   "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-  "slug" text NOT NULL,
-  "name" text NOT NULL,
+  "slug" text NOT NULL CHECK (length("slug") > 0),
+  "name" text NOT NULL CHECK (length("name") > 0),
   "short_name" text,
-  "url" text NOT NULL,
-  "image" text NOT NULL,
+  "url" text NOT NULL CHECK (length("url") > 0),
+  "image" text NOT NULL CHECK (length("image") > 0),
   "description" text DEFAULT '' NOT NULL,
   "start_at" timestamp with time zone NOT NULL,
   "end_at" timestamp with time zone,
-  "city" text NOT NULL,
-  "country_code" text NOT NULL REFERENCES "countries"("iso2") ON DELETE restrict ON UPDATE no action,
+  "city" text NOT NULL CHECK (length("city") > 0),
+  "country_code" text NOT NULL REFERENCES "countries"("iso2") ON DELETE restrict ON UPDATE no action CHECK ("country_code" ~ '^[A-Z]{2}$'),
   "venue" text,
   "location" geometry(Point, 4326),
-  "tier_slug" text NOT NULL REFERENCES "event_tiers"("slug") ON DELETE restrict ON UPDATE no action,
+  "tier_slug" text NOT NULL REFERENCES "event_tiers"("slug") ON DELETE restrict ON UPDATE no action CHECK (length("tier_slug") > 0),
   "featured" boolean DEFAULT false NOT NULL,
   "created_by" uuid REFERENCES "profiles"("id") ON DELETE set null ON UPDATE no action,
   "created_at" timestamp with time zone DEFAULT now() NOT NULL,
@@ -185,6 +215,8 @@ CREATE INDEX "sport_events_start_at_idx" ON "sport_events" USING btree ("start_a
 --> statement-breakpoint
 
 -- ─── saved_spots ────────────────────────────────────────────────────
+DROP TABLE IF EXISTS "saved_spots" CASCADE;
+--> statement-breakpoint
 CREATE TABLE "saved_spots" (
   "user_id" uuid NOT NULL,
   "spot_id" uuid NOT NULL REFERENCES "spots"("id") ON DELETE cascade ON UPDATE no action,
@@ -199,6 +231,8 @@ CREATE INDEX "saved_spots_spot_idx" ON "saved_spots" USING btree ("spot_id");
 --> statement-breakpoint
 
 -- ─── spot_sports (join) ─────────────────────────────────────────────
+DROP TABLE IF EXISTS "spot_sports" CASCADE;
+--> statement-breakpoint
 CREATE TABLE "spot_sports" (
   "spot_id" uuid NOT NULL REFERENCES "spots"("id") ON DELETE cascade ON UPDATE no action,
   "discipline_slug" text NOT NULL REFERENCES "sport_disciplines"("slug") ON DELETE restrict ON UPDATE no action,
@@ -210,6 +244,8 @@ CREATE INDEX "spot_sports_discipline_idx" ON "spot_sports" USING btree ("discipl
 --> statement-breakpoint
 
 -- ─── spot_feature_links (join) ─────────────────────────────────────
+DROP TABLE IF EXISTS "spot_feature_links" CASCADE;
+--> statement-breakpoint
 CREATE TABLE "spot_feature_links" (
   "spot_id" uuid NOT NULL REFERENCES "spots"("id") ON DELETE cascade ON UPDATE no action,
   "feature_slug" text NOT NULL REFERENCES "spot_features"("slug") ON DELETE restrict ON UPDATE no action,
@@ -221,6 +257,8 @@ CREATE INDEX "spot_feature_links_feature_idx" ON "spot_feature_links" USING btre
 --> statement-breakpoint
 
 -- ─── event_sports (join) ───────────────────────────────────────────
+DROP TABLE IF EXISTS "event_sports" CASCADE;
+--> statement-breakpoint
 CREATE TABLE "event_sports" (
   "event_id" uuid NOT NULL REFERENCES "sport_events"("id") ON DELETE cascade ON UPDATE no action,
   "discipline_slug" text NOT NULL REFERENCES "sport_disciplines"("slug") ON DELETE restrict ON UPDATE no action,
@@ -235,6 +273,8 @@ CREATE INDEX "event_sports_discipline_idx" ON "event_sports" USING btree ("disci
 -- Exposes the canonical SportEvent shape with a computed `status`
 -- column. Hand-managed (not in the Drizzle schema; see D16).
 
+DROP VIEW IF EXISTS "sport_events_with_status";
+--> statement-breakpoint
 CREATE OR REPLACE VIEW "sport_events_with_status" AS
 SELECT
   se."id",
@@ -274,6 +314,10 @@ FROM "sport_events" se;
 -- Pattern (from the proven 0002 set): every policy uses an explicit
 -- `TO` clause. UPDATE policies declare both USING and WITH CHECK so
 -- ownership cannot be transferred.
+--
+-- Note: RLS policies on the domain tables are dropped automatically
+-- when the table is dropped via `DROP TABLE … CASCADE`, so we don't
+-- need explicit `DROP POLICY` statements for them here.
 
 -- Dimension tables: public read, writes are service-role (admin/seed).
 ALTER TABLE "public"."regions" ENABLE ROW LEVEL SECURITY;
@@ -447,7 +491,17 @@ CREATE POLICY "profiles_update_owner"
 
 -- Storage bucket policies (spot-images) — bucket itself is created
 -- out-of-band. Objects live at spots/{userId}/{uuid}; the policies
--- scope access by the first folder segment.
+-- scope access by the first folder segment. `storage.objects` is a
+-- Supabase-managed table we don't drop — we just drop and recreate
+-- our four policies for idempotency.
+DROP POLICY IF EXISTS "spot_images_select_owner" ON "storage"."objects";
+--> statement-breakpoint
+DROP POLICY IF EXISTS "spot_images_insert_owner" ON "storage"."objects";
+--> statement-breakpoint
+DROP POLICY IF EXISTS "spot_images_update_owner" ON "storage"."objects";
+--> statement-breakpoint
+DROP POLICY IF EXISTS "spot_images_delete_owner" ON "storage"."objects";
+--> statement-breakpoint
 CREATE POLICY "spot_images_select_owner"
   ON "storage"."objects"
   FOR SELECT
