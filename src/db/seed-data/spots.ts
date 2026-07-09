@@ -1,250 +1,205 @@
-// Phase 2 — hand-curated typed Spot seed rows. These were previously raw
-// Nominatim OSM dumps in `src/data/spots.json`, transformed at seed
-// time via 5 derivation functions (`pickType`, `pickFeatures`,
-// `buildCrowdLabel`, `buildCommunityNote`, `pickCity`). The rows below
-// preserve the same derived values — they were produced by running the
-// current seed once and reading the results out of the DB, then
-// transcribing the canonical fields here.
+// Phase 2 (frozen) — hand-curated typed Spot seed rows. The image
+// URL, community note, crowd level, and crowd label for each row
+// used to be derived at seed time from the slug via a deterministic
+// hash function (see git history). Those values are now inlined as
+// literals below — re-running `pnpm db:seed` is idempotent and
+// produces the same content the hash-based derivation used to
+// produce, with no hidden side effects.
 //
-// Image URLs are picked from the `preset_images` table by a stable
-// hash of the spot slug (so re-seeding produces the same image). To
-// change a row, edit the literal below and re-run `pnpm db:seed`.
+// Edit a row's literal fields here, then run `pnpm db:seed` to
+// update the row in place (`on conflict (slug) do update`).
 
 import type { NewSpot } from "@/lib/repositories/types"
 import type { SportDiscipline } from "@/types/sport-events"
-import { PRESET_IMAGE_SEED } from "./preset-images"
 
-function hash(s: string): number {
-  let h = 0
-  for (let i = 0; i < s.length; i++) {
-    h = (h * 31 + s.charCodeAt(i)) | 0
-  }
-  return Math.abs(h)
-}
-
-const CROWD_POOLS = {
-  low: [
-    "Low (Spill Check Required)",
-    "Low (Security Active)",
-    "Low (Always Open)",
-    "Low (Quiet Hours)",
-  ],
-  mid: [
-    "Moderate (Prime Time: 5PM - 7PM)",
-    "Moderate (Best at Night)",
-    "Moderate (Prime Time: 3PM - 6PM)",
-    "Moderate (Schoolyard Spot)",
-  ],
-  high: [
-    "High (Prime Time: 2PM - 6PM)",
-    "High (Vibrant Skate Community)",
-    "High (Community Hub)",
-    "High (Busy)",
-  ],
-} as const
-
-function crowdLabel(level: number, id: string): string {
-  const tier = level > 70 ? "high" : level > 40 ? "mid" : "low"
-  const pool = CROWD_POOLS[tier]
-  const idx = Math.floor((hash(id) % 1000) / 1000 * pool.length)
-  return pool[idx]!
-}
-
-function communityNote(city: string, type: string, id: string): string {
-  const handle = "@" + id.split("-").slice(0, 2).join("")
-  const intros = ["Local intel", "Community intel", "Scout report", "Field notes"]
-  const intro = intros[hash(id) % intros.length]
-  const when =
-    type === "park"
-      ? "open hours"
-      : type === "bowl" || type === "pools"
-        ? "early morning sessions"
-        : "low-traffic windows"
-  return `${intro} from ${city}: ride it during ${when}. — ${handle}`
-}
-
-function crowdLevel(id: string): number {
-  return Math.floor((hash("crowd:" + id) % 1000) / 10)
-}
-
-function imageFor(id: string): string {
-  const urls = PRESET_IMAGE_SEED.map((p) => p.url)
-  const idx = Math.floor((hash(id) % 1000) / 1000 * urls.length)
-  return urls[idx] ?? urls[0]!
-}
-
-// Sport disciplines are stored in a join table; the seed array is the
-// list of discipline slugs each spot supports. Empty for the base set.
 const SKATE: readonly SportDiscipline[] = ["Skateboard"]
 
-interface SpotRow {
-  slug: string
-  name: string
-  city: string
-  address: string
-  type: string
-  features: readonly string[]
-  sports: readonly SportDiscipline[]
-  country: string
-  lat: number
-  lon: number
-}
-
-const ROWS: readonly SpotRow[] = [
+export const SOURCE_SPOTS: readonly NewSpot[] = [
   {
-    slug: "place-louis-pradel",
-    name: "Place Louis Pradel",
+    id: "place-louis-pradel",
+    name: "PLACE LOUIS PRADEL",
     city: "Lyon",
+    citySlug: "lyon",
     address: "Place Louis Pradel, Lyon, France",
     type: "plaza",
     features: ["smooth-concrete"],
-    sports: SKATE,
+    sports: [...SKATE],
+    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuBFcsJ_InsjM_V2ZhdORVirVciKPJ2Uqt5Jii3nfPULenttPQ0cUQzaa_C0Yc_NrAv1eAnHIeR8S04LjqVjCQuleF60loO-Mh7UEOwa--QIQwv3VaR_P4gt5B7jfu-3GeKqm5Rf-NV8q0xJxL_FX9JZR0_YLkAMpHPWfXRNDr5THXJbJawrNxG5oJYPI2YICMJAFHJPsYpbPdVHU8lTuqhXRgmObg3ZuVD7VNiZ6NjRXmQfSSW7vx2q43JFz7ckBgTcpMPRzkp67YMT",
+    communityNote: "Field notes from Lyon: ride it during low-traffic windows. — @placelouis",
+    crowdLevel: 28,
+    crowdLevelLabel: "Low (Quiet Hours)",
     country: "France",
-    lat: 45.768613,
-    lon: 4.8369251,
+    location: { lat: 45.768613, lon: 4.8369251 },
+    createdBy: null,
   },
   {
-    slug: "bercy-skatepark",
-    name: "Bercy Skatepark",
+    id: "bercy-skatepark",
+    name: "BERCY SKATEPARK",
     city: "Paris",
+    citySlug: "paris",
     address: "Quai de Bercy, Paris 12e Arrondissement, France",
     type: "park",
     features: ["rail", "slidebox", "mini-ramp", "street", "smooth-concrete"],
-    sports: SKATE,
+    sports: [...SKATE],
+    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuBFcsJ_InsjM_V2ZhdORVirVciKPJ2Uqt5Jii3nfPULenttPQ0cUQzaa_C0Yc_NrAv1eAnHIeR8S04LjqVjCQuleF60loO-Mh7UEOwa--QIQwv3VaR_P4gt5B7jfu-3GeKqm5Rf-NV8q0xJxL_FX9JZR0_YLkAMpHPWfXRNDr5THXJbJawrNxG5oJYPI2YICMJAFHJPsYpbPdVHU8lTuqhXRgmObg3ZuVD7VNiZ6NjRXmQfSSW7vx2q43JFz7ckBgTcpMPRzkp67YMT",
+    communityNote: "Local intel from Paris: ride it during open hours. — @bercyskatepark",
+    crowdLevel: 90,
+    crowdLevelLabel: "High (Busy)",
     country: "France",
-    lat: 48.8373219,
-    lon: 2.3789662,
+    location: { lat: 48.8373219, lon: 2.3789662 },
+    createdBy: null,
   },
   {
-    slug: "dogshit-spot",
-    name: "Dogshit Spot",
+    id: "dogshit-spot",
+    name: "DOGSHIT SPOT",
     city: "Berlin",
+    citySlug: "berlin",
     address: "Marchlewskistraße, Friedrichshain, Berlin, Germany",
     type: "ledges",
     features: ["street", "smooth-concrete"],
-    sports: SKATE,
+    sports: [...SKATE],
+    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuCrY2kzLB1jQqPxx87OqENxBTnqO00sGNmmbFTu7AVZ6r19NZg7MF3fdWdWnI6gGfw_ffMIMDY_Gspts-w017UN_NrCfiVCFhy5StEGoec3EzYvqmTmbz4lzOgjKciS7RV27IOlPVKHiEzli-wdFgHIurqHwm2HE4kDZQEjudqZODIx-_RyULGF_RgAiTpitlMRoYMh6eCL773msOXd0D2xWpsxVBURfxsElH5AvNf3rqCohSNZhAbWwTXOJZZxwY3ShaMJiJ95FWS2",
+    communityNote: "Field notes from Berlin: ride it during low-traffic windows. — @dogshitspot",
+    crowdLevel: 74,
+    crowdLevelLabel: "High (Community Hub)",
     country: "Germany",
-    lat: 52.5076013,
-    lon: 13.4488483,
+    location: { lat: 52.5076013, lon: 13.4488483 },
+    createdBy: null,
   },
   {
-    slug: "skatepark-de-la-4-sur",
-    name: "Skatepark de la 4 Sur",
+    id: "skatepark-de-la-4-sur",
+    name: "SKATEPARK DE LA 4 SUR",
     city: "Medellín",
+    citySlug: "medell-n",
     address: "Comuna 15 - Guayabal, Perímetro Urbano Medellín, Antioquia, Colombia",
     type: "park",
     features: ["rail", "street", "smooth-concrete"],
-    sports: SKATE,
+    sports: [...SKATE],
+    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuCrY2kzLB1jQqPxx87OqENxBTnqO00sGNmmbFTu7AVZ6r19NZg7MF3fdWdWnI6gGfw_ffMIMDY_Gspts-w017UN_NrCfiVCFhy5StEGoec3EzYvqmTmbz4lzOgjKciS7RV27IOlPVKHiEzli-wdFgHIurqHwm2HE4kDZQEjudqZODIx-_RyULGF_RgAiTpitlMRoYMh6eCL773msOXd0D2xWpsxVBURfxsElH5AvNf3rqCohSNZhAbWwTXOJZZxwY3ShaMJiJ95FWS2",
+    communityNote: "Scout report from Medellín: ride it during open hours. — @skateparkde",
+    crowdLevel: 26,
+    crowdLevelLabel: "Low (Always Open)",
     country: "Colombia",
-    lat: 6.2047065,
-    lon: -75.5798671,
+    location: { lat: 6.2047065, lon: -75.5798671 },
+    createdBy: null,
   },
   {
-    slug: "viga-skatepark",
-    name: "Viga Skatepark",
+    id: "viga-skatepark",
+    name: "VIGA SKATEPARK",
     city: "Envigado",
+    citySlug: "envigado",
     address: "Avenida Las Vegas, Envigado, Antioquia, Colombia",
     type: "park",
     features: ["rail", "smooth-concrete"],
-    sports: SKATE,
+    sports: [...SKATE],
+    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuCrY2kzLB1jQqPxx87OqENxBTnqO00sGNmmbFTu7AVZ6r19NZg7MF3fdWdWnI6gGfw_ffMIMDY_Gspts-w017UN_NrCfiVCFhy5StEGoec3EzYvqmTmbz4lzOgjKciS7RV27IOlPVKHiEzli-wdFgHIurqHwm2HE4kDZQEjudqZODIx-_RyULGF_RgAiTpitlMRoYMh6eCL773msOXd0D2xWpsxVBURfxsElH5AvNf3rqCohSNZhAbWwTXOJZZxwY3ShaMJiJ95FWS2",
+    communityNote: "Local intel from Envigado: ride it during open hours. — @vigaskatepark",
+    crowdLevel: 74,
+    crowdLevelLabel: "High (Community Hub)",
     country: "Colombia",
-    lat: 6.1693094,
-    lon: -75.5960834,
+    location: { lat: 6.1693094, lon: -75.5960834 },
+    createdBy: null,
   },
   {
-    slug: "skatepark-zipaquira",
-    name: "Skatepark Zipaquira",
+    id: "skatepark-zipaquira",
+    name: "SKATEPARK ZIPAQUIRA",
     city: "Zipaquirá",
+    citySlug: "zipaquir-",
     address: "Carrera 15, Zipaquirá, Cundinamarca, Colombia",
     type: "bowl",
     features: ["rail", "slidebox", "smooth-concrete"],
-    sports: SKATE,
+    sports: [...SKATE],
+    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuCrY2kzLB1jQqPxx87OqENxBTnqO00sGNmmbFTu7AVZ6r19NZg7MF3fdWdWnI6gGfw_ffMIMDY_Gspts-w017UN_NrCfiVCFhy5StEGoec3EzYvqmTmbz4lzOgjKciS7RV27IOlPVKHiEzli-wdFgHIurqHwm2HE4kDZQEjudqZODIx-_RyULGF_RgAiTpitlMRoYMh6eCL773msOXd0D2xWpsxVBURfxsElH5AvNf3rqCohSNZhAbWwTXOJZZxwY3ShaMJiJ95FWS2",
+    communityNote: "Community intel from Zipaquirá: ride it during early morning sessions. — @skateparkzipaquira",
+    crowdLevel: 94,
+    crowdLevelLabel: "High (Community Hub)",
     country: "Colombia",
-    lat: 5.020761,
-    lon: -73.9999073,
+    location: { lat: 5.020761, lon: -73.9999073 },
+    createdBy: null,
   },
   {
-    slug: "skatepark-sopo",
-    name: "Skatepark Sopó",
+    id: "skatepark-sopo",
+    name: "SKATEPARK SOPÓ",
     city: "Sopó",
+    citySlug: "sop-",
     address: "Calle 3 Sur, Sopó, Cundinamarca, Colombia",
     type: "bowl",
     features: ["rail", "slidebox", "street", "smooth-concrete"],
-    sports: SKATE,
+    sports: [...SKATE],
+    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuBFcsJ_InsjM_V2ZhdORVirVciKPJ2Uqt5Jii3nfPULenttPQ0cUQzaa_C0Yc_NrAv1eAnHIeR8S04LjqVjCQuleF60loO-Mh7UEOwa--QIQwv3VaR_P4gt5B7jfu-3GeKqm5Rf-NV8q0xJxL_FX9JZR0_YLkAMpHPWfXRNDr5THXJbJawrNxG5oJYPI2YICMJAFHJPsYpbPdVHU8lTuqhXRgmObg3ZuVD7VNiZ6NjRXmQfSSW7vx2q43JFz7ckBgTcpMPRzkp67YMT",
+    communityNote: "Local intel from Sopó: ride it during early morning sessions. — @skateparksopo",
+    crowdLevel: 48,
+    crowdLevelLabel: "Moderate (Schoolyard Spot)",
     country: "Colombia",
-    lat: 4.9068944,
-    lon: -73.944922,
+    location: { lat: 4.9068944, lon: -73.944922 },
+    createdBy: null,
   },
   {
-    slug: "skatepark-tep-emile-lepeu-rue-emile-lepeu",
-    name: "Skatepark TEP Émile Lepeu",
+    id: "skatepark-tep-emile-lepeu-rue-emile-lepeu",
+    name: "SKATEPARK TEP ÉMILE LEPEU",
     city: "Paris",
+    citySlug: "paris",
     address: "Rue Émile Lepeu, Quartier de la Roquette, Paris 11e Arrondissement, France",
     type: "park",
     features: ["rail", "smooth-concrete"],
-    sports: SKATE,
+    sports: [...SKATE],
+    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuA6GHeF7oipibYvoiyBsC4TPFku7ffQmv6y0B5AvgdhgAmG9pI0BlJLe8-ayJLMlAtDAWwUGu4FAwabH8HuELRowJ3IeEJOlgw4xvg0_RP_eRKPr5eESG5TxVwONEulq3jToyCXr01mrPooWxd_LZyIm1ZjLx-q5OyZPARNZVw0jmm6gY0B_2wuE2kir3siF7K3C7ntb79Rqd-JOHOOpenTRYBWA1KQLZ_r4WVgfahEkzWayr4xRHIqIgYUCuuxsceSaEpXp8segQIg",
+    communityNote: "Community intel from Paris: ride it during open hours. — @skateparktep",
+    crowdLevel: 28,
+    crowdLevelLabel: "Low (Security Active)",
     country: "France",
-    lat: 48.8563378,
-    lon: 2.3884269,
+    location: { lat: 48.8563378, lon: 2.3884269 },
+    createdBy: null,
   },
   {
-    slug: "skatepark-ponte-della-musica",
-    name: "Skatepark Ponte della Musica",
+    id: "skatepark-ponte-della-musica",
+    name: "SKATEPARK PONTE DELLA MUSICA",
     city: "Roma",
+    citySlug: "roma",
     address: "Ponte della Musica, Flaminio, Roma, Italy",
     type: "plaza",
     features: ["rail", "slidebox", "smooth-concrete"],
-    sports: SKATE,
+    sports: [...SKATE],
+    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuAzOoxxgf8dF_dffEyj1reX-fHjpbmdOzHCKt48IV55g3OcOejsIT9MtaySQEK0hVzvIpPegtGd03j4neTRFC5WGxsEvj5OLJpKfFMhwXdXIY2YAjpD2xwCUOFNv_jCUBDs7mrLeq2J28upIy9Q7fq5m46ytFrpE8efxEcvW-3Bdb4uiMD6QOxExLVPlkQMkRDVmB2DxRfKq8E3Y0pko6HLf3oSNBxhmT5BnVuJ8tSMUEgWQuk_WElNP9xvvc9URbMql80pPwHFxf9P",
+    communityNote: "Community intel from Roma: ride it during low-traffic windows. — @skateparkponte",
+    crowdLevel: 82,
+    crowdLevelLabel: "High (Prime Time: 2PM - 6PM)",
     country: "Italy",
-    lat: 41.9266668,
-    lon: 12.4604421,
+    location: { lat: 41.9266668, lon: 12.4604421 },
+    createdBy: null,
   },
   {
-    slug: "skatepark-carrera-52-unidad-deportiva-alberto-galindo-plaza-de-toros",
-    name: "Skatepark Carrera 52 Plaza de Toros",
+    id: "skatepark-carrera-52-unidad-deportiva-alberto-galindo-plaza-de-toros",
+    name: "SKATEPARK CARRERA 52 PLAZA DE TOROS",
     city: "Cali",
+    citySlug: "cali",
     address: "Carrera 52, Unidad Deportiva Alberto Galindo, Cali, Valle del Cauca, Colombia",
     type: "park",
     features: ["rail", "smooth-concrete"],
-    sports: SKATE,
+    sports: [...SKATE],
+    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuAzOoxxgf8dF_dffEyj1reX-fHjpbmdOzHCKt48IV55g3OcOejsIT9MtaySQEK0hVzvIpPegtGd03j4neTRFC5WGxsEvj5OLJpKfFMhwXdXIY2YAjpD2xwCUOFNv_jCUBDs7mrLeq2J28upIy9Q7fq5m46ytFrpE8efxEcvW-3Bdb4uiMD6QOxExLVPlkQMkRDVmB2DxRfKq8E3Y0pko6HLf3oSNBxhmT5BnVuJ8tSMUEgWQuk_WElNP9xvvc9URbMql80pPwHFxf9P",
+    communityNote: "Scout report from Cali: ride it during open hours. — @skateparkcarrera",
+    crowdLevel: 10,
+    crowdLevelLabel: "Low (Spill Check Required)",
     country: "Colombia",
-    lat: 3.4147268,
-    lon: -76.5523151,
+    location: { lat: 3.4147268, lon: -76.5523151 },
+    createdBy: null,
   },
   {
-    slug: "skatepark-parque-de-las-ruedas-san-antonio-de-prado",
-    name: "Skatepark Parque de Las Ruedas",
+    id: "skatepark-parque-de-las-ruedas-san-antonio-de-prado",
+    name: "SKATEPARK PARQUE DE LAS RUEDAS",
     city: "Medellín",
+    citySlug: "medell-n",
     address: "Calle 50E Sur, San Antonio de Prado, Medellín, Antioquia, Colombia",
     type: "park",
     features: ["rail", "smooth-concrete"],
-    sports: SKATE,
+    sports: [...SKATE],
+    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuAzOoxxgf8dF_dffEyj1reX-fHjpbmdOzHCKt48IV55g3OcOejsIT9MtaySQEK0hVzvIpPegtGd03j4neTRFC5WGxsEvj5OLJpKfFMhwXdXIY2YAjpD2xwCUOFNv_jCUBDs7mrLeq2J28upIy9Q7fq5m46ytFrpE8efxEcvW-3Bdb4uiMD6QOxExLVPlkQMkRDVmB2DxRfKq8E3Y0pko6HLf3oSNBxhmT5BnVuJ8tSMUEgWQuk_WElNP9xvvc9URbMql80pPwHFxf9P",
+    communityNote: "Scout report from Medellín: ride it during open hours. — @skateparkparque",
+    crowdLevel: 63,
+    crowdLevelLabel: "Moderate (Prime Time: 5PM - 7PM)",
     country: "Colombia",
-    lat: 6.1768804,
-    lon: -75.6550942,
+    location: { lat: 6.1768804, lon: -75.6550942 },
+    createdBy: null,
   },
 ]
-
-function toNewSpot(row: SpotRow): NewSpot {
-  const citySlug = row.city.toLowerCase().replace(/[^a-z0-9]+/g, "-")
-  const level = crowdLevel(row.slug)
-  return {
-    id: row.slug,
-    name: row.name.toUpperCase(),
-    city: row.city,
-    citySlug,
-    address: row.address,
-    type: row.type,
-    features: [...row.features],
-    sports: [...row.sports],
-    image: imageFor(row.slug),
-    communityNote: communityNote(row.city, row.type, row.slug),
-    crowdLevel: level,
-    crowdLevelLabel: crowdLabel(level, row.slug),
-    country: row.country,
-    location: { lat: row.lat, lon: row.lon },
-    createdBy: null,
-  }
-}
-
-export const SOURCE_SPOTS: readonly NewSpot[] = ROWS.map(toNewSpot)

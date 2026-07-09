@@ -1,9 +1,10 @@
--- 0000_initial_data_model.sql
+-- 0000_fresh.sql
 --
 -- Single consolidated migration: the entire Open Spot data model in
--- one file. Replaces the historical 0000–0008 sequence. Run via
--- `pnpm db:apply` against a fresh database (Supabase Dashboard reset
--- or `DROP SCHEMA public CASCADE; CREATE SCHEMA public; ...`). The
+-- one file. Replaces the historical 0000_initial_data_model.sql and
+-- 0001_preset_images.sql. Run via `pnpm db:apply` against a fresh
+-- database (Supabase Dashboard reset or
+-- `DROP SCHEMA public CASCADE; CREATE SCHEMA public; ...`). The
 -- `src/db/seed.ts` script is the single source of truth for the
 -- dimension and content data; this file is pure schema.
 --
@@ -87,6 +88,28 @@ CREATE TABLE "spot_features" (
   "slug" text PRIMARY KEY NOT NULL,
   "name" text NOT NULL
 );
+--> statement-breakpoint
+
+-- ─── preset_images (Phase 2) ────────────────────────────────────────
+-- Curated, admin-ownable list of image URLs that the admin
+-- ImageSourceField offers when creating or editing a spot, and that
+-- the Drizzle spot repo uses as the deterministic fallback when a
+-- spot has no image.
+
+CREATE TABLE "preset_images" (
+  "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+  "slug" text NOT NULL,
+  "name" text NOT NULL,
+  "url" text NOT NULL,
+  "sort_order" integer DEFAULT 0 NOT NULL,
+  "created_by" uuid,
+  "created_at" timestamp with time zone DEFAULT now() NOT NULL,
+  "updated_at" timestamp with time zone DEFAULT now() NOT NULL,
+  CONSTRAINT "preset_images_slug_unique" UNIQUE("slug")
+);
+--> statement-breakpoint
+
+CREATE INDEX "preset_images_sort_order_idx" ON "preset_images" USING btree ("sort_order");
 --> statement-breakpoint
 
 -- ─── profiles ───────────────────────────────────────────────────────
@@ -305,6 +328,35 @@ CREATE POLICY "spot_features_select_public"
   FOR SELECT
   TO anon, authenticated
   USING (true);
+--> statement-breakpoint
+
+-- preset_images: public read; owner-only writes.
+ALTER TABLE "public"."preset_images" ENABLE ROW LEVEL SECURITY;
+--> statement-breakpoint
+CREATE POLICY "preset_images_select_public"
+  ON "public"."preset_images"
+  FOR SELECT
+  TO anon, authenticated
+  USING (true);
+--> statement-breakpoint
+CREATE POLICY "preset_images_insert_owner"
+  ON "public"."preset_images"
+  FOR INSERT
+  TO authenticated
+  WITH CHECK ((select auth.uid()) = "created_by");
+--> statement-breakpoint
+CREATE POLICY "preset_images_update_owner"
+  ON "public"."preset_images"
+  FOR UPDATE
+  TO authenticated
+  USING ((select auth.uid()) = "created_by")
+  WITH CHECK ((select auth.uid()) = "created_by");
+--> statement-breakpoint
+CREATE POLICY "preset_images_delete_owner"
+  ON "public"."preset_images"
+  FOR DELETE
+  TO authenticated
+  USING ((select auth.uid()) = "created_by");
 --> statement-breakpoint
 
 -- spots: public read; writes by the creator only.
