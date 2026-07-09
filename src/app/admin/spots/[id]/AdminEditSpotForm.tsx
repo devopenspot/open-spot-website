@@ -15,6 +15,7 @@ function stateFromSpot(spot: Spot): SpotFormState {
     citySlug: spot.citySlug,
     address: spot.address,
     country: spot.country,
+    countryCode: spot.countryCode,
     type: spot.type,
     features: [...spot.features],
     sports: [...spot.sports] as SportDiscipline[],
@@ -33,6 +34,7 @@ function buildFormData(state: SpotFormState): FormData {
   fd.set("citySlug", state.citySlug)
   fd.set("address", state.address)
   fd.set("country", state.country)
+  fd.set("countryCode", state.countryCode)
   fd.set("type", state.type)
   fd.set("features", state.features.join(","))
   for (const sport of state.sports as readonly SportDiscipline[]) {

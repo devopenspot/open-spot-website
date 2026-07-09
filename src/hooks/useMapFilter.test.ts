@@ -76,6 +76,7 @@ function makeSpot(id: string, country: string): Spot {
     crowdLevel: 25,
     crowdLevelLabel: "Low",
     country,
+    countryCode: "US",
     location: { lat: 0, lon: 0 },
     createdBy: null,
     createdAt: "2024-01-01T00:00:00.000Z",

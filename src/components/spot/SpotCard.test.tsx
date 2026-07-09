@@ -20,6 +20,7 @@ function fakeSpot(): Spot {
     crowdLevel: 25,
     crowdLevelLabel: "Low",
     country: "United States",
+    countryCode: "US",
     location: { lat: 0, lon: 0 },
     createdBy: null,
     createdAt: "2024-01-01T00:00:00.000Z",

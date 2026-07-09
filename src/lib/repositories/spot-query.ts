@@ -53,6 +53,7 @@ export interface JoinedSpotRow {
   crowdLevel: number
   crowdLevelLabel: string
   country: string
+  countryCode: string | null
   location: SpotLocation
   createdBy: string | null
   createdAt: Date
@@ -79,6 +80,7 @@ export function joinedSpotSelect(
       crowdLevel: spots.crowdLevel,
       crowdLevelLabel: spots.crowdLevelLabel,
       country: countries.name,
+      countryCode: spots.countryCode,
       location: spots.location,
       createdBy: spots.createdBy,
       createdAt: spots.createdAt,
@@ -106,6 +108,7 @@ export function rowToSpot(row: JoinedSpotRow): Spot {
     crowdLevel: row.crowdLevel,
     crowdLevelLabel: row.crowdLevelLabel,
     country: row.country,
+    countryCode: row.countryCode ?? "",
     location: row.location,
     createdBy: row.createdBy,
     createdAt: row.createdAt.toISOString(),

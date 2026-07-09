@@ -20,6 +20,7 @@ function buildInitialState(): SpotFormState {
     citySlug: "",
     address: "",
     country: "",
+    countryCode: "",
     type: INITIAL_TYPE,
     features: [...FEATURE_DEFAULTS],
     sports: [],
@@ -45,6 +46,7 @@ function applyAddress(
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/^-+|-+$/g, ""),
     country: state.country || address.country || "",
+    countryCode: state.countryCode || address.countryCode || "",
     address:
       state.address ||
       [address.houseNumber, address.road].filter(Boolean).join(" "),
@@ -60,6 +62,7 @@ function buildFormData(state: SpotFormState): FormData {
   fd.set("citySlug", state.citySlug)
   fd.set("address", state.address)
   fd.set("country", state.country)
+  fd.set("countryCode", state.countryCode)
   fd.set("type", state.type)
   fd.set("features", state.features.join(","))
   for (const sport of state.sports as readonly SportDiscipline[]) {

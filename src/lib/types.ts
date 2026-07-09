@@ -42,6 +42,7 @@ export interface Spot {
   crowdLevel: number;
   crowdLevelLabel: string;
   country: string;
+  countryCode: string;
   location: SpotLocation;
   createdBy: string | null;
   createdAt: string;

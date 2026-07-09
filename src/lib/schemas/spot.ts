@@ -31,6 +31,7 @@ export const SpotSchema = z.object({
   crowdLevel: z.number().int().min(0).max(100),
   crowdLevelLabel: z.string(),
   country: z.string(),
+  countryCode: z.string(),
   location: SpotLocationSchema,
   createdBy: z.string().nullable(),
   createdAt: z.string(),
@@ -53,6 +54,10 @@ export const NewSpotSchema = z
     crowdLevel: z.number().int().min(0).max(100).default(0),
     crowdLevelLabel: z.string().default(""),
     country: z.string().default(""),
+    countryCode: z
+      .string()
+      .regex(/^[A-Z]{2}$/, "countryCode must be a 2-letter ISO code")
+      .optional(),
     location: SpotLocationSchema,
     createdBy: z.string().nullable().default(null),
   })
@@ -72,6 +77,10 @@ export const SpotPatchSchema = z
     crowdLevel: z.number().int().min(0).max(100).optional(),
     crowdLevelLabel: z.string().optional(),
     country: z.string().optional(),
+    countryCode: z
+      .string()
+      .regex(/^[A-Z]{2}$/, "countryCode must be a 2-letter ISO code")
+      .optional(),
     location: SpotLocationSchema.optional(),
   })
   .strict();

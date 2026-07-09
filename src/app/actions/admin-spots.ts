@@ -94,6 +94,7 @@ export async function createSpotFromLookupAction(
   const type = (strField(formData, "type") || "Plaza") as Spot["type"]
   const imageUrl = strField(formData, "imageUrl")
   const country = strField(formData, "country")
+  const countryCode = strField(formData, "countryCode").toUpperCase()
   const communityNote = strField(formData, "communityNote")
   const features = strField(formData, "features")
     .split(",")
@@ -119,6 +120,7 @@ export async function createSpotFromLookupAction(
     crowdLevel,
     crowdLevelLabel: crowdLabel(crowdLevel),
     country,
+    countryCode: countryCode || undefined,
     location: { lat, lon },
     createdBy: user.id,
   }
@@ -145,6 +147,8 @@ export async function updateSpotAction(
   if (text("type")) patch.type = text("type")
   if (text("imageUrl")) patch.image = text("imageUrl")
   if (text("country")) patch.country = text("country")
+  const countryCode = strField(formData, "countryCode").toUpperCase()
+  if (countryCode) patch.countryCode = countryCode
   if (text("communityNote")) patch.communityNote = text("communityNote")
   const featuresStr = text("features")
   if (featuresStr) {

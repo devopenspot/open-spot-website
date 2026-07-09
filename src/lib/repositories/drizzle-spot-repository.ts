@@ -297,8 +297,9 @@ export class DrizzleSpotRepository implements SpotRepository {
       communityNote: input.communityNote,
       crowdLevel: input.crowdLevel,
       crowdLevelLabel: input.crowdLevelLabel,
-      countryCode:
-        sql<string | null>`(select iso2 from ${countries} where name = ${input.country} limit 1)` as unknown as string,
+      countryCode: input.countryCode
+        ? input.countryCode
+        : (sql<string | null>`(select iso2 from ${countries} where name = ${input.country} limit 1)` as unknown as string),
       location: input.location as unknown as SpotRow["location"],
       createdBy: input.createdBy,
     }
@@ -334,7 +335,9 @@ export class DrizzleSpotRepository implements SpotRepository {
     if (patch.crowdLevel !== undefined) setValues.crowdLevel = patch.crowdLevel
     if (patch.crowdLevelLabel !== undefined)
       setValues.crowdLevelLabel = patch.crowdLevelLabel
-    if (patch.country !== undefined) {
+    if (patch.countryCode !== undefined) {
+      setValues.countryCode = patch.countryCode
+    } else if (patch.country !== undefined) {
       setValues.countryCode =
         sql<string | null>`(select iso2 from ${countries} where name = ${patch.country} limit 1)` as unknown as string
     }

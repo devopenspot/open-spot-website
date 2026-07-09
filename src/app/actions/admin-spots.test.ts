@@ -115,6 +115,8 @@ describe("createSpotFromLookupAction", () => {
       ["sports", "Skateboard"],
       ["sports", "BMX"],
       ["crowdLevel", "35"],
+      ["country", "France"],
+      ["countryCode", "fr"],
       ["lat", "45.7686"],
       ["lon", "4.8369"],
     ])
@@ -132,11 +134,32 @@ describe("createSpotFromLookupAction", () => {
       features: ["Smooth Concrete", "Red Curb"],
       sports: ["Skateboard", "BMX"],
       crowdLevel: 35,
+      country: "France",
+      countryCode: "FR",
       location: { lat: 45.7686, lon: 4.8369 },
       createdBy: adminUser.id,
     })
     expect(parsed?.citySlug).toBe("lyon")
     expect(revalidatePathMock).toHaveBeenCalledWith("/admin/spots")
+  })
+
+  it("normalizes a lowercase countryCode from the form to uppercase ISO", async () => {
+    const fd = makeFormData([
+      ["name", "Tokyo Spot"],
+      ["city", "Tokyo"],
+      ["address", "Aomi"],
+      ["type", "Park"],
+      ["imageUrl", "https://example.com/img.png"],
+      ["country", "Japon"],
+      ["countryCode", "jp"],
+      ["lat", "35.64"],
+      ["lon", "139.77"],
+    ])
+
+    await createSpotFromLookupAction(fd)
+    const parsed = createMock.mock.calls[0]?.[0]
+    expect(parsed?.country).toBe("Japon")
+    expect(parsed?.countryCode).toBe("JP")
   })
 
   it("omits the file upload path when no file is present", async () => {
@@ -193,6 +216,17 @@ describe("updateSpotAction", () => {
     await updateSpotAction("spot-1", fd)
     const [, patch] = updateMock.mock.calls[0] ?? []
     expect(patch).toMatchObject({ sports: ["Inline", "Scooter"] })
+  })
+
+  it("threads a countryCode in the patch when present", async () => {
+    const fd = makeFormData([
+      ["name", "Updated Name"],
+      ["country", "Japon"],
+      ["countryCode", "jp"],
+    ])
+    await updateSpotAction("spot-1", fd)
+    const [, patch] = updateMock.mock.calls[0] ?? []
+    expect(patch).toMatchObject({ country: "Japon", countryCode: "JP" })
   })
 })
 

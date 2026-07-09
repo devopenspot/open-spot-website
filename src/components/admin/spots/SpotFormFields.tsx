@@ -18,6 +18,7 @@ export interface SpotFormState {
   citySlug: string
   address: string
   country: string
+  countryCode: string
   type: SpotType
   features: string[]
   sports: SportDiscipline[]
