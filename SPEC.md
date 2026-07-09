@@ -1,23 +1,24 @@
 ---
-spec: Admin Dashboard
+spec: Single Source of Truth (DB-Only) Refactor
 status: Approved (plan), pending implementation
 owner: TBD
 target release: TBD
-last updated: 2026-07-03
+last updated: 2026-07-09
+replaces: SPEC.md (Admin Dashboard — implementation complete, archived)
 ---
 
-# SPEC — Admin Dashboard (CRUD for Spots & Sport Events)
+# SPEC — Single Source of Truth (DB-Only) Refactor
 
-This spec is the implementation plan for the admin dashboard of Open Spot. It
-covers (a) the new admin surface for reading, adding, updating, and deleting
-`spots` and `sport_events` records, and (b) the redesigned create-spot flow
-that uses a pasted latitude/longitude as the seed and reverse-geocodes it
-through Nominatim before allowing the operator to edit the result.
+This spec replaces the current `SPEC.md` (Admin Dashboard). The Admin Dashboard
+implementation is complete (`src/app/admin/**`, `src/app/actions/admin-*.ts`,
+`src/components/admin/**`, `src/app/api/geocode/reverse`, `src/lib/admin.ts`,
+related tests) and that plan is archived.
 
-> **Scope reminder.** The public app stays unchanged: the `/post` page becomes
-> a stub that links to the admin dashboard. The community / saved-spots
-> flow is not affected. The Map, Sport Events, Explore, Saved, Account, and
-> Login pages keep their current behaviour.
+The new spec removes the JSON/DB data-source duality, collapses dimension
+reads onto the database as the single source of truth, and deletes the
+duplicated and dead code the duality created. The goal is a simpler,
+scalable data layer with one read path (Postgres via Drizzle), one set of
+dimension tables, and no env-driven runtime branching.
 
 ---
 
@@ -25,656 +26,421 @@ through Nominatim before allowing the operator to edit the result.
 
 | Term | Meaning |
 | --- | --- |
-| Admin | A signed-in user whose email is in the `ADMIN_EMAILS` allow-list, or the dev placeholder user `DEV_USER_ID = "dev"` when Supabase is unconfigured. |
-| JSON mode | Runtime mode when `SPOTS_DATA_SOURCE=json` (the default). Reads from `src/data/*.json`. Writes are intentionally unsupported on the event repository in this mode. |
-| DB mode | Runtime mode when `SPOTS_DATA_SOURCE=db`. Reads and writes go through the Drizzle repositories to Postgres + PostGIS. |
-| Reverse geocode | A call to Nominatim's `GET /reverse?lat=…&lon=…&format=jsonv2&addressdetails=1` that returns a structured address for a coordinate. |
-| Lookup panel | The first step of the new create-spot flow: two numeric inputs + a `Look up` button + a result preview. |
+| Single source of truth | The Postgres database (via Drizzle) is the only runtime read path for spots, events, saved spots, and dimension data (regions, countries, spot types, disciplines, tiers). No runtime fallback, no env toggle. |
+| Seed source | The static files in `src/data.ts` + `src/data/*.json` used **only** by `src/db/seed.ts` to bootstrap a fresh database. Not a runtime read path. |
+| Dimension data | Lookup tables (`regions`, `countries`, `spot_types`, `sport_disciplines`, `event_tiers`) seeded once and read from the DB at runtime. |
+| UI config | Static constants that are **not** in the DB (preset images). Stay as a small constant module. |
+| Dead code | Symbols with zero callers (confirmed by grep + knowledge graph). Deleted in phase 6. |
+| Duality | The JSON/DB split: `SPOTS_DATA_SOURCE` env var, `getSpotsDataSource()`, `Json*Repository` classes, the async-factory JSON-fallback branch, the `DataModeNotice` banner, the `writeEnabled` prop, and the `getTerrainOptionsFromSource` JSON branch. |
 
 ---
 
 ## 1. Goals
 
-1. Provide a single admin surface (`/admin/*`) for managing `spots` and `sport_events`.
-2. Replace the manual text-entry create-spot flow with a lat/lon → reverse-geocode → edit → save flow.
-3. Keep the create-spot code path unified: one Zod schema, one repository method, one action.
-4. Surface the new flow as a curated tool the admin uses to bootstrap and curate the catalogue.
-5. Preserve the existing monochrome design system and a11y rules (`eslint-plugin-jsx-a11y`).
+1. **One read path.** All spot, event, saved-spot, and dimension reads go through the Drizzle repositories. The JSON repositories and the `SPOTS_DATA_SOURCE` toggle are deleted.
+2. **One source for regions.** `REGIONS_DATA` is no longer bundled into client components. The root layout fetches regions from the DB and delivers them to the client tree via the existing `SpotsProvider` (already the server→client data bridge).
+3. **No env-driven runtime branching for data.** `getSpotsDataSource()` and the `writeEnabled`/`DataModeNotice` admin machinery are deleted. The DB is required at all times.
+4. **No dead code in the data layer.** Unused getters, the sync factory duplicates, and the JSON-only transformation helpers are deleted.
+5. **No ambiguous dimension reads.** `getTerrainOptionsFromSource()` collapses to a single DB read. `pickFallbackImage` and `getPresetImages` (UI config) stay as the only non-DB helpers.
 
 ## 2. Non-goals
 
-- Per-row audit log, soft delete, restore.
-- Bulk import / export (CSV/JSON).
-- A role management UI (admins are configured via env, not via in-app UI).
-- A multi-image gallery per spot (the schema supports one image; the new form keeps that contract).
-- An in-app map editor (drag-to-edit pins). The existing `/map` page stays read-only.
-- Modifying the public `SpotCard`, `SpotDetailsContent`, `SportEventsTab`, or `AppShell` views.
-- Soft delete and trash view (deletes are hard and immediate).
-
-## 3. Roles & access
-
-### 3.1 Identity model
-
-There is currently no admin concept in the codebase. We introduce **email allow-list** as the only admin gate, with the dev placeholder as an automatic fallback.
-
-- New env var: `ADMIN_EMAILS` (CSV, case-insensitive, default `""`).
-- `src/lib/user.ts` `User.email` (already populated from Supabase `auth.getClaims()` via `userFromClaims`) is the comparison key.
-- When Supabase is **unconfigured**, the dev placeholder user `DEV_USER_ID = "dev"` (email `devopenspot@gmail.com`) is treated as admin unconditionally. This matches the existing dev-mode conventions (`useSignOut` already returns `isSignedIn: user.id !== DEV_USER_ID`).
-- When Supabase **is** configured, only users whose email is in `ADMIN_EMAILS` are admin. The dev user does not exist in that mode.
-
-### 3.2 New helpers
-
-`src/lib/admin.ts` (new):
-
-```ts
-import { env } from "@/lib/env";
-import { DEV_USER_ID, type User } from "@/lib/user";
-
-function parseAdminEmails(raw: string): readonly string[] {
-  return raw.split(",").map(s => s.trim().toLowerCase()).filter(Boolean);
-}
-
-export function getAdminEmails(): readonly string[] {
-  return parseAdminEmails(env.ADMIN_EMAILS);
-}
-
-export function isAdminUser(
-  user: User,
-  adminEmails: readonly string[] = getAdminEmails(),
-): boolean {
-  if (user.id === DEV_USER_ID) return true;
-  return adminEmails.includes(user.email.toLowerCase());
-}
-```
-
-`src/lib/auth.ts` `getServerUserFromCookies` spreads `isAdmin: isAdminUser(fromClaims)` over the result of `userFromClaims` so the `User` returned to the client always carries the correct `isAdmin` flag.
-
-`src/lib/auth/server.ts` gains two siblings that mirror the existing `requireUser` / `requireUserOrRedirect`:
-
-- `requireAdminOrRedirect(nextPath: string): Promise<User>` — for Server Components; throws `redirect("/")` on failure.
-- `requireAdmin(): Promise<User>` — for server actions and route handlers; throws `Error("Admin only")` on failure. Callers handle the throw.
-
-The two new guards live in `auth/server.ts` (alongside `requireUser`) rather than `admin.ts` to keep the dependency graph acyclic: `auth.ts` ↔ `admin.ts` would otherwise be a cycle. `admin.ts` stays a pure module with no auth imports and is therefore safe to import from client components.
-
-`src/lib/user-context.tsx` and `useUser()` expose `isAdmin: boolean` on the `User` so client components can hide/show admin UI without a server round trip.
-
-`src/hooks/useUser.ts` re-exports the new field.
-
-### 3.3 Threat model
-
-- An attacker who can read `ADMIN_EMAILS` from `.env.local` and guess a Supabase auth email gets admin. Mitigation: keep `.env` files git-ignored (already the case per `.gitignore`) and never log `ADMIN_EMAILS` (the singleton `log` is the only logger; do not add an `ADMIN_EMAILS` log line anywhere).
-- The reverse-geocode API route is admin-gated so anonymous traffic does not pollute the Nominatim quota.
-- Server actions validate input via Zod; repository methods do not trust caller-provided `createdBy` (the new admin actions do not set `createdBy`; the creator of record is the admin's `user.id` if the column is non-null, else `null` — see §6.3).
-
----
-
-## 4. Routes & navigation
-
-### 4.1 URL map
-
-```
-src/app/
-  admin/
-    layout.tsx                  # requireAdminOrRedirect("/admin"); renders AdminShell
-    page.tsx                    # overview cards: counts of spots, events, saved_spots
-    spots/
-      page.tsx                  # paginated list + search/filter
-      new/page.tsx              # new create-spot flow (lat/lon → reverse → edit → save)
-      [id]/page.tsx             # edit (server-rendered initial values)
-    events/
-      page.tsx                  # paginated list
-      new/page.tsx
-      [id]/page.tsx
-  api/
-    geocode/
-      reverse/route.ts          # GET ?lat=&lon= → Nominatim /reverse (proxied)
-```
-
-### 4.2 `/post` becomes a stub
-
-`src/app/post/page.tsx` is replaced with a Server Component that:
-1. Calls `await requireUserOrRedirect("/post")` (keeps today's gating).
-2. Renders a new `<PostClosedNotice />` client component: monochrome panel with one `Go to admin dashboard` button linking to `/admin/spots/new` (or `/admin` if not admin) and a `Back to directory` link.
-
-After the migration, these files are deleted:
-- `src/components/post/PostForm.tsx`
-- `src/components/post/PostTab.tsx`
-- `src/components/post/PostSuccessScreen.tsx`
-
-### 4.3 Navigation
-
-`src/lib/types.ts` — extend `TabType`:
-```ts
-export type TabType = "explore" | "saved" | "map" | "post" | "events" | "admin";
-```
-
-`src/lib/nav.ts` — add a new `NAV_ITEMS` entry:
-```ts
-{
-  id: "admin",
-  path: "/admin",
-  label: "Admin",
-  shortLabel: "Admin",
-  drawerLabel: "Admin",
-  Icon: Shield,
-}
-```
-
-`NAV_ITEMS` itself stays the full list, but the public header / mobile drawer hide the entry unless `useUser().isAdmin` is true. This matches the existing "show Sign in only when dev" pattern in `SignInLink.tsx`.
-
-### 4.4 Sitemap
-
-`src/app/sitemap.ts` explicitly excludes `/admin/*` so search engines do not index admin pages.
-
----
-
-## 5. Data layer changes
-
-### 5.1 Schema migration
-
-`supabase/migrations/0004_spot_sports.sql` (new):
-```sql
-ALTER TABLE "public"."spots" ADD COLUMN "sports" text[] NOT NULL DEFAULT '{}';
-```
-
-`src/db/schema.ts`:
-```ts
-sports: text("sports").array().notNull().default([]),
-```
-
-`src/lib/schemas/spot.ts`:
-- `NewSpotSchema` gains `sports: z.array(SportDisciplineSchema).default([])`.
-- `SpotPatchSchema` gains `sports: z.array(SportDisciplineSchema).optional()`.
-
-`src/lib/types.ts` re-exports `SportDiscipline` from `@/types/sport-events` for convenience.
-
-No other schema changes. All existing fields are reused.
-
-### 5.2 Repository changes
-
-`SpotRepository` (`src/lib/repositories/spot-repository.ts`) already exposes `create`, `update`, `delete`. No interface change is needed.
-
-`EventRepository` (`src/lib/repositories/event-repository.ts`) gains three members:
-```ts
-create(input: NewSportEvent): Promise<SportEvent>
-update(id: string, patch: SportEventPatch): Promise<SportEvent>
-delete(id: string): Promise<void>
-```
-
-`JsonEventRepository` (`src/lib/repositories/json-event-repository.ts`) implements the new members by throwing a clear `Error("sport_events writes are not supported in JSON mode")`. This matches the "JSON is the read-only fallback" philosophy in `src/lib/repositories/index.ts`.
-
-`DrizzleEventRepository` (`src/lib/repositories/drizzle-event-repository.ts`) implements the new members using the same patterns as `DrizzleSpotRepository.create/update/delete` (Drizzle `insert().values().returning()`, `update().set().where().returning()`, `delete().where().returning({ id })`).
-
-`src/lib/schemas/event.ts` adds:
-```ts
-export const NewSportEventSchema = z
-  .object({ /* mirrors SportEvent fields */ })
-  .strict();
-
-export const SportEventPatchSchema = z
-  .object({ /* same fields, all optional */ })
-  .strict();
-```
-
-`src/lib/repositories/types.ts` exports `NewSportEvent`, `SportEventPatch`.
-
-`DrizzleSpotRepository.create` and `update` (`src/lib/repositories/drizzle-spot-repository.ts`) thread the new `sports` field through. The Drizzle spot schema's `sports` is a `text[]`; the JSON impl converts `SportDiscipline[]` ↔ `string[]` (the existing code already does this for `features`).
-
----
-
-## 6. Admin shell & components
-
-### 6.1 New files
-
-```
-src/components/admin/
-  AdminShell.tsx                # mirrors AppShell, but renders AdminSidebar
-  AdminSidebar.tsx              # vertical nav: Overview / Spots / Events
-  AdminOverviewCards.tsx        # 3 cards: total spots, total events, saved_spots
-  DataModeNotice.tsx            # persistent banner when SPOTS_DATA_SOURCE=json
-  common/
-    DeleteConfirmDialog.tsx     # wraps Overlay (role="alertdialog")
-    FormSection.tsx             # collapsible section card (sharp edges, no shadow)
-    KeyValueGrid.tsx            # read-only display of id / createdAt / updatedAt / createdBy
-  spots/
-    SpotTable.tsx
-    SpotTableFilters.tsx
-    SpotFormFields.tsx          # shared form fields (used by new + edit)
-    SpotFormSubmit.tsx          # action call + toast + redirect
-    LatLonLookupPanel.tsx       # the "paste lat/lon → Look up" step
-    NominatimAddressPreview.tsx # shows the projected address result
-    ImageSourceField.tsx        # lifted out of the old PostForm
-  events/
-    EventTable.tsx
-    EventTableFilters.tsx
-    EventFormFields.tsx
-    EventFormSubmit.tsx
-
-src/components/post/
-  PostClosedNotice.tsx          # the new stub content for /post
-```
-
-### 6.2 AdminShell
-
-The admin shell lives **outside** the public `AppShell` so the public nav, search overlay, and header are not double-rendered. The header still shows the `BrandLogo` so the operator knows they are still in the same site. The admin shell reuses:
-
-- `ToastViewport` (from `@/components/feedback/Toast`)
-- The `Overlay` primitive (from `@/components/feedback/Overlay`) for modals
-- The `SurfaceCard` / `Eyebrow` / `PrimaryButton` / `UserAvatar` primitives
-- The `cn` helper and the `log` singleton
-
-The admin shell is **not** wrapped by `SpotsProvider` (admin pages do not need the global spots store; they fetch the lists they need).
-
-### 6.3 `createdBy` semantics
-
-Today, `spots.created_by` is set to the signed-in user's UUID (per the public `/post` form). When an admin creates or edits a spot, the existing `createSpotAction` continues to set `createdBy = user.id` where `user` is the admin. The new admin actions (`createSpotFromLookupAction`, `updateSpotAction`) follow the same rule. There is no separate "admin created this" marker; the admin's `user.id` is the marker.
-
-### 6.4 `DataModeNotice`
-
-When `getSpotsDataSource() === "json"`, render a persistent yellow-bordered banner at the top of every admin page:
-
-> "JSON mode — writes are disabled. Set `SPOTS_DATA_SOURCE=db` to manage records."
-
-All write buttons become disabled with a `title="DB mode required"` tooltip. This mirrors the philosophy in `src/lib/repositories/index.ts` that JSON is the read-only fallback. The banner never appears in production once `SPOTS_DATA_SOURCE=db` is set.
-
----
-
-## 7. The new create-spot flow (lat/lon → reverse → edit → save)
-
-The headline behaviour change. The flow lives on a single page (`/admin/spots/new`) with three sequential steps.
-
-### 7.1 Step 1 — Paste lat/lon
-
-`<LatLonLookupPanel>`:
-- Two numeric inputs (`lat`, `lon`), client-validated with Zod `z.number().min(-90).max(90)` / `z.number().min(-180).max(180)`.
-- A `Look up` button (disabled while pending) that calls `GET /api/geocode/reverse?lat=…&lon=…`.
-- While the call is in flight, a skeleton placeholder is shown.
-- On error, show an inline error with a `Retry` button. The form is not auto-populated.
-
-### 7.2 Step 2 — Reverse-geocode (server)
-
-`src/app/api/geocode/reverse/route.ts`:
-
-```ts
-import { NextResponse, type NextRequest } from "next/server";
-import { z } from "zod";
-import { getServerUserFromCookies } from "@/lib/auth";
-import { isAdminUser } from "@/lib/admin";
-import { env } from "@/lib/env";
-import { log } from "@/lib/log";
-
-const Query = z.object({
-  lat: z.coerce.number().min(-90).max(90),
-  lon: z.coerce.number().min(-180).max(180),
-});
-
-export async function GET(req: NextRequest) {
-  const user = await getServerUserFromCookies();
-  if (!isAdminUser(user)) {
-    return NextResponse.json({ error: "Admin only" }, { status: 403 });
-  }
-
-  const url = new URL(req.url);
-  const parsed = Query.safeParse({
-    lat: url.searchParams.get("lat"),
-    lon: url.searchParams.get("lon"),
-  });
-  if (!parsed.success) {
-    return NextResponse.json({ error: "Invalid coordinates" }, { status: 400 });
-  }
-
-  const { lat, lon } = parsed.data;
-  const nominatim = `${env.NOMINATIM_URL}/reverse?format=jsonv2&lat=${lat}&lon=${lon}&addressdetails=1&zoom=18`;
-  try {
-    const r = await fetch(nominatim, {
-      headers: {
-        "User-Agent": env.NOMINATIM_USER_AGENT,
-        "Accept": "application/json",
-      },
-      // Nominatim enforces a 1 req/sec policy. Do not cache.
-      cache: "no-store",
-    });
-    if (!r.ok) {
-      log.warn("geocode.reverse_failed", { status: r.status, lat, lon });
-      return NextResponse.json({ error: "Reverse geocode failed" }, { status: 502 });
-    }
-    const raw = (await r.json()) as NominatimResponse;
-    return NextResponse.json({ address: projectAddress(raw) });
-  } catch (e) {
-    log.error("geocode.reverse_threw", e instanceof Error ? e.message : String(e));
-    return NextResponse.json({ error: "Reverse geocode unavailable" }, { status: 502 });
-  }
-}
-```
-
-`src/lib/geocode/project.ts` (new) exports:
-
-```ts
-export interface ProjectedAddress {
-  displayName: string;
-  name: string | null;
-  road: string | null;
-  houseNumber: string | null;
-  city: string | null;     // any of city / town / village
-  suburb: string | null;
-  state: string | null;
-  country: string | null;
-  countryCode: string | null;
-  lat: number;
-  lon: number;
-}
-
-export function projectAddress(raw: NominatimResponse): ProjectedAddress { /* ... */ }
-```
-
-The endpoint **never** returns the raw Nominatim payload (the upstream shape changes; we want a stable contract).
-
-`src/lib/geocode/classify.ts` (new) exports `classifySpotType(raw): SpotType` that mirrors the regex priority list in `json-spot-repository.ts` (Bowl > Pools > Ledges > DIY > Stair > Park > Plaza) but reads from the Nominatim `class` / `type` / `extratags` fields. The result is a default only — the admin can override it on the form.
-
-### 7.3 Step 3 — Edit & save
-
-After the reverse-geocode returns, the form fields below auto-populate but are **fully editable**:
-
-| Field | Auto-filled from | Editable? |
+- Changing the public visual UX (regions still render in the same place; the "Browse Regions" grid still shows the same shape).
+- Changing the auth axis. `isSupabaseConfigured()` and the dev-placeholder user fallback stay (separate concern from the data axis).
+- Changing the Drizzle schema. The `regions` / `countries` / `spot_types` tables and their relations are already in `src/db/schema.ts` and the single consolidated `supabase/migrations/0000_initial_data_model.sql`.
+- Changing `src/db/seed.ts`. It still uses `src/data.ts` + `src/data/*.json` as the bootstrap source.
+- Soft delete, audit log, or any new migration. The `0000_initial_data_model.sql` is the only migration.
+
+## 3. Decisions
+
+| # | Decision | Rationale |
 | --- | --- | --- |
-| `name` | `displayName` (the spot name; the operator usually hand-tunes) | Yes |
-| `city` | `projectedAddress.city` | Yes |
-| `address` | composed from `road` + `houseNumber` + `suburb` | Yes |
-| `country` | `projectedAddress.country` | Yes |
-| `type` | `classifySpotType(raw)` (Plaza / DIY / Stair / …) | Yes |
-| `features` | first 5 chips derived from the Nominatim `category` / `type` | Yes |
-| `sports` | `[]` (admin picks) | Yes |
-| `communityNote` | pre-filled template, blank if not applicable | Yes |
-| `crowdLevel` | `35` (sensible default) | Yes (slider 0–100) |
-| `image` | preset / URL / file upload — re-uses `<ImageSourceField>` | Yes |
+| D1 | **DB is required to run dev and prod.** `pnpm dev` and `pnpm build` both require a reachable Postgres. No silent JSON read fallback. | Truest single source of truth. The user explicitly chose this over "keep a JSON dev fallback." Surfaces DB setup issues immediately. |
+| D2 | **Regions flow server→client via `SpotsProvider` (Zustand store).** Not prop-drilled through `AppShell` → `SearchOverlay`. | `SpotsProvider` is already the server→client data bridge (`initialSpots`, `initialWeather`, `initialUser`, `initialSavedSpots`). Adding `initialRegions` to the same provider avoids threading regions through 4+ global chrome components. |
+| D3 | **Regions are a Zustand slice on `useSpotsStore`, not a new store.** | All bootstrapped, read-only reference data lives in the same store. One store, one hydration point. |
+| D4 | **`getRegions()` and `getTerrainOptions()` are deleted from `src/lib/spots.ts`.** Their callers (client components) read from the store or call the repo directly. | They were the JSON-mode fallbacks. With JSON mode gone, they are dead. |
+| D5 | **`getPresetImages` and `pickFallbackImage` stay** (consumed by the Drizzle spot repo and the admin `ImageSourceField` client component). | `DEFAULT_PRESET_IMAGES` is UI config not in the DB. The Drizzle repo depends on `pickFallbackImage` for the image-fallback path. |
+| D6 | **The async factory signature stays `async`.** Body simplifies to a lazy singleton. | The factories were async to accommodate the now-removed `checkDbHealth()` call. Making them sync is a breaking change at 26 call sites; out of scope for this refactor. |
+| D7 | **`checkDbHealth()` and `pnpm db:health` stay as a diagnostic tool**, but the async factory no longer calls it. | Useful for ops; not a runtime read-path dependency. |
+| D8 | **Sync factories (`getSpotRepository`, `getEventRepository`, `getSavedSpotsRepository`) are deleted.** | Zero callers (confirmed by grep + knowledge graph). The `AGENTS.md` note that they were "kept for tests, CLI" is stale. |
+| D9 | **`src/data.ts` keeps** `REGIONS_DATA`, `COUNTRY_NAME_OVERRIDES`, `COUNTRY_TO_REGION`, `DEFAULT_PRESET_IMAGES` (the seed source). **Deletes** `EXPLORE_CATEGORIES`, `LEGENDARY_TERRAINS`, `POPULAR_SEARCH_TERMS`, `RECENT_SEARCHES`, `TERRAIN_OPTIONS` (dead). | The kept constants are the seed bootstrap. The deleted ones have zero callers. |
+| D10 | **`src/data/spots.json` and `src/data/sport-events.json` stay** as the seed source. Not a runtime read path. | `src/db/seed.ts` still reads them. After the refactor, they are a **one-time bootstrap** for a fresh DB, not a fallback. |
+| D11 | **The `writeEnabled` prop and `DataModeNotice` are deleted.** Admin write buttons are always enabled. | The DB is always the source, so writes always work. The prop and banner are pure JSON-mode scaffolding. |
+| D12 | **The `Region.count` display field is computed** from `repo.listRegions()` spot counts (live data), not a static string. | "1.2k Spots" etc. in the seed were invented. Live counts are honest and match the single-source-of-truth principle. |
 
-The submit handler calls `createSpotFromLookupAction(formData)`, which is the same code path as the existing `createSpotAction` plus the new `sports` field. After a successful save, the page redirects to `/admin/spots/[id]` so the operator can immediately review / tweak.
+## 4. Architecture after the refactor
 
-### 7.4 Edit flow (`/admin/spots/[id]`)
+### 4.1 Read path (collapsed)
 
-The same `<SpotFormFields>` renders pre-populated with the existing record. The submit handler calls `updateSpotAction(id, formData)`. Hard delete is available from the table and from the edit page (gated by `<DeleteConfirmDialog>`).
+```
+Server Component / Server Action
+  └─ await getSpotRepositoryAsync()   ← lazy singleton, returns DrizzleSpotRepository
+       └─ getDbClient()               ← throws if DATABASE_URL* not set
+            └─ postgres(url, { ssl: "require" })
+                 └─ drizzle(client, { schema })
+```
 
----
-
-## 8. Server actions
-
-All actions live in `src/app/actions/admin-*.ts`, all start with `"use server"`, and all call `requireAdmin()` from `@/lib/auth/server`. They use the `log` singleton from `@/lib/log` for failure paths.
-
-### 8.1 `src/app/actions/admin-spots.ts`
+There is no `if (source === "json")` branch anywhere. The factory body becomes:
 
 ```ts
-"use server";
-
-import { revalidatePath, revalidateTag } from "next/cache";
-import { requireAdmin } from "@/lib/auth/server";
-import { getSpotRepositoryAsync } from "@/lib/repositories";
-import { NewSpotSchema, SpotPatchSchema } from "@/lib/schemas/spot";
-import { log } from "@/lib/log";
-
-export async function createSpotFromLookupAction(formData: FormData): Promise<Spot> {
-  const user = await requireAdmin();
-  // ... same as createSpotAction: read file (uploadSpotImage), parse, repo.create
-  revalidateTag("spots", "max");
-  return created;
-}
-
-export async function updateSpotAction(id: string, formData: FormData): Promise<Spot> {
-  await requireAdmin();
-  const parsed = SpotPatchSchema.parse(/* extract from FormData */);
-  const repo = await getSpotRepositoryAsync();
-  const updated = await repo.update(id, parsed);
-  revalidateTag("spots", "max");
-  return updated;
-}
-
-export async function deleteSpotAction(id: string): Promise<void> {
-  await requireAdmin();
-  const repo = await getSpotRepositoryAsync();
-  await repo.delete(id);
-  revalidateTag("spots", "max");
+let repo: SpotRepository | null = null
+export async function getSpotRepositoryAsync(): Promise<SpotRepository> {
+  if (!repo) {
+    const { db } = getDbClient()
+    repo = new DrizzleSpotRepository(db)
+  }
+  return repo
 }
 ```
 
-`createSpotFromLookupAction` mirrors the existing `createSpotAction` (`src/app/actions/spots.ts`) and threads the new `sports` field through `NewSpotSchema.parse(input)`. The existing `createSpotAction` stays in place; the new flow uses the dedicated `createSpotFromLookupAction` so the public-fallback page can still use the simpler text-only path if it is later restored.
+`getEventRepositoryAsync` and `getSavedSpotsRepositoryAsync` follow the same shape.
 
-### 8.2 `src/app/actions/admin-events.ts`
+### 4.2 Dimension reads (collapsed)
+
+`getTerrainOptionsFromSource()` (in `src/lib/spots/source.ts`) loses the JSON branch and becomes a single DB read:
 
 ```ts
-"use server";
-
-import { revalidatePath, revalidateTag } from "next/cache";
-import { requireAdmin } from "@/lib/auth/server";
-import { getEventRepositoryAsync } from "@/lib/repositories";
-import { NewSportEventSchema, SportEventPatchSchema } from "@/lib/schemas/event";
-import { log } from "@/lib/log";
-
-export async function createEventAction(formData: FormData): Promise<SportEvent> { /* ... */ }
-export async function updateEventAction(id: string, formData: FormData): Promise<SportEvent> { /* ... */ }
-export async function deleteEventAction(id: string): Promise<void> { /* ... */ }
+export const getTerrainOptionsFromSource = cache(
+  async (): Promise<readonly TerrainOption[]> => {
+    const repo = await getSpotRepositoryAsync()
+    const facets = await repo.listTypes()
+    return facets.map((f) => ({ value: f.name, label: f.name }))
+  },
+)
 ```
 
-Each event action calls `revalidateTag("sport-events", "max")` and `revalidatePath("/sport-events")`.
+### 4.3 Region delivery (server→client)
 
-### 8.3 Error contract
+```
+RootDataProviders (app/layout.tsx, async server component)
+  └─ Promise.all([
+       getSpotRepositoryAsync(),         ← existing
+       getWeatherForAllSpots(),          ← existing
+       getServerUserFromCookies(),       ← existing
+       getRegionsForClient(),            ← NEW: regions+countries join + spot counts
+     ])
+  └─ <SpotsProvider
+       initialSpots={...}                ← existing
+       initialRegions={...}              ← NEW
+       initialWeather={...}              ← existing
+       initialUser={...}                 ← existing
+       initialSavedSpots={...}           ← existing
+     >
+       └─ <AppShell> → <SearchOverlay>   ← reads regions from useSpotsStore
+       └─ <MapTab>                       ← reads regions from useSpotsStore
+       └─ <ExploreTab>                   ← reads regions from useSpotsStore
+```
 
-Per the existing convention, server actions throw plain `Error("Admin only")` on auth failure. The form components wrap the action call in a `try/catch`, surface a `showToast(message, "error")`, and re-enable the submit button. Pages do not `try/catch` around `requireAdminOrRedirect` (the `redirect()` throw is handled by Next.js).
+`getRegionsForClient()` is a new server function that:
+- Joins `regions` + `countries` (via the existing `regionsRelations` / `countriesRelations`).
+- Calls `repo.listRegions()` for live spot counts per region.
+- Returns `Region[]` with `name`, `desc` (from `description`), `image` (from `imageUrl`), `link` (derived: `/map?region={slug}`), `count` (formatted from `spotCount`: e.g. `"1.2k"`, `"892"`), `countries` (array of country names).
 
----
+### 4.4 `useSpotsStore` (extended)
 
-## 9. Validation
-
-- `NewSpotSchema` (existing) gains `sports: z.array(SportDisciplineSchema).default([])`.
-- `SpotPatchSchema` (existing) gains `sports: z.array(SportDisciplineSchema).optional()`.
-- `NewSportEventSchema` (new) mirrors `SportEvent` (Zod transform to coerce `slug` from `id` if missing).
-- `SportEventPatchSchema` (new) makes all `SportEvent` fields optional.
-- `src/app/api/geocode/reverse/route.ts` uses a thin inline Zod object (see §7.2).
-
----
-
-## 10. Environment & config
-
-`src/lib/env.ts` — add to `EnvSchema`:
 ```ts
-ADMIN_EMAILS: z.string().default(""),
+interface SpotsState {
+  spots: readonly Spot[]
+  regions: readonly Region[]   // NEW
+  setSpots: (spots: readonly Spot[]) => void
+  setRegions: (regions: readonly Region[]) => void   // NEW
+}
 ```
 
-`.env.example`:
-```bash
-# Comma-separated list of admin emails (case-insensitive). In local dev
-# (Supabase unconfigured), the `dev` placeholder user is automatically
-# treated as admin.
-ADMIN_EMAILS=
+`SpotsProvider` hydrates both slices in the same `useEffect`. The existing `setSpots` call is joined by `setRegions(initialRegions)`.
+
+### 4.5 Admin (simplified)
+
+- `DataModeNotice` component: **deleted**.
+- `getSpotsDataSource()`: **deleted** from `env.ts`.
+- `SPOTS_DATA_SOURCE` env var: **deleted** from the Zod schema and `.env.example`.
+- `writeEnabled` prop: **deleted** from all 7 admin pages and 6 admin components/forms. Write buttons are always enabled. The "DB mode required" tooltip strings are deleted.
+- The `if (!writeEnabled) { … SPOTS_DATA_SOURCE=db }` JSX blocks in 4 admin forms are deleted.
+- `SpotFormFields`'s `writeEnabled` prop (defaults to `true`, used to flip the lat/lon editor to read-only): **deleted**. The lat/lon editor is always editable.
+
+## 5. File-by-file changes
+
+### 5.1 Files to delete (13)
+
+| File | Reason |
+| --- | --- |
+| `src/lib/repositories/json-spot-repository.ts` | JSON spot repo impl (365 lines). |
+| `src/lib/repositories/json-event-repository.ts` | JSON event repo impl. |
+| `src/lib/repositories/json-saved-spots-repository.ts` | JSON saved-spots repo impl. |
+| `src/lib/repositories/spot-repository.ts` | The `SpotRepository` interface — see §5.3. |
+| `src/lib/repositories/event-repository.ts` | The `EventRepository` interface — see §5.3. |
+| `src/lib/repositories/saved-spots-repository.ts` | The `SavedSpotsRepository` interface — see §5.3. |
+| `src/components/admin/DataModeNotice.tsx` | JSON-mode banner. |
+| `src/data/sport-events.json` | Only consumed by the deleted `JsonEventRepository` (seed.ts reads from `src/db/seed.ts`'s inline data; confirm in §5.4). |
+| `src/data/spots.json` | Same — only consumed by the deleted `JsonSpotRepository` (seed.ts reads from `../data/spots.json`; confirm in §5.4). |
+| `src/lib/spots/source.ts` | The `getTerrainOptionsFromSource` file — collapsed to a 5-line inline call in the 2 admin pages (or moved to `src/lib/spots.ts` as a thin server-only export). |
+
+> **§5.4 verification note:** the seed file (`src/db/seed.ts`) currently reads `src/data/spots.json` and `src/data/sport-events.json` at lines 2–3. These JSON files MUST stay if the seed still needs them. The deletion of `src/data/*.json` in the table above is **conditional on confirming the seed no longer needs them** during phase 1. If the seed still imports them, keep them. (Likely outcome: keep both JSON files, drop only the JSON repo classes.)
+
+### 5.2 Files to keep, simplify, or extend
+
+| File | Change |
+| --- | --- |
+| `src/lib/repositories/index.ts` | **Rewrite.** Drop `JsonSpotRepository`/`JsonEventRepository`/`JsonSavedSpotsRepository` imports. Drop the 3 `getJson*Repo` private helpers, `lastContext`/`forceSource`/`getLastRepositoryContext`. Drop the 3 sync factories. Keep the 3 async factories, simplified to lazy singletons. Re-export the 3 Drizzle repos as the implementations. |
+| `src/lib/repositories/drizzle-spot-repository.ts` | No change. |
+| `src/lib/repositories/drizzle-event-repository.ts` | No change. |
+| `src/lib/repositories/drizzle-saved-spots-repository.ts` | No change. |
+| `src/lib/repositories/types.ts` | No change. |
+| `src/lib/repositories/spot-query.ts` | No change. |
+| `src/lib/env.ts` | **Remove** `SPOTS_DATA_SOURCE` from the Zod schema and `getSpotsDataSource()`. **Keep** all auth/DB env vars and `isSupabaseConfigured()`. |
+| `src/lib/db/client.ts` | No change. `getDbClient()` already throws if `getDatabaseUrl()` returns null. |
+| `src/lib/db/health.ts` | No change. `checkDbHealth()` stays as a diagnostic (used by `pnpm db:health`). |
+| `src/lib/spots.ts` | **Delete** `getExploreCategories`, `getLegendaryTerrains`, `getPopularSearchTerms`, `getRecentSearches`, `getRegions`, `getTerrainOptions` (and their imports from `@/data`). **Keep** `getPresetImages` and `pickFallbackImage` (Drizzle repo + admin depend on them). |
+| `src/lib/spots/source.ts` | **Delete** the file. The 2 callers (`admin/spots/new/page.tsx`, `admin/spots/[id]/page.tsx`) inline the 5-line repo call, or call a new exported `getTerrainOptionsFromSource` from `src/lib/spots.ts` (which would make that file server-only). Cleanest: inline. |
+| `src/lib/data/regions.ts` (new) | New server-only module. Exports `getRegionsForClient(): Promise<readonly Region[]>`. Joins `regions` + `countries`, calls `getSpotRepositoryAsync().listRegions()` for spot counts, formats the `Region[]` shape. |
+| `src/stores/spots-store.ts` | **Extend** the `SpotsState` interface with `regions` and `setRegions`. |
+| `src/components/layout/SpotsProvider.tsx` | **Add** `initialRegions` prop; call `useSpotsStore.setState({ regions: initialRegions })` in a `useEffect`. |
+| `src/app/layout.tsx` | **Add** `getRegionsForClient()` to the `Promise.all` in `RootDataProviders`; pass `initialRegions` to `<SpotsProvider>`. |
+| `src/hooks/useMapFilter.ts` | **Replace** `import { getRegions } from "@/lib/spots"` with `import { useSpotsStore } from "@/stores/spots-store"`. Change the `useMemo(() => getRegions(), [])` to `const regions = useSpotsStore((s) => s.regions)`. The `deriveRegion(spot)` helper becomes a closed-over function using the store value. |
+| `src/hooks/useMapFilter.test.ts` | **Update** `beforeEach` to seed the store: `useSpotsStore.setState({ regions: TEST_REGIONS, spots: [] })`. Define `TEST_REGIONS` from the same data shape the production `getRegionsForClient` returns (a small fixture mirroring the seed). |
+| `src/components/search/RegionFilter.tsx` | **Delete** the module-level `const regions = getRegions()`. Read from `useSpotsStore`. |
+| `src/components/explore/ExploreTab.tsx` | **Replace** `const regions = useMemo(() => getRegions(), [])` with `const regions = useSpotsStore((s) => s.regions)`. |
+| `src/app/map/page.tsx` | **Make async.** Call `getRegionsForClient()`, pass `regions` to `<MapPageClient regions={...} />`. |
+| `src/app/map/MapPageClient.tsx` | **Accept** `regions` prop; pass to `MapTab`. |
+| `src/components/map/MapTab.tsx` | **Accept** `regions` prop; pass to `useMapFilter(spots, searchParams, { regions })`. (Or: `useMapFilter` reads from store directly — see §6 design choice.) |
+| `src/app/admin/layout.tsx` | **Delete** the `getSpotsDataSource` import, the `isJsonMode` variable, and the `<DataModeNotice>`. |
+| `src/app/admin/spots/page.tsx` | **Delete** the `writeEnabled` derivation. `<SpotTable spots={...} />` (no prop). |
+| `src/app/admin/spots/new/page.tsx` | **Delete** the `writeEnabled` derivation. `<AdminNewSpotForm terrainOptions={...} />` (no `writeEnabled`). |
+| `src/app/admin/spots/[id]/page.tsx` | **Delete** the `writeEnabled` derivation. `<AdminEditSpotForm spot={...} terrainOptions={...} />` (no `writeEnabled`). |
+| `src/app/admin/spots/new/AdminNewSpotForm.tsx` | **Delete** the `writeEnabled` prop, all `!writeEnabled` checks, the "DB mode required" label, the `{!writeEnabled ? … : …}` JSX block. |
+| `src/app/admin/spots/[id]/AdminEditSpotForm.tsx` | Same as above. |
+| `src/app/admin/spots/[id]/AdminEditSpotForm.tsx` (ImageSourceField) | The `imageDisabled` / `writeEnabled` props on `ImageSourceField` are dropped (see below). |
+| `src/app/admin/events/page.tsx` | **Delete** the `writeEnabled` derivation. `<EventTable events={...} />` (no prop). |
+| `src/app/admin/events/new/page.tsx` | **Delete** the `writeEnabled` derivation. `<AdminNewEventForm />` (no prop). |
+| `src/app/admin/events/[id]/page.tsx` | **Delete** the `writeEnabled` derivation. `<AdminEditEventForm event={...} />` (no prop). |
+| `src/app/admin/events/new/AdminNewEventForm.tsx` | **Delete** the `writeEnabled` prop and all conditional JSX. |
+| `src/app/admin/events/[id]/AdminEditEventForm.tsx` | Same. |
+| `src/components/admin/spots/SpotTable.tsx` | **Delete** the `writeEnabled` prop. Edit/Delete buttons always enabled. |
+| `src/components/admin/events/EventTable.tsx` | Same. |
+| `src/components/admin/spots/SpotFormFields.tsx` | **Delete** the `writeEnabled` prop (defaults to `true`). Lat/lon editor always editable. |
+| `src/components/admin/spots/ImageSourceField.tsx` | **Delete** the `imageDisabled` and `writeEnabled` props (if present). |
+| `src/data.ts` | **Delete** `EXPLORE_CATEGORIES`, `LEGENDARY_TERRAINS`, `POPULAR_SEARCH_TERMS`, `RECENT_SEARCHES`, `TERRAIN_OPTIONS` and their type imports (`ExploreCategory`, `LegendaryTerrain`, `TerrainOption`). **Keep** `REGIONS_DATA`, `COUNTRY_NAME_OVERRIDES`, `COUNTRY_TO_REGION`, `DEFAULT_PRESET_IMAGES`. **Keep** the `Region`, `Country`, `PresetImage` type imports. |
+| `src/db/seed.ts` | No change. Still uses `src/data.ts` + `src/data/*.json` for bootstrap. |
+| `.env.example` | **Delete** the `SPOTS_DATA_SOURCE` section and the `docker compose up -d infra-db` instruction's JSON-mode mention. Document that a DB is now required for dev. |
+| `.env` / `.env.local` | If `SPOTS_DATA_SOURCE` is set, remove it. (Local-only; not committed.) |
+| `AGENTS.md` | **Update** the "TL;DR" and "Environment quirks" sections: remove `SPOTS_DATA_SOURCE` references. Note that a DB is required for `pnpm dev` and `pnpm build`. Update the "Architecture" section: single read path (DB), no JSON repos, no `DataModeNotice`, no `writeEnabled`. Update the "Database & migrations" section: clarify the JSON files are now seed-only. |
+| `nominatim-api.rest` | No change. |
+
+### 5.3 Interface decision (in or out?)
+
+The 3 interface files (`spot-repository.ts`, `event-repository.ts`, `saved-spots-repository.ts`) define the contracts the Drizzle repos implement. They are imported by:
+- The async factories (which stay).
+- The Drizzle repos (which stay).
+- The JSON repos (which are deleted).
+- The seed CLI (if it uses them — verify; it likely doesn't).
+- The `src/lib/repositories/types.ts` re-exports (stays).
+
+**Recommendation: keep the interfaces.** They document the contract and are a clean seam for future implementations. Only the 3 JSON `implements` statements are removed. The row in §5.1 above ("Files to delete") is **wrong** for the 3 interface files — correct it to "keep."
+
+### 5.4 Seed file verification (phase 1)
+
+`src/db/seed.ts` imports:
+- `../data/spots.json` (line 2)
+- `../data/sport-events.json` (line 3)
+- `COUNTRY_NAME_OVERRIDES`, `COUNTRY_TO_REGION`, `REGIONS_DATA` from `../data` (line 6)
+
+**Both JSON files MUST stay** for the seed to work. The row in §5.1 above is wrong — correct it. The seed is the single bootstrap path; the JSON files are its input, not a runtime fallback. If the seed is later rewritten to skip the JSON and insert directly from the seed constants + region/country tables, the JSON files can be deleted in a follow-up. Not in this refactor.
+
+## 6. Design choice: `useMapFilter` regions via store or prop?
+
+Two options for how `useMapFilter` receives regions:
+
+**Option A — Store (recommended).** `useMapFilter` reads `useSpotsStore((s) => s.regions)`. No prop threading through `MapTab` or `SearchOverlay`. The store is the single source of truth on the client.
+
+**Option B — Prop.** Add a `regions` param to `useMapFilter` and thread it through `MapTab` and `SearchOverlay`. `MapPageClient` receives it from the async `map/page.tsx`. `AppShell`/`SearchOverlay` receive it from `SpotsProvider`.
+
+**Decision: Option A.** The store already holds `spots` (which `useMapFilter` also receives as a param, redundantly — but the param is needed for the test seam). Adding `regions` to the store avoids threading it through 3 components and keeps `useMapFilter` signature stable. The `useMapFilter` test seeds the store in `beforeEach`.
+
+> This is the same approach as the existing `spots` hydration: `SpotsProvider` calls `setSpots(initialSpots)` and `useMapFilter` reads from the store via the param (which currently shadows the store — in practice the param and store are the same data). For regions, we **drop the param and read from the store** since the test seam for regions is the store itself.
+
+## 7. The `Region.count` computation
+
+`Region.count` is currently a hardcoded display string in `REGIONS_DATA` ("1.2k Spots", "840 Spots", "620 Spots"). After the refactor, `getRegionsForClient()` computes it from `repo.listRegions()`:
+
+```ts
+function formatCount(spotCount: number): string {
+  if (spotCount >= 1000) return `${(spotCount / 1000).toFixed(1)}k Spots`
+  return `${spotCount} Spots`
+}
 ```
 
-No new Supabase env, no new external API keys. Nominatim is already configured (`NOMINATIM_URL`, `NOMINATIM_USER_AGENT`).
+`getRegionsForClient()` does two queries:
+1. `db.select().from(regions).leftJoin(countries, …).orderBy(regions.sortOrder)` — regions with their countries.
+2. `repo.listRegions()` — `{ name, spotCount, countryCount }[]` from the existing facet query.
 
-`src/proxy.ts` — unchanged. The session cookie is already refreshed there.
+Then maps and merges by region name. The `link` is derived: `` `/map?region=${slugify(region.name)}` `` (or stored on the row if a column is added later — out of scope).
 
----
+## 8. Testing impact
 
-## 11. Testing
+Zero tests break. The two action tests (`admin-spots.test.ts`, `admin-events.test.ts`) mock the async factories and are unaffected. `useMapFilter.test.ts` is **updated** (not broken) — `beforeEach` seeds the store. No test references `getSpotsDataSource`, `isSupabaseConfigured`, the JSON repo classes, or the sync factories (confirmed by grep + knowledge graph).
 
-The vitest setup already aliases `server-only` → `./test/server-only.ts` and pulls in `@testing-library/jest-dom`. Tests use `happy-dom`. Server actions and route handlers are tested through `vi.mock("@/lib/auth/server", …)`.
+New test to add: `src/lib/data/regions.test.ts` — unit-test `getRegionsForClient()` with the Drizzle client mocked (or with a test DB if the project standardizes on integration tests). At minimum, a unit test for the `formatCount` helper and the slug→name mapping.
 
-### 11.1 New test files
-
-- `src/lib/admin.test.ts` — `isAdminUser` matrix:
-  - dev user (`id === "dev"`) → `true` regardless of `ADMIN_EMAILS`
-  - email in `ADMIN_EMAILS` (any case) → `true`
-  - signed-in user with no email match → `false`
-  - empty `ADMIN_EMAILS` env → `false` (only the dev user is admin)
-- `src/app/api/geocode/reverse/route.test.ts`:
-  - `403` for non-admin
-  - `400` for out-of-range coords
-  - `200` + projected body for in-range coords (mock `fetch`)
-  - `502` on Nominatim upstream error
-- `src/app/actions/admin-spots.test.ts`:
-  - `requireAdmin` is `vi.mock`-ed per the `route.test.ts` pattern.
-  - happy path: action calls `repo.create` / `update` / `delete` and `revalidateTag("spots", "max")`.
-  - "Admin only" path: action throws, no repository call, no `revalidateTag`.
-- `src/app/actions/admin-events.test.ts` — same shape as above for events.
-- `src/components/admin/spots/LatLonLookupPanel.test.tsx`:
-  - happy path: types lat/lon, clicks `Look up`, sees preview, sees form populated.
-  - `502` path: shows inline error, does not populate the form.
-
-### 11.2 Existing tests
-
-`SpotCard.test.tsx` does not reference `PostForm`; no change required.
-
----
-
-## 12. Phased implementation
+## 9. Phased implementation
 
 | Phase | Scope | Exit criteria |
 | --- | --- | --- |
-| 1 | **Auth scaffolding.** `src/lib/admin.ts`, `requireAdmin` / `requireAdminOrRedirect`, `ADMIN_EMAILS` env, `useUser().isAdmin` plumbing. No UI yet. | `pnpm typecheck && pnpm lint && pnpm test` pass; `src/lib/admin.test.ts` is green. |
-| 2 | **Geocode API route.** `src/app/api/geocode/reverse/route.ts` + test. | `pnpm test` includes the new route test; manual `curl` against `/api/geocode/reverse` with a dev cookie returns a projected address. |
-| 3 | **Event repository writes.** New `EventRepository` interface members, `JsonEventRepository` throws, `DrizzleEventRepository` implements, new `NewSportEventSchema` / `SportEventPatchSchema`. | `pnpm typecheck` is green; existing `SportEventsTab` still renders. |
-| 4 | **Admin shell + layout.** `/admin` overview, `AdminShell`, `AdminSidebar`, conditional nav entry, `DataModeNotice`. No CRUD yet. | `/admin` renders for an admin; redirects to `/` for a non-admin. |
-| 5 | **Spot CRUD + new flow.** `spots` list / new (lat/lon flow) / edit / delete. Includes the `0004_spot_sports.sql` migration, the new `createSpotFromLookupAction` / `updateSpotAction` / `deleteSpotAction`, the new `<LatLonLookupPanel>` / `<NominatimAddressPreview>` / `<ImageSourceField>`. | An admin can paste lat/lon, see a reverse-geocoded preview, edit the fields, save, see the row in the admin list, and edit/delete it. |
-| 6 | **Event CRUD.** List / new / edit / delete. Includes the new event actions. | An admin can create / edit / delete a sport event. The public `/sport-events` page reflects changes (via `revalidateTag("sport-events", "max")` + `revalidatePath("/sport-events")`). |
-| 7 | **`/post` replacement.** Replace `src/app/post/page.tsx` with a stub. Delete the unused `PostForm` / `PostTab` / `PostSuccessScreen`. | `pnpm typecheck && pnpm lint && pnpm test` green; `git grep PostForm` returns zero hits. |
-| 8 | **Cleanup.** Sitemap excludes `/admin/*`; update `AGENTS.md` to mention the dashboard; ensure the `dataMode` banner is wired; ensure the dev env (`SPOTS_DATA_SOURCE=json`) shows the banner. | `pnpm typecheck && pnpm lint && pnpm test && pnpm build` all green. |
+| 1 | **Repository collapse.** Rewrite `src/lib/repositories/index.ts`: drop JSON imports, sync factories, `lastContext`/`forceSource`. Simplify async factories to lazy singletons. | `pnpm typecheck` green; `pnpm test` green (admin action tests still mock the async factories). |
+| 2 | **Env + admin scaffolding.** Remove `SPOTS_DATA_SOURCE` from `env.ts`, `.env.example`, `.env.local`. Delete `DataModeNotice.tsx`. Remove `writeEnabled` from all 7 admin pages and 6 admin components. | `pnpm typecheck && pnpm lint && pnpm test && pnpm build` green. The admin dashboard renders without the banner; all write buttons always enabled. |
+| 3 | **Server-side regions.** Add `src/lib/data/regions.ts` with `getRegionsForClient()`. Wire `RootDataProviders` to fetch regions and pass `initialRegions` to `SpotsProvider`. Extend `useSpotsStore` with `regions` + `setRegions`. Hydrate in `SpotsProvider`. | `pnpm typecheck` green; `/explore` renders the region grid from DB data. |
+| 4 | **Client regions migration.** Update `useMapFilter`, `RegionFilter`, `ExploreTab` to read from `useSpotsStore` instead of `getRegions()`. Update `useMapFilter.test.ts` to seed the store. | `pnpm test` green; the map and explore pages render the region filter from the store. |
+| 5 | **Map page wiring.** Make `app/map/page.tsx` async, fetch regions, pass to `MapPageClient` → `MapTab`. | The map page renders without "use client" prop-drilling; the `regions` param on `useMapFilter` is removed (Option A). |
+| 6 | **Dead-code cleanup.** Delete the 4 unused getters (`getExploreCategories`, `getLegendaryTerrains`, `getPopularSearchTerms`, `getRecentSearches`) and their constants (`EXPLORE_CATEGORIES`, `LEGENDARY_TERRAINS`, `POPULAR_SEARCH_TERMS`, `RECENT_SEARCHES`) from `src/lib/spots.ts` and `src/data.ts`. Delete `TERRAIN_OPTIONS` and `getTerrainOptions` (only used by the removed `getTerrainOptionsFromSource` JSON branch). Delete `src/lib/spots/source.ts` and inline the 5-line repo call in the 2 admin pages. | `pnpm typecheck && pnpm lint && pnpm test` green; `git grep` returns zero hits for the deleted symbols. |
+| 7 | **AGENTS.md + docs update.** Update the TL;DR, env quirks, architecture, and testing sections. Remove all `SPOTS_DATA_SOURCE`, `JsonSpotRepository`, `DataModeNotice`, `writeEnabled`, and "JSON-mode fallback" references. Add a note that `pnpm dev` and `pnpm build` require a reachable Postgres. | AGENTS.md reflects the post-refactor reality. |
 
-### 12.1 CI order
+### 9.1 CI order
 
-`.github/workflows/ci.yml` order is unchanged: `typecheck` → `lint` → `test` → `pnpm db:apply` (the last only if `supabase/migrations/**` changed — which it will, because of `0004_spot_sports.sql`).
+`.github/workflows/ci.yml` is unchanged: `install --frozen-lockfile` → `typecheck` → `lint` → `test` → `db:apply`. The test step does not require a DB (tests mock the repos). The `db:apply` step requires the Supabase `DB_CONNETION_STRING` secret. Local devs must run `pnpm db:health && pnpm db:apply && pnpm db:seed` once before `pnpm dev` or `pnpm build` (documented in `AGENTS.md` and `.env.example`).
 
-### 12.2 Smoke test checklist (manual, before merge)
+### 9.2 Smoke test checklist (manual, before merge)
 
-1. `pnpm dev` with `SPOTS_DATA_SOURCE=json` → `/admin` shows the `DataModeNotice` and disables write buttons.
-2. `pnpm dev` with `SPOTS_DATA_SOURCE=db` and a fresh DB → run `pnpm db:apply && pnpm db:seed` → log in as `devopenspot@gmail.com` (or any email in `ADMIN_EMAILS`) → `/admin` renders the overview.
-3. Click "Spots" → "New spot" → paste `45.76864173087472, 4.836915452991425` → click `Look up` → confirm the preview matches the canonical example in `nominatim-api.rest` → edit `Name` to `Test Plaza` → click `Save` → confirm the row appears in `/admin/spots`.
-4. Click the row → edit `Crowd level` to `90` → click `Save` → confirm the change is reflected in `/spots/[id]`.
-5. Click `Delete` → confirm in `<DeleteConfirmDialog>` → confirm the row is gone from `/admin/spots` and from the public `/` listing.
-6. Repeat 3–5 for an event under `/admin/events`.
-7. Visit `/post` as a signed-in non-admin user → confirm the stub page renders with a "Go to admin dashboard" link that 403s the user (or redirects to `/`).
-8. Visit `/post` as an admin user → confirm the link goes to `/admin/spots/new`.
+1. Fresh DB: `pnpm db:health` → ok. `pnpm db:apply` → applies `0000_initial_data_model.sql`. `pnpm db:seed` → seeds regions, countries, spot types, spots, events. `pnpm dev` → renders the public site.
+2. `/explore` → "Browse Regions" grid renders 3 regions from the DB (Americas, Europe, Asia), each with its real spot count and a `/map?region=…` link.
+3. `/map` → region pills and country pills render from the store. Selecting a region updates the URL and filters spots.
+4. Cmd+K → search overlay opens. Region filter pills render. Selecting a region navigates to `/map?region=…`.
+5. `pnpm dev` with no DB running → fails fast (the Drizzle client throws on the first query). No silent JSON fallback.
+6. `/admin` → no `DataModeNotice` banner. All write buttons enabled. Create / edit / delete a spot and an event — changes persist.
+7. `pnpm build` → succeeds (requires DB; `generateStaticParams` in `app/spots/[id]/page.tsx` calls the repo).
+8. `pnpm test` → all 12 tests green.
 
----
+## 10. File checklist
 
-## 13. File checklist
-
-### 13.1 New files (~30)
+### 10.1 New files (1)
 
 ```
+src/lib/data/regions.ts              # getRegionsForClient(): Promise<readonly Region[]>
+```
+
+### 10.2 Files to rewrite (3)
+
+```
+src/lib/repositories/index.ts        # simplify to 3 async factories + re-exports
+src/lib/spots.ts                     # drop 5 dead getters, keep pickFallbackImage + getPresetImages
+src/stores/spots-store.ts            # add regions + setRegions
+```
+
+### 10.3 Files to edit (~22)
+
+```
+src/lib/env.ts                                       # remove SPOTS_DATA_SOURCE + getSpotsDataSource
+src/lib/data/regions.ts                              # NEW
+src/components/layout/SpotsProvider.tsx              # add initialRegions prop
+src/app/layout.tsx                                   # fetch + pass initialRegions
+src/app/map/page.tsx                                 # async + fetch + pass regions
+src/app/map/MapPageClient.tsx                        # accept + forward regions
+src/components/map/MapTab.tsx                        # (option A: no change; option B: accept regions)
+src/hooks/useMapFilter.ts                            # read regions from store
+src/hooks/useMapFilter.test.ts                       # seed store in beforeEach
+src/components/search/RegionFilter.tsx               # read from store
+src/components/explore/ExploreTab.tsx                # read from store
+src/app/admin/layout.tsx                             # drop DataModeNotice + getSpotsDataSource
+src/app/admin/spots/page.tsx                         # drop writeEnabled
+src/app/admin/spots/new/page.tsx                     # drop writeEnabled
+src/app/admin/spots/[id]/page.tsx                    # drop writeEnabled
+src/app/admin/spots/new/AdminNewSpotForm.tsx         # drop writeEnabled prop + JSX
+src/app/admin/spots/[id]/AdminEditSpotForm.tsx       # drop writeEnabled prop + JSX
+src/app/admin/events/page.tsx                        # drop writeEnabled
+src/app/admin/events/new/page.tsx                    # drop writeEnabled
+src/app/admin/events/[id]/page.tsx                   # drop writeEnabled
+src/app/admin/events/new/AdminNewEventForm.tsx       # drop writeEnabled prop + JSX
+src/app/admin/events/[id]/AdminEditEventForm.tsx     # drop writeEnabled prop + JSX
+src/components/admin/spots/SpotTable.tsx             # drop writeEnabled prop
+src/components/admin/spots/SpotFormFields.tsx        # drop writeEnabled prop
+src/components/admin/spots/ImageSourceField.tsx      # drop imageDisabled/writeEnabled (if present)
+src/components/admin/events/EventTable.tsx           # drop writeEnabled prop
+src/data.ts                                          # drop 5 dead constants + imports
+.env.example                                         # drop SPOTS_DATA_SOURCE section
+.env / .env.local                                    # drop SPOTS_DATA_SOURCE line (local, not committed)
+AGENTS.md                                            # update env + architecture + testing sections
+```
+
+### 10.4 Files to delete (6)
+
+```
+src/lib/repositories/json-spot-repository.ts
+src/lib/repositories/json-event-repository.ts
+src/lib/repositories/json-saved-spots-repository.ts
+src/components/admin/DataModeNotice.tsx
+src/lib/spots/source.ts                              # getTerrainOptionsFromSource inlined into 2 admin pages
+```
+
+> The 3 `*-repository.ts` interface files (`spot-repository.ts`, `event-repository.ts`, `saved-spots-repository.ts`) are **kept** (see §5.3).
+
+### 10.5 Files explicitly NOT changed
+
+```
+src/lib/repositories/drizzle-spot-repository.ts
+src/lib/repositories/drizzle-event-repository.ts
+src/lib/repositories/drizzle-saved-spots-repository.ts
+src/lib/repositories/types.ts
+src/lib/repositories/spot-query.ts
+src/lib/db/client.ts
+src/lib/db/health.ts
+src/db/seed.ts
+src/db/apply-sql.ts
+src/db/health-cli.ts
+src/db/load-env.ts
+src/db/schema.ts
+src/lib/auth.ts
+src/lib/auth/server.ts
 src/lib/admin.ts
-src/lib/admin.test.ts
-src/lib/geocode/project.ts
-src/lib/geocode/classify.ts
-src/lib/geocode/nominatim-types.ts
-src/app/api/geocode/reverse/route.ts
-src/app/api/geocode/reverse/route.test.ts
-src/app/admin/layout.tsx
-src/app/admin/AdminLayoutClient.tsx
-src/app/admin/page.tsx
-src/app/admin/spots/page.tsx
-src/app/admin/spots/new/page.tsx
-src/app/admin/spots/[id]/page.tsx
-src/app/admin/events/page.tsx
-src/app/admin/events/new/page.tsx
-src/app/admin/events/[id]/page.tsx
-src/app/actions/admin-spots.ts
-src/app/actions/admin-spots.test.ts
-src/app/actions/admin-events.ts
-src/app/actions/admin-events.test.ts
-src/components/admin/AdminShell.tsx
+src/lib/user.ts
+src/data/spots.json                                  # still used by seed.ts
+src/data/sport-events.json                           # still used by seed.ts
+supabase/migrations/0000_initial_data_model.sql
+src/lib/weather/**                                   # no data-source coupling
+src/components/admin/AdminShell.tsx                  # no writeEnabled/DataModeNotice coupling
 src/components/admin/AdminSidebar.tsx
 src/components/admin/AdminOverviewCards.tsx
-src/components/admin/DataModeNotice.tsx
 src/components/admin/common/DeleteConfirmDialog.tsx
 src/components/admin/common/FormSection.tsx
 src/components/admin/common/KeyValueGrid.tsx
-src/components/admin/common/index.ts
-src/components/admin/spots/SpotTable.tsx
-src/components/admin/spots/SpotTableFilters.tsx
-src/components/admin/spots/SpotFormFields.tsx
-src/components/admin/spots/SpotFormSubmit.tsx
-src/components/admin/spots/LatLonLookupPanel.tsx
-src/components/admin/spots/LatLonLookupPanel.test.tsx
-src/components/admin/spots/NominatimAddressPreview.tsx
-src/components/admin/spots/ImageSourceField.tsx
-src/components/admin/events/EventTable.tsx
-src/components/admin/events/EventTableFilters.tsx
-src/components/admin/events/EventFormFields.tsx
-src/components/admin/events/EventFormSubmit.tsx
-src/components/post/PostClosedNotice.tsx
-supabase/migrations/0004_spot_sports.sql
 ```
 
-### 13.2 Edited files (~13)
-
-```
-src/lib/env.ts                                # + ADMIN_EMAILS
-src/lib/auth/server.ts                        # + requireAdmin, requireAdminOrRedirect
-src/lib/user.ts                               # no change to User; isAdmin computed in context
-src/lib/user-context.tsx                      # + isAdmin field on User + fallback
-src/lib/types.ts                              # TabType += "admin"; re-export SportDiscipline
-src/lib/nav.ts                                # + admin NAV_ITEMS entry
-src/lib/repositories/event-repository.ts      # + create/update/delete
-src/lib/repositories/json-event-repository.ts # + throwing implementations
-src/lib/repositories/drizzle-event-repository.ts # + Drizzle implementations
-src/lib/repositories/types.ts                 # + NewSportEvent, SportEventPatch
-src/lib/schemas/event.ts                      # + NewSportEventSchema, SportEventPatchSchema
-src/lib/schemas/spot.ts                       # + sports
-src/db/schema.ts                              # + spots.sports
-src/components/layout/NavList.tsx             # conditionally show admin link
-src/components/layout/MobileDrawer.tsx        # same
-src/components/layout/Header.tsx              # same (if applicable)
-src/hooks/useUser.ts                          # re-export User with isAdmin
-src/app/sitemap.ts                            # exclude /admin/*
-.env.example                                  # document ADMIN_EMAILS
-AGENTS.md                                     # add a one-line note about /admin and the env
-```
-
-### 13.3 Deleted files (3)
-
-```
-src/components/post/PostForm.tsx
-src/components/post/PostTab.tsx
-src/components/post/PostSuccessScreen.tsx
-```
-
----
-
-## 14. Risks & mitigations
+## 11. Risks & mitigations
 
 | Risk | Likelihood | Impact | Mitigation |
 | --- | --- | --- | --- |
-| Nominatim 1 req/sec rate limit hit during dev | Medium | Low | `cache: "no-store"` + a single in-flight button (the form disables `Look up` while pending). |
-| Admin mistakenly deletes a spot with saved_spots | Low | Medium | Hard delete; cascade on `saved_spots.spot_id` (already in place per `0000_0001_initial_schema.sql`). Public re-clone from JSON seed is possible via `pnpm db:seed`. |
-| The `admin` nav entry flashes for non-admins before the cookie is read | Low | Low | The nav is rendered from a client component that reads `useUser()`; the entry is conditionally rendered only when `isAdmin` is true. The initial server render uses the same context. |
-| An admin's `createdBy` UUID collides with a contributor's UUID | Very low | None | The admin and contributor are both real Supabase auth UIDs; the column is not unique. No change. |
-| Hardening: `ADMIN_EMAILS` is a single env var; rotating admins requires a redeploy | Medium | Low | Out of scope for this spec. A future "admin promotion flow" can move this to the `profiles` table (see §2). |
-| `getStaticProps` / `generateStaticParams` include admin pages | Low | Medium | `src/app/spots/[id]/page.tsx` already calls `generateStaticParams`; the new `src/app/admin/spots/[id]/page.tsx` and `src/app/admin/events/[id]/page.tsx` will **not** export `generateStaticParams`. Confirmed by the routing model — admin routes are not pre-rendered. |
-| `useToast` fires while the admin is mid-form-submit and the user navigates away | Low | Low | `useToast` is a global queue (`src/hooks/useToast.ts`); toasts from a previous page persist for 3.2 s. No new mitigation. |
+| `pnpm dev` now requires a running Postgres, raising the local setup bar | Medium | Medium | `AGENTS.md` and `.env.example` document the `pnpm db:health && pnpm db:apply && pnpm db:seed` bootstrap. `docker compose` is mentioned in `.env.example`; the dev must bring their own compose file (existing constraint, not new). |
+| `pnpm build` now requires a DB (`generateStaticParams` calls the repo) | Medium | Low | Documented in `AGENTS.md` and the smoke-test checklist. Vercel builds already have a DB connection. |
+| Regions fetched at the root layout add a query to every request | Low | Low | The `useSpotsStore` is hydrated once per page load. `getRegionsForClient()` runs at most once per request. The regions table is small (3 rows in the seed). |
+| `Region.count` changes from a static display string to a live spot count, changing what users see | Low | Low | Acceptable — live data is more honest. The format helper (`1.2k`, `892`) matches the previous visual style. |
+| `useMapFilter.test.ts` needs to seed a Zustand store, which the test didn't do before | Low | Low | The test already runs in `happy-dom`; Zustand works there. `useSpotsStore.setState` is stable across renders. |
+| The async factory signature stays `async` but is now trivially sync internally | Low | Low | Acceptable — the `await` overhead is microseconds. Making it sync touches 26 call sites and is out of scope. Follow-up note in `AGENTS.md`. |
+| The 3 sync factory deletions break a hidden caller (despite grep + graph showing zero) | Very low | Low | `pnpm typecheck` catches dangling references. The sync factories are not exported in any `index.ts` barrel that would be hard to grep. |
+| Deleting `TERRAIN_OPTIONS` breaks a hidden consumer | Very low | Low | The constant is exported from `src/data.ts` and used by exactly one function (`getTerrainOptions` in `src/lib/spots.ts`), which itself has one caller (`getTerrainOptionsFromSource`). All confirmed deleted in phase 6. |
 
----
-
-## 15. Decisions log
+## 12. Decisions log
 
 | # | Decision | Rationale | Alternatives considered |
 | --- | --- | --- | --- |
-| D1 | Admin identity = email allow-list (`ADMIN_EMAILS`) + dev fallback | Simple, no schema change, no in-app role UI needed | `is_admin` column on `profiles`; service-role cookie only |
-| D2 | Dashboard at `/admin/*` (new segment) | Mirrors the public app shell, keeps the nav simple | Add a sixth tab to `NAV_ITEMS`; standalone `/dashboard` |
-| D3 | New API route `GET /api/geocode/reverse` | Mirrors the existing `/api/*` style; allows server-controlled User-Agent (Nominatim policy) | Server action; client-side fetch to Nominatim |
-| D4 | Replace `/post` with a stub | The new flow is admin-only by design; public contributors are not part of this spec | Keep both flows; two creation paths diverge |
-| D5 | Throw in JSON mode for `EventRepository.create/update/delete` | Matches the "JSON is the read-only fallback" philosophy | In-memory CRUD that is lost on restart |
-| D6 | Add `spots.sports` column (text[]) | Spec requires "add … sport" on the new form; mirrors the existing `sport_events.sports` | Skip the field, ship without it |
-| D7 | One new Drizzle migration `0004_spot_sports.sql` | Idempotent, follows the existing migration style | Two migrations (add column + add RLS) |
-| D8 | Reuse `Overlay` for `<DeleteConfirmDialog>` | Already exists, already accessible | New modal primitive |
-| D9 | `useUser().isAdmin` computed in context, not fetched | Avoids a per-page server round trip; same pattern as `useUser().id !== DEV_USER_ID` | New `useAdmin` hook that calls `/api/auth/session` |
-| D10 | `revalidateTag("spots", "max")` and `revalidateTag("sport-events", "max")` for cache invalidation | Matches the existing `createSpotAction` / `toggleSavedAction` patterns | `revalidatePath` everywhere |
+| D1 | **DB is required to run dev** | Truest single source of truth. Surfaces DB setup issues immediately. No silent fallback. | Keep a dev-only JSON read fallback; keep `seed.ts` as a one-time bootstrap only (but that IS this decision — the seed stays, the runtime doesn't). |
+| D2 | **Regions delivered via `SpotsProvider` (Zustand)** | `SpotsProvider` is already the server→client data bridge. Avoids prop-drilling through 4+ global chrome components. | Pure prop threading through `MapPageClient` → `MapTab` and `AppShell` → `SearchOverlay`. More verbose, same outcome. |
+| D3 | **Regions as a slice on `useSpotsStore`, not a new store** | All bootstrapped, read-only reference data lives in the same store. One store, one hydration point. | New `useRegionsStore`. More indirection for no benefit. |
+| D4 | **`getRegions` and `getTerrainOptions` deleted from `src/lib/spots.ts`** | They were the JSON-mode fallbacks. With JSON mode gone, dead. | Keep them as thin wrappers over the store — adds a layer for no benefit. |
+| D5 | **`getPresetImages` and `pickFallbackImage` stay** | `DEFAULT_PRESET_IMAGES` is UI config not in the DB. Drizzle repo + admin `ImageSourceField` depend on it. | Move preset images to a DB table — out of scope, no clear win. |
+| D6 | **Async factory signature stays `async`** | Changing it touches 26 call sites; the refactor's focus is the duality, not API shape. | Make factories sync — cleaner but larger diff. Follow-up. |
+| D7 | **`checkDbHealth()` stays as a diagnostic** | `pnpm db:health` is useful for ops. Not a runtime dependency anymore. | Delete it — removes a diagnostic tool for no gain. |
+| D8 | **Sync factories deleted** | Zero callers (grep + graph). | Keep for "future tests" — YAGNI; the async factories are the production path. |
+| D9 | **`src/data.ts` loses 5 dead constants** | `EXPLORE_CATEGORIES`, `LEGENDARY_TERRAINS`, `POPULAR_SEARCH_TERMS`, `RECENT_SEARCHES`, `TERRAIN_OPTIONS` have zero callers. | Keep for "future UI" — they are bundled into the client bundle today, so they cost bytes. |
+| D10 | **`src/data/spots.json` + `sport-events.json` stay** | `seed.ts` still imports them. They are a one-time bootstrap, not a runtime read path. | Rewrite `seed.ts` to skip the JSON — out of scope. |
+| D11 | **`writeEnabled` and `DataModeNotice` deleted** | They were JSON-mode scaffolding. The DB is always the source, so writes always work. | Keep them as a "no-op UI affordance" — adds noise. |
+| D12 | **`Region.count` computed from live spot counts** | Honest live data. Matches the single-source-of-truth principle. | Keep as a static string (would require a new DB column or a seed constant). |
+| D13 | **`useMapFilter` reads regions from the store (Option A)** | No prop threading. Store is the single source on the client. | Option B (prop threading) — more verbose, same outcome. |
+| D14 | **Repository interfaces kept** | They document the contract and are a clean seam. Only the JSON `implements` statements are removed. | Delete the interfaces — Drizzle repos become the only impl, no abstraction. Less flexible for future swap-outs. |
+| D15 | **`getRegionsForClient()` lives in `src/lib/data/regions.ts`** (new server-only module) | Keeps the region-joining logic in one place. `src/lib/data/` is a new home for server-only data-assembly functions (parallel to `src/lib/weather/`, `src/lib/sport-events/`). | Put it in `src/lib/spots.ts` — would force that file to be server-only, breaking the client `getPresetImages` import. |
 
----
+## 13. Open questions for follow-up specs
 
-## 16. Open questions for follow-up specs
-
-1. Multi-image gallery per spot (deferred — see §2).
-2. Admin audit log (deferred — see §2).
-3. CSV/JSON bulk import (deferred — see §2).
-4. Per-event image upload to the same `spot-images` bucket (today events store an `image` URL string only; the schema does not yet have `image_path` for events).
-5. Map editor (deferred — see §2).
-6. A "promote to admin" flow inside the dashboard (deferred — see §2).
+1. **Make the async factories sync.** After this refactor, the async signature is vestigial. A follow-up can change `getSpotRepositoryAsync` → `getSpotRepository` and drop the `await` at all 26 call sites.
+2. **Rewrite `seed.ts` to skip `src/data/*.json`.** Insert spots/events directly from typed constants. Drops the JSON dependency entirely.
+3. **Move `DEFAULT_PRESET_IMAGES` to a `preset_images` DB table.** Currently bundled; a DB table would let admins curate presets. Not needed today.
+4. **Add a `regions.display_count` column** if static display strings are preferred over live counts. Not needed today.
+5. **Cache `getRegionsForClient()`** with the `"use cache"` directive (like `checkDbHealth()`), since regions change rarely. The current `SpotsProvider` hydration pattern means the query runs once per request, but a cache would let it be reused across server components in the same render.
 
 These are explicitly out of scope for this spec.
