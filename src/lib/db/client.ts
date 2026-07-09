@@ -7,8 +7,10 @@ import * as schema from "@/db/schema"
 let client: ReturnType<typeof postgres> | null = null
 let db: ReturnType<typeof drizzle<typeof schema>> | null = null
 
-const POOL_MAX = 10
+const POOL_MAX = 5
 const CONNECT_TIMEOUT = 8
+const IDLE_TIMEOUT = 30
+const CONNECTION_LIFETIME = 1800
 
 export function isConnectionError(err: unknown): boolean {
   if (!err) return false
@@ -21,7 +23,11 @@ export function isConnectionError(err: unknown): boolean {
     msg.includes("timeout exceeded when trying to connect") ||
     msg.includes("Connection terminated") ||
     msg.includes("database does not exist") ||
-    msg.includes("password authentication failed")
+    msg.includes("password authentication failed") ||
+    // pgBouncer pool saturation — transient, retry with backoff.
+    msg.includes("EMAXCONNSESSION") ||
+    msg.includes("max clients reached") ||
+    msg.includes("pool_size")
   )
 }
 
@@ -59,6 +65,13 @@ export function getDbClient() {
     ssl: "require",
     max: POOL_MAX,
     connect_timeout: CONNECT_TIMEOUT,
+    idle_timeout: IDLE_TIMEOUT,
+    connection: {
+      application_name: "open-spot-website",
+    },
+    // Rotate client-side connections every 30 min to match Vercel function
+    // recycling and avoid stale connections accumulating against the pooler.
+    max_lifetime: CONNECTION_LIFETIME,
     prepare: false,
   })
   db = drizzle(client, { schema })

@@ -8,7 +8,7 @@ Set the following in **Project Settings → Environment Variables** for the **Pr
 
 | Var | Required | Source | Notes |
 | --- | --- | --- | --- |
-| `SUPABASE_DATABASE_URL` | yes | Supabase dashboard → Settings → Database → Connection string → **Transaction pooler** (port 6543) | The pgBouncer Transaction pooler. IPv4-only, designed for serverless, and DNS-resolves from the Vercel function network. Same value you set in `.env.local` — dev and prod share the Supabase project. |
+| `SUPABASE_DATABASE_URL` | yes | Supabase dashboard → Settings → Database → Connection string → **Transaction pooler** (port 6543, **Mode: Transaction**) | The pgBouncer Transaction pooler. IPv4-only, designed for serverless, and DNS-resolves from the Vercel function network. Same value you set in `.env.local` — dev and prod share the Supabase project. **Pick the Transaction mode pooler, not the Session mode pooler.** They share the same host (`aws-0-<region>.pooler.supabase.com`) and port (`6543`) but behave very differently — see the callout below. |
 | `NEXT_PUBLIC_SUPABASE_URL` | yes | Supabase dashboard → Settings → API | Public project URL. |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | yes | Supabase dashboard → Settings → API → **Publishable key** | Browser-safe `sb_publishable_…` key. Replaces the legacy `anon` JWT. |
 | `SUPABASE_SECRET_KEY` | yes (admin) | Supabase dashboard → Settings → API → **Secret key** | Server-only `sb_secret_…` key. Used by `getAdminClient()` for `public.profiles` upserts. NEVER prefix with `NEXT_PUBLIC_`. |
@@ -29,7 +29,22 @@ Optional / fallback:
 
 ### Why the pooler (and not the direct endpoint)?
 
-The direct hostname `db.<project>.supabase.co` (port 5432) is intended for trusted environments with IP allow-listing (your laptop, a long-lived server). The Vercel function network cannot resolve that hostname (`getaddrinfo ENOTFOUND db.<project>.supabase.co`). The pooler hostname `aws-0-<region>.pooler.supabase.com` (port 6543) is on different infrastructure — IPv4-only, designed for serverless, and DNS-resolves from Vercel. Same Postgres, same RLS, same schema — just a different endpoint. The `postgres-js` client config (`prepare: false`, `ssl: "require"`) is already pooler-compatible.
+The direct hostname `db.<project>.supabase.co` (port 5432) is intended for trusted environments with IP allow-listing (your laptop, a long-lived server). The Vercel function network cannot resolve that hostname (`getaddrinfo ENOTFOUND db.<project>.supabase.co`). The pooler hostname `aws-0-<region>.pooler.supabase.com` (port 6543) is on different infrastructure — IPv4-only, designed for serverless, and DNS-resolves from Vercel. Same Postgres, same RLS, same schema — just a different endpoint. The `postgres-js` client config (`prepare: false`, `ssl: "require"`, `max: 5`, `idle_timeout: 30`) is already pooler-compatible.
+
+### Pick Transaction mode, not Session mode
+
+The Supabase dashboard exposes two pooler modes at the same host and port:
+
+- **Transaction** — pgBouncer releases the server connection back to the pool after each SQL transaction. Many client connections can share a small server pool. This is the only mode that works for serverless.
+- **Session** — pgBouncer holds the server connection for the entire client session. Default `pool_size: 15` on Supabase Pro. A single long-lived `postgres-js` client occupies one server connection for the lifetime of the Vercel function instance. With multiple concurrent function instances, the pool saturates and pgBouncer returns:
+
+  ```
+  (EMAXCONNSESSION) max clients reached in session mode - max clients are limited to pool_size: 15
+  ```
+
+  This error looks like a connection limit issue but it's really the wrong pooler mode.
+
+In the dashboard, open **Settings** → **Database** → **Connection string** and select **Mode: Transaction**. The connection string has the same host and port as Session — only the mode is different. If your `SUPABASE_DATABASE_URL` doesn't have `?pgbouncer=true` appended, that's a hint it may be on Session mode (Supabase appends this for Transaction).
 
 ## 2. Supabase Storage bucket
 
