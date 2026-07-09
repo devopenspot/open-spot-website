@@ -52,7 +52,7 @@ interface JoinedEventRow {
   endAt: Date | null
   city: string
   country: string
-  countryCode: string | null
+  countryCode: string
   venue: string | null
   location: { lat: number; lon: number } | null
   featured: boolean
@@ -81,7 +81,7 @@ function toEvent(row: JoinedEventRow): SportEvent {
     location: {
       city: row.city,
       country: row.country,
-      countryCode: row.countryCode ?? undefined,
+      countryCode: row.countryCode,
       venue: row.venue ?? undefined,
       latitude: row.location?.lat,
       longitude: row.location?.lon,
@@ -116,31 +116,29 @@ export class DrizzleEventRepository implements EventRepository {
         endAt: sportEvents.endAt,
         city: sportEvents.city,
         country: countries.name,
-        countryCode: sportEvents.countryCodeFk,
+        countryCode: sportEvents.countryCode,
         venue: sportEvents.venue,
         location: sportEvents.location,
-        featured: sportEvents.featuredV2,
+        featured: sportEvents.featured,
         createdBy: sportEvents.createdBy,
         createdAt: sportEvents.createdAt,
         updatedAt: sportEvents.updatedAt,
       })
       .from(sportEvents)
       .leftJoin(eventTiers, eq(eventTiers.slug, sportEvents.tierSlug))
-      .leftJoin(
-        countries,
-        eq(countries.iso2, sportEvents.countryCodeFk),
-      )
+      .leftJoin(countries, eq(countries.iso2, sportEvents.countryCode))
       .$dynamic()
   }
 
   async list(query?: SportEventQuery): Promise<SportEventListResult> {
     const limit = query?.limit ?? 50
     const conditions: SQL[] = []
-    if (query?.country) conditions.push(eq(sportEvents.country, query.country))
+    if (query?.country)
+      conditions.push(eq(countries.name, query.country))
     if (query?.tier)
       conditions.push(eq(sportEvents.tierSlug, query.tier))
     if (query?.featured)
-      conditions.push(eq(sportEvents.featuredV2, true))
+      conditions.push(eq(sportEvents.featured, true))
     if (query?.discipline)
       conditions.push(
         sql`${query.discipline.toLowerCase()} = (
@@ -166,7 +164,11 @@ export class DrizzleEventRepository implements EventRepository {
     }
     const where =
       conditions.length > 0
-        ? and(...conditions.map((c) => c as SQL | undefined).filter(Boolean) as SQL[])
+        ? and(
+            ...conditions
+              .map((c) => c as SQL | undefined)
+              .filter(Boolean) as SQL[],
+          )
         : undefined
 
     const rows = await (where
@@ -175,7 +177,9 @@ export class DrizzleEventRepository implements EventRepository {
     )
       .orderBy(asc(sportEvents.startAt))
       .limit(limit + 1)
-    const items = (rows as unknown as JoinedEventRow[]).slice(0, limit).map(toEvent)
+    const items = (rows as unknown as JoinedEventRow[])
+      .slice(0, limit)
+      .map(toEvent)
     const nextCursor =
       rows.length > limit
         ? (items[items.length - 1]?.startDate ?? null)
@@ -193,7 +197,7 @@ export class DrizzleEventRepository implements EventRepository {
 
   async findFeatured(): Promise<SportEvent | null> {
     const rows = await this.selectJoined()
-      .where(eq(sportEvents.featuredV2, true))
+      .where(eq(sportEvents.featured, true))
       .limit(1)
     const row = (rows as unknown as JoinedEventRow[])[0]
     if (row) return toEvent(row)
@@ -208,7 +212,7 @@ export class DrizzleEventRepository implements EventRepository {
     const rows = await this.db.execute<{ country: string; count: string }>(sql`
       select c.name as country, count(*)::int as count
       from ${sportEvents} se
-      join ${countries} c on c.iso2 = se.country_code_fk
+      join ${countries} c on c.iso2 = se.country_code
       group by c.name
       order by c.name
     `)
@@ -277,25 +281,18 @@ export class DrizzleEventRepository implements EventRepository {
       url: input.url,
       image: input.image,
       description: input.description,
-      sports: [...input.sports],
-      startDate: input.startDate,
-      endDate: input.endDate ?? null,
       startAt: sql`${startAtTsql}::timestamptz` as unknown as Date,
       endAt: endAtTsql
         ? (sql`${endAtTsql}::timestamptz` as unknown as Date)
         : null,
       city: input.city,
-      country: input.country,
-      countryCode: input.countryCode ?? null,
-      countryCodeFk: input.countryCode
-        ? (input.countryCode as unknown as NewSportEventRow["countryCodeFk"])
+      countryCode: input.countryCode
+        ? (input.countryCode as unknown as NewSportEventRow["countryCode"])
         : (sql<string | null>`(select iso2 from ${countries} where name = ${input.country} limit 1)` as unknown as string),
       venue: input.venue ?? null,
       location,
-      tier: input.tier as unknown as NewSportEventRow["tier"],
       tierSlug: input.tier,
-      featured: input.featured ? "true" : null,
-      featuredV2: input.featured,
+      featured: input.featured,
       createdBy: null,
     }
     const [row] = await this.db
@@ -318,14 +315,11 @@ export class DrizzleEventRepository implements EventRepository {
     if (patch.url !== undefined) setValues.url = patch.url
     if (patch.image !== undefined) setValues.image = patch.image
     if (patch.description !== undefined) setValues.description = patch.description
-    if (patch.sports !== undefined) setValues.sports = [...patch.sports]
     if (patch.startDate !== undefined) {
-      setValues.startDate = patch.startDate
       setValues.startAt =
         sql`${patch.startDate} 00:00:00+00::timestamptz` as unknown as Date
     }
     if (patch.endDate !== undefined) {
-      setValues.endDate = patch.endDate
       if (patch.endDate === null || patch.endDate === "") {
         setValues.endAt = null
       } else {
@@ -334,22 +328,18 @@ export class DrizzleEventRepository implements EventRepository {
       }
     }
     if (patch.city !== undefined) setValues.city = patch.city
-    if (patch.country !== undefined) setValues.country = patch.country
     if (patch.countryCode !== undefined) {
-      setValues.countryCode = patch.countryCode
-      setValues.countryCodeFk = patch.countryCode as unknown as NewSportEventRow["countryCodeFk"]
+      setValues.countryCode = patch.countryCode as unknown as NewSportEventRow["countryCode"]
     } else if (patch.country !== undefined) {
-      setValues.countryCodeFk =
+      setValues.countryCode =
         sql<string | null>`(select iso2 from ${countries} where name = ${patch.country} limit 1)` as unknown as string
     }
     if (patch.venue !== undefined) setValues.venue = patch.venue
     if (patch.tier !== undefined) {
-      setValues.tier = patch.tier as unknown as NewSportEventRow["tier"]
       setValues.tierSlug = patch.tier
     }
     if (patch.featured !== undefined) {
-      setValues.featured = patch.featured ? "true" : null
-      setValues.featuredV2 = patch.featured
+      setValues.featured = patch.featured
     }
     if (patch.latitude !== undefined && patch.longitude !== undefined) {
       setValues.location = {

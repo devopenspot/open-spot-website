@@ -63,8 +63,9 @@ export class DrizzleSpotRepository implements SpotRepository {
     const limit = query?.limit ?? 50
     const conditions: SQL[] = []
     if (query?.type)
-      conditions.push(eq(spots.type, query.type as SpotRow["type"]))
-    if (query?.country) conditions.push(eq(spots.country, query.country))
+      conditions.push(eq(spots.typeSlug, spotTypeTitleToSlug(query.type)))
+    if (query?.country)
+      conditions.push(eq(countries.name, query.country))
     if (query?.city) conditions.push(eq(spots.citySlug, query.city))
     if (query?.ids && query.ids.length > 0)
       conditions.push(inArray(spots.id, [...query.ids]))
@@ -74,7 +75,6 @@ export class DrizzleSpotRepository implements SpotRepository {
         lower(coalesce(${spots.name}, '')) like ${like}
         or lower(coalesce(${spots.city}, '')) like ${like}
         or lower(coalesce(${spots.address}, '')) like ${like}
-        or lower(coalesce(${spots.country}, '')) like ${like}
         or exists (
           select 1 from ${spotFeatureLinks} sfl
           join ${spotFeatures} sf on sf.slug = sfl.feature_slug
@@ -281,16 +281,12 @@ export class DrizzleSpotRepository implements SpotRepository {
       citySlug:
         input.citySlug ?? input.city.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
       address: input.address,
-      type: input.type,
       typeSlug,
-      features: [...input.features],
-      sports: [...input.sports],
       imageUrl: input.image,
       imagePath: input.imagePath ?? null,
       communityNote: input.communityNote,
       crowdLevel: input.crowdLevel,
       crowdLevelLabel: input.crowdLevelLabel,
-      country: input.country,
       countryCode:
         sql<string | null>`(select iso2 from ${countries} where name = ${input.country} limit 1)` as unknown as string,
       location: input.location as unknown as SpotRow["location"],
@@ -303,11 +299,9 @@ export class DrizzleSpotRepository implements SpotRepository {
     if (!row) throw new Error("Insert returned no row")
     await this.syncSpotSports(id, input.sports)
     await this.syncSpotFeatures(id, input.features)
-    const [spot] = await withImageUrls([
-      rowToSpotWithImagePath(row as unknown as JoinedSpotRow),
-    ])
-    if (!spot) throw new Error("withImageUrls returned no spot")
-    return spot
+    const reloaded = await this.findById(id)
+    if (!reloaded) throw new Error("Spot not found after insert")
+    return reloaded
   }
 
   async update(id: string, patch: SpotPatch): Promise<Spot> {
@@ -319,12 +313,8 @@ export class DrizzleSpotRepository implements SpotRepository {
     if (patch.citySlug !== undefined) setValues.citySlug = patch.citySlug
     if (patch.address !== undefined) setValues.address = patch.address
     if (patch.type !== undefined) {
-      setValues.type = patch.type
       setValues.typeSlug = spotTypeTitleToSlug(patch.type)
     }
-    if (patch.features !== undefined)
-      setValues.features = [...patch.features]
-    if (patch.sports !== undefined) setValues.sports = [...patch.sports]
     if (patch.image !== undefined) setValues.imageUrl = patch.image
     if (patch.communityNote !== undefined)
       setValues.communityNote = patch.communityNote
@@ -332,7 +322,6 @@ export class DrizzleSpotRepository implements SpotRepository {
     if (patch.crowdLevelLabel !== undefined)
       setValues.crowdLevelLabel = patch.crowdLevelLabel
     if (patch.country !== undefined) {
-      setValues.country = patch.country
       setValues.countryCode =
         sql<string | null>`(select iso2 from ${countries} where name = ${patch.country} limit 1)` as unknown as string
     }
@@ -351,11 +340,9 @@ export class DrizzleSpotRepository implements SpotRepository {
     if (patch.features !== undefined) {
       await this.syncSpotFeatures(id, patch.features)
     }
-    const [spot] = await withImageUrls([
-      rowToSpotWithImagePath(row as unknown as JoinedSpotRow),
-    ])
-    if (!spot) throw new Error(`Spot not found: ${id}`)
-    return spot
+    const reloaded = await this.findById(id)
+    if (!reloaded) throw new Error(`Spot not found: ${id}`)
+    return reloaded
   }
 
   async delete(id: string): Promise<void> {

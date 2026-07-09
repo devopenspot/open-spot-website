@@ -45,7 +45,7 @@ CI order (`.github/workflows/ci.yml`): `install --frozen-lockfile` → `typechec
 - Drizzle schema: `src/db/schema.ts` (PostGIS `geometry(Point, 4326)` for `spots.location` and `sport_events.location` via a custom type).
 - SQL migrations: `supabase/migrations/*.sql` (drizzle-generated). Each file must split statements on `--> statement-breakpoint` — `apply-sql.ts` will not split otherwise and the live DB will reject multi-statement strings.
 - `supabase/migrations/meta/` is drizzle-kit's bookkeeping — do not hand-edit.
-- RLS is enabled on all four domain tables (`supabase/migrations/0002_rls_policies.sql`): public read on `spots` / `sport_events` / `profiles` / `country_regions`; owner-only writes on `spots`, `saved_spots`, `profiles`. Storage bucket policies scope objects to `spots/{userId}/{uuid}` folders.
+- RLS is enabled on all domain tables (`supabase/migrations/0002_rls_policies.sql`): public read on `spots` / `sport_events` / `profiles` / `regions` / `countries` / `spot_types` / `sport_disciplines` / `event_tiers` / `spot_features`; owner-only writes on `spots`, `saved_spots`, `profiles`. Storage bucket policies scope objects to `spots/{userId}/{uuid}` folders.
 - The `spot-images` Supabase Storage bucket is **created out-of-band** (Dashboard / supabase CLI). The repo does not provision it.
 
 ## Testing gotchas

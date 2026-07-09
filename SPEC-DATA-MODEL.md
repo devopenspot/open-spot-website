@@ -201,7 +201,7 @@ migration `0002_rls_policies.sql`:
 | 1 | **Additive.** New `regions`, `countries`, `spot_types`, `sport_disciplines`, `event_tiers`, `spot_features`, `spot_sports`, `spot_feature_links`, `event_sports` tables. Seeded. No existing column changed. | `pnpm typecheck && pnpm lint` green; `pnpm db:generate` produces a single additive migration; seed is idempotent. | **done** |
 | 2 | **Backfill.** New nullable / default-backed columns on `spots` (`type_slug`, `country_code`) and `sport_events` (`tier_slug`, `country_code`, `start_at`, `end_at`, `featured`, `created_by`). Backfill from old columns (enum→slug, country name→iso2, `start_date text`→`start_at timestamptz`, `featured text`→bool, feature array→join rows, sport array→join rows). Add the `sport_events_with_status` view. RLS unchanged. | `pnpm typecheck && pnpm lint` green; a fresh DB seeded via `pnpm db:apply && pnpm db:seed` exposes both old and new columns populated. | **done** |
 | 3 | **Repository cutover.** Repositories (`DrizzleSpotRepository`, `DrizzleEventRepository`, `DrizzleSavedSpotsRepository`, JSON variants) read the new shape; `NewSpotSchema` / `SpotPatchSchema` / `NewSportEventSchema` / `SportEventPatchSchema` switch to the new field names; types (`SpotLocation`, `SportEventLocation`) unify. | `pnpm typecheck && pnpm lint && pnpm test && pnpm build` green; manual smoke test against the public UI. | **done (compat layer — D15)** |
-| 4 | **Column drop + enum drop.** Migration drops the old `spots.type` enum, `spots.features`/`sports` text[], `spots.country` text, `sport_events.tier` enum, `sport_events.sports` enum[], `sport_events.start_date`/`end_date`/`featured` text, `sport_events.country` text, and the `country_regions` table + its enums. | `pnpm db:apply` runs cleanly on a fresh DB; `git grep country_regions` returns zero hits; `pnpm test` green. | not started |
+| 4 | **Column drop + enum drop.** Migration drops the old `spots.type` enum, `spots.features`/`sports` text[], `spots.country` text, `sport_events.tier` enum, `sport_events.sports` enum[], `sport_events.start_date`/`end_date`/`featured` text, `sport_events.country` text, and the `country_regions` table + its enums. | `pnpm db:apply` runs cleanly on a fresh DB; `git grep country_regions` returns zero hits; `pnpm test` green. | **done** |
 | 5 | **`src/data.ts` cleanup.** `REGIONS_DATA` / `COUNTRY_TO_REGION` / `COUNTRY_NAME_OVERRIDES` / `TERRAIN_OPTIONS` become DB-backed reads in DB mode; JSON mode keeps the current shape and maps to the new typed domain. Update AGENTS.md. | `pnpm typecheck && pnpm lint && pnpm test` green. | not started |
 
 ### 5.1 CI order
@@ -242,6 +242,9 @@ so CI's `db:apply` step will run it.
 | D15 | Phase 3 ships a **compat layer**: the Drizzle + JSON repositories return the current TS `Spot` / `SportEvent` shape (`startDate`/`endDate` text, `location.{city,country,countryCode,venue,latitude,longitude}`, `featured: boolean`, `tier` slug, `sports` as `SportDiscipline[]`, `features` as `string[]`), but the source of truth is the new DB shape (joins to `spot_types`/`sport_disciplines`/`spot_features`/`countries`, the `start_at`/`end_at` timestamptz columns aliased to `YYYY-MM-DD` strings, `country_code_fk` joined to `countries.name` for the country display). The full field rename + location unification (drop the derived old fields, rename `startDate`→`startAt`, flatten `event.location.*` to top-level) is deferred to a follow-up "consumer cutover" phase. The Drizzle write path **dual-writes** legacy and new columns (the legacy NOT NULL columns must stay populated until Phase 4 drops them). | The full cutover would rewrite ~15+ component/form files (`EventFormFields`, `AdminNewEventForm`, `AdminEditEventForm`, `EventTable`, `loader`, `status`, etc.) and the `sport-events.json` / `src/data.ts` shape in one pass, which would break `pnpm build` and the manual smoke test (I can't run a browser locally). The compat layer makes the DB the single source of truth now, keeps tests + build green, and turns the consumer cutover into a mechanical rename pass. | Full cutover in one pass |
 | D16 | The `sport_events_with_status` view is **not** added to the Drizzle schema | Adding `pgView` to `schema.ts` would make drizzle-kit emit `CREATE VIEW` in a future `db:generate`, which would fail to re-apply (the view is owned by the hand-written 0007 as `CREATE OR REPLACE VIEW`). The Drizzle event repository selects from `sport_events` directly with the needed joins + correlated subqueries, which is more flexible than the view for the repo's query shape. The view remains a DB-level convenience for raw SQL consumers. | Add `pgView` to schema.ts and let drizzle manage it |
 | D17 | `sports` and `features` are aggregated into arrays via correlated subqueries in the repository's joined select, not via the view | Drizzle's `sql<string[]>\`array_agg(...)\`` correlated subquery keeps the read in a single query and lets the repo control the sort order. Same result, simpler migration story. | Read the view for `sports` |
+| D18 | `featured` text→boolean is migrated by adding a temp column `featured_v2`, backfilling, then in Phase 4 the legacy text `featured` is DROPPED first and `featured_v2` is RENAMEd to `featured` (preserves data; the boolean `USING` cast would be wrong because the legacy text is `'true'`/`'false'` and a bare `USING featured::boolean` maps any non-empty string to `true`) | A single `ALTER TABLE ... ALTER COLUMN ... TYPE boolean USING (featured = 'true')` would also work but requires knowing the exact `USING` clause; the temp-name approach is uniform with the other renames and keeps the data-migration story consistent. | In-place `ALTER COLUMN TYPE boolean USING (featured = 'true')` |
+| D19 | Phase 4 is hand-written, not drizzle-generated | Drizzle's auto-diff produces destructive `DROP COLUMN` + `ADD COLUMN` for the `country_code_fk`→`country_code` and `featured_v2`→`featured` renames (since the JS field names differ and drizzle doesn't detect the rename), and a wrong `ALTER COLUMN ... SET DATA TYPE boolean` on the legacy text `featured` (which would corrupt `'false'` rows). The hand-written 0008 does safe `ALTER TABLE ... RENAME COLUMN` (preserves data, preserves indexes' column references), drops the legacy columns in the correct order, replaces the view to reference the renamed columns, and drops the enums + `country_regions`. The Drizzle snapshot for 0008 is the re-baseline (D11 resolution): it's the *post-Phase-4* schema state, so the next `db:generate` is a no-op (`No schema changes, nothing to migrate`). | Trust drizzle's auto-generated diff |
+| D20 | `git grep country_regions` returns zero hits in the **active** source tree (`src/`, `AGENTS.md`); the historical SQL migrations (`0000` creates the table, `0002` adds RLS, `0008` drops it) and `SPEC-DATA-MODEL.md` legitimately reference the name as part of the schema's documented lifecycle | The table is documented in the migration history and the spec; rewriting history would be misleading. The Phase 4 intent — "no live code uses the table" — is met. | Rewriting historical migrations to scrub the name |
 
 ## 8. Open questions for follow-up specs
 
@@ -295,6 +298,18 @@ src/lib/repositories/drizzle-saved-spots-repository.ts # use shared spot mapper
 src/db/seed.ts                                 # fix "Smooth concrete" -> "Smooth Concrete"
 ```
 
+**Phase 4 (column drop + enum drop + rename + re-baseline — D11, D18–D20):**
+```
+src/db/schema.ts                                   # remove spotTypeEnum/sportDisciplineEnum/sportEventTierEnum, countryRegions table, all legacy columns; rename countryCodeFk->countryCode, featuredV2->featured; update relations()
+src/lib/repositories/drizzle-spot-repository.ts    # stop dual-writing legacy columns; reload via findById() after insert/update
+src/lib/repositories/drizzle-event-repository.ts   # stop dual-writing legacy columns; references to countryCode (renamed) and featured (renamed)
+src/db/seed.ts                                     # remove seedCountryRegions; rewrite seedSpots/seedSportEvents for new columns + spot_sports/spot_feature_links/event_sports
+supabase/migrations/0008_drop_legacy_and_rename.sql  # NEW: DROP legacy text columns, RENAME temp columns, replace view, DROP country_regions, DROP enums
+supabase/migrations/meta/_journal.json              # add 0008 entry; re-baseline complete (D11 resolved)
+supabase/migrations/meta/0008_snapshot.json         # NEW: post-Phase-4 schema snapshot (replaces the stale 0006 snapshot's diff)
+AGENTS.md                                          # update RLS line: country_regions -> regions/countries/spot_types/sport_disciplines/event_tiers/spot_features
+```
+
 ### 9.3 Deferred to later phases
 
 - `src/lib/repositories/json-spot-repository.ts` /
@@ -313,6 +328,7 @@ src/db/seed.ts                                 # fix "Smooth concrete" -> "Smoot
   (Phase 5).
 - `src/lib/geocode/project.ts` / `classify.ts` — use the new lookup tables
   (Phase 5).
-- Phase 4 (column drop + enum drop) — drop legacy columns, rename
-  `featured_v2` → `featured`, `country_code_fk` → `country_code`, drop the
-  `country_regions` table.
+- `sport_events.created_by` — currently always `null` on insert (no
+  admin-user wiring). A future change should set it to the admin's
+  `user.id` in `createEventAction` and thread it through the
+  `NewSportEvent` type.

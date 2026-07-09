@@ -385,20 +385,6 @@ async function seedSpotFeatures(sql: ReturnType<typeof postgres>) {
   console.log(`  ✓ ${SPOT_FEATURE_SEED.length} spot_features`)
 }
 
-async function seedCountryRegions(sql: ReturnType<typeof postgres>) {
-  console.log("→ seeding country_regions")
-  let count = 0
-  for (const [country, region] of Object.entries(COUNTRY_TO_REGION)) {
-    await sql`
-      insert into country_regions (country, region)
-      values (${country}, ${region})
-      on conflict (country) do update set region = excluded.region
-    `
-    count++
-  }
-  console.log(`  ✓ ${count} countries/regions`)
-}
-
 async function seedSpots(sql: ReturnType<typeof postgres>) {
   console.log("→ seeding spots")
   const DEFAULT_PRESET_IMAGES = [
@@ -427,31 +413,43 @@ async function seedSpots(sql: ReturnType<typeof postgres>) {
     const crowdLevelLabel = buildCrowdLabel(crowdLevel, id)
     const communityNote = buildCommunityNote(entry, type, id)
 
-    await sql`
+    const [row] = await sql<{ id: string }[]>`
       insert into spots (
-        id, slug, name, city, city_slug, address, type, features,
+        id, slug, name, city, city_slug, address, type_slug,
         image_url, community_note, crowd_level, crowd_level_label,
-        country, location
+        country_code, location
       ) values (
         gen_random_uuid(), ${slug}, ${name}, ${city}, ${citySlug}, ${address},
-        ${type}::spot_type, ${features}::text[],
+        ${type.toLowerCase()},
         ${imageUrl}, ${communityNote}, ${crowdLevel}, ${crowdLevelLabel},
-        ${country}, ${pointWkt(lat, lon)}::geometry
+        (select iso2 from countries where name = ${country} limit 1),
+        ${pointWkt(lat, lon)}::geometry
       )
       on conflict (slug) do update set
         name = excluded.name,
         city = excluded.city,
         city_slug = excluded.city_slug,
         address = excluded.address,
-        type = excluded.type,
-        features = excluded.features,
+        type_slug = excluded.type_slug,
         image_url = excluded.image_url,
         community_note = excluded.community_note,
         crowd_level = excluded.crowd_level,
         crowd_level_label = excluded.crowd_level_label,
-        country = excluded.country,
+        country_code = excluded.country_code,
         location = excluded.location
+      returning id
     `
+    const spotId = row?.id
+    if (spotId) {
+      for (const feature of features) {
+        const featureSlug = feature.toLowerCase().replace(/\s+/g, "-")
+        await sql`
+          insert into spot_feature_links (spot_id, feature_slug)
+          values (${spotId}, ${featureSlug})
+          on conflict do nothing
+        `
+      }
+    }
     count++
   }
   console.log(`  ✓ ${count} spots`)
@@ -488,20 +486,33 @@ async function seedSportEvents(sql: ReturnType<typeof postgres>) {
       typeof lat === "number" && typeof lon === "number"
         ? pointWkt(lat, lon)
         : null
-    await sql`
+    const startAt = `${event.startDate} 00:00:00+00`
+    const endAt = event.endDate ? `${event.endDate} 00:00:00+00` : null
+    const countryCode =
+      event.location.countryCode ??
+      (
+        await sql<{ iso2: string }[]>`
+          select iso2 from countries where name = ${event.location.country} limit 1
+        `
+      )[0]?.iso2 ??
+      null
+    if (!countryCode) {
+      console.warn(
+        `  ! skipping ${event.name}: country "${event.location.country}" not found`,
+      )
+      continue
+    }
+    const [row] = await sql<{ id: string }[]>`
       insert into sport_events (
-        id, slug, name, short_name, url, image, description, sports,
-        start_date, end_date, city, country, country_code, venue,
-        location, tier, featured
+        id, slug, name, short_name, url, image, description,
+        start_at, end_at, city, country_code, venue,
+        location, tier_slug, featured
       ) values (
         gen_random_uuid(), ${event.id}, ${event.name}, ${event.shortName ?? null},
         ${event.url}, ${event.image}, ${event.description},
-        ${event.sports}::sport_discipline[],
-        ${event.startDate}, ${event.endDate ?? null},
-        ${event.location.city}, ${event.location.country},
-        ${event.location.countryCode ?? null}, ${event.location.venue ?? null},
-        ${location}::geometry, ${event.tier}::sport_event_tier,
-        ${event.featured ? "true" : "false"}
+        ${startAt}::timestamptz, ${endAt}::timestamptz,
+        ${event.location.city}, ${countryCode}, ${event.location.venue ?? null},
+        ${location}::geometry, ${event.tier}, ${event.featured ?? false}
       )
       on conflict (slug) do update set
         name = excluded.name,
@@ -509,17 +520,27 @@ async function seedSportEvents(sql: ReturnType<typeof postgres>) {
         url = excluded.url,
         image = excluded.image,
         description = excluded.description,
-        sports = excluded.sports,
-        start_date = excluded.start_date,
-        end_date = excluded.end_date,
+        start_at = excluded.start_at,
+        end_at = excluded.end_at,
         city = excluded.city,
-        country = excluded.country,
         country_code = excluded.country_code,
         venue = excluded.venue,
         location = excluded.location,
-        tier = excluded.tier,
+        tier_slug = excluded.tier_slug,
         featured = excluded.featured
+      returning id
     `
+    const eventId = row?.id
+    if (eventId) {
+      for (const sport of event.sports) {
+        const slug = sport.toLowerCase()
+        await sql`
+          insert into event_sports (event_id, discipline_slug)
+          values (${eventId}, ${slug})
+          on conflict do nothing
+        `
+      }
+    }
     count++
   }
   console.log(`  ✓ ${count} sport_events`)
@@ -536,7 +557,6 @@ async function main() {
     await seedSportDisciplines(sql)
     await seedEventTiers(sql)
     await seedSpotFeatures(sql)
-    await seedCountryRegions(sql)
     await seedSpots(sql)
     await seedSportEvents(sql)
     console.log("✓ seed complete")
