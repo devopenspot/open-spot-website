@@ -43,7 +43,7 @@ export function NavList({
         ? "mobile-nav"
         : undefined;
   const isDrawer = variant === "mobile-drawer";
-  console.log("NavList render", { navItems });
+
   return (
     <div
       ref={listRef}

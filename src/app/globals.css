@@ -140,14 +140,15 @@
   }
   .leaflet-pin__square {
     position: relative;
-    width: 24px;
-    height: 24px;
+    width: 84px;
+    height: 32px;
     border: 1px solid var(--color-outline);
     background: var(--color-surface);
     color: var(--color-on-surface);
     display: flex;
     align-items: center;
     justify-content: center;
+    gap: 6px;
     box-sizing: border-box;
   }
   .leaflet-pin__glyph {
@@ -162,6 +163,16 @@
     justify-content: center;
     line-height: 0;
     color: inherit;
+  }
+  .leaflet-pin__temp {
+    font-family: var(--font-mono);
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: 0;
+  }
+  .leaflet-pin--active .leaflet-pin__temp {
+    font-size: 16px;
   }
   .leaflet-pin__label {
     font-family: var(--font-mono);
@@ -185,8 +196,8 @@
     animation: leafletPinPulse 180ms ease-out 1;
   }
   .leaflet-pin--active .leaflet-pin__square {
-    width: 32px;
-    height: 32px;
+    width: 100px;
+    height: 40px;
     background: var(--color-primary);
     border-color: var(--color-primary);
     color: var(--color-on-primary);

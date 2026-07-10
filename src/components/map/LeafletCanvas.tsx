@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import {
   Component,
@@ -9,7 +9,7 @@ import {
   useRef,
   useState,
   type ReactNode,
-} from 'react';
+} from "react";
 import {
   Circle,
   MapContainer,
@@ -17,11 +17,11 @@ import {
   TileLayer,
   useMap,
   useMapEvent,
-} from 'react-leaflet';
-import L from 'leaflet';
-import type { Spot, WeatherIconName } from '@/lib/types';
-import type { SpotWeather } from '@/lib/weather/weather-cached';
-import { weatherIconGlyph } from '@/components/spot/WeatherIcon';
+} from "react-leaflet";
+import L from "leaflet";
+import type { Spot, WeatherIconName } from "@/lib/types";
+import type { SpotWeather } from "@/lib/weather/weather-cached";
+import { weatherIconGlyph } from "@/components/spot/WeatherIcon";
 
 const FOCUS_ZOOM = 13;
 const FLY_DURATION_SEC = 0.6;
@@ -34,11 +34,11 @@ const LABEL_MAX_CHARS = 14;
 
 function escapeHtml(s: string): string {
   return s
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
 
 function truncateLabel(name: string): string {
@@ -48,33 +48,46 @@ function truncateLabel(name: string): string {
 
 function buildPinHTML(
   spot: Spot,
-  options: { active: boolean; saved: boolean; weather: WeatherIconName | null; crowdLevel: number },
+  options: {
+    active: boolean;
+    saved: boolean;
+    weather: WeatherIconName | null;
+    crowdLevel: number;
+    temp: number | null;
+  },
 ): string {
-  const cls = ['leaflet-pin'];
-  if (options.active) cls.push('leaflet-pin--active');
-  else if (options.saved) cls.push('leaflet-pin--saved');
+  const cls = ["leaflet-pin"];
+  if (options.active) cls.push("leaflet-pin--active");
+  else if (options.saved) cls.push("leaflet-pin--saved");
 
   const label = escapeHtml(truncateLabel(spot.name));
 
   const weatherHtml = options.weather
-    ? `<span class="leaflet-pin__weather">${weatherIconGlyph(options.weather, 10)}</span>`
-    : '';
+    ? `<span class="leaflet-pin__weather">${weatherIconGlyph(options.weather, 28)}</span>` +
+      (options.temp !== null
+        ? `<span class="leaflet-pin__temp">${options.temp}°C</span>`
+        : "")
+    : "";
 
-  const crowdCells = Math.max(0, Math.min(3, Math.round(options.crowdLevel / 34)));
+  const crowdCells = Math.max(
+    0,
+    Math.min(3, Math.round(options.crowdLevel / 34)),
+  );
   const crowdHtml =
     '<span class="leaflet-pin__crowd" aria-hidden="true">' +
-    Array.from({ length: 3 }, (_, i) =>
-      `<i class="${i < crowdCells ? 'on' : ''}"></i>`,
-    ).join('') +
-    '</span>';
+    Array.from(
+      { length: 3 },
+      (_, i) => `<i class="${i < crowdCells ? "on" : ""}"></i>`,
+    ).join("") +
+    "</span>";
 
   return (
-    `<div class="${cls.join(' ')}">` +
+    `<div class="${cls.join(" ")}">` +
     `<span class="leaflet-pin__square">` +
     weatherHtml +
     (options.active
       ? `<span class="leaflet-pin__info" aria-hidden="true">${crowdHtml}</span>`
-      : '') +
+      : "") +
     `</span>` +
     `<span class="leaflet-pin__label">${label}</span>` +
     `</div>`
@@ -91,26 +104,46 @@ function buildClusterHTML(count: number, typeLabel: string): string {
   );
 }
 
-function makeIcon(html: string, size: [number, number], anchor: [number, number]): L.DivIcon {
+function makeIcon(
+  html: string,
+  size: [number, number],
+  anchor: [number, number],
+): L.DivIcon {
   return L.divIcon({
-    className: 'leaflet-pin-wrapper',
+    className: "leaflet-pin-wrapper",
     iconSize: size,
     iconAnchor: anchor,
     html,
   });
 }
 
-function pinSize(active: boolean): { size: [number, number]; anchor: [number, number] } {
-  if (active) return { size: [32, 46], anchor: [16, 16] };
-  return { size: [24, 38], anchor: [12, 12] };
+function pinSize(active: boolean): {
+  size: [number, number];
+  anchor: [number, number];
+} {
+  if (active) return { size: [100, 56], anchor: [50, 20] };
+  return { size: [84, 48], anchor: [42, 16] };
 }
 
-function pickWeatherName(spot: Spot, weather: Record<string, SpotWeather> | undefined): WeatherIconName | null {
+function pickWeatherName(
+  spot: Spot,
+  weather: Record<string, SpotWeather> | undefined,
+): WeatherIconName | null {
   if (!weather) return null;
   const w = weather[spot.id];
   if (!w) return null;
   const first = w.forecast[0];
   return first?.icon ?? null;
+}
+
+function pickTemperature(
+  spot: Spot,
+  weather: Record<string, SpotWeather> | undefined,
+): number | null {
+  if (!weather) return null;
+  const w = weather[spot.id];
+  if (!w) return null;
+  return w.current;
 }
 
 export interface LeafletUserLocation {
@@ -140,8 +173,8 @@ interface LeafletCanvasProps {
 }
 
 function prefersReducedMotion(): boolean {
-  if (typeof window === 'undefined') return false;
-  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (typeof window === "undefined") return false;
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
 function safeMapCall(map: L.Map, fn: () => void): void {
@@ -295,7 +328,7 @@ function MapController({
 
 function ZoomListener({ onZoomChange }: { onZoomChange: (z: number) => void }) {
   const map = useMap();
-  useMapEvent('zoomend', () => {
+  useMapEvent("zoomend", () => {
     onZoomChange(map.getZoom());
   });
   return null;
@@ -324,6 +357,7 @@ function buildRenderedMarkers(
       else groups.set(key, [s]);
     }
     const out: RenderedMarker[] = [];
+
     for (const arr of groups.values()) {
       if (arr.length < 2) {
         for (const s of arr) {
@@ -334,7 +368,7 @@ function buildRenderedMarkers(
       const anchor = arr[0];
       if (!anchor) continue;
       const html = buildClusterHTML(arr.length, anchor.type);
-      const icon = makeIcon(html, [28, 28], [14, 14]);
+      const icon = makeIcon(html, [48, 48], [14, 14]);
       out.push({
         key: `cluster:${anchor.citySlug}:${anchor.type}`,
         position: [anchor.location.lat, anchor.location.lon],
@@ -361,6 +395,7 @@ function makeMarker(
     saved,
     weather: pickWeatherName(spot, weather),
     crowdLevel: spot.crowdLevel,
+    temp: pickTemperature(spot, weather),
   });
   const { size, anchor } = pinSize(active);
   return {
@@ -400,80 +435,85 @@ class LeafletErrorBoundary extends Component<
   }
 }
 
-export const LeafletCanvas = forwardRef<LeafletCanvasHandle, LeafletCanvasProps>(
-  function LeafletCanvas(
-    {
-      spots,
-      activeId,
-      savedIds = new Set(),
-      weather,
-      onTogglePin,
-      userLocation = null,
-      radiusMeters,
-      showRadius = true,
-      initialCenter,
-      initialZoom,
-    },
-    ref,
-  ) {
-    const initialZoomState =
-      initialZoom ?? (userLocation ? USER_FOCUS_ZOOM : 2);
-    const initialCenterState: [number, number] =
-      initialCenter ??
-      (userLocation
-        ? [userLocation.lat, userLocation.lon]
-        : [20, 0]);
-    const [zoom, setZoom] = useState<number>(initialZoomState);
-    const [resetKey, setResetKey] = useState(0);
-    const markers = useMemo(
-      () => buildRenderedMarkers(spots, activeId, savedIds, weather, zoom),
-      [spots, activeId, savedIds, weather, zoom],
-    );
+export const LeafletCanvas = forwardRef<
+  LeafletCanvasHandle,
+  LeafletCanvasProps
+>(function LeafletCanvas(
+  {
+    spots,
+    activeId,
+    savedIds = new Set(),
+    weather,
+    onTogglePin,
+    userLocation = null,
+    radiusMeters,
+    showRadius = true,
+    initialCenter,
+    initialZoom,
+  },
+  ref,
+) {
+  const initialZoomState = initialZoom ?? (userLocation ? USER_FOCUS_ZOOM : 2);
+  const initialCenterState: [number, number] =
+    initialCenter ??
+    (userLocation ? [userLocation.lat, userLocation.lon] : [20, 0]);
+  const [zoom, setZoom] = useState<number>(initialZoomState);
+  const [resetKey, setResetKey] = useState(0);
+  const markers = useMemo(
+    () => buildRenderedMarkers(spots, activeId, savedIds, weather, zoom),
+    [spots, activeId, savedIds, weather, zoom],
+  );
 
-    const userNearby = useMemo(() => {
-      if (!userLocation) return false;
-      for (const s of spots) {
-        const dLat = s.location.lat - userLocation.lat;
-        const dLon = s.location.lon - userLocation.lon;
-        if (dLat * dLat + dLon * dLon < 0.000001) return true;
-      }
-      return false;
-    }, [spots, userLocation]);
+  const userNearby = useMemo(() => {
+    if (!userLocation) return false;
+    for (const s of spots) {
+      const dLat = s.location.lat - userLocation.lat;
+      const dLon = s.location.lon - userLocation.lon;
+      if (dLat * dLat + dLon * dLon < 0.000001) return true;
+    }
+    return false;
+  }, [spots, userLocation]);
 
-    const userIcon = useMemo(() => {
-      return L.divIcon({
-        className: `leaflet-user-pin ${userNearby ? 'leaflet-user-pin--nearby' : ''}`,
-        iconSize: [18, 18],
-        iconAnchor: [9, 9],
-        html:
-          '<span class="leaflet-user-pin__ring" aria-hidden="true" />' +
-          '<span class="leaflet-user-pin__dot" aria-hidden="true" />',
-      });
-    }, [userNearby]);
+  const userIcon = useMemo(() => {
+    return L.divIcon({
+      className: `leaflet-user-pin ${userNearby ? "leaflet-user-pin--nearby" : ""}`,
+      iconSize: [18, 18],
+      iconAnchor: [9, 9],
+      html:
+        '<span class="leaflet-user-pin__ring" aria-hidden="true" />' +
+        '<span class="leaflet-user-pin__dot" aria-hidden="true" />',
+    });
+  }, [userNearby]);
 
-    const showCircle =
-      userLocation !== null && showRadius && typeof radiusMeters === 'number' && radiusMeters > 0;
+  const showCircle =
+    userLocation !== null &&
+    showRadius &&
+    typeof radiusMeters === "number" &&
+    radiusMeters > 0;
 
-    return (
-      <LeafletErrorBoundary key={resetKey} onRetry={() => setResetKey((k) => k + 1)}>
-        <MapContainer
-          key={resetKey}
-          center={initialCenterState}
-          zoom={initialZoomState}
-          minZoom={2}
-          maxZoom={18}
-          scrollWheelZoom
-          worldCopyJump
-          className="h-full w-full"
-          attributionControl
-        >
-          <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            maxZoom={19}
-          />
-          <MapController spots={spots} userLocation={userLocation} ref={ref} />
-          <ZoomListener onZoomChange={setZoom} />
+  return (
+    <LeafletErrorBoundary
+      key={resetKey}
+      onRetry={() => setResetKey((k) => k + 1)}
+    >
+      <MapContainer
+        key={resetKey}
+        center={initialCenterState}
+        zoom={initialZoomState}
+        minZoom={2}
+        maxZoom={18}
+        scrollWheelZoom
+        worldCopyJump
+        className="h-full w-full"
+        attributionControl
+      >
+        <TileLayer
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          maxZoom={19}
+        />
+        <MapController spots={spots} userLocation={userLocation} ref={ref} />
+        <ZoomListener onZoomChange={setZoom} />
         {markers.map((m) => (
           <Marker
             key={m.key}
@@ -497,17 +537,16 @@ export const LeafletCanvas = forwardRef<LeafletCanvasHandle, LeafletCanvasProps>
             center={[userLocation.lat, userLocation.lon]}
             radius={radiusMeters as number}
             pathOptions={{
-              color: '#000000',
+              color: "#000000",
               weight: 1,
               opacity: 0.6,
-              fillColor: '#000000',
+              fillColor: "#000000",
               fillOpacity: 0.05,
-              dashArray: '4 4',
+              dashArray: "4 4",
             }}
           />
         )}
-        </MapContainer>
-      </LeafletErrorBoundary>
-    );
-  },
-);
+      </MapContainer>
+    </LeafletErrorBoundary>
+  );
+});
