@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { usePathname, useRouter, type ReadonlyURLSearchParams } from "next/navigation";
 import { useSpotsStore } from "@/stores/spots-store";
 import type { Spot } from "@/lib/types";
@@ -42,11 +42,20 @@ export interface MapFilter {
   region: string | null;
   country: string | null;
   availableCountries: readonly string[];
-  filteredSpots: Spot[];
+  filteredSpots: readonly Spot[];
   hasFilter: boolean;
   setRegion: (name: string | null) => void;
   setCountry: (name: string | null) => void;
   clearAll: () => void;
+  /**
+   * Flush the pending selection to the URL via the configured `targetPath`.
+   * No-op when `defer` is false, or when no pending changes exist.
+   */
+  commit: () => void;
+  /** Discard any pending selection without touching the URL. */
+  cancelPending: () => void;
+  /** True while a deferred selection is staged but not yet committed. */
+  hasPending: boolean;
 }
 
 export interface UseMapFilterOptions {
@@ -58,6 +67,19 @@ export interface UseMapFilterOptions {
    * on the target path (no extra history entries).
    */
   targetPath?: string;
+  /**
+   * When true, setters stage the change in a local `pending` state instead
+   * of writing to the URL. Reads (`region`, `country`, `availableCountries`,
+   * `filteredSpots`) reflect the pending values when present, falling back
+   * to the URL otherwise. Call `commit()` to flush pending to the URL, or
+   * `cancelPending()` to discard. Default `false` (write through).
+   */
+  defer?: boolean;
+}
+
+interface PendingSelection {
+  region: string | null;
+  country: string | null;
 }
 
 export function useMapFilter(
@@ -67,8 +89,9 @@ export function useMapFilter(
 ): MapFilter {
   const router = useRouter();
   const pathname = usePathname();
-  const { targetPath } = options;
+  const { targetPath, defer = false } = options;
   const regions = useSpotsStore((s) => s.regions);
+  const [pending, setPending] = useState<PendingSelection | null>(null);
 
   const slugs = useMemo(() => buildSlugMaps(regions), [regions]);
   const validRegionNames = useMemo(
@@ -83,22 +106,25 @@ export function useMapFilter(
   const regionSlug = searchParams.get("region")?.toLowerCase() ?? null;
   const countrySlug = searchParams.get("country")?.toLowerCase() ?? null;
 
-  const region = regionSlug ? slugs.regionSlugToName.get(regionSlug) ?? null : null;
-  const country = countrySlug
+  const regionFromUrl = regionSlug ? slugs.regionSlugToName.get(regionSlug) ?? null : null;
+  const countryFromUrl = countrySlug
     ? slugs.countrySlugToName.get(countrySlug) ?? null
     : null;
 
-  const safeRegion =
-    region && validRegionNames.has(region) ? region : null;
-  const safeCountry =
-    country && validCountryNames.has(country) ? country : null;
+  const safeRegionFromUrl =
+    regionFromUrl && validRegionNames.has(regionFromUrl) ? regionFromUrl : null;
+  const safeCountryFromUrl =
+    countryFromUrl && validCountryNames.has(countryFromUrl) ? countryFromUrl : null;
+
+  const region = defer && pending ? pending.region : safeRegionFromUrl;
+  const country = defer && pending ? pending.country : safeCountryFromUrl;
 
   const availableCountries = useMemo(() => {
-    if (!safeRegion) {
+    if (!region) {
       return regions.flatMap((r) => r.countries);
     }
-    return regions.find((r) => r.name === safeRegion)?.countries ?? [];
-  }, [safeRegion, regions]);
+    return regions.find((r) => r.name === region)?.countries ?? [];
+  }, [region, regions]);
 
   const writeQuery = useCallback(
     (next: { region: string | null; country: string | null }) => {
@@ -128,53 +154,88 @@ export function useMapFilter(
   const setRegion = useCallback(
     (name: string | null) => {
       if (name === null) {
+        if (defer) {
+          setPending({ region: null, country: null });
+          return;
+        }
         writeQuery({ region: null, country: null });
         return;
       }
       if (!validRegionNames.has(name)) return;
       const regionEntry = regions.find((r) => r.name === name);
-      const nextCountry = safeCountry && regionEntry && !regionEntry.countries.includes(safeCountry)
-        ? null
-        : safeCountry;
+      const nextCountry =
+        country && regionEntry && !regionEntry.countries.includes(country)
+          ? null
+          : country;
+      if (defer) {
+        setPending({ region: name, country: nextCountry });
+        return;
+      }
       writeQuery({ region: name, country: nextCountry });
     },
-    [regions, safeCountry, validRegionNames, writeQuery],
+    [country, defer, regions, validRegionNames, writeQuery],
   );
 
   const setCountry = useCallback(
     (name: string | null) => {
       if (name === null) {
-        writeQuery({ region: safeRegion, country: null });
+        if (defer) {
+          setPending({ region, country: null });
+          return;
+        }
+        writeQuery({ region, country: null });
         return;
       }
       if (!validCountryNames.has(name)) return;
-      writeQuery({ region: safeRegion, country: name });
+      if (defer) {
+        setPending({ region, country: name });
+        return;
+      }
+      writeQuery({ region, country: name });
     },
-    [safeRegion, validCountryNames, writeQuery],
+    [defer, region, validCountryNames, writeQuery],
   );
 
   const clearAll = useCallback(() => {
+    if (defer) {
+      setPending({ region: null, country: null });
+      return;
+    }
     writeQuery({ region: null, country: null });
-  }, [writeQuery]);
+  }, [defer, writeQuery]);
+
+  const commit = useCallback(() => {
+    if (!defer || !pending) return;
+    writeQuery(pending);
+    setPending(null);
+  }, [defer, pending, writeQuery]);
+
+  const cancelPending = useCallback(() => {
+    if (!defer) return;
+    setPending(null);
+  }, [defer]);
 
   const filteredSpots = useMemo(() => {
-    if (!safeRegion) return spots.slice();
+    if (!region) return spots.slice();
     return spots.filter((spot) => {
       const regionEntry = regions.find((r) => r.countries.includes(spot.country));
-      if (regionEntry?.name !== safeRegion) return false;
-      if (safeCountry && spot.country !== safeCountry) return false;
+      if (regionEntry?.name !== region) return false;
+      if (country && spot.country !== country) return false;
       return true;
     });
-  }, [spots, safeRegion, safeCountry, regions]);
+  }, [spots, region, country, regions]);
 
   return {
-    region: safeRegion,
-    country: safeCountry,
+    region,
+    country,
     availableCountries,
     filteredSpots,
-    hasFilter: safeRegion !== null || safeCountry !== null,
+    hasFilter: region !== null || country !== null,
     setRegion,
     setCountry,
     clearAll,
+    commit,
+    cancelPending,
+    hasPending: defer && pending !== null,
   };
 }

@@ -314,3 +314,154 @@ describe("useMapFilter with targetPath", () => {
     expect(routerReplace).not.toHaveBeenCalled();
   });
 });
+
+describe("useMapFilter with defer", () => {
+  function renderDeferred(
+    options?: UseMapFilterOptions,
+  ): RenderHookResult<ReturnType<typeof useMapFilter>, unknown> {
+    return renderHook(() =>
+      useMapFilter(
+        [US, FR, JP],
+        mockSearchParams as unknown as ReadonlyURLSearchParams,
+        { defer: true, ...options },
+      ),
+    );
+  }
+
+  it("stages setRegion in pending without touching the URL", () => {
+    const { result } = renderDeferred({ targetPath: "/map" });
+    act(() => {
+      result.current.setRegion("Asia");
+    });
+    expect(routerReplace).not.toHaveBeenCalled();
+    expect(routerPush).not.toHaveBeenCalled();
+    expect(result.current.region).toBe("Asia");
+    expect(result.current.country).toBeNull();
+    expect(result.current.hasPending).toBe(true);
+    expect(result.current.hasFilter).toBe(true);
+  });
+
+  it("reflects pending on availableCountries and filteredSpots", () => {
+    const { result } = renderDeferred();
+    act(() => {
+      result.current.setRegion("Europe");
+    });
+    expect(result.current.availableCountries).toEqual(
+      expect.arrayContaining(["France", "Germany"]),
+    );
+    expect(result.current.filteredSpots.map((s) => s.id)).toEqual(["fr-1"]);
+  });
+
+  it("setRegion clears the country when it no longer belongs to the new region", () => {
+    mockSearchParams = new URLSearchParams("region=europe&country=france");
+    const { result } = renderDeferred();
+    act(() => {
+      result.current.setRegion("Americas");
+    });
+    expect(result.current.region).toBe("Americas");
+    expect(result.current.country).toBeNull();
+  });
+
+  it("setCountry stages the country without writing the URL", () => {
+    const { result } = renderDeferred();
+    act(() => {
+      result.current.setRegion("Asia");
+    });
+    act(() => {
+      result.current.setCountry("Japan");
+    });
+    expect(routerReplace).not.toHaveBeenCalled();
+    expect(result.current.region).toBe("Asia");
+    expect(result.current.country).toBe("Japan");
+    expect(result.current.filteredSpots.map((s) => s.id)).toEqual(["jp-1"]);
+  });
+
+  it("clearAll stages null/null without writing the URL", () => {
+    mockSearchParams = new URLSearchParams("region=asia&country=japan");
+    const { result } = renderDeferred({ targetPath: "/map" });
+    act(() => {
+      result.current.clearAll();
+    });
+    expect(routerReplace).not.toHaveBeenCalled();
+    expect(routerPush).not.toHaveBeenCalled();
+    expect(result.current.region).toBeNull();
+    expect(result.current.country).toBeNull();
+    expect(result.current.hasPending).toBe(true);
+  });
+
+  it("commit() flushes pending to the URL via targetPath with push when on a different page", () => {
+    mockPathname = "/";
+    const { result } = renderDeferred({ targetPath: "/map" });
+    act(() => {
+      result.current.setRegion("Americas");
+    });
+    act(() => {
+      result.current.setCountry("Brazil");
+    });
+    act(() => {
+      result.current.commit();
+    });
+    expect(routerPush).toHaveBeenCalledTimes(1);
+    expect(routerReplace).not.toHaveBeenCalled();
+    const [url, options] = routerPush.mock.calls[0] as [string, { scroll: boolean }];
+    expect(url).toBe("/map?region=americas&country=brazil");
+    expect(options).toEqual({ scroll: false });
+    expect(result.current.hasPending).toBe(false);
+  });
+
+  it("commit() uses replace when already on the target path", () => {
+    mockPathname = "/map";
+    const { result } = renderDeferred({ targetPath: "/map" });
+    act(() => {
+      result.current.setRegion("Europe");
+    });
+    act(() => {
+      result.current.commit();
+    });
+    expect(routerReplace).toHaveBeenCalledTimes(1);
+    expect(routerPush).not.toHaveBeenCalled();
+    const [url] = routerReplace.mock.calls[0] as [string, unknown];
+    expect(url).toBe("/map?region=europe");
+  });
+
+  it("commit() is a no-op when nothing is pending", () => {
+    const { result } = renderDeferred({ targetPath: "/map" });
+    act(() => {
+      result.current.commit();
+    });
+    expect(routerPush).not.toHaveBeenCalled();
+    expect(routerReplace).not.toHaveBeenCalled();
+    expect(result.current.hasPending).toBe(false);
+  });
+
+  it("cancelPending() discards pending and restores URL-derived reads", () => {
+    mockSearchParams = new URLSearchParams("region=europe");
+    const { result } = renderDeferred({ targetPath: "/map" });
+    act(() => {
+      result.current.setCountry("Germany");
+    });
+    expect(result.current.country).toBe("Germany");
+    expect(result.current.hasPending).toBe(true);
+    act(() => {
+      result.current.cancelPending();
+    });
+    expect(result.current.country).toBeNull();
+    expect(result.current.region).toBe("Europe");
+    expect(result.current.hasPending).toBe(false);
+    expect(routerPush).not.toHaveBeenCalled();
+    expect(routerReplace).not.toHaveBeenCalled();
+  });
+
+  it("ignores invalid names in deferred mode (no write, no stage)", () => {
+    const { result } = renderDeferred();
+    act(() => {
+      result.current.setRegion("Atlantis");
+    });
+    act(() => {
+      result.current.setCountry("Atlantis");
+    });
+    expect(routerReplace).not.toHaveBeenCalled();
+    expect(routerPush).not.toHaveBeenCalled();
+    expect(result.current.hasPending).toBe(false);
+  });
+});
