@@ -3,7 +3,7 @@ import {
   Compass,
   Heart,
   PlusCircle,
-  Shield,
+  //   Shield,
   Trophy,
   type LucideIcon,
 } from "lucide-react";
@@ -34,14 +34,6 @@ export const NAV_ITEMS: readonly {
   //     Icon: Map,
   //   },
   {
-    id: "saved",
-    path: "/saved",
-    label: "Saved",
-    shortLabel: "Saved",
-    drawerLabel: "Saved Locations",
-    Icon: Heart,
-  },
-  {
     id: "events",
     path: "/sport-events",
     label: "Events",
@@ -59,14 +51,22 @@ export const NAV_ITEMS: readonly {
     adminOnly: true,
   },
   {
-    id: "admin",
-    path: "/admin",
-    label: "Admin",
-    shortLabel: "Admin",
-    drawerLabel: "Admin",
-    Icon: Shield,
-    adminOnly: true,
+    id: "saved",
+    path: "/saved",
+    label: "Saved",
+    shortLabel: "Saved",
+    drawerLabel: "Saved Locations",
+    Icon: Heart,
   },
+  //   {
+  //     id: "admin",
+  //     path: "/admin",
+  //     label: "Admin",
+  //     shortLabel: "Admin",
+  //     drawerLabel: "Admin",
+  //     Icon: Shield,
+  //     adminOnly: true,
+  //   },
 ] as const;
 
 export type NavItem = (typeof NAV_ITEMS)[number];
@@ -74,8 +74,8 @@ export type NavItem = (typeof NAV_ITEMS)[number];
 export const ROUTES = {
   explore: "/",
   map: "/map",
-  saved: "/saved",
   events: "/sport-events",
+  saved: "/saved",
   post: "/post",
   spot: (id: string) => `/spots/${id}`,
 } as const;

@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useCallback, useMemo, useRef, type KeyboardEvent } from 'react';
-import { usePathname } from 'next/navigation';
-import { NAV_ITEMS } from '@/lib/nav';
-import { useUser } from '@/hooks/useUser';
-import type { NavVariant } from '@/components/layout/NavLink';
+import { useCallback, useMemo, useRef, type KeyboardEvent } from "react";
+import { usePathname } from "next/navigation";
+import { NAV_ITEMS } from "@/lib/nav";
+import { useUser } from "@/hooks/useUser";
+import type { NavVariant } from "@/components/layout/NavLink";
 
 interface UseNavListOptions {
   variant: NavVariant;
@@ -30,10 +30,10 @@ export function useNavList({ variant, onSelect }: UseNavListOptions) {
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent<HTMLDivElement>) => {
-      const isTabVariant = variant !== 'mobile-drawer';
+      const isTabVariant = variant !== "mobile-drawer";
       const allowedKeys = isTabVariant
-        ? ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End']
-        : ['ArrowUp', 'ArrowDown', 'Home', 'End'];
+        ? ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Home", "End"]
+        : ["ArrowUp", "ArrowDown", "Home", "End"];
       if (!allowedKeys.includes(e.key)) return;
       const buttons = Array.from(
         listRef.current?.querySelectorAll<HTMLButtonElement>('[role="tab"]') ??
@@ -44,11 +44,11 @@ export function useNavList({ variant, onSelect }: UseNavListOptions) {
         (b) => b === document.activeElement,
       );
       let nextIndex = currentIndex;
-      if (e.key === 'Home') nextIndex = 0;
-      else if (e.key === 'End') nextIndex = buttons.length - 1;
-      else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+      if (e.key === "Home") nextIndex = 0;
+      else if (e.key === "End") nextIndex = buttons.length - 1;
+      else if (e.key === "ArrowRight" || e.key === "ArrowDown") {
         nextIndex = (currentIndex + 1) % buttons.length;
-      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
         nextIndex = (currentIndex - 1 + buttons.length) % buttons.length;
       }
       e.preventDefault();
@@ -67,8 +67,8 @@ interface RenderBadgeArgs {
 }
 
 export function renderNavBadge({ variant, id, savedCount }: RenderBadgeArgs) {
-  if (id !== 'saved' || savedCount <= 0) return undefined;
-  if (variant === 'mobile-drawer') {
+  if (id !== "saved" || savedCount <= 0) return undefined;
+  if (variant === "mobile-drawer") {
     return (
       <span
         aria-label={`${savedCount} spots saved`}
@@ -78,7 +78,7 @@ export function renderNavBadge({ variant, id, savedCount }: RenderBadgeArgs) {
       </span>
     );
   }
-  if (variant === 'mobile-tab') {
+  if (variant === "mobile-tab") {
     return (
       <span
         aria-label={`${savedCount} spots saved`}
@@ -98,8 +98,11 @@ export function renderNavBadge({ variant, id, savedCount }: RenderBadgeArgs) {
   );
 }
 
-export function navLabelFor(item: (typeof NAV_ITEMS)[number], variant: NavVariant) {
-  if (variant === 'mobile-tab') return item.shortLabel;
-  if (variant === 'mobile-drawer') return item.drawerLabel;
+export function navLabelFor(
+  item: (typeof NAV_ITEMS)[number],
+  variant: NavVariant,
+) {
+  if (variant === "mobile-tab") return item.shortLabel;
+  if (variant === "mobile-drawer") return item.drawerLabel;
   return item.label;
 }

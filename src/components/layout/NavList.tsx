@@ -1,13 +1,9 @@
-'use client';
+"use client";
 
-import { isActivePath } from '@/lib/nav';
-import { NavLink, type NavVariant } from './NavLink';
-import {
-  navLabelFor,
-  renderNavBadge,
-  useNavList,
-} from '@/hooks/useNavList';
-import { cn } from '@/lib/cn';
+import { isActivePath } from "@/lib/nav";
+import { NavLink, type NavVariant } from "./NavLink";
+import { navLabelFor, renderNavBadge, useNavList } from "@/hooks/useNavList";
+import { cn } from "@/lib/cn";
 
 interface NavListProps {
   variant: NavVariant;
@@ -17,10 +13,10 @@ interface NavListProps {
 }
 
 const VARIANT_CONTAINER: Record<NavVariant, string> = {
-  desktop: 'hidden items-center space-x-1 md:flex',
-  'mobile-tab':
-    'fixed bottom-0 left-0 right-0 z-40 flex border-t border-outline-variant bg-surface px-2 py-2.5 md:hidden justify-around',
-  'mobile-drawer': 'space-y-2',
+  desktop: "hidden items-center space-x-1 md:flex",
+  "mobile-tab":
+    "fixed bottom-0 left-0 right-0 z-40 flex border-t border-outline-variant bg-surface px-2 py-2.5 md:hidden justify-around",
+  "mobile-drawer": "space-y-2",
 };
 
 export function NavList({
@@ -29,24 +25,25 @@ export function NavList({
   controlsId,
   onSelect,
 }: NavListProps) {
-  const { pathname, listRef, handleSelect, handleKeyDown, navItems } = useNavList({
-    variant,
-    onSelect,
-  });
+  const { pathname, listRef, handleSelect, handleKeyDown, navItems } =
+    useNavList({
+      variant,
+      onSelect,
+    });
 
-  const containerRole = variant === 'mobile-drawer' ? undefined : 'tablist';
+  const containerRole = variant === "mobile-drawer" ? undefined : "tablist";
   const containerLabel =
-    variant === 'mobile-drawer'
-      ? 'Drawer primary navigation'
-      : 'Primary navigation';
+    variant === "mobile-drawer"
+      ? "Drawer primary navigation"
+      : "Primary navigation";
   const containerId =
-    variant === 'desktop'
-      ? 'desktop-nav'
-      : variant === 'mobile-tab'
-        ? 'mobile-nav'
+    variant === "desktop"
+      ? "desktop-nav"
+      : variant === "mobile-tab"
+        ? "mobile-nav"
         : undefined;
-  const isDrawer = variant === 'mobile-drawer';
-
+  const isDrawer = variant === "mobile-drawer";
+  console.log("NavList render", { navItems });
   return (
     <div
       ref={listRef}
@@ -58,7 +55,7 @@ export function NavList({
     >
       {navItems.map((item) => {
         const isActive = isActivePath(pathname, item.path);
-        const showBadge = item.id === 'saved' && savedCount > 0;
+        const showBadge = item.id === "saved" && savedCount > 0;
         const Icon = item.Icon;
         return (
           <NavLink
@@ -70,7 +67,11 @@ export function NavList({
             variant={variant}
             controlsId={controlsId}
             onClick={handleSelect(item.path)}
-            badge={showBadge ? renderNavBadge({ variant, id: item.id, savedCount }) : undefined}
+            badge={
+              showBadge
+                ? renderNavBadge({ variant, id: item.id, savedCount })
+                : undefined
+            }
           />
         );
       })}
