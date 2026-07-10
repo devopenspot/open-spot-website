@@ -41,7 +41,7 @@ export function MapInfoPopup({
       role="dialog"
       aria-labelledby="map-info-popup-title"
       tabIndex={-1}
-      className="absolute bottom-4 left-4 right-4 z-20 md:left-auto md:right-4 md:w-80 bg-surface/95 backdrop-blur-md rounded-xl border border-outline-variant shadow-lg p-4 animate-slide-up outline-none"
+      className="absolute bottom-4 left-4 right-4 z-[1000] md:left-auto md:right-4 md:w-80 bg-surface/95 backdrop-blur-md rounded-xl border border-outline-variant shadow-lg p-4 animate-slide-up outline-none"
     >
       <div className="flex space-x-3">
         <div className="relative h-16 w-16 bg-black rounded-lg overflow-hidden shrink-0">

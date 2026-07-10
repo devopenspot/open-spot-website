@@ -212,20 +212,20 @@ export default function MapTab({ searchParams, nearbyRequested }: MapTabProps) {
             initialCenter={initialCenter}
             initialZoom={initialZoom}
           />
+
+          {activePin && (
+            <MapInfoPopup
+              spot={activePin}
+              weather={weather}
+              isSaved={savedIds.has(activePin.id)}
+              onClose={() => setActivePin(null)}
+              onOpen={openSpot}
+              onToggleSave={toggleSaved}
+            />
+          )}
         </div>
         <MapLegend />
       </div>
-
-      {activePin && (
-        <MapInfoPopup
-          spot={activePin}
-          weather={weather}
-          isSaved={savedIds.has(activePin.id)}
-          onClose={() => setActivePin(null)}
-          onOpen={openSpot}
-          onToggleSave={toggleSaved}
-        />
-      )}
     </section>
   );
 }
