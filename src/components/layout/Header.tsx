@@ -1,17 +1,17 @@
-'use client';
+"use client";
 
-import { useRouter } from 'next/navigation';
-import { BrandLogo } from './BrandLogo';
-import { NavList } from './NavList';
-import { MobileDrawerTrigger } from './MobileDrawerTrigger';
-import { SearchTrigger } from './SearchTrigger';
-import { SignInLink } from './SignInLink';
-import { SignOutButton } from './SignOutButton';
-import { UserAvatar } from '@/components/ui';
-import { useUIStore } from '@/stores/ui-store';
-import { useSavedSpots } from '@/hooks/useSavedSpots';
-import { useUser } from '@/hooks/useUser';
-import { MAIN_CONTENT_ID } from '@/lib/constants';
+import { useRouter } from "next/navigation";
+import { BrandLogo } from "./BrandLogo";
+import { NavList } from "./NavList";
+import { MobileDrawerTrigger } from "./MobileDrawerTrigger";
+import { SearchTrigger } from "./SearchTrigger";
+import { SignInLink } from "./SignInLink";
+import { SignOutButton } from "./SignOutButton";
+import { UserAvatar } from "@/components/ui";
+import { useUIStore } from "@/stores/ui-store";
+import { useSavedSpots } from "@/hooks/useSavedSpots";
+import { useUser } from "@/hooks/useUser";
+import { MAIN_CONTENT_ID } from "@/lib/constants";
 
 export function Header() {
   const router = useRouter();
@@ -43,11 +43,7 @@ export function Header() {
 
           <SignInLink variant="header" />
 
-          <UserAvatar
-            user={user}
-            size="sm"
-            className="hidden sm:inline-flex"
-          />
+          <UserAvatar user={user} size="sm" className="hidden sm:inline-flex" />
 
           <SignOutButton className="hidden sm:inline-flex" />
 
@@ -55,12 +51,12 @@ export function Header() {
         </div>
       </div>
 
-      <NavList
+      {/* <NavList
         variant="mobile-tab"
         savedCount={savedCount}
         controlsId={MAIN_CONTENT_ID}
         onSelect={handleSelect}
-      />
+      /> */}
     </header>
   );
 }
