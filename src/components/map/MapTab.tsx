@@ -21,7 +21,12 @@ import type { LeafletCanvasHandle } from "./LeafletCanvas";
 
 const LeafletCanvas = dynamic(
   () => import("./LeafletCanvas").then((m) => m.LeafletCanvas),
-  { ssr: false, loading: () => <div className="flex-1 border border-outline-variant bg-surface-container-low animate-pulse" /> },
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex-1 border border-outline-variant bg-surface-container-low animate-pulse" />
+    ),
+  },
 );
 
 const NEAR_YOU_INITIAL_ZOOM = 12;
@@ -38,7 +43,14 @@ export default function MapTab({ searchParams, nearbyRequested }: MapTabProps) {
   const { savedIds, toggle: toggleSaved } = useSavedSpots(user.id);
   const { weather } = useWeather();
   const { region, country, filteredSpots } = useMapFilter(spots, searchParams);
-  const { location, status, radiusMiles, setRadiusMiles, request: requestLocation, clear: clearLocation } = useUserLocation();
+  const {
+    location,
+    status,
+    radiusMiles,
+    setRadiusMiles,
+    request: requestLocation,
+    clear: clearLocation,
+  } = useUserLocation();
   const [activePin, setActivePin] = useState<Spot | null>(null);
   const leafletRef = useRef<LeafletCanvasHandle | null>(null);
 
@@ -58,14 +70,23 @@ export default function MapTab({ searchParams, nearbyRequested }: MapTabProps) {
   }, [filteredSpots, userLatLon]);
 
   const hasRegionFilter = region !== null || country !== null;
-  const nearYou = nearbyRequested && status === "granted" && userLatLon !== null && !hasRegionFilter;
+  const nearYou =
+    nearbyRequested &&
+    status === "granted" &&
+    userLatLon !== null &&
+    !hasRegionFilter;
 
   const sidebarSpots = useMemo(() => {
     if (!nearYou || !userLatLon) return orderedSpots;
     const origin = userLatLon;
     return orderedSpots.filter(
       (s) =>
-        haversineMiles(origin.lat, origin.lon, s.location.lat, s.location.lon) <= radiusMiles,
+        haversineMiles(
+          origin.lat,
+          origin.lon,
+          s.location.lat,
+          s.location.lon,
+        ) <= radiusMiles,
     );
   }, [orderedSpots, userLatLon, radiusMiles, nearYou]);
 
@@ -73,12 +94,15 @@ export default function MapTab({ searchParams, nearbyRequested }: MapTabProps) {
     const params = new URLSearchParams(searchParams.toString());
     params.delete("nearby");
     const query = params.toString();
-    router.replace(query ? `${ROUTES.map}?${query}` : ROUTES.map, { scroll: false });
+    router.replace(query ? `${ROUTES.map}?${query}` : ROUTES.map, {
+      scroll: false,
+    });
   }, [router, searchParams]);
 
   useEffect(() => {
     if (!nearbyRequested) return;
-    if (status === "granted" || status === "requesting" || status === "denied") return;
+    if (status === "granted" || status === "requesting" || status === "denied")
+      return;
     void requestLocation();
   }, [nearbyRequested, status, requestLocation]);
 
@@ -138,11 +162,12 @@ export default function MapTab({ searchParams, nearbyRequested }: MapTabProps) {
     }
   }, [nearYou, hasRegionFilter]);
 
-  const initialCenter: [number, number] = nearYou && userLatLon
-    ? [userLatLon.lat, userLatLon.lon]
-    : sidebarSpots[0]
-      ? [sidebarSpots[0].location.lat, sidebarSpots[0].location.lon]
-      : [20, 0];
+  const initialCenter: [number, number] =
+    nearYou && userLatLon
+      ? [userLatLon.lat, userLatLon.lon]
+      : sidebarSpots[0]
+        ? [sidebarSpots[0].location.lat, sidebarSpots[0].location.lon]
+        : [20, 0];
   const initialZoom = nearYou ? NEAR_YOU_INITIAL_ZOOM : 2;
 
   return (
@@ -150,7 +175,7 @@ export default function MapTab({ searchParams, nearbyRequested }: MapTabProps) {
       id="map-tab"
       role="tabpanel"
       aria-labelledby="nav-btn-map"
-      className="flex flex-col lg:flex-row gap-6 pb-24 animate-fade-in min-h-[500px]"
+      className="flex flex-col lg:flex-row gap-6 pb-16 md:pb-12 animate-fade-in min-h-[500px]"
       style={{ height: `calc(100vh - ${MAP_VIEWPORT_OFFSET_PX.DESKTOP}px)` }}
     >
       <h1 className="visually-hidden">Spot Map</h1>
@@ -224,7 +249,7 @@ export default function MapTab({ searchParams, nearbyRequested }: MapTabProps) {
             />
           )}
         </div>
-        <MapLegend />
+        {/* <MapLegend /> */}
       </div>
     </section>
   );
