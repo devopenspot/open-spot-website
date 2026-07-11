@@ -14,7 +14,7 @@ import { ROUTES } from "@/lib/nav";
 import { haversineMiles, milesToMeters } from "@/lib/spots/geo";
 import { MapSidebar } from "./MapSidebar";
 import { MapInfoPopup } from "./MapInfoPopup";
-import { MapLegend } from "./MapLegend";
+// import { MapLegend } from "./MapLegend";
 import { NearbyControl } from "./NearbyControl";
 import type { Spot } from "@/lib/types";
 import type { LeafletCanvasHandle } from "./LeafletCanvas";
