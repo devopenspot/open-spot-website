@@ -41,7 +41,7 @@ export function MapInfoPopup({
       role="dialog"
       aria-labelledby="map-info-popup-title"
       tabIndex={-1}
-      className="absolute bottom-4 left-4 right-4 z-[1000] md:left-auto md:right-4 md:w-80 bg-surface/95 backdrop-blur-md rounded-xl border border-outline-variant shadow-lg p-4 animate-slide-up outline-none"
+      className="fixed -top-30 md:top-4 md:absolute left-0 right-4 z-[1000] md:left-auto md:right-4 w-full md:w-80 bg-surface/95 backdrop-blur-md rounded-xl border border-outline-variant shadow-lg p-4 animate-slide-up outline-none"
     >
       <div className="flex space-x-3">
         <div className="relative h-16 w-16 bg-black rounded-lg overflow-hidden shrink-0">
@@ -92,9 +92,7 @@ export function MapInfoPopup({
         <div>
           <span className="block text-[8px] text-secondary">Air temp</span>
           <span className="font-semibold text-on-surface flex items-center gap-1">
-            {weatherIcon ? (
-              <WeatherIcon name={weatherIcon} size={12} />
-            ) : null}
+            {weatherIcon ? <WeatherIcon name={weatherIcon} size={12} /> : null}
             {current !== undefined ? `${current}°C` : "—"}
           </span>
         </div>
