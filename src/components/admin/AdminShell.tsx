@@ -1,17 +1,17 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { ArrowLeft } from "lucide-react"
-import { BrandLogo } from "@/components/layout/BrandLogo"
-import { ToastViewport } from "@/components/feedback/Toast"
-import { UserAvatar } from "@/components/ui"
-import { useUser } from "@/hooks/useUser"
-import { MAIN_CONTENT_ID } from "@/lib/constants"
-import { AdminSidebar } from "./AdminSidebar"
-import type { ReactNode } from "react"
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
+import { BrandLogo } from "@/components/layout/BrandLogo";
+import { ToastViewport } from "@/components/feedback/Toast";
+import { UserAvatar } from "@/components/ui";
+import { useUser } from "@/hooks/useUser";
+import { MAIN_CONTENT_ID } from "@/lib/constants";
+import { AdminSidebar } from "./AdminSidebar";
+import type { ReactNode } from "react";
 
 export function AdminShell({ children }: { children: ReactNode }) {
-  const user = useUser()
+  const user = useUser();
   return (
     <div
       id="app-root"
@@ -64,5 +64,5 @@ export function AdminShell({ children }: { children: ReactNode }) {
 
       <ToastViewport />
     </div>
-  )
+  );
 }

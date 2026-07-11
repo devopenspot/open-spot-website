@@ -1,17 +1,17 @@
-'use client';
+"use client";
 
-import { useEffect } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
-import { Header } from './Header';
-import { MobileDrawer } from './MobileDrawer';
-import { SearchOverlay } from '@/components/search/SearchOverlay';
-import { ToastViewport } from '@/components/feedback/Toast';
-import { useUIStore } from '@/stores/ui-store';
-import { useSpotsStore } from '@/stores/spots-store';
-import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
-import { MAIN_CONTENT_ID } from '@/lib/constants';
-import { ROUTES } from '@/lib/nav';
-import type { Spot } from '@/lib/types';
+import { useEffect } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { Header } from "./Header";
+import { MobileDrawer } from "./MobileDrawer";
+import { SearchOverlay } from "@/components/search/SearchOverlay";
+import { ToastViewport } from "@/components/feedback/Toast";
+import { useUIStore } from "@/stores/ui-store";
+import { useSpotsStore } from "@/stores/spots-store";
+import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
+import { MAIN_CONTENT_ID } from "@/lib/constants";
+import { ROUTES } from "@/lib/nav";
+import type { Spot } from "@/lib/types";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -24,7 +24,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   // The admin segment renders its own shell (`src/app/admin/layout.tsx`).
   // Bail out early so the public header, search overlay, and mobile
   // drawer are not double-rendered alongside the admin chrome.
-  const isAdminRoute = pathname?.startsWith('/admin') ?? false;
+  const isAdminRoute = pathname?.startsWith("/admin") ?? false;
 
   // Close the search overlay on route change
   useEffect(() => {
@@ -38,9 +38,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       ? []
       : [
           {
-            key: 'k',
+            key: "k",
             cmdOrCtrl: true,
-            handler: e => {
+            handler: (e) => {
               e.preventDefault();
               toggleSearch();
             },
@@ -70,7 +70,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <main
         id={MAIN_CONTENT_ID}
         aria-label="Open Spot content"
-        className="flex-1 mx-auto w-full max-w-7xl px-4 py-8 md:px-8"
+        className="flex-1 mx-auto w-full max-w-7xl p-4 md:px-8"
       >
         {children}
       </main>
