@@ -37,16 +37,16 @@ interface LookupState {
 }
 
 const FIELD_CLASSES =
-  "w-full rounded-lg border border-outline-variant bg-surface-bright p-3 text-xs font-medium text-on-surface shadow-sm focus:border-outline focus:outline-none disabled:opacity-50"
+  "w-full rounded-lg border border-outline-variant bg-surface-bright p-3 text-xs font-medium text-on-surface shadow-sm focus:border-outline focus:outline-none disabled:opacity-50";
 
 // Strict "lat, lon" parser. Optional surrounding whitespace, optional
 // leading minus. Does NOT accept parens, DMS, or "lat lon" with no comma —
 // those are rejected silently so the paste input feels honest.
-const PASTE_REGEX = /^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$/
+const PASTE_REGEX = /^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$/;
 
 function formatPaste(lat: number, lon: number): string {
-  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return ""
-  return `${lat}, ${lon}`
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return "";
+  return `${lat}, ${lon}`;
 }
 
 export function LatLonEditor({
@@ -58,109 +58,108 @@ export function LatLonEditor({
   onError,
   disabled = false,
 }: LatLonEditorProps) {
-  const latId = useId()
-  const lonId = useId()
-  const pasteId = useId()
-  const readOnly = mode === "read-only" || disabled
+  const latId = useId();
+  const lonId = useId();
+  const pasteId = useId();
+  const readOnly = mode === "read-only" || disabled;
   const [state, setState] = useState<LookupState>({
     status: "idle",
     address: null,
     error: null,
-  })
+  });
   // Local state for the paste field. Source of truth for the form is still
   // the `lat` / `lon` props; this just lets the user type freely without
   // losing their input on every keystroke.
-  const [pasteValue, setPasteValue] = useState<string>(formatPaste(lat, lon))
+  const [pasteValue, setPasteValue] = useState<string>(formatPaste(lat, lon));
 
   // Resync the paste field when the two separate inputs change it externally.
   // This is the standard "derived state from props" pattern for a hybrid
   // controlled input (the user types freely, but prop changes win).
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setPasteValue(formatPaste(lat, lon))
-  }, [lat, lon])
+    setPasteValue(formatPaste(lat, lon));
+  }, [lat, lon]);
 
   const setError = (message: string) => {
-    setState({ status: "error", address: null, error: message })
-    onError?.(message)
-  }
+    setState({ status: "error", address: null, error: message });
+    onError?.(message);
+  };
 
   const handleLookup = async () => {
     if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
-      setError("Enter numeric latitude and longitude.")
-      return
+      setError("Enter numeric latitude and longitude.");
+      return;
     }
     if (lat === 0 && lon === 0) {
       setError(
         "Coordinates look like a placeholder (0, 0). Set real coordinates or paste from a map.",
-      )
-      return
+      );
+      return;
     }
     if (lat < -90 || lat > 90 || lon < -180 || lon > 180) {
-      setError("Coordinates out of range. Use lat ∈ [-90, 90] and lon ∈ [-180, 180].")
-      return
+      setError(
+        "Coordinates out of range. Use lat ∈ [-90, 90] and lon ∈ [-180, 180].",
+      );
+      return;
     }
-    setState({ status: "loading", address: null, error: null })
+    setState({ status: "loading", address: null, error: null });
     try {
       const r = await fetch(
         `/api/geocode/reverse?lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}`,
-      )
+      );
       if (!r.ok) {
-        const body = (await r.json().catch(() => null)) as
-          | { error?: string }
-          | null
+        const body = (await r.json().catch(() => null)) as {
+          error?: string;
+        } | null;
         const message =
           r.status === 404
             ? "No address found at this location. Try moving the pin."
             : r.status >= 500
               ? "Reverse-geocode service is unavailable. Try again later."
-              : (body?.error ?? `Reverse geocode failed (${r.status})`)
-        setError(message)
-        return
+              : (body?.error ?? `Reverse geocode failed (${r.status})`);
+        setError(message);
+        return;
       }
-      const data = (await r.json()) as { address: ProjectedAddress }
-      setState({ status: "success", address: data.address, error: null })
+      const data = (await r.json()) as { address: ProjectedAddress };
+      setState({ status: "success", address: data.address, error: null });
       if (mode === "auto-fill") {
-        onAutoFillResult?.(data.address)
+        onAutoFillResult?.(data.address);
       }
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : "Reverse geocode failed"
-      setError(message)
+        err instanceof Error ? err.message : "Reverse geocode failed";
+      setError(message);
     }
-  }
+  };
 
   const handleRetry = () => {
-    setState({ status: "idle", address: null, error: null })
-  }
+    setState({ status: "idle", address: null, error: null });
+  };
 
   const handleLatChange = (raw: string) => {
-    const next = Number(raw)
-    onChange(Number.isFinite(next) ? next : NaN, lon)
-  }
+    const next = Number(raw);
+    onChange(Number.isFinite(next) ? next : NaN, lon);
+  };
 
   const handleLonChange = (raw: string) => {
-    const next = Number(raw)
-    onChange(lat, Number.isFinite(next) ? next : NaN)
-  }
+    const next = Number(raw);
+    onChange(lat, Number.isFinite(next) ? next : NaN);
+  };
 
   const handlePasteChange = (raw: string) => {
-    setPasteValue(raw)
-    const match = PASTE_REGEX.exec(raw)
-    if (!match) return
-    const newLat = Number(match[1])
-    const newLon = Number(match[2])
+    setPasteValue(raw);
+    const match = PASTE_REGEX.exec(raw);
+    if (!match) return;
+    const newLat = Number(match[1]);
+    const newLon = Number(match[2]);
     if (Number.isFinite(newLat) && Number.isFinite(newLon)) {
-      onChange(newLat, newLon)
+      onChange(newLat, newLon);
     }
-  }
+  };
 
-  const loading = state.status === "loading"
+  const loading = state.status === "loading";
   const canLookup =
-    !readOnly &&
-    !loading &&
-    Number.isFinite(lat) &&
-    Number.isFinite(lon)
+    !readOnly && !loading && Number.isFinite(lat) && Number.isFinite(lon);
 
   return (
     <fieldset className="rounded-xl border border-outline-variant bg-surface-container-low p-5">
@@ -178,7 +177,11 @@ export function LatLonEditor({
           htmlFor={pasteId}
           className="mb-1 block font-mono text-[10px] font-bold uppercase tracking-wider text-secondary"
         >
-          <MapPin size={10} className="mr-1 inline-block align-middle" aria-hidden="true" />
+          <MapPin
+            size={10}
+            className="mr-1 inline-block align-middle"
+            aria-hidden="true"
+          />
           Paste coordinates (lat, lon)
         </label>
         <input
@@ -194,6 +197,7 @@ export function LatLonEditor({
           aria-describedby={`${pasteId}-hint`}
           className={cn(FIELD_CLASSES, "font-mono")}
         />
+
         <p
           id={`${pasteId}-hint`}
           className="mt-1 font-mono text-[9px] uppercase tracking-widest text-secondary"
@@ -204,7 +208,7 @@ export function LatLonEditor({
       </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_1fr_auto]">
-        <div>
+        {/* <div>
           <label
             htmlFor={latId}
             className="mb-1 block font-mono text-[10px] font-bold uppercase tracking-wider text-secondary"
@@ -245,7 +249,7 @@ export function LatLonEditor({
             disabled={readOnly}
             className={cn(FIELD_CLASSES, "font-mono")}
           />
-        </div>
+        </div> */}
         <div className="flex items-end">
           <button
             type="button"
@@ -279,5 +283,5 @@ export function LatLonEditor({
         <NominatimAddressPreview address={state.address} />
       ) : null}
     </fieldset>
-  )
+  );
 }

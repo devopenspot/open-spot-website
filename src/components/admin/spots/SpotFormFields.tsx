@@ -1,38 +1,38 @@
-"use client"
+"use client";
 
-import { useId } from "react"
-import { Tag, Plus } from "lucide-react"
-import { SPORT_DISCIPLINES, type SportDiscipline } from "@/types/sport-events"
-import { CROWD_LEVEL } from "@/lib/constants"
-import { ImageSourceField, type ImageSourceFieldValue } from "./ImageSourceField"
+import { useId } from "react";
+import { Tag, Plus } from "lucide-react";
+import { SPORT_DISCIPLINES, type SportDiscipline } from "@/types/sport-events";
+import { CROWD_LEVEL } from "@/lib/constants";
 import {
-  LatLonEditor,
-  type LatLonEditorMode,
-} from "./LatLonEditor"
-import type { ProjectedAddress } from "@/lib/geocode/project"
-import type { SpotTypeEntity } from "@/lib/types"
+  ImageSourceField,
+  type ImageSourceFieldValue,
+} from "./ImageSourceField";
+import { LatLonEditor, type LatLonEditorMode } from "./LatLonEditor";
+import type { ProjectedAddress } from "@/lib/geocode/project";
+import type { SpotTypeEntity } from "@/lib/types";
 
 export interface SpotFormState {
-  name: string
-  city: string
-  citySlug: string
-  address: string
-  country: string
-  countryCode: string
-  type: string
-  features: string[]
-  sports: SportDiscipline[]
-  communityNote: string
-  crowdLevel: number
-  image: ImageSourceFieldValue
-  lat: number
-  lon: number
+  name: string;
+  city: string;
+  citySlug: string;
+  address: string;
+  country: string;
+  countryCode: string;
+  type: string;
+  features: string[];
+  sports: SportDiscipline[];
+  communityNote: string;
+  crowdLevel: number;
+  image: ImageSourceFieldValue;
+  lat: number;
+  lon: number;
 }
 
 interface SpotFormFieldsProps {
-  state: SpotFormState
-  onChange: (next: SpotFormState) => void
-  errors?: Partial<Record<keyof SpotFormState, string>>
+  state: SpotFormState;
+  onChange: (next: SpotFormState) => void;
+  errors?: Partial<Record<keyof SpotFormState, string>>;
   /**
    * Lat/lon editor behaviour. Defaults to `"preview"` (the edit-page
    * contract: lookup shows a preview, does not overwrite address fields).
@@ -40,22 +40,22 @@ interface SpotFormFieldsProps {
    * populates city / country / address / citySlug through
    * `onAutoFillResult`.
    */
-  latLonMode?: LatLonEditorMode
+  latLonMode?: LatLonEditorMode;
   /**
    * Only used when `latLonMode === "auto-fill"`. Receives the projected
    * address from a successful reverse-geocode so the parent can apply
    * it to the form (mirrors the previous `applyAddress` helper in
    * `AdminNewSpotForm`).
    */
-  onAutoFillResult?: (address: ProjectedAddress) => void
+  onAutoFillResult?: (address: ProjectedAddress) => void;
   /** Forwarded to the lat/lon editor for its API + validation errors. */
-  onError?: (message: string) => void
+  onError?: (message: string) => void;
   /**
    * The available spot types for the type dropdown. The server page
    * fetches this from the `spot_types` DB table via
    * `repo.listAllSpotTypes()` and passes it down.
    */
-  spotTypes: readonly SpotTypeEntity[]
+  spotTypes: readonly SpotTypeEntity[];
 }
 
 export function SpotFormFields({
@@ -67,45 +67,45 @@ export function SpotFormFields({
   onError,
   spotTypes,
 }: SpotFormFieldsProps) {
-  const nameId = useId()
-  const typeId = useId()
-  const cityId = useId()
-  const addressId = useId()
-  const countryId = useId()
-  const crowdId = useId()
-  const crowdHelpId = useId()
-  const featuresId = useId()
-  const noteId = useId()
-  const sportsFieldsetId = useId()
-  const featuresListId = useId()
-  const errorId = useId()
+  const nameId = useId();
+  const typeId = useId();
+  const cityId = useId();
+  const addressId = useId();
+  const countryId = useId();
+  const crowdId = useId();
+  const crowdHelpId = useId();
+  const featuresId = useId();
+  const noteId = useId();
+  const sportsFieldsetId = useId();
+  const featuresListId = useId();
+  const errorId = useId();
 
   const update = <K extends keyof SpotFormState>(
     key: K,
     value: SpotFormState[K],
-  ) => onChange({ ...state, [key]: value })
+  ) => onChange({ ...state, [key]: value });
 
   const toggleFeature = (feature: string) => {
     if (state.features.includes(feature)) {
       update(
         "features",
         state.features.filter((f) => f !== feature),
-      )
+      );
     } else {
-      update("features", [...state.features, feature])
+      update("features", [...state.features, feature]);
     }
-  }
+  };
 
   const toggleSport = (sport: SportDiscipline) => {
     if (state.sports.includes(sport)) {
       update(
         "sports",
         state.sports.filter((s) => s !== sport),
-      )
+      );
     } else {
-      update("sports", [...state.sports, sport])
+      update("sports", [...state.sports, sport]);
     }
-  }
+  };
 
   return (
     <div className="space-y-8">
@@ -113,9 +113,7 @@ export function SpotFormFields({
         lat={state.lat}
         lon={state.lon}
         mode={latLonMode}
-        onChange={(lat, lon) =>
-          onChange({ ...state, lat, lon })
-        }
+        onChange={(lat, lon) => onChange({ ...state, lat, lon })}
         onAutoFillResult={onAutoFillResult}
         onError={onError}
       />
@@ -144,7 +142,7 @@ export function SpotFormFields({
             htmlFor={typeId}
             className="mb-1.5 block font-mono text-[10px] font-bold uppercase tracking-wider text-secondary"
           >
-            Terrain type <span aria-hidden="true">*</span>
+            Spot type <span aria-hidden="true">*</span>
           </label>
           <select
             id={typeId}
@@ -232,7 +230,7 @@ export function SpotFormFields({
         </p>
         <ul className="flex flex-wrap gap-1.5">
           {SPORT_DISCIPLINES.map((sport) => {
-            const active = state.sports.includes(sport)
+            const active = state.sports.includes(sport);
             return (
               <li key={sport}>
                 <label
@@ -252,12 +250,12 @@ export function SpotFormFields({
                   {sport}
                 </label>
               </li>
-            )
+            );
           })}
         </ul>
       </fieldset>
 
-      <div>
+      {/* <div>
         <label
           htmlFor={crowdId}
           className="mb-1.5 block font-mono text-[10px] font-bold uppercase tracking-wider text-secondary"
@@ -295,9 +293,9 @@ export function SpotFormFields({
               ? "Moderate Activity"
               : "Low Crowd (Ideal)"}
         </p>
-      </div>
+      </div> */}
 
-      <fieldset className="rounded-xl border border-outline-variant bg-surface-container-low p-5">
+      {/* <fieldset className="rounded-xl border border-outline-variant bg-surface-container-low p-5">
         <legend className="flex items-center px-1 font-mono text-[10px] font-bold uppercase tracking-wider text-secondary">
           <Tag size={12} className="mr-1.5" aria-hidden="true" />
           Obstacle specifications / features
@@ -363,9 +361,9 @@ export function SpotFormFields({
             </li>
           ))}
         </ul>
-      </fieldset>
+      </fieldset> */}
 
-      <div>
+      {/* <div>
         <label
           htmlFor={noteId}
           className="mb-1.5 block font-mono text-[10px] font-bold uppercase tracking-wider text-secondary"
@@ -380,7 +378,7 @@ export function SpotFormFields({
           placeholder="Describe runway smoothness, security timing, wax needs, lighting, etc..."
           className="w-full rounded-lg border border-outline-variant bg-surface-bright p-3 text-xs font-medium text-on-surface shadow-sm focus:border-outline focus:outline-none"
         />
-      </div>
+      </div> */}
 
       {Object.values(errors ?? {}).some(Boolean) ? (
         <p
@@ -388,9 +386,11 @@ export function SpotFormFields({
           role="alert"
           className="rounded-lg border border-error/30 bg-error-container/30 px-4 py-2 text-xs text-error"
         >
-          {Object.values(errors ?? {}).filter(Boolean).join(" · ")}
+          {Object.values(errors ?? {})
+            .filter(Boolean)
+            .join(" · ")}
         </p>
       ) : null}
     </div>
-  )
+  );
 }

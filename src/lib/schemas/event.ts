@@ -3,12 +3,8 @@ import { z } from "zod";
 export const SportDisciplineSchema = z.enum([
   "Skateboard",
   "BMX",
-  "Inline",
   "Scooter",
   "Rollerblade",
-  "Wakeboard",
-  "Snowboard",
-  "Ski",
 ]);
 
 export const SportEventTierSchema = z.enum([
@@ -130,10 +126,7 @@ export const SportEventPatchSchema = z
     featured: z.boolean().optional(),
   })
   .strict()
-  .refine(
-    (p) => (p.latitude === undefined) === (p.longitude === undefined),
-    {
-      message: "latitude and longitude must both be set or both be omitted",
-      path: ["latitude"],
-    },
-  );
+  .refine((p) => (p.latitude === undefined) === (p.longitude === undefined), {
+    message: "latitude and longitude must both be set or both be omitted",
+    path: ["latitude"],
+  });

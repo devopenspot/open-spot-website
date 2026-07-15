@@ -1,22 +1,10 @@
-export type SportDiscipline =
-  | "Skateboard"
-  | "BMX"
-  | "Inline"
-  | "Scooter"
-  | "Rollerblade"
-  | "Wakeboard"
-  | "Snowboard"
-  | "Ski";
+export type SportDiscipline = "Skateboard" | "BMX" | "Scooter" | "Rollerblade";
 
 export const SPORT_DISCIPLINES: readonly SportDiscipline[] = [
   "Skateboard",
   "BMX",
-  "Inline",
   "Scooter",
   "Rollerblade",
-  "Wakeboard",
-  "Snowboard",
-  "Ski",
 ] as const;
 
 export type SportEventStatus = "upcoming" | "live" | "completed";
