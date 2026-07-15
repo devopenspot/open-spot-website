@@ -1,13 +1,14 @@
-// Phase 2 (frozen) — hand-curated typed Spot seed rows. The image
-// URL, community note, crowd level, and crowd label for each row
-// used to be derived at seed time from the slug via a deterministic
-// hash function (see git history). Those values are now inlined as
-// literals below — re-running `pnpm db:seed` is idempotent and
-// produces the same content the hash-based derivation used to
-// produce, with no hidden side effects.
+// Phase 3 (frozen) — full canonical seed for a fresh install. Includes
+// the 11 hand-curated typed rows from Phase 2 plus the 11 admin-created
+// rows currently in the live database. Re-running `pnpm db:seed` is
+// idempotent (every insert is `on conflict (slug) do update`) and
+// produces the same content the live DB has, with no hidden side
+// effects.
 //
-// Edit a row's literal fields here, then run `pnpm db:seed` to
-// update the row in place (`on conflict (slug) do update`).
+// Edit a row's literal fields here, then run `pnpm db:seed` to update
+// the row in place. The `id` field in each row is **the slug** at
+// seed-time — the DB row's primary key is always `gen_random_uuid()`
+// (the live `id` is captured in the slug for re-seeding stability).
 
 import type { NewSpot } from "@/lib/repositories/types";
 import type { SportDiscipline } from "@/types/sport-events";
@@ -15,6 +16,7 @@ import type { SportDiscipline } from "@/types/sport-events";
 const SKATE: readonly SportDiscipline[] = ["Skateboard"];
 
 export const SOURCE_SPOTS: readonly NewSpot[] = [
+  // ── Original 11 hand-curated rows (Phase 2) ─────────────────────────
   {
     id: "place-louis-pradel",
     name: "PLACE LOUIS PRADEL",
@@ -22,14 +24,10 @@ export const SOURCE_SPOTS: readonly NewSpot[] = [
     citySlug: "lyon",
     address: "Place Louis Pradel, Lyon, France",
     type: "plaza",
-    features: ["smooth-concrete"],
     sports: [...SKATE],
     image:
       "https://lh3.googleusercontent.com/aida-public/AB6AXuBFcsJ_InsjM_V2ZhdORVirVciKPJ2Uqt5Jii3nfPULenttPQ0cUQzaa_C0Yc_NrAv1eAnHIeR8S04LjqVjCQuleF60loO-Mh7UEOwa--QIQwv3VaR_P4gt5B7jfu-3GeKqm5Rf-NV8q0xJxL_FX9JZR0_YLkAMpHPWfXRNDr5THXJbJawrNxG5oJYPI2YICMJAFHJPsYpbPdVHU8lTuqhXRgmObg3ZuVD7VNiZ6NjRXmQfSSW7vx2q43JFz7ckBgTcpMPRzkp67YMT",
-    communityNote:
-      "Field notes from Lyon: ride it during low-traffic windows. — @placelouis",
     crowdLevel: 28,
-    crowdLevelLabel: "Low (Quiet Hours)",
     country: "France",
     location: { lat: 45.768613, lon: 4.8369251 },
     createdBy: null,
@@ -41,14 +39,10 @@ export const SOURCE_SPOTS: readonly NewSpot[] = [
     citySlug: "paris",
     address: "Quai de Bercy, Paris 12e Arrondissement, France",
     type: "park",
-    features: ["rail", "slidebox", "mini-ramp", "street", "smooth-concrete"],
     sports: [...SKATE],
     image:
       "https://lh3.googleusercontent.com/aida-public/AB6AXuBFcsJ_InsjM_V2ZhdORVirVciKPJ2Uqt5Jii3nfPULenttPQ0cUQzaa_C0Yc_NrAv1eAnHIeR8S04LjqVjCQuleF60loO-Mh7UEOwa--QIQwv3VaR_P4gt5B7jfu-3GeKqm5Rf-NV8q0xJxL_FX9JZR0_YLkAMpHPWfXRNDr5THXJbJawrNxG5oJYPI2YICMJAFHJPsYpbPdVHU8lTuqhXRgmObg3ZuVD7VNiZ6NjRXmQfSSW7vx2q43JFz7ckBgTcpMPRzkp67YMT",
-    communityNote:
-      "Local intel from Paris: ride it during open hours. — @bercyskatepark",
     crowdLevel: 90,
-    crowdLevelLabel: "High (Busy)",
     country: "France",
     location: { lat: 48.8373219, lon: 2.3789662 },
     createdBy: null,
@@ -60,14 +54,10 @@ export const SOURCE_SPOTS: readonly NewSpot[] = [
     citySlug: "berlin",
     address: "Marchlewskistraße, Friedrichshain, Berlin, Germany",
     type: "ledges",
-    features: ["street", "smooth-concrete"],
     sports: [...SKATE],
     image:
       "https://lh3.googleusercontent.com/aida-public/AB6AXuCrY2kzLB1jQqPxx87OqENxBTnqO00sGNmmbFTu7AVZ6r19NZg7MF3fdWdWnI6gGfw_ffMIMDY_Gspts-w017UN_NrCfiVCFhy5StEGoec3EzYvqmTmbz4lzOgjKciS7RV27IOlPVKHiEzli-wdFgHIurqHwm2HE4kDZQEjudqZODIx-_RyULGF_RgAiTpitlMRoYMh6eCL773msOXd0D2xWpsxVBURfxsElH5AvNf3rqCohSNZhAbWwTXOJZZxwY3ShaMJiJ95FWS2",
-    communityNote:
-      "Field notes from Berlin: ride it during low-traffic windows. — @dogshitspot",
     crowdLevel: 74,
-    crowdLevelLabel: "High (Community Hub)",
     country: "Germany",
     location: { lat: 52.5076013, lon: 13.4488483 },
     createdBy: null,
@@ -80,14 +70,10 @@ export const SOURCE_SPOTS: readonly NewSpot[] = [
     address:
       "Comuna 15 - Guayabal, Perímetro Urbano Medellín, Antioquia, Colombia",
     type: "park",
-    features: ["rail", "street", "smooth-concrete"],
     sports: [...SKATE],
     image:
       "https://lh3.googleusercontent.com/aida-public/AB6AXuCrY2kzLB1jQqPxx87OqENxBTnqO00sGNmmbFTu7AVZ6r19NZg7MF3fdWdWnI6gGfw_ffMIMDY_Gspts-w017UN_NrCfiVCFhy5StEGoec3EzYvqmTmbz4lzOgjKciS7RV27IOlPVKHiEzli-wdFgHIurqHwm2HE4kDZQEjudqZODIx-_RyULGF_RgAiTpitlMRoYMh6eCL773msOXd0D2xWpsxVBURfxsElH5AvNf3rqCohSNZhAbWwTXOJZZxwY3ShaMJiJ95FWS2",
-    communityNote:
-      "Scout report from Medellín: ride it during open hours. — @skateparkde",
     crowdLevel: 26,
-    crowdLevelLabel: "Low (Always Open)",
     country: "Colombia",
     location: { lat: 6.2047065, lon: -75.5798671 },
     createdBy: null,
@@ -99,14 +85,10 @@ export const SOURCE_SPOTS: readonly NewSpot[] = [
     citySlug: "envigado",
     address: "Avenida Las Vegas, Envigado, Antioquia, Colombia",
     type: "park",
-    features: ["rail", "smooth-concrete"],
     sports: [...SKATE],
     image:
       "https://lh3.googleusercontent.com/aida-public/AB6AXuCrY2kzLB1jQqPxx87OqENxBTnqO00sGNmmbFTu7AVZ6r19NZg7MF3fdWdWnI6gGfw_ffMIMDY_Gspts-w017UN_NrCfiVCFhy5StEGoec3EzYvqmTmbz4lzOgjKciS7RV27IOlPVKHiEzli-wdFgHIurqHwm2HE4kDZQEjudqZODIx-_RyULGF_RgAiTpitlMRoYMh6eCL773msOXd0D2xWpsxVBURfxsElH5AvNf3rqCohSNZhAbWwTXOJZZxwY3ShaMJiJ95FWS2",
-    communityNote:
-      "Local intel from Envigado: ride it during open hours. — @vigaskatepark",
     crowdLevel: 74,
-    crowdLevelLabel: "High (Community Hub)",
     country: "Colombia",
     location: { lat: 6.1693094, lon: -75.5960834 },
     createdBy: null,
@@ -118,14 +100,10 @@ export const SOURCE_SPOTS: readonly NewSpot[] = [
     citySlug: "zipaquir-",
     address: "Carrera 15, Zipaquirá, Cundinamarca, Colombia",
     type: "bowl",
-    features: ["rail", "slidebox", "smooth-concrete"],
     sports: [...SKATE],
     image:
       "https://lh3.googleusercontent.com/aida-public/AB6AXuCrY2kzLB1jQqPxx87OqENxBTnqO00sGNmmbFTu7AVZ6r19NZg7MF3fdWdWnI6gGfw_ffMIMDY_Gspts-w017UN_NrCfiVCFhy5StEGoec3EzYvqmTmbz4lzOgjKciS7RV27IOlPVKHiEzli-wdFgHIurqHwm2HE4kDZQEjudqZODIx-_RyULGF_RgAiTpitlMRoYMh6eCL773msOXd0D2xWpsxVBURfxsElH5AvNf3rqCohSNZhAbWwTXOJZZxwY3ShaMJiJ95FWS2",
-    communityNote:
-      "Community intel from Zipaquirá: ride it during early morning sessions. — @skateparkzipaquira",
     crowdLevel: 94,
-    crowdLevelLabel: "High (Community Hub)",
     country: "Colombia",
     location: { lat: 5.020761, lon: -73.9999073 },
     createdBy: null,
@@ -137,14 +115,10 @@ export const SOURCE_SPOTS: readonly NewSpot[] = [
     citySlug: "sop-",
     address: "Calle 3 Sur, Sopó, Cundinamarca, Colombia",
     type: "bowl",
-    features: ["rail", "slidebox", "street", "smooth-concrete"],
     sports: [...SKATE],
     image:
       "https://lh3.googleusercontent.com/aida-public/AB6AXuBFcsJ_InsjM_V2ZhdORVirVciKPJ2Uqt5Jii3nfPULenttPQ0cUQzaa_C0Yc_NrAv1eAnHIeR8S04LjqVjCQuleF60loO-Mh7UEOwa--QIQwv3VaR_P4gt5B7jfu-3GeKqm5Rf-NV8q0xJxL_FX9JZR0_YLkAMpHPWfXRNDr5THXJbJawrNxG5oJYPI2YICMJAFHJPsYpbPdVHU8lTuqhXRgmObg3ZuVD7VNiZ6NjRXmQfSSW7vx2q43JFz7ckBgTcpMPRzkp67YMT",
-    communityNote:
-      "Local intel from Sopó: ride it during early morning sessions. — @skateparksopo",
     crowdLevel: 48,
-    crowdLevelLabel: "Moderate (Schoolyard Spot)",
     country: "Colombia",
     location: { lat: 4.9068944, lon: -73.944922 },
     createdBy: null,
@@ -157,14 +131,10 @@ export const SOURCE_SPOTS: readonly NewSpot[] = [
     address:
       "Rue Émile Lepeu, Quartier de la Roquette, Paris 11e Arrondissement, France",
     type: "park",
-    features: ["rail", "smooth-concrete"],
     sports: [...SKATE],
     image:
       "https://lh3.googleusercontent.com/aida-public/AB6AXuA6GHeF7oipibYvoiyBsC4TPFku7ffQmv6y0B5AvgdhgAmG9pI0BlJLe8-ayJLMlAtDAWwUGu4FAwabH8HuELRowJ3IeEJOlgw4xvg0_RP_eRKPr5eESG5TxVwONEulq3jToyCXr01mrPooWxd_LZyIm1ZjLx-q5OyZPARNZVw0jmm6gY0B_2wuE2kir3siF7K3C7ntb79Rqd-JOHOOpenTRYBWA1KQLZ_r4WVgfahEkzWayr4xRHIqIgYUCuuxsceSaEpXp8segQIg",
-    communityNote:
-      "Community intel from Paris: ride it during open hours. — @skateparktep",
     crowdLevel: 28,
-    crowdLevelLabel: "Low (Security Active)",
     country: "France",
     location: { lat: 48.8563378, lon: 2.3884269 },
     createdBy: null,
@@ -176,14 +146,10 @@ export const SOURCE_SPOTS: readonly NewSpot[] = [
     citySlug: "roma",
     address: "Ponte della Musica, Flaminio, Roma, Italy",
     type: "plaza",
-    features: ["rail", "slidebox", "smooth-concrete"],
     sports: [...SKATE],
     image:
       "https://lh3.googleusercontent.com/aida-public/AB6AXuAzOoxxgf8dF_dffEyj1reX-fHjpbmdOzHCKt48IV55g3OcOejsIT9MtaySQEK0hVzvIpPegtGd03j4neTRFC5WGxsEvj5OLJpKfFMhwXdXIY2YAjpD2xwCUOFNv_jCUBDs7mrLeq2J28upIy9Q7fq5m46ytFrpE8efxEcvW-3Bdb4uiMD6QOxExLVPlkQMkRDVmB2DxRfKq8E3Y0pko6HLf3oSNBxhmT5BnVuJ8tSMUEgWQuk_WElNP9xvvc9URbMql80pPwHFxf9P",
-    communityNote:
-      "Community intel from Roma: ride it during low-traffic windows. — @skateparkponte",
     crowdLevel: 82,
-    crowdLevelLabel: "High (Prime Time: 2PM - 6PM)",
     country: "Italy",
     location: { lat: 41.9266668, lon: 12.4604421 },
     createdBy: null,
@@ -196,14 +162,10 @@ export const SOURCE_SPOTS: readonly NewSpot[] = [
     address:
       "Carrera 52, Unidad Deportiva Alberto Galindo, Cali, Valle del Cauca, Colombia",
     type: "park",
-    features: ["rail", "smooth-concrete"],
     sports: [...SKATE],
     image:
       "https://lh3.googleusercontent.com/aida-public/AB6AXuAzOoxxgf8dF_dffEyj1reX-fHjpbmdOzHCKt48IV55g3OcOejsIT9MtaySQEK0hVzvIpPegtGd03j4neTRFC5WGxsEvj5OLJpKfFMhwXdXIY2YAjpD2xwCUOFNv_jCUBDs7mrLeq2J28upIy9Q7fq5m46ytFrpE8efxEcvW-3Bdb4uiMD6QOxExLVPlkQMkRDVmB2DxRfKq8E3Y0pko6HLf3oSNBxhmT5BnVuJ8tSMUEgWQuk_WElNP9xvvc9URbMql80pPwHFxf9P",
-    communityNote:
-      "Scout report from Cali: ride it during open hours. — @skateparkcarrera",
     crowdLevel: 10,
-    crowdLevelLabel: "Low (Spill Check Required)",
     country: "Colombia",
     location: { lat: 3.4147268, lon: -76.5523151 },
     createdBy: null,
@@ -216,16 +178,178 @@ export const SOURCE_SPOTS: readonly NewSpot[] = [
     address:
       "Calle 50E Sur, San Antonio de Prado, Medellín, Antioquia, Colombia",
     type: "park",
-    features: ["rail", "smooth-concrete"],
     sports: [...SKATE],
     image:
       "https://lh3.googleusercontent.com/aida-public/AB6AXuAzOoxxgf8dF_dffEyj1reX-fHjpbmdOzHCKt48IV55g3OcOejsIT9MtaySQEK0hVzvIpPegtGd03j4neTRFC5WGxsEvj5OLJpKfFMhwXdXIY2YAjpD2xwCUOFNv_jCUBDs7mrLeq2J28upIy9Q7fq5m46ytFrpE8efxEcvW-3Bdb4uiMD6QOxExLVPlkQMkRDVmB2DxRfKq8E3Y0pko6HLf3oSNBxhmT5BnVuJ8tSMUEgWQuk_WElNP9xvvc9URbMql80pPwHFxf9P",
-    communityNote:
-      "Scout report from Medellín: ride it during open hours. — @skateparkparque",
     crowdLevel: 63,
-    crowdLevelLabel: "Moderate (Prime Time: 5PM - 7PM)",
     country: "Colombia",
     location: { lat: 6.1768804, lon: -75.6550942 },
     createdBy: null,
+  },
+  // ── 11 admin-created rows from the live database ────────────────────
+  {
+    id: "tokio-1783647692990",
+    name: "PLANET PARK",
+    city: "Tokio",
+    citySlug: "tokio",
+    address: "Japan, 〒650-0011 Tokyo, Hachioji, 1746-1 Tobukimachi, Hachioji",
+    type: "park",
+    sports: [...SKATE],
+    image:
+      "https://lh3.googleusercontent.com/aida-public/AB6AXuCrY2kzLB1jQqPxx87OqENxBTnqO00sGNmmbFTu7AVZ6r19NZg7MF3fdWdWnI6gGfw_ffMIMDY_Gspts-w017UN_NrCfiVCFhy5StEGoec3EzYvqmTmbz4lzOgjKciS7RV27IOlPVKHiEzli-wdFgHIurqHwm2HE4kDZQEjudqZODIx-_RyULGF_RgAiTpitlMRoYMh6eCL773msOXd0D2xWpsxVBURfxsElH5AvNf3rqCohSNZhAbWwTXOJZZxwY3ShaMJiJ95FWS2",
+    crowdLevel: 35,
+    country: "Japan",
+    location: { lat: 35.7132208, lon: 139.2898981 },
+    createdBy: "01ab32d7-abb4-46e9-8f95-3857f812d923",
+  },
+  {
+    id: "yokohama-1783649567195",
+    name: "SHINYOKOHAMA PARK",
+    city: "Yokohama",
+    citySlug: "yokohama",
+    address: "3300 Kozukuecho, Kohoku Ward",
+    type: "park",
+    sports: [...SKATE],
+    image:
+      "https://lh3.googleusercontent.com/aida-public/AB6AXuBFcsJ_InsjM_V2ZhdORVirVciKPJ2Uqt5Jii3nfPULenttPQ0cUQzaa_C0Yc_NrAv1eAnHIeR8S04LjqVjCQuleF60loO-Mh7UEOwa--QIQwv3VaR_P4gt5B7jfu-3GeKqm5Rf-NV8q0xJxL_FX9JZR0_YLkAMpHPWfXRNDr5THXJbJawrNxG5oJYPI2YICMJAFHJPsYpbPdVHU8lTuqhXRgmObg3ZuVD7VNiZ6NjRXmQfSSW7vx2q43JFz7ckBgTcpMPRzkp67YMT",
+    crowdLevel: 51,
+    country: "Japan",
+    location: { lat: 35.5265154, lon: 139.6065631 },
+    createdBy: "01ab32d7-abb4-46e9-8f95-3857f812d923",
+  },
+  {
+    id: "seoul-1783649672401",
+    name: "HANGANG ICHON SKATE PARK",
+    city: "Seoul",
+    citySlug: "seoul",
+    address: "370-2 Ichon-dong, Yongsan District",
+    type: "plaza",
+    sports: [...SKATE],
+    image:
+      "https://lh3.googleusercontent.com/aida-public/AB6AXuBFcsJ_InsjM_V2ZhdORVirVciKPJ2Uqt5Jii3nfPULenttPQ0cUQzaa_C0Yc_NrAv1eAnHIeR8S04LjqVjCQuleF60loO-Mh7UEOwa--QIQwv3VaR_P4gt5B7jfu-3GeKqm5Rf-NV8q0xJxL_FX9JZR0_YLkAMpHPWfXRNDr5THXJbJawrNxG5oJYPI2YICMJAFHJPsYpbPdVHU8lTuqhXRgmObg3ZuVD7VNiZ6NjRXmQfSSW7vx2q43JFz7ckBgTcpMPRzkp67YMT",
+    crowdLevel: 35,
+    country: "South Korea",
+    location: { lat: 37.5241302, lon: 126.9662873 },
+    createdBy: "01ab32d7-abb4-46e9-8f95-3857f812d923",
+  },
+  {
+    id: "barcelona-1783650621395",
+    name: "SKATEPARK MAR BELLA",
+    city: "Barcelona",
+    citySlug: "barcelona",
+    address: "Av. del Litoral, 106, Sant Martí",
+    type: "park",
+    sports: [...SKATE],
+    image:
+      "https://lh3.googleusercontent.com/aida-public/AB6AXuBFcsJ_InsjM_V2ZhdORVirVciKPJ2Uqt5Jii3nfPULenttPQ0cUQzaa_C0Yc_NrAv1eAnHIeR8S04LjqVjCQuleF60loO-Mh7UEOwa--QIQwv3VaR_P4gt5B7jfu-3GeKqm5Rf-NV8q0xJxL_FX9JZR0_YLkAMpHPWfXRNDr5THXJbJawrNxG5oJYPI2YICMJAFHJPsYpbPdVHU8lTuqhXRgmObg3ZuVD7VNiZ6NjRXmQfSSW7vx2q43JFz7ckBgTcpMPRzkp67YMT",
+    crowdLevel: 53,
+    country: "Spain",
+    location: { lat: 41.4014705, lon: 2.2106526 },
+    createdBy: "01ab32d7-abb4-46e9-8f95-3857f812d923",
+  },
+  {
+    id: "barcelona-1783650881587",
+    name: "SKATEPARK LA MARINA",
+    city: "Barcelona",
+    citySlug: "barcelona",
+    address: "Pg. de la Zona Franca, 99, Sants-Montjuïc",
+    type: "park",
+    sports: [...SKATE],
+    image:
+      "https://lh3.googleusercontent.com/aida-public/AB6AXuA6GHeF7oipibYvoiyBsC4TPFku7ffQmv6y0B5AvgdhgAmG9pI0BlJLe8-ayJLMlAtDAWwUGu4FAwabH8HuELRowJ3IeEJOlgw4xvg0_RP_eRKPr5eESG5TxVwONEulq3jToyCXr01mrPooWxd_LZyIm1ZjLx-q5OyZPARNZVw0jmm6gY0B_2wuE2kir3siF7K3C7ntb79Rqd-JOHOOpenTRYBWA1KQLZ_r4WVgfahEkzWayr4xRHIqIgYUCuuxsceSaEpXp8segQIg",
+    crowdLevel: 35,
+    country: "Spain",
+    location: { lat: 41.3611693, lon: 2.1383742 },
+    createdBy: "01ab32d7-abb4-46e9-8f95-3857f812d923",
+  },
+  {
+    id: "pineda-de-mar-1783651067022",
+    name: "SKATEPARK DE PINEDA DE MAR",
+    city: "Pineda de Mar",
+    citySlug: "pineda-de-mar",
+    address: "Rambla de Catalunya",
+    type: "plaza",
+    sports: [...SKATE],
+    image:
+      "https://lh3.googleusercontent.com/aida-public/AB6AXuBFcsJ_InsjM_V2ZhdORVirVciKPJ2Uqt5Jii3nfPULenttPQ0cUQzaa_C0Yc_NrAv1eAnHIeR8S04LjqVjCQuleF60loO-Mh7UEOwa--QIQwv3VaR_P4gt5B7jfu-3GeKqm5Rf-NV8q0xJxL_FX9JZR0_YLkAMpHPWfXRNDr5THXJbJawrNxG5oJYPI2YICMJAFHJPsYpbPdVHU8lTuqhXRgmObg3ZuVD7VNiZ6NjRXmQfSSW7vx2q43JFz7ckBgTcpMPRzkp67YMT",
+    crowdLevel: 31,
+    country: "Spain",
+    location: { lat: 41.6227554, lon: 2.6835812 },
+    createdBy: "01ab32d7-abb4-46e9-8f95-3857f812d923",
+  },
+  {
+    id: "amparo-1783651224198",
+    name: "PARQUE DAS ÁGUAS- AMPARO BMX & SKT PARK",
+    city: "Sao Paulo",
+    citySlug: "amparo",
+    address: "Rod. Eng. Constâncio Cintra - Amparo",
+    type: "plaza",
+    sports: [...SKATE],
+    image:
+      "https://lh3.googleusercontent.com/aida-public/AB6AXuBFcsJ_InsjM_V2ZhdORVirVciKPJ2Uqt5Jii3nfPULenttPQ0cUQzaa_C0Yc_NrAv1eAnHIeR8S04LjqVjCQuleF60loO-Mh7UEOwa--QIQwv3VaR_P4gt5B7jfu-3GeKqm5Rf-NV8q0xJxL_FX9JZR0_YLkAMpHPWfXRNDr5THXJbJawrNxG5oJYPI2YICMJAFHJPsYpbPdVHU8lTuqhXRgmObg3ZuVD7VNiZ6NjRXmQfSSW7vx2q43JFz7ckBgTcpMPRzkp67YMT",
+    crowdLevel: 35,
+    country: "Brazil",
+    location: { lat: -22.7366186, lon: -46.7636622 },
+    createdBy: "01ab32d7-abb4-46e9-8f95-3857f812d923",
+  },
+  {
+    id: "amparo-1783651438900",
+    name: "PARQUE LINEAR AGUAS DO CAMANDUCAIA",
+    city: "Sao Paulo",
+    citySlug: "amparo",
+    address: "Av. Dr. Carlos Burgos, 1967 - Jardim Italia, Amparo",
+    type: "plaza",
+    sports: [...SKATE],
+    image:
+      "https://lh3.googleusercontent.com/aida-public/AB6AXuBFcsJ_InsjM_V2ZhdORVirVciKPJ2Uqt5Jii3nfPULenttPQ0cUQzaa_C0Yc_NrAv1eAnHIeR8S04LjqVjCQuleF60loO-Mh7UEOwa--QIQwv3VaR_P4gt5B7jfu-3GeKqm5Rf-NV8q0xJxL_FX9JZR0_YLkAMpHPWfXRNDr5THXJbJawrNxG5oJYPI2YICMJAFHJPsYpbPdVHU8lTuqhXRgmObg3ZuVD7VNiZ6NjRXmQfSSW7vx2q43JFz7ckBgTcpMPRzkp67YMT",
+    crowdLevel: 35,
+    country: "Brazil",
+    location: { lat: -22.7031789, lon: -46.7721865 },
+    createdBy: "01ab32d7-abb4-46e9-8f95-3857f812d923",
+  },
+  {
+    id: "bogot-1783698730232",
+    name: "JAPÓN DIY",
+    city: "Bogotá",
+    citySlug: "bogot",
+    address: "Al lado de la Registraduria de Kennedy",
+    type: "diy",
+    sports: [...SKATE],
+    image:
+      "https://lh3.googleusercontent.com/aida-public/AB6AXuAzOoxxgf8dF_dffEyj1reX-fHjpbmdOzHCKt48IV55g3OcOejsIT9MtaySQEK0hVzvIpPegtGd03j4neTRFC5WGxsEvj5OLJpKfFMhwXdXIY2YAjpD2xwCUOFNv_jCUBDs7mrLeq2J28upIy9Q7fq5m46ytFrpE8efxEcvW-3Bdb4uiMD6QOxExLVPlkQMkRDVmB2DxRfKq8E3Y0pko6HLf3oSNBxhmT5BnVuJ8tSMUEgWQuk_WElNP9xvvc9URbMql80pPwHFxf9P",
+    crowdLevel: 60,
+    country: "Colombia",
+    location: { lat: 4.6204317, lon: -74.15473 },
+    createdBy: "01ab32d7-abb4-46e9-8f95-3857f812d923",
+  },
+  {
+    id: "bogot-1783698595636",
+    name: "PHILLIPS DIY",
+    city: "Bogotá",
+    citySlug: "bogot",
+    address: "Puente Aranda, Bogotá, Bogota",
+    type: "diy",
+    sports: [...SKATE],
+    image:
+      "https://lh3.googleusercontent.com/aida-public/AB6AXuBFcsJ_InsjM_V2ZhdORVirVciKPJ2Uqt5Jii3nfPULenttPQ0cUQzaa_C0Yc_NrAv1eAnHIeR8S04LjqVjCQuleF60loO-Mh7UEOwa--QIQwv3VaR_P4gt5B7jfu-3GeKqm5Rf-NV8q0xJxL_FX9JZR0_YLkAMpHPWfXRNDr5THXJbJawrNxG5oJYPI2YICMJAFHJPsYpbPdVHU8lTuqhXRgmObg3ZuVD7VNiZ6NjRXmQfSSW7vx2q43JFz7ckBgTcpMPRzkp67YMT",
+    crowdLevel: 52,
+    country: "Colombia",
+    location: { lat: 4.6457122, lon: -74.1111908 },
+    createdBy: "01ab32d7-abb4-46e9-8f95-3857f812d923",
+  },
+  {
+    id: "helsinki-1783876353196",
+    name: "SUVILAHTI DIY",
+    city: "Helsinki",
+    citySlug: "helsinki",
+    address: "Kaasutehtaankatu 1, 00540 Helsinki, Finland",
+    type: "diy",
+    sports: [...SKATE],
+    image:
+      "https://lh3.googleusercontent.com/aida-public/AB6AXuBFcsJ_InsjM_V2ZhdORVirVciKPJ2Uqt5Jii3nfPULenttPQ0cUQzaa_C0Yc_NrAv1eAnHIeR8S04LjqVjCQuleF60loO-Mh7UEOwa--QIQwv3VaR_P4gt5B7jfu-3GeKqm5Rf-NV8q0xJxL_FX9JZR0_YLkAMpHPWfXRNDr5THXJbJawrNxG5oJYPI2YICMJAFHJPsYpbPdVHU8lTuqhXRgmObg3ZuVD7VNiZ6NjRXmQfSSW7vx2q43JFz7ckBgTcpMPRzkp67YMT",
+    crowdLevel: 35,
+    country: "Finland",
+    location: { lat: 60.1914641, lon: 24.9762351 },
+    createdBy: "01ab32d7-abb4-46e9-8f95-3857f812d923",
   },
 ];

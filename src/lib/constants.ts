@@ -5,6 +5,12 @@ export const CROWD_LEVEL = {
   HIGH_MIN: 70,
 } as const;
 
+export function crowdLevelToLabel(level: number): string {
+  if (level > CROWD_LEVEL.HIGH_MIN) return "High (Busy)";
+  if (level > CROWD_LEVEL.LOW_MAX) return "Moderate Activity";
+  return "Low Crowd (Ideal)";
+}
+
 export const MAP_VIEWPORT_OFFSET_PX = {
   DESKTOP: 60,
   MOBILE: 160,

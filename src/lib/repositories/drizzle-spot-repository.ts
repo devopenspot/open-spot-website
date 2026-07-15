@@ -1,10 +1,8 @@
 import { and, asc, eq, inArray, sql, type SQL } from "drizzle-orm"
-import { drizzle } from "drizzle-orm/postgres-js"
+import type { drizzle } from "drizzle-orm/postgres-js"
 import {
   countries,
   regions,
-  spotFeatureLinks,
-  spotFeatures,
   spotSports,
   spotTypes,
   spots,
@@ -50,10 +48,6 @@ function sportDisciplineTitleToSlug(title: string): string {
   return title.toLowerCase()
 }
 
-function featureTitleToSlug(title: string): string {
-  return title.toLowerCase().replace(/\s+/g, "-")
-}
-
 async function getPresetImageUrls(): Promise<readonly { url: string }[]> {
   const repo = await getPresetImagesRepositoryAsync()
   const rows = await repo.list()
@@ -78,11 +72,6 @@ export class DrizzleSpotRepository implements SpotRepository {
         lower(coalesce(${spots.name}, '')) like ${like}
         or lower(coalesce(${spots.city}, '')) like ${like}
         or lower(coalesce(${spots.address}, '')) like ${like}
-        or exists (
-          select 1 from ${spotFeatureLinks} sfl
-          join ${spotFeatures} sf on sf.slug = sfl.feature_slug
-          where sfl.spot_id = ${spots.id} and lower(sf.name) like ${like}
-        )
       )`)
     }
     const where =
@@ -263,30 +252,6 @@ export class DrizzleSpotRepository implements SpotRepository {
       .values(slugs.map((disciplineSlug) => ({ spotId, disciplineSlug })))
   }
 
-  private async syncSpotFeatures(
-    spotId: string,
-    features: readonly string[],
-  ): Promise<void> {
-    await this.db
-      .delete(spotFeatureLinks)
-      .where(eq(spotFeatureLinks.spotId, spotId))
-    if (features.length === 0) return
-    const known = new Set(
-      (
-        await this.db
-          .select({ slug: spotFeatures.slug })
-          .from(spotFeatures)
-      ).map((r) => r.slug),
-    )
-    const slugs = features
-      .map(featureTitleToSlug)
-      .filter((slug) => known.has(slug))
-    if (slugs.length === 0) return
-    await this.db
-      .insert(spotFeatureLinks)
-      .values(slugs.map((featureSlug) => ({ spotId, featureSlug })))
-  }
-
   async create(input: NewSpot): Promise<Spot> {
     const id = input.id ?? crypto.randomUUID()
     const insertValues: NewSpotRow = {
@@ -302,9 +267,7 @@ export class DrizzleSpotRepository implements SpotRepository {
         ? input.image
         : input.image || pickFallbackImage(id, await getPresetImageUrls()),
       imagePath: input.imagePath ?? null,
-      communityNote: input.communityNote,
       crowdLevel: input.crowdLevel,
-      crowdLevelLabel: input.crowdLevelLabel,
       countryCode: input.countryCode
         ? input.countryCode
         : (sql<string | null>`(select iso2 from ${countries} where name = ${input.country} limit 1)` as unknown as string),
@@ -317,7 +280,6 @@ export class DrizzleSpotRepository implements SpotRepository {
       .returning()
     if (!row) throw new Error("Insert returned no row")
     await this.syncSpotSports(id, input.sports)
-    await this.syncSpotFeatures(id, input.features)
     const reloaded = await this.findById(id)
     if (!reloaded) throw new Error("Spot not found after insert")
     return reloaded
@@ -338,11 +300,7 @@ export class DrizzleSpotRepository implements SpotRepository {
       setValues.imageUrl =
         patch.image || pickFallbackImage(id, await getPresetImageUrls())
     }
-    if (patch.communityNote !== undefined)
-      setValues.communityNote = patch.communityNote
     if (patch.crowdLevel !== undefined) setValues.crowdLevel = patch.crowdLevel
-    if (patch.crowdLevelLabel !== undefined)
-      setValues.crowdLevelLabel = patch.crowdLevelLabel
     if (patch.countryCode !== undefined) {
       setValues.countryCode = patch.countryCode
     } else if (patch.country !== undefined) {
@@ -360,9 +318,6 @@ export class DrizzleSpotRepository implements SpotRepository {
     if (!row) throw new Error(`Spot not found: ${id}`)
     if (patch.sports !== undefined) {
       await this.syncSpotSports(id, patch.sports)
-    }
-    if (patch.features !== undefined) {
-      await this.syncSpotFeatures(id, patch.features)
     }
     const reloaded = await this.findById(id)
     if (!reloaded) throw new Error(`Spot not found: ${id}`)

@@ -72,7 +72,7 @@ const ROWS: readonly EventRow[] = [
     image: "https://images.unsplash.com/photo-1554068865-24cecd4e34b8?w=1600&q=80&auto=format&fit=crop",
     description:
       "The definitive gathering of the international inline skating scene. Street, park, and a one-of-a-kind vert ramp battle.",
-    sports: ["Inline"],
+    sports: ["Rollerblade"],
     startDate: "2027-01-22",
     endDate: "2027-01-24",
     city: "Berlin",
@@ -110,7 +110,7 @@ const ROWS: readonly EventRow[] = [
     image: "https://images.unsplash.com/photo-1572776685600-aca8c3456337?w=1600&q=80&auto=format&fit=crop",
     description:
       "The governing body's flagship multi-discipline championship. Skateboarding, inline, scootering, and artistic events under one umbrella.",
-    sports: ["Skateboard", "Inline", "Scooter", "Rollerblade"],
+    sports: ["Skateboard", "Rollerblade", "Scooter", "Rollerblade"],
     startDate: "2026-09-18",
     endDate: "2026-09-27",
     city: "Buenos Aires",
@@ -123,6 +123,10 @@ const ROWS: readonly EventRow[] = [
   },
 ]
 
+function dedupeSports<T>(sports: readonly T[]): T[] {
+  return Array.from(new Set(sports))
+}
+
 export const SOURCE_SPORT_EVENTS: readonly NewSportEvent[] = ROWS.map(
   (row): NewSportEvent => ({
     name: row.name,
@@ -130,7 +134,7 @@ export const SOURCE_SPORT_EVENTS: readonly NewSportEvent[] = ROWS.map(
     url: row.url,
     image: row.image,
     description: row.description,
-    sports: [...row.sports],
+    sports: dedupeSports([...row.sports]),
     startDate: row.startDate,
     endDate: row.endDate,
     city: row.city,

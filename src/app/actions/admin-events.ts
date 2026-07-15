@@ -5,8 +5,7 @@ import { log } from "@/lib/log"
 import { requireAdmin } from "@/lib/auth/server"
 import { getEventRepositoryAsync } from "@/lib/repositories"
 import { NewSportEventSchema, SportEventPatchSchema } from "@/lib/schemas/event"
-import type { SportEvent } from "@/types/sport-events"
-import type { SportDiscipline } from "@/types/sport-events"
+import { SPORT_DISCIPLINES, type SportDiscipline, type SportEvent } from "@/types/sport-events"
 
 function strField(form: FormData, key: string): string {
   const v = form.get(key)
@@ -23,7 +22,11 @@ function numberField(form: FormData, key: string): number | undefined {
 function readSports(form: FormData): SportDiscipline[] {
   return form
     .getAll("sports")
-    .filter((v): v is string => typeof v === "string" && v.length > 0) as SportDiscipline[]
+    .filter(
+      (v): v is SportDiscipline =>
+        typeof v === "string" &&
+        SPORT_DISCIPLINES.includes(v as SportDiscipline),
+    )
 }
 
 function boolField(form: FormData, key: string): boolean {

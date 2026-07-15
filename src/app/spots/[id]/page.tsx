@@ -18,7 +18,7 @@ export async function generateMetadata({
   }
   return {
     title: spot.name,
-    description: `${spot.type} spot in ${spot.city} — ${getSpotDistanceLabel(spot).toLowerCase()}. ${spot.communityNote}`,
+    description: `${spot.type} spot in ${spot.city} — ${getSpotDistanceLabel(spot).toLowerCase()}.`,
     openGraph: {
       title: spot.name,
       description: `${spot.type} skate spot in ${spot.city}.`,

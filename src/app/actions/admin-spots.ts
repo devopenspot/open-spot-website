@@ -6,11 +6,10 @@ import { requireAdmin } from "@/lib/auth/server"
 import { getSpotRepositoryAsync } from "@/lib/repositories"
 import { NewSpotSchema, SpotPatchSchema } from "@/lib/schemas/spot"
 import { uploadSpotImage } from "@/lib/supabase/storage"
-import { CROWD_LEVEL } from "@/lib/constants"
 import { classifySpotType } from "@/lib/geocode/classify"
 import type { ProjectedAddress } from "@/lib/geocode/project"
 import type { Spot } from "@/lib/types"
-import type { SportDiscipline } from "@/types/sport-events"
+import { SPORT_DISCIPLINES, type SportDiscipline } from "@/types/sport-events"
 
 function strField(form: FormData, key: string): string {
   const v = form.get(key)
@@ -20,12 +19,6 @@ function strField(form: FormData, key: string): string {
 function numberField(form: FormData, key: string): number {
   const v = Number(strField(form, key))
   return Number.isFinite(v) ? v : 0
-}
-
-function crowdLabel(level: number): string {
-  if (level > CROWD_LEVEL.HIGH_MIN) return "High (Busy)"
-  if (level > CROWD_LEVEL.LOW_MAX) return "Moderate Activity"
-  return "Low Crowd (Ideal)"
 }
 
 function deriveCitySlug(city: string): string {
@@ -38,7 +31,11 @@ function deriveCitySlug(city: string): string {
 function readSports(form: FormData): SportDiscipline[] {
   return form
     .getAll("sports")
-    .filter((v): v is string => typeof v === "string" && v.length > 0) as SportDiscipline[]
+    .filter(
+      (v): v is SportDiscipline =>
+        typeof v === "string" &&
+        SPORT_DISCIPLINES.includes(v as SportDiscipline),
+    )
 }
 
 /**
@@ -116,11 +113,6 @@ export async function createSpotFromLookupAction(
   const imageUrl = strField(formData, "imageUrl")
   const country = strField(formData, "country")
   const countryCode = strField(formData, "countryCode").toUpperCase()
-  const communityNote = strField(formData, "communityNote")
-  const features = strField(formData, "features")
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean)
   const sports = readSports(formData)
   const providedCitySlug = strField(formData, "citySlug") || deriveCitySlug(city)
   const lat = numberField(formData, "lat")
@@ -136,13 +128,10 @@ export async function createSpotFromLookupAction(
     citySlug: providedCitySlug,
     address,
     type,
-    features,
     sports,
     image: imageUrl,
     imagePath,
-    communityNote,
     crowdLevel,
-    crowdLevelLabel: crowdLabel(crowdLevel),
     country,
     countryCode: countryCode || undefined,
     location: { lat, lon },
@@ -174,18 +163,11 @@ export async function updateSpotAction(
   if (text("country")) patch.country = text("country")
   const countryCode = strField(formData, "countryCode").toUpperCase()
   if (countryCode) patch.countryCode = countryCode
-  if (text("communityNote")) patch.communityNote = text("communityNote")
-  const featuresStr = text("features")
-  if (featuresStr) {
-    patch.features = featuresStr.split(",").map((s) => s.trim()).filter(Boolean)
-  }
   if (formData.has("sports")) {
     patch.sports = readSports(formData)
   }
   if (formData.has("crowdLevel")) {
-    const level = numberField(formData, "crowdLevel")
-    patch.crowdLevel = level
-    patch.crowdLevelLabel = crowdLabel(level)
+    patch.crowdLevel = numberField(formData, "crowdLevel")
   }
   if (formData.has("lat") && formData.has("lon")) {
     patch.location = {

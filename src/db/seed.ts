@@ -4,9 +4,7 @@ import { getDatabaseUrl } from "../lib/env"
 import { log } from "../lib/log"
 import {
   EVENT_TIER_SEED,
-  FEATURE_SLUG_SET,
   SPORT_DISCIPLINE_SEED,
-  SPOT_FEATURE_SEED,
   SPOT_TYPE_SEED,
 } from "./seed-data/taxonomy"
 import { REGION_SEED } from "./seed-data/regions"
@@ -114,21 +112,6 @@ async function seedEventTiers(sql: ReturnType<typeof postgres>): Promise<void> {
   log.info("seed.event_tiers.done", { count: EVENT_TIER_SEED.length })
 }
 
-async function seedSpotFeatures(
-  sql: ReturnType<typeof postgres>,
-): Promise<void> {
-  log.info("seed.spot_features.start")
-  for (const f of SPOT_FEATURE_SEED) {
-    await sql`
-      insert into spot_features (slug, name)
-      values (${f.slug}, ${f.name})
-      on conflict (slug) do update set
-        name = excluded.name
-    `
-  }
-  log.info("seed.spot_features.done", { count: SPOT_FEATURE_SEED.length })
-}
-
 async function seedPresetImages(
   sql: ReturnType<typeof postgres>,
 ): Promise<void> {
@@ -161,14 +144,12 @@ async function seedSpots(sql: ReturnType<typeof postgres>): Promise<void> {
     const [row] = await sql<{ id: string }[]>`
       insert into spots (
         id, slug, name, city, city_slug, address, type_slug,
-        image_url, community_note, crowd_level, crowd_level_label,
-        country_code, location, created_by
+        image_url, crowd_level, country_code, location, created_by
       ) values (
         gen_random_uuid(), ${slug}, ${spot.name}, ${spot.city},
         ${citySlug}, ${spot.address},
         ${spot.type.toLowerCase()},
-        ${spot.image}, ${spot.communityNote}, ${spot.crowdLevel},
-        ${spot.crowdLevelLabel},
+        ${spot.image}, ${spot.crowdLevel},
         (select iso2 from countries where name = ${spot.country} limit 1),
         ${pointWkt(spot.location.lat, spot.location.lon)}::geometry,
         ${spot.createdBy ?? null}
@@ -180,23 +161,13 @@ async function seedSpots(sql: ReturnType<typeof postgres>): Promise<void> {
         address = excluded.address,
         type_slug = excluded.type_slug,
         image_url = excluded.image_url,
-        community_note = excluded.community_note,
         crowd_level = excluded.crowd_level,
-        crowd_level_label = excluded.crowd_level_label,
         country_code = excluded.country_code,
         location = excluded.location
       returning id
     `
     const spotId = row?.id
     if (spotId) {
-      for (const featureSlug of spot.features) {
-        if (!FEATURE_SLUG_SET.has(featureSlug)) continue
-        await sql`
-          insert into spot_feature_links (spot_id, feature_slug)
-          values (${spotId}, ${featureSlug})
-          on conflict do nothing
-        `
-      }
       for (const sport of spot.sports) {
         const slug = sport.toLowerCase()
         await sql`
@@ -281,7 +252,6 @@ async function main() {
     await seedSpotTypes(sql)
     await seedSportDisciplines(sql)
     await seedEventTiers(sql)
-    await seedSpotFeatures(sql)
     await seedPresetImages(sql)
     await seedSpots(sql)
     await seedSportEvents(sql)

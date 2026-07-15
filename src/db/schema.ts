@@ -63,9 +63,7 @@ export const spots = pgTable(
       .references(() => spotTypes.slug, { onDelete: "restrict" }),
     imageUrl: text("image_url").notNull(),
     imagePath: text("image_path"),
-    communityNote: text("community_note").notNull().default(""),
     crowdLevel: integer("crowd_level").notNull().default(0),
-    crowdLevelLabel: text("crowd_level_label").notNull().default(""),
     countryCode: text("country_code")
       .notNull()
       .references(() => countries.iso2, { onDelete: "restrict" }),
@@ -226,11 +224,6 @@ export const eventTiers = pgTable(
   (t) => [index("event_tiers_sort_order_idx").on(t.sortOrder)],
 )
 
-export const spotFeatures = pgTable("spot_features", {
-  slug: text("slug").primaryKey(),
-  name: text("name").notNull(),
-})
-
 export const presetImages = pgTable(
   "preset_images",
   {
@@ -266,22 +259,6 @@ export const spotSports = pgTable(
   ],
 )
 
-export const spotFeatureLinks = pgTable(
-  "spot_feature_links",
-  {
-    spotId: uuid("spot_id")
-      .notNull()
-      .references(() => spots.id, { onDelete: "cascade" }),
-    featureSlug: text("feature_slug")
-      .notNull()
-      .references(() => spotFeatures.slug, { onDelete: "restrict" }),
-  },
-  (t) => [
-    primaryKey({ columns: [t.spotId, t.featureSlug] }),
-    index("spot_feature_links_feature_idx").on(t.featureSlug),
-  ],
-)
-
 export const eventSports = pgTable(
   "event_sports",
   {
@@ -308,7 +285,6 @@ export const spotsRelations = relations(spots, ({ one, many }) => ({
     references: [countries.iso2],
   }),
   sports: many(spotSports),
-  features: many(spotFeatureLinks),
 }))
 
 export const sportEventsRelations = relations(sportEvents, ({ one, many }) => ({
@@ -348,20 +324,6 @@ export const spotSportsRelations = relations(spotSports, ({ one }) => ({
   }),
 }))
 
-export const spotFeatureLinksRelations = relations(
-  spotFeatureLinks,
-  ({ one }) => ({
-    spot: one(spots, {
-      fields: [spotFeatureLinks.spotId],
-      references: [spots.id],
-    }),
-    feature: one(spotFeatures, {
-      fields: [spotFeatureLinks.featureSlug],
-      references: [spotFeatures.slug],
-    }),
-  }),
-)
-
 export const eventSportsRelations = relations(eventSports, ({ one }) => ({
   event: one(sportEvents, {
     fields: [eventSports.eventId],
@@ -395,12 +357,10 @@ export type SportDisciplineRow = typeof sportDisciplines.$inferSelect
 export type NewSportDisciplineRow = typeof sportDisciplines.$inferInsert
 export type EventTierRow = typeof eventTiers.$inferSelect
 export type NewEventTierRow = typeof eventTiers.$inferInsert
-export type SpotFeatureRow = typeof spotFeatures.$inferSelect
-export type NewSpotFeatureRow = typeof spotFeatures.$inferInsert
+export type SpotFeatureRow = never
+export type NewSpotFeatureRow = never
 export type SpotSportRow = typeof spotSports.$inferSelect
 export type NewSpotSportRow = typeof spotSports.$inferInsert
-export type SpotFeatureLinkRow = typeof spotFeatureLinks.$inferSelect
-export type NewSpotFeatureLinkRow = typeof spotFeatureLinks.$inferInsert
 export type EventSportRow = typeof eventSports.$inferSelect
 export type NewEventSportRow = typeof eventSports.$inferInsert
 export type PresetImageRow = typeof presetImages.$inferSelect

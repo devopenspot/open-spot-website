@@ -40,12 +40,9 @@ export interface Spot {
   address: string;
   type: string;
   typeSlug: string;
-  features: readonly string[];
   sports: readonly SportDiscipline[];
   image: string;
-  communityNote: string;
   crowdLevel: number;
-  crowdLevelLabel: string;
   country: string;
   countryCode: string;
   location: SpotLocation;

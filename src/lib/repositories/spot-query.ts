@@ -2,8 +2,6 @@ import { eq, sql } from "drizzle-orm"
 import type { drizzle } from "drizzle-orm/postgres-js"
 import {
   countries,
-  spotFeatureLinks,
-  spotFeatures,
   spotSports,
   spotTypes,
   sportDisciplines,
@@ -25,18 +23,6 @@ export const sportsAgg = sql<string[]>`
   )
 `.as("sports")
 
-export const featuresAgg = sql<string[]>`
-  coalesce(
-    (
-      select array_agg(sf.name order by sf.name)
-      from ${spotFeatureLinks} sfl
-      join ${spotFeatures} sf on sf.slug = sfl.feature_slug
-      where sfl.spot_id = ${spots.id}
-    ),
-    '{}'::text[]
-  )
-`.as("features")
-
 export interface JoinedSpotRow {
   id: string
   slug: string
@@ -46,13 +32,10 @@ export interface JoinedSpotRow {
   address: string
   type: string
   typeSlug: string
-  features: string[]
   sports: string[]
   imageUrl: string
   imagePath: string | null
-  communityNote: string
   crowdLevel: number
-  crowdLevelLabel: string
   country: string
   countryCode: string | null
   location: SpotLocation
@@ -74,13 +57,10 @@ export function joinedSpotSelect(
       address: spots.address,
       type: spotTypes.name,
       typeSlug: spotTypes.slug,
-      features: featuresAgg,
       sports: sportsAgg,
       imageUrl: spots.imageUrl,
       imagePath: spots.imagePath,
-      communityNote: spots.communityNote,
       crowdLevel: spots.crowdLevel,
-      crowdLevelLabel: spots.crowdLevelLabel,
       country: countries.name,
       countryCode: spots.countryCode,
       location: spots.location,
@@ -104,12 +84,9 @@ export function rowToSpot(row: JoinedSpotRow): Spot {
     address: row.address,
     type: row.type,
     typeSlug: row.typeSlug,
-    features: row.features,
     sports: row.sports as readonly SportDiscipline[],
     image: row.imagePath ?? row.imageUrl,
-    communityNote: row.communityNote,
     crowdLevel: row.crowdLevel,
-    crowdLevelLabel: row.crowdLevelLabel,
     country: row.country,
     countryCode: row.countryCode ?? "",
     location: row.location,

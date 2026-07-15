@@ -10,8 +10,6 @@ import type { ProjectedAddress } from "@/lib/geocode/project"
 import type { SpotTypeEntity } from "@/lib/types"
 import type { SportDiscipline } from "@/types/sport-events"
 
-const FEATURE_DEFAULTS = ["Smooth Concrete"]
-
 function buildInitialState(initialTypeSlug: string): SpotFormState {
   return {
     name: "",
@@ -21,9 +19,7 @@ function buildInitialState(initialTypeSlug: string): SpotFormState {
     country: "",
     countryCode: "",
     type: initialTypeSlug,
-    features: [...FEATURE_DEFAULTS],
     sports: [],
-    communityNote: "",
     crowdLevel: 35,
     image: { imageUrl: "", file: null },
     lat: 0,
@@ -63,11 +59,9 @@ function buildFormData(state: SpotFormState): FormData {
   fd.set("country", state.country)
   fd.set("countryCode", state.countryCode)
   fd.set("type", state.type)
-  fd.set("features", state.features.join(","))
   for (const sport of state.sports as readonly SportDiscipline[]) {
     fd.append("sports", sport)
   }
-  fd.set("communityNote", state.communityNote)
   fd.set("crowdLevel", String(state.crowdLevel))
   fd.set("imageUrl", state.image.imageUrl)
   fd.set("lat", String(state.lat))

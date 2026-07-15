@@ -58,8 +58,6 @@ export function LatLonEditor({
   onError,
   disabled = false,
 }: LatLonEditorProps) {
-  const latId = useId();
-  const lonId = useId();
   const pasteId = useId();
   const readOnly = mode === "read-only" || disabled;
   const [state, setState] = useState<LookupState>({
@@ -136,16 +134,6 @@ export function LatLonEditor({
     setState({ status: "idle", address: null, error: null });
   };
 
-  const handleLatChange = (raw: string) => {
-    const next = Number(raw);
-    onChange(Number.isFinite(next) ? next : NaN, lon);
-  };
-
-  const handleLonChange = (raw: string) => {
-    const next = Number(raw);
-    onChange(lat, Number.isFinite(next) ? next : NaN);
-  };
-
   const handlePasteChange = (raw: string) => {
     setPasteValue(raw);
     const match = PASTE_REGEX.exec(raw);
@@ -207,60 +195,16 @@ export function LatLonEditor({
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_1fr_auto]">
-        {/* <div>
-          <label
-            htmlFor={latId}
-            className="mb-1 block font-mono text-[10px] font-bold uppercase tracking-wider text-secondary"
-          >
-            Latitude
-          </label>
-          <input
-            id={latId}
-            type="number"
-            inputMode="decimal"
-            step="any"
-            min={-90}
-            max={90}
-            value={Number.isFinite(lat) ? String(lat) : ""}
-            onChange={(e) => handleLatChange(e.target.value)}
-            placeholder="e.g. 45.7686"
-            disabled={readOnly}
-            className={cn(FIELD_CLASSES, "font-mono")}
-          />
-        </div>
-        <div>
-          <label
-            htmlFor={lonId}
-            className="mb-1 block font-mono text-[10px] font-bold uppercase tracking-wider text-secondary"
-          >
-            Longitude
-          </label>
-          <input
-            id={lonId}
-            type="number"
-            inputMode="decimal"
-            step="any"
-            min={-180}
-            max={180}
-            value={Number.isFinite(lon) ? String(lon) : ""}
-            onChange={(e) => handleLonChange(e.target.value)}
-            placeholder="e.g. 4.8369"
-            disabled={readOnly}
-            className={cn(FIELD_CLASSES, "font-mono")}
-          />
-        </div> */}
-        <div className="flex items-end">
-          <button
-            type="button"
-            onClick={handleLookup}
-            disabled={!canLookup}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-on-surface px-4 py-3 text-xs font-bold uppercase tracking-widest text-surface transition-all hover:bg-on-surface/90 disabled:opacity-50 sm:w-auto"
-          >
-            <Search size={12} aria-hidden="true" />
-            {loading ? "Looking up…" : "Look up"}
-          </button>
-        </div>
+      <div className="flex items-end">
+        <button
+          type="button"
+          onClick={handleLookup}
+          disabled={!canLookup}
+          className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-on-surface px-4 py-3 text-xs font-bold uppercase tracking-widest text-surface transition-all hover:bg-on-surface/90 disabled:opacity-50 sm:w-auto"
+        >
+          <Search size={12} aria-hidden="true" />
+          {loading ? "Looking up…" : "Look up"}
+        </button>
       </div>
 
       {state.status === "error" ? (

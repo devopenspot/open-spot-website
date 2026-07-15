@@ -7,18 +7,11 @@ import type { NewSpot } from "@/lib/repositories"
 import type { Spot } from "@/lib/types"
 import { uploadSpotImage } from "@/lib/supabase/storage"
 import { REFERENCE_LAT, REFERENCE_LON } from "@/lib/spots/geo"
-import { CROWD_LEVEL } from "@/lib/constants"
 import { requireUser } from "@/lib/auth/server"
 
 function strField(form: FormData, key: string): string {
   const v = form.get(key)
   return typeof v === "string" ? v : ""
-}
-
-function crowdLabel(level: number): string {
-  if (level > CROWD_LEVEL.HIGH_MIN) return "High (Busy)"
-  if (level > CROWD_LEVEL.LOW_MAX) return "Moderate Activity"
-  return "Low Crowd (Ideal)"
 }
 
 function deriveCitySlug(city: string): string {
@@ -56,11 +49,6 @@ export async function createSpotAction(formData: FormData): Promise<Spot> {
   const type = strField(formData, "type")
   const imageUrl = strField(formData, "imageUrl")
   const country = strField(formData, "country")
-  const communityNote = strField(formData, "communityNote")
-  const features = strField(formData, "features")
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean)
   const providedCitySlug = strField(formData, "citySlug") || deriveCitySlug(city)
 
   const input: NewSpot = {
@@ -70,13 +58,10 @@ export async function createSpotAction(formData: FormData): Promise<Spot> {
     citySlug: providedCitySlug,
     address,
     type,
-    features,
     sports: [],
     image: imageUrl,
     imagePath,
-    communityNote,
     crowdLevel,
-    crowdLevelLabel: crowdLabel(crowdLevel),
     country,
     location: { lat: REFERENCE_LAT, lon: REFERENCE_LON },
     createdBy: user.id,

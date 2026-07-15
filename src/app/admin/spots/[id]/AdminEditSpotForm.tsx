@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { updateSpotAction } from "@/app/actions/admin-spots"
 import { SpotFormFields, type SpotFormState } from "@/components/admin/spots/SpotFormFields"
 import { SpotFormSubmit } from "@/components/admin/spots/SpotFormSubmit"
-import type { SportDiscipline } from "@/types/sport-events"
+import { SPORT_DISCIPLINES, type SportDiscipline } from "@/types/sport-events"
 import type { Spot, SpotTypeEntity } from "@/lib/types"
 
 function stateFromSpot(spot: Spot): SpotFormState {
@@ -17,9 +17,10 @@ function stateFromSpot(spot: Spot): SpotFormState {
     country: spot.country,
     countryCode: spot.countryCode,
     type: spot.typeSlug,
-    features: [...spot.features],
-    sports: [...spot.sports] as SportDiscipline[],
-    communityNote: spot.communityNote,
+    sports: spot.sports.filter(
+      (s): s is SportDiscipline =>
+        SPORT_DISCIPLINES.includes(s as SportDiscipline),
+    ),
     crowdLevel: spot.crowdLevel,
     image: { imageUrl: spot.image, file: null },
     lat: spot.location.lat,
@@ -36,11 +37,9 @@ function buildFormData(state: SpotFormState): FormData {
   fd.set("country", state.country)
   fd.set("countryCode", state.countryCode)
   fd.set("type", state.type)
-  fd.set("features", state.features.join(","))
   for (const sport of state.sports as readonly SportDiscipline[]) {
     fd.append("sports", sport)
   }
-  fd.set("communityNote", state.communityNote)
   fd.set("crowdLevel", String(state.crowdLevel))
   fd.set("imageUrl", state.image.imageUrl)
   fd.set("lat", String(state.lat))

@@ -7,7 +7,7 @@ import { MapPin, Heart, Share2, ExternalLink } from "lucide-react";
 import { WeatherIcon } from "./WeatherIcon";
 import { showToast } from "@/hooks/useToast";
 import { cn } from "@/lib/cn";
-import { CROWD_LEVEL } from "@/lib/constants";
+import { CROWD_LEVEL, crowdLevelToLabel } from "@/lib/constants";
 import { getSpotDistanceLabel } from "@/lib/spots/geo";
 import type { Spot } from "@/lib/types";
 import type { SpotWeather } from "@/lib/weather/weather-cached";
@@ -197,7 +197,7 @@ export function SpotDetailsContent({
                 </div>
               </div>
               <p className="mt-3 text-[11px] font-medium text-on-surface font-sans">
-                {spot.crowdLevelLabel}
+                {crowdLevelToLabel(spot.crowdLevel)}
               </p>
             </div>
           </div>
@@ -218,31 +218,6 @@ export function SpotDetailsContent({
               <span>Get directions</span>
               <ExternalLink size={10} className="ml-1" aria-hidden="true" />
             </a>
-          </div>
-
-          <blockquote className="mb-6 border-l-2 border-primary pl-4 py-1">
-            <span className="block font-mono text-[10px] tracking-wider text-secondary uppercase mb-1">
-              Community intel
-            </span>
-            <p className="italic text-xs text-on-surface leading-relaxed">
-              &ldquo;{spot.communityNote}&rdquo;
-            </p>
-          </blockquote>
-
-          <div className="mb-4">
-            <span className="block font-mono text-[10px] tracking-wider text-secondary uppercase mb-2">
-              Spot details
-            </span>
-            <ul className="flex flex-wrap gap-1.5" aria-label="Spot features">
-              {spot.features.map((feature) => (
-                <li
-                  key={feature}
-                  className="rounded-full bg-surface-container-high px-2.5 py-1 text-[10px] font-medium text-on-surface border border-outline-variant/60"
-                >
-                  {feature}
-                </li>
-              ))}
-            </ul>
           </div>
         </div>
 

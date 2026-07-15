@@ -1,9 +1,9 @@
 -- 0000_fresh.sql
 --
 -- Single consolidated migration: the entire Open Spot data model in
--- one file. Replaces the historical 0000_initial_data_model.sql and
--- 0001_preset_images.sql. Run via `pnpm db:apply` against a fresh
--- database (Supabase Dashboard reset or
+-- one file. Replaces the historical 0000_initial_data_model.sql,
+-- 0001_preset_images.sql, and the 0002 RLS set. Run via `pnpm db:apply`
+-- against a fresh database (Supabase Dashboard reset or
 -- `DROP SCHEMA public CASCADE; CREATE SCHEMA public; ...`). The
 -- `src/db/seed.ts` script is the single source of truth for the
 -- dimension and content data; this file is pure schema.
@@ -17,6 +17,20 @@
 -- enforce length checks, `crowd_level BETWEEN 0 AND 100`, ISO code
 -- formats, and the email format. The runtime Zod schemas in
 -- `src/lib/schemas/` are the application-side mirror.
+--
+-- Field cleanup (post-e40a19f + refactor): the `community_note`,
+-- `crowd_level_label` columns on `spots`, the entire `spot_features`
+-- taxonomy table, and the `spot_feature_links` join table are gone.
+-- Crowd level labels are now derived in the UI from `crowd_level`
+-- via `crowdLevelToLabel()` in `src/lib/constants.ts`. Feature tags
+-- are no longer collected at the form level.
+--
+-- Data migration: any `event_sports` / `spot_sports` rows left over
+-- from the historical `Inline` / `Wakeboard` / `Snowboard` / `Ski`
+-- disciplines (slugs not in the new enum) are remapped to
+-- `rollerblade`, then the stale discipline rows are deleted. This
+-- keeps every existing event/spot row intact and only adjusts the
+-- discipline link.
 --
 -- Every statement is separated by the statement-breakpoint marker
 -- (see src/db/apply-sql.ts).
@@ -103,15 +117,6 @@ CREATE TABLE "event_tiers" (
 CREATE INDEX "event_tiers_sort_order_idx" ON "event_tiers" USING btree ("sort_order");
 --> statement-breakpoint
 
--- ─── spot_features ──────────────────────────────────────────────────
-DROP TABLE IF EXISTS "spot_features" CASCADE;
---> statement-breakpoint
-CREATE TABLE "spot_features" (
-  "slug" text PRIMARY KEY NOT NULL CHECK (length("slug") > 0),
-  "name" text NOT NULL CHECK (length("name") > 0)
-);
---> statement-breakpoint
-
 -- ─── preset_images (Phase 2) ────────────────────────────────────────
 -- Curated, admin-ownable list of image URLs that the admin
 -- ImageSourceField offers when creating or editing a spot, and that
@@ -150,6 +155,8 @@ CREATE TABLE "profiles" (
 --> statement-breakpoint
 
 -- ─── spots ──────────────────────────────────────────────────────────
+-- (post-refactor: dropped `community_note` and `crowd_level_label`
+--  columns; their JSX form fields are gone too.)
 DROP TABLE IF EXISTS "spots" CASCADE;
 --> statement-breakpoint
 CREATE TABLE "spots" (
@@ -162,9 +169,7 @@ CREATE TABLE "spots" (
   "type_slug" text NOT NULL REFERENCES "spot_types"("slug") ON DELETE restrict ON UPDATE no action,
   "image_url" text NOT NULL CHECK (length("image_url") > 0),
   "image_path" text,
-  "community_note" text DEFAULT '' NOT NULL,
   "crowd_level" integer DEFAULT 0 NOT NULL CHECK ("crowd_level" BETWEEN 0 AND 100),
-  "crowd_level_label" text DEFAULT '' NOT NULL CHECK (length("crowd_level_label") > 0),
   "country_code" text NOT NULL REFERENCES "countries"("iso2") ON DELETE restrict ON UPDATE no action CHECK ("country_code" ~ '^[A-Z]{2}$'),
   "location" geometry(Point, 4326) NOT NULL,
   "created_by" uuid,
@@ -243,19 +248,6 @@ CREATE TABLE "spot_sports" (
 CREATE INDEX "spot_sports_discipline_idx" ON "spot_sports" USING btree ("discipline_slug");
 --> statement-breakpoint
 
--- ─── spot_feature_links (join) ─────────────────────────────────────
-DROP TABLE IF EXISTS "spot_feature_links" CASCADE;
---> statement-breakpoint
-CREATE TABLE "spot_feature_links" (
-  "spot_id" uuid NOT NULL REFERENCES "spots"("id") ON DELETE cascade ON UPDATE no action,
-  "feature_slug" text NOT NULL REFERENCES "spot_features"("slug") ON DELETE restrict ON UPDATE no action,
-  CONSTRAINT "spot_feature_links_spot_id_feature_slug_pk" PRIMARY KEY("spot_id","feature_slug")
-);
---> statement-breakpoint
-
-CREATE INDEX "spot_feature_links_feature_idx" ON "spot_feature_links" USING btree ("feature_slug");
---> statement-breakpoint
-
 -- ─── event_sports (join) ───────────────────────────────────────────
 DROP TABLE IF EXISTS "event_sports" CASCADE;
 --> statement-breakpoint
@@ -267,6 +259,56 @@ CREATE TABLE "event_sports" (
 --> statement-breakpoint
 
 CREATE INDEX "event_sports_discipline_idx" ON "event_sports" USING btree ("discipline_slug");
+--> statement-breakpoint
+
+-- ─── data migration: remap pruned disciplines → rollerblade ─────────
+-- One-shot idempotent remap for the post-e40a19f enum shrink. Any
+-- event_sports / spot_sports row that still references a pruned
+-- discipline slug (inline / wakeboard / snowboard / ski) is moved
+-- to rollerblade. The CTE first deletes any existing rollerblade row
+-- for the same parent to avoid PK collisions on the remap. The
+-- statements are no-ops on a fresh DB.
+
+WITH to_remap AS (
+  SELECT es.event_id, es.discipline_slug AS old_slug
+  FROM event_sports es
+  WHERE es.discipline_slug IN ('inline','wakeboard','snowboard','ski')
+),
+dedup AS (
+  DELETE FROM event_sports es
+  USING to_remap r
+  WHERE es.event_id = r.event_id
+    AND es.discipline_slug = 'rollerblade'
+  RETURNING es.event_id
+)
+UPDATE event_sports es
+  SET discipline_slug = 'rollerblade'
+FROM to_remap r
+WHERE es.event_id = r.event_id
+  AND es.discipline_slug = r.old_slug;
+--> statement-breakpoint
+
+WITH to_remap AS (
+  SELECT ss.spot_id, ss.discipline_slug AS old_slug
+  FROM spot_sports ss
+  WHERE ss.discipline_slug IN ('inline','wakeboard','snowboard','ski')
+),
+dedup AS (
+  DELETE FROM spot_sports ss
+  USING to_remap r
+  WHERE ss.spot_id = r.spot_id
+    AND ss.discipline_slug = 'rollerblade'
+  RETURNING ss.spot_id
+)
+UPDATE spot_sports ss
+  SET discipline_slug = 'rollerblade'
+FROM to_remap r
+WHERE ss.spot_id = r.spot_id
+  AND ss.discipline_slug = r.old_slug;
+--> statement-breakpoint
+
+DELETE FROM sport_disciplines
+  WHERE slug IN ('inline','wakeboard','snowboard','ski');
 --> statement-breakpoint
 
 -- ─── sport_events_with_status view ────────────────────────────────
@@ -360,15 +402,6 @@ ALTER TABLE "public"."event_tiers" ENABLE ROW LEVEL SECURITY;
 --> statement-breakpoint
 CREATE POLICY "event_tiers_select_public"
   ON "public"."event_tiers"
-  FOR SELECT
-  TO anon, authenticated
-  USING (true);
---> statement-breakpoint
-
-ALTER TABLE "public"."spot_features" ENABLE ROW LEVEL SECURITY;
---> statement-breakpoint
-CREATE POLICY "spot_features_select_public"
-  ON "public"."spot_features"
   FOR SELECT
   TO anon, authenticated
   USING (true);
@@ -487,6 +520,27 @@ CREATE POLICY "profiles_update_owner"
   TO authenticated
   USING ((select auth.uid()) = "id")
   WITH CHECK ((select auth.uid()) = "id");
+--> statement-breakpoint
+
+-- spot_sports: public read; the join table is owned via the parent
+-- spot row (spots_update_owner already gates updates on the parent).
+ALTER TABLE "public"."spot_sports" ENABLE ROW LEVEL SECURITY;
+--> statement-breakpoint
+CREATE POLICY "spot_sports_select_public"
+  ON "public"."spot_sports"
+  FOR SELECT
+  TO anon, authenticated
+  USING (true);
+--> statement-breakpoint
+
+-- event_sports: public read; writes are service-role only.
+ALTER TABLE "public"."event_sports" ENABLE ROW LEVEL SECURITY;
+--> statement-breakpoint
+CREATE POLICY "event_sports_select_public"
+  ON "public"."event_sports"
+  FOR SELECT
+  TO anon, authenticated
+  USING (true);
 --> statement-breakpoint
 
 -- Storage bucket policies (spot-images) — bucket itself is created

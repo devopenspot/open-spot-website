@@ -2,7 +2,7 @@
 
 Next.js 16 (App Router, Cache Components) + React 19 + TypeScript 5.8 (`strict`, `noUncheckedIndexedAccess`, `noUnusedLocals`, `noUnusedParameters`) + Tailwind 4 + Drizzle + Supabase + Zod 4 + Vitest 4. **pnpm 11 only** (Node 22). No monorepo (despite `pnpm-workspace.yaml`, it's a single-package config), no Storybook, no `docker-compose.yml` checked in.
 
-The data layer is **DB-only at runtime** — Phase 1 and Phase 2 of the `SPEC.md` "Single Source of Truth (DB-Only) Refactor" are both implemented in code. `src/data.ts` and `src/data/*.json` are gone; seed data lives as typed TS constants in `src/db/seed-data/`. `src/lib/spots.ts` is also gone (only `src/lib/spots/geo.ts` remains).
+The data layer is **DB-only at runtime** — Phase 1 and Phase 2 of the "Single Source of Truth (DB-Only) Refactor" are both implemented in code. `src/data.ts` and `src/data/*.json` are gone; seed data lives as typed TS constants in `src/db/seed-data/`. `src/lib/spots.ts` is also gone (only `src/lib/spots/geo.ts` remains).
 
 ## TL;DR — most-isolated gotchas
 
@@ -59,7 +59,7 @@ CI order (`.github/workflows/ci.yml`): `pnpm install --frozen-lockfile` → `typ
 - **Dimension reads are DB-only.** Regions, countries, spot types, sport disciplines, event tiers, spot features, and preset images are seeded by `src/db/seed.ts` from typed TS constants in `src/db/seed-data/` and read from the DB at runtime. The 11 base spot rows + 5 base event rows are typed `NewSpot` / `NewSportEvent` consts in `src/db/seed-data/spots.ts` and `sport-events.ts`. Preset images are a `preset_images` DB table (Phase 2).
 - **Server-only data assembly** lives in `src/lib/data/` (e.g. `getRegionsForClient()` in `regions.ts`, `getSpotTypesForClient()` in `spot-types.ts`). The client tree reads them through `useSpotsStore` (hydrated by `SpotsProvider` in `RootDataProviders`).
 - **Zustand `useSpotsStore` carries 4 reference-data slices** hydrated once at the root layout: `spots`, `regions`, `presetImages`, `spotTypes`. `useMapFilter`, `RegionFilter`, `ExploreTab`, and admin `ImageSourceField` all read from this store. The `useMapFilter` test seeds the store in `beforeEach`.
-- **`SPEC.md` is the historical plan for the DB-only refactor; both phases are implemented.** `SPEC-DATA-MODEL.md` is the historical data-model spec. `DEPLOY.md` covers Vercel env + the `spot-images` Storage bucket step. `DESIGN.md` is the design system source of truth.
+- `DEPLOY.md` covers Vercel env + the `spot-images` Storage bucket step. `DESIGN.md` is the design system source of truth.
 
 ## Database & migrations
 
@@ -67,7 +67,7 @@ CI order (`.github/workflows/ci.yml`): `pnpm install --frozen-lockfile` → `typ
 - SQL migrations: `supabase/migrations/*.sql`. The repo has a single consolidated `0000_fresh.sql` covering the full schema (extensions, all dimension tables including `preset_images`, all content tables, join tables, the `sport_events_with_status` view, RLS for every domain table, and the `spot-images` storage policies). The file is **fully idempotent** — every table, the view, and each storage policy are dropped via `… IF EXISTS` before being (re)created, so re-running `pnpm db:apply` on a populated DB wipes the schema and rebuilds it. New migrations must split statements on `--> statement-breakpoint` — `apply-sql.ts` will not split otherwise and the live DB will reject multi-statement strings.
 - **DB-level CHECK constraints** validate every domain table at INSERT/UPDATE time: length checks on every slug/name/url/city, `crowd_level BETWEEN 0 AND 100`, `country_code ~ '^[A-Z]{2}$'`, `iso2 ~ '^[A-Z]{2}$'`, `iso3 ~ '^[A-Z]{3}$'` (nullable), `sort_order >= 0`, email format on `profiles.email`. The runtime Zod schemas in `src/lib/schemas/` are the application-side mirror. The Drizzle schema (`src/db/schema.ts`) does not model CHECKs — they live in the SQL file.
 - `supabase/migrations/meta/` is drizzle-kit's bookkeeping (`_journal.json`, `*_snapshot.json`) — do not hand-edit.
-- RLS is enabled on all domain tables: public read on `regions` / `countries` / `spot_types` / `sport_disciplines` / `event_tiers` / `spot_features` / `preset_images` / `spots` / `sport_events` / `profiles`; owner-only writes on `spots`, `saved_spots`, `profiles`, `preset_images`. Storage bucket policies scope objects to `spots/{userId}/{uuid}` folders.
+- RLS is enabled on all domain tables: public read on `regions` / `countries` / `spot_types` / `sport_disciplines` / `event_tiers` / `preset_images` / `spots` / `sport_events` / `event_sports` / `spot_sports` / `profiles`; owner-only writes on `spots`, `saved_spots`, `profiles`, `preset_images`. Storage bucket policies scope objects to `spots/{userId}/{uuid}` folders.
 - The `spot-images` Supabase Storage bucket is **created out-of-band** (Dashboard / supabase CLI). The repo does not provision it.
 - Drizzle-kit config (`drizzle.config.ts`) reads `SUPABASE_DIRECT_URL` → `DB_CONNETION_STRING` → `DATABASE_URL`. Use a direct endpoint here, not the pooler.
 

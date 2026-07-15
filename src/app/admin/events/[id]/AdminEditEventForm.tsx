@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { updateEventAction } from "@/app/actions/admin-events"
 import { EventFormFields, type EventFormState } from "@/components/admin/events/EventFormFields"
 import { EventFormSubmit } from "@/components/admin/events/EventFormSubmit"
-import type { SportDiscipline, SportEvent } from "@/types/sport-events"
+import { SPORT_DISCIPLINES, type SportDiscipline, type SportEvent } from "@/types/sport-events"
 
 function stateFromEvent(event: SportEvent): EventFormState {
   return {
@@ -14,7 +14,10 @@ function stateFromEvent(event: SportEvent): EventFormState {
     url: event.url,
     image: event.image,
     description: event.description,
-    sports: [...event.sports] as SportDiscipline[],
+    sports: event.sports.filter(
+      (s): s is SportDiscipline =>
+        SPORT_DISCIPLINES.includes(s as SportDiscipline),
+    ),
     startDate: event.startDate,
     endDate: event.endDate ?? "",
     city: event.location.city,

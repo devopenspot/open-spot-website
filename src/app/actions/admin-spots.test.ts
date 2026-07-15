@@ -49,13 +49,11 @@ const createdSpot = {
   address: "10 Rue de la République",
   type: "Plaza",
   typeSlug: "plaza",
-  features: ["Smooth Concrete"],
   sports: ["Skateboard"] as const,
   image: "https://example.com/img.png",
-  communityNote: "",
   crowdLevel: 35,
-  crowdLevelLabel: "Low Crowd (Ideal)",
   country: "France",
+  countryCode: "FR",
   location: { lat: 45.7686, lon: 4.8369 },
   createdBy: adminUser.id,
   createdAt: "2024-01-01T00:00:00.000Z",
@@ -123,7 +121,6 @@ describe("createSpotFromLookupAction", () => {
       ["address", "10 Rue de la République"],
       ["type", "plaza"],
       ["imageUrl", "https://example.com/img.png"],
-      ["features", "Smooth Concrete,Red Curb"],
       ["sports", "Skateboard"],
       ["sports", "BMX"],
       ["crowdLevel", "35"],
@@ -143,7 +140,6 @@ describe("createSpotFromLookupAction", () => {
       address: "10 Rue de la République",
       type: "plaza",
       image: "https://example.com/img.png",
-      features: ["Smooth Concrete", "Red Curb"],
       sports: ["Skateboard", "BMX"],
       crowdLevel: 35,
       country: "France",
@@ -229,7 +225,6 @@ describe("updateSpotAction", () => {
     expect(patch).toMatchObject({
       name: "Updated Name",
       crowdLevel: 85,
-      crowdLevelLabel: "High (Busy)",
     })
     expect(revalidatePathMock).toHaveBeenCalledWith("/spots/spot-1")
     expect(revalidatePathMock).toHaveBeenCalledWith("/admin/spots")
@@ -238,12 +233,12 @@ describe("updateSpotAction", () => {
   it("threads the sports array when present", async () => {
     const fd = makeFormData([
       ["name", "Updated Name"],
-      ["sports", "Inline"],
+      ["sports", "Rollerblade"],
       ["sports", "Scooter"],
     ])
     await updateSpotAction("spot-1", fd)
     const [, patch] = updateMock.mock.calls[0] ?? []
-    expect(patch).toMatchObject({ sports: ["Inline", "Scooter"] })
+    expect(patch).toMatchObject({ sports: ["Rollerblade", "Scooter"] })
   })
 
   it("threads a countryCode in the patch when present", async () => {

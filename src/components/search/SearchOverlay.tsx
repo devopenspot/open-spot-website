@@ -96,7 +96,7 @@ export function SearchOverlay({
           </h2>
           <div className="flex items-center space-x-3 flex-1 min-w-0">
             <label htmlFor={inputId} className="visually-hidden">
-              Search spots by name, city, style, or features
+              Search spots by name, city, or style
             </label>
             <Search
               size={20}
@@ -109,7 +109,7 @@ export function SearchOverlay({
               type="search"
               role="searchbox"
               autoComplete="off"
-              placeholder="Search spots by name, city, style, or features..."
+              placeholder="Search spots by name, city, or style..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               className="w-full bg-transparent text-lg font-medium text-on-surface focus:outline-none placeholder:text-secondary"
@@ -228,12 +228,7 @@ function MatchedSpots({ query, spots, onPick }: MatchedSpotsProps) {
                       className="mr-0.5 shrink-0"
                       aria-hidden="true"
                     />
-                    {spot.city} •{" "}
-                    <span className="ml-1 italic">
-                      &ldquo;
-                      {spot.features.slice(0, 2).join(", ")}
-                      &rdquo;
-                    </span>
+                    {spot.city}
                   </span>
                 </span>
 
