@@ -52,9 +52,7 @@ export function MapSidebar({
     onRadiusChange !== undefined;
 
   const hasFilter = region !== null || country !== null;
-  const filterLabel = country
-    ? `${country} (${region})`
-    : region;
+  const filterLabel = country ? `${country} (${region})` : region;
 
   const handleChipClick = useCallback(
     (miles: NearbyRadiusMiles) => {
@@ -118,11 +116,8 @@ export function MapSidebar({
             {spots.length} spots active
           </span>
         </div>
-        {hasFilter && filterLabel && (
-          <div
-            id="map-active-filter"
-            className="flex items-center gap-2"
-          >
+        {hasFilter && filterLabel && !radiusMiles && (
+          <div id="map-active-filter" className="flex items-center gap-2">
             <span className="font-mono text-[9px] font-bold tracking-widest uppercase text-secondary">
               Filter
             </span>
@@ -249,9 +244,7 @@ export function MapSidebar({
           <div className="p-6 text-center text-xs text-secondary font-mono space-y-3">
             {hasFilter && filterLabel ? (
               <>
-                <p>
-                  No spots in {filterLabel}.
-                </p>
+                <p>No spots in {filterLabel}.</p>
                 {onClearFilter && (
                   <button
                     type="button"

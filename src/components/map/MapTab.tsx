@@ -188,7 +188,9 @@ export default function MapTab({ searchParams, nearbyRequested }: MapTabProps) {
         ? [sidebarSpots[0].location.lat, sidebarSpots[0].location.lon]
         : [20, 0];
   const initialZoom = nearYou ? NEAR_YOU_INITIAL_ZOOM : 2;
-  const mapMode: "nearby" | "filtered" = nearbyRequested ? "nearby" : "filtered";
+  const mapMode: "nearby" | "filtered" = nearbyRequested
+    ? "nearby"
+    : "filtered";
   return (
     <section
       id="map-tab"

@@ -22,7 +22,6 @@ import L from "leaflet";
 import type { Spot, WeatherIconName } from "@/lib/types";
 import type { SpotWeather } from "@/lib/weather/weather-cached";
 import { weatherIconGlyph } from "@/components/spot/WeatherIcon";
-import { NearbyCtaButton } from "./NearbyCtaButton";
 
 const FOCUS_ZOOM = 13;
 const FLY_DURATION_SEC = 0.6;
@@ -515,7 +514,6 @@ export const LeafletCanvas = forwardRef<
         />
         <MapController spots={spots} userLocation={userLocation} ref={ref} />
         <ZoomListener onZoomChange={setZoom} />
-        <NearbyCtaButton />
         {markers.map((m) => (
           <Marker
             key={m.key}
