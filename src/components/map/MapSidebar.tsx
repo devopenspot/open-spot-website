@@ -231,7 +231,7 @@ export function MapSidebar({
                       className="h-1 w-1 rounded-full bg-primary"
                     />
                     <span className="text-[8px] font-mono text-secondary">
-                      CRD: {spot.crowdLevel}%
+                      {spot.sports.join("|")}
                     </span>
                   </span>
                 </span>
