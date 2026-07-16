@@ -273,7 +273,7 @@ export function SpotDetailsContent({
                       </span>
                       <span className="font-display text-sm font-bold text-on-surface font-mono">
                         {dayMin !== null && dayMax !== null
-                          ? `${dayMax}° / ${dayMin}°`
+                          ? `${dayMin}° / ${dayMax}°`
                           : "—"}
                       </span>
                       <div className="ml-auto flex items-center gap-3">
