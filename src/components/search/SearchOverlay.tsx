@@ -1,6 +1,13 @@
 "use client";
 
-import { useCallback, useDeferredValue, useEffect, useId, useRef, useState } from "react";
+import {
+  useCallback,
+  useDeferredValue,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+} from "react";
 import { Search, X, MapPin, ArrowRight } from "lucide-react";
 import Image from "next/image";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
@@ -254,7 +261,7 @@ function MatchedSpots({
                     alt=""
                     fill
                     sizes="64px"
-                    className="object-cover grayscale"
+                    className="object-cover"
                     referrerPolicy="no-referrer"
                     unoptimized
                   />
@@ -278,11 +285,7 @@ function MatchedSpots({
                   </span>
                 </span>
 
-                <ArrowRight
-                  size={16}
-                  className="shrink-0"
-                  aria-hidden="true"
-                />
+                <ArrowRight size={16} className="shrink-0" aria-hidden="true" />
               </button>
             </li>
           ))}

@@ -50,7 +50,7 @@ export function MapInfoPopup({
             alt=""
             fill
             sizes="64px"
-            className="object-cover grayscale"
+            className="object-cover"
             referrerPolicy="no-referrer"
             unoptimized
           />

@@ -149,7 +149,7 @@ function RegionList({ regions, region, onPick }: RegionListProps) {
                       fill
                       sizes="80px"
                       className={cn(
-                        "object-cover grayscale",
+                        "object-cover",
                         active
                           ? "opacity-90"
                           : "opacity-70 group-hover:opacity-90",

@@ -1,8 +1,12 @@
-import Image from 'next/image';
-import { MapPin, ExternalLink, Calendar } from 'lucide-react';
-import type { SportEventEnriched, SportEventStatus, SportEventTier } from '@/types/sport-events';
-import { TIER_DISPLAY, STATUS_LABELS } from '@/lib/sport-events';
-import { cn } from '@/lib/cn';
+import Image from "next/image";
+import { MapPin, ExternalLink, Calendar } from "lucide-react";
+import type {
+  SportEventEnriched,
+  SportEventStatus,
+  SportEventTier,
+} from "@/types/sport-events";
+import { TIER_DISPLAY, STATUS_LABELS } from "@/lib/sport-events";
+import { cn } from "@/lib/cn";
 
 interface EventCardProps {
   event: SportEventEnriched;
@@ -10,15 +14,15 @@ interface EventCardProps {
 }
 
 const STATUS_DOT_STYLES: Record<SportEventStatus, string> = {
-  live: 'bg-error animate-pulse-dot',
-  upcoming: 'bg-primary',
-  completed: 'bg-outline',
+  live: "bg-error animate-pulse-dot",
+  upcoming: "bg-primary",
+  completed: "bg-outline",
 };
 
 const STATUS_TEXT_STYLES: Record<SportEventStatus, string> = {
-  live: 'text-error',
-  upcoming: 'text-on-surface',
-  completed: 'text-secondary',
+  live: "text-error",
+  upcoming: "text-on-surface",
+  completed: "text-secondary",
 };
 
 function TierBadge({ tier }: { tier: SportEventTier }) {
@@ -34,9 +38,9 @@ function TierBadge({ tier }: { tier: SportEventTier }) {
 
 export function EventCard({ event, priority = false }: EventCardProps) {
   const { location } = event;
-  const isCompleted = event.status === 'completed';
+  const isCompleted = event.status === "completed";
   const statusLabel = STATUS_LABELS[event.status];
-  const showStatus = event.status !== 'upcoming';
+  const showStatus = event.status !== "upcoming";
 
   return (
     <article
@@ -52,15 +56,17 @@ export function EventCard({ event, priority = false }: EventCardProps) {
           aria-label={`Open ${event.name} official site in a new tab`}
           className="absolute inset-0 z-0 block cursor-pointer"
         >
-          <span className="visually-hidden">Open {event.name} official site</span>
+          <span className="visually-hidden">
+            Open {event.name} official site
+          </span>
           <Image
             src={event.image}
             alt=""
             fill
             sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
             className={cn(
-              'object-cover grayscale transition-transform duration-500 ease-out group-hover:scale-105 pointer-events-none',
-              isCompleted && 'opacity-60',
+              "object-cover transition-transform duration-500 ease-out group-hover:scale-105 pointer-events-none",
+              isCompleted && "opacity-60",
             )}
             referrerPolicy="no-referrer"
             unoptimized
@@ -77,7 +83,7 @@ export function EventCard({ event, priority = false }: EventCardProps) {
           <TierBadge tier={event.tier} />
         </div>
 
-        {event.status === 'live' && (
+        {event.status === "live" && (
           <div className="absolute top-3 right-3 z-10 flex items-center gap-1.5 bg-surface/95 px-2 py-0.5 font-mono text-[9px] font-bold tracking-widest text-error uppercase backdrop-blur-sm">
             <span
               aria-hidden="true"
@@ -92,11 +98,14 @@ export function EventCard({ event, priority = false }: EventCardProps) {
         <div className="flex items-center gap-2 mb-2">
           <span
             aria-hidden="true"
-            className={cn('h-1.5 w-1.5 rounded-full', STATUS_DOT_STYLES[event.status])}
+            className={cn(
+              "h-1.5 w-1.5 rounded-full",
+              STATUS_DOT_STYLES[event.status],
+            )}
           />
           <span
             className={cn(
-              'font-mono text-[10px] font-bold tracking-widest uppercase',
+              "font-mono text-[10px] font-bold tracking-widest uppercase",
               STATUS_TEXT_STYLES[event.status],
             )}
           >
@@ -138,8 +147,10 @@ export function EventCard({ event, priority = false }: EventCardProps) {
             />
             <dt className="visually-hidden">Location</dt>
             <dd className="text-secondary">
-              <span className="text-on-surface font-semibold">{location.city}</span>
-              {location.country ? `, ${location.country}` : ''}
+              <span className="text-on-surface font-semibold">
+                {location.city}
+              </span>
+              {location.country ? `, ${location.country}` : ""}
               {location.venue && (
                 <span className="block text-[10px] tracking-wider uppercase mt-0.5">
                   {location.venue}
@@ -150,11 +161,8 @@ export function EventCard({ event, priority = false }: EventCardProps) {
         </dl>
 
         {event.sports.length > 0 && (
-          <ul
-            aria-label="Disciplines"
-            className="mt-4 flex flex-wrap gap-1.5"
-          >
-            {event.sports.map(sport => (
+          <ul aria-label="Disciplines" className="mt-4 flex flex-wrap gap-1.5">
+            {event.sports.map((sport) => (
               <li
                 key={sport}
                 className="border border-outline-variant bg-surface-container-low px-2 py-0.5 font-mono text-[9px] font-bold tracking-widest text-on-surface uppercase"
@@ -183,4 +191,3 @@ export function EventCard({ event, priority = false }: EventCardProps) {
     </article>
   );
 }
-

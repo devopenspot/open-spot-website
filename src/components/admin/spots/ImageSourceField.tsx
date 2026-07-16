@@ -1,23 +1,23 @@
-"use client"
+"use client";
 
-import Image from "next/image"
-import { useEffect, useId, useRef, useState } from "react"
-import { Check, Image as ImageIcon, Upload, X } from "lucide-react"
-import { cn } from "@/lib/cn"
-import { useSpotsStore } from "@/stores/spots-store"
+import Image from "next/image";
+import { useEffect, useId, useRef, useState } from "react";
+import { Check, Image as ImageIcon, Upload, X } from "lucide-react";
+import { cn } from "@/lib/cn";
+import { useSpotsStore } from "@/stores/spots-store";
 
-const MAX_UPLOAD_BYTES = 5 * 1024 * 1024
+const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
 
 export interface ImageSourceFieldValue {
-  imageUrl: string
-  file: File | null
+  imageUrl: string;
+  file: File | null;
 }
 
 interface ImageSourceFieldProps {
-  value: ImageSourceFieldValue
-  onChange: (value: ImageSourceFieldValue) => void
+  value: ImageSourceFieldValue;
+  onChange: (value: ImageSourceFieldValue) => void;
   /** Disable the file input (e.g. in JSON mode). */
-  disabled?: boolean
+  disabled?: boolean;
 }
 
 /**
@@ -31,78 +31,78 @@ export function ImageSourceField({
   onChange,
   disabled = false,
 }: ImageSourceFieldProps) {
-  const presetImages = useSpotsStore((s) => s.presetImages)
-  const fileId = useId()
-  const imageId = useId()
-  const previewUrlRef = useRef<string | null>(null)
-  const [filePreview, setFilePreview] = useState<string | null>(null)
-  const [error, setError] = useState<string | null>(null)
+  const presetImages = useSpotsStore((s) => s.presetImages);
+  const fileId = useId();
+  const imageId = useId();
+  const previewUrlRef = useRef<string | null>(null);
+  const [filePreview, setFilePreview] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [selectedPreset, setSelectedPreset] = useState<number>(() => {
-    const idx = presetImages.findIndex((p) => p.url === value.imageUrl)
-    return idx === -1 ? -1 : idx
-  })
+    const idx = presetImages.findIndex((p) => p.url === value.imageUrl);
+    return idx === -1 ? -1 : idx;
+  });
 
   useEffect(() => {
     return () => {
-      if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current)
-    }
-  }, [])
+      if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
+    };
+  }, []);
 
   const handlePresetPick = (idx: number, url: string) => {
-    setSelectedPreset(idx)
-    setError(null)
+    setSelectedPreset(idx);
+    setError(null);
     if (previewUrlRef.current) {
-      URL.revokeObjectURL(previewUrlRef.current)
-      previewUrlRef.current = null
+      URL.revokeObjectURL(previewUrlRef.current);
+      previewUrlRef.current = null;
     }
-    setFilePreview(null)
-    onChange({ imageUrl: url, file: null })
-  }
+    setFilePreview(null);
+    onChange({ imageUrl: url, file: null });
+  };
 
   const handleCustomUrl = (url: string) => {
-    setSelectedPreset(-1)
-    setError(null)
-    onChange({ imageUrl: url, file: value.file })
-  }
+    setSelectedPreset(-1);
+    setError(null);
+    onChange({ imageUrl: url, file: value.file });
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const next = e.target.files?.[0] ?? null
+    const next = e.target.files?.[0] ?? null;
     if (!next) {
       if (previewUrlRef.current) {
-        URL.revokeObjectURL(previewUrlRef.current)
-        previewUrlRef.current = null
+        URL.revokeObjectURL(previewUrlRef.current);
+        previewUrlRef.current = null;
       }
-      setFilePreview(null)
-      onChange({ imageUrl: value.imageUrl, file: null })
-      return
+      setFilePreview(null);
+      onChange({ imageUrl: value.imageUrl, file: null });
+      return;
     }
     if (!next.type.startsWith("image/")) {
-      setError("Please choose an image file (PNG, JPG, or WebP).")
-      return
+      setError("Please choose an image file (PNG, JPG, or WebP).");
+      return;
     }
     if (next.size > MAX_UPLOAD_BYTES) {
       setError(
         `Image is too large (max ${Math.round(MAX_UPLOAD_BYTES / 1024 / 1024)} MB).`,
-      )
-      return
+      );
+      return;
     }
-    if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current)
-    const url = URL.createObjectURL(next)
-    previewUrlRef.current = url
-    setFilePreview(url)
-    setSelectedPreset(-1)
-    setError(null)
-    onChange({ imageUrl: value.imageUrl, file: next })
-  }
+    if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
+    const url = URL.createObjectURL(next);
+    previewUrlRef.current = url;
+    setFilePreview(url);
+    setSelectedPreset(-1);
+    setError(null);
+    onChange({ imageUrl: value.imageUrl, file: next });
+  };
 
   const handleClearFile = () => {
     if (previewUrlRef.current) {
-      URL.revokeObjectURL(previewUrlRef.current)
-      previewUrlRef.current = null
+      URL.revokeObjectURL(previewUrlRef.current);
+      previewUrlRef.current = null;
     }
-    setFilePreview(null)
-    onChange({ imageUrl: value.imageUrl, file: null })
-  }
+    setFilePreview(null);
+    onChange({ imageUrl: value.imageUrl, file: null });
+  };
 
   return (
     <fieldset className="rounded-xl border border-outline-variant bg-surface-container-low p-5">
@@ -111,9 +111,9 @@ export function ImageSourceField({
         Visual banner source
       </legend>
       <p className="mb-3 text-[10px] text-secondary">
-        Choose a preset, paste a custom URL, or upload a photo. Uploaded
-        photos are stored privately in Supabase Storage and rendered via a
-        1-hour signed URL.
+        Choose a preset, paste a custom URL, or upload a photo. Uploaded photos
+        are stored privately in Supabase Storage and rendered via a 1-hour
+        signed URL.
       </p>
 
       <div
@@ -140,14 +140,11 @@ export function ImageSourceField({
               alt={preset.name}
               fill
               sizes="(min-width: 640px) 25vw, 50vw"
-              className="object-cover grayscale"
+              className="object-cover"
               referrerPolicy="no-referrer"
               unoptimized
             />
-            <div
-              className="absolute inset-0 bg-black/40"
-              aria-hidden="true"
-            />
+            <div className="absolute inset-0 bg-black/40" aria-hidden="true" />
             <span className="absolute bottom-1.5 left-2 right-2 truncate text-center text-[8px] font-bold uppercase tracking-wider text-white">
               {preset.name}
             </span>
@@ -242,5 +239,5 @@ export function ImageSourceField({
         </p>
       ) : null}
     </fieldset>
-  )
+  );
 }

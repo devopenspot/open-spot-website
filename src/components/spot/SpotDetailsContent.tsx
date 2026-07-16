@@ -102,7 +102,7 @@ export function SpotDetailsContent({
           alt={spot.name}
           fill
           sizes="100vw"
-          className="object-cover grayscale transition-transform duration-700 ease-out group-hover:scale-105"
+          className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
           referrerPolicy="no-referrer"
           unoptimized
           priority

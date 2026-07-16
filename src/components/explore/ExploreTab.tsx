@@ -91,7 +91,7 @@ export default function ExploreTab({ events, featured }: ExploreTabProps) {
                   fill
                   priority={idx === 0}
                   sizes="(min-width: 640px) 33vw, 100vw"
-                  className="object-cover opacity-60 grayscale transition-transform duration-700 ease-out group-hover:scale-105"
+                  className="object-cover opacity-60 transition-transform duration-700 ease-out group-hover:scale-105"
                   referrerPolicy="no-referrer"
                   unoptimized
                 />

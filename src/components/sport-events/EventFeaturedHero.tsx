@@ -1,8 +1,8 @@
-import Image from 'next/image';
-import { MapPin, Calendar, ExternalLink, Trophy } from 'lucide-react';
-import type { SportEventEnriched } from '@/types/sport-events';
-import { TIER_DISPLAY, STATUS_LABELS } from '@/lib/sport-events';
-import { cn } from '@/lib/cn';
+import Image from "next/image";
+import { MapPin, Calendar, ExternalLink, Trophy } from "lucide-react";
+import type { SportEventEnriched } from "@/types/sport-events";
+import { TIER_DISPLAY, STATUS_LABELS } from "@/lib/sport-events";
+import { cn } from "@/lib/cn";
 
 interface EventFeaturedHeroProps {
   event: SportEventEnriched;
@@ -10,8 +10,8 @@ interface EventFeaturedHeroProps {
 
 export function EventFeaturedHero({ event }: EventFeaturedHeroProps) {
   const { location } = event;
-  const isLive = event.status === 'live';
-  const isCompleted = event.status === 'completed';
+  const isLive = event.status === "live";
+  const isCompleted = event.status === "completed";
 
   return (
     <article
@@ -26,8 +26,8 @@ export function EventFeaturedHero({ event }: EventFeaturedHeroProps) {
           fill
           sizes="(min-width: 1024px) 1200px, 100vw"
           className={cn(
-            'object-cover grayscale transition-opacity duration-500',
-            isCompleted && 'opacity-50',
+            "object-cover transition-opacity duration-500",
+            isCompleted && "opacity-50",
           )}
           referrerPolicy="no-referrer"
           unoptimized
@@ -43,18 +43,14 @@ export function EventFeaturedHero({ event }: EventFeaturedHeroProps) {
           aria-hidden="true"
         />
 
-        <div
-          className="absolute inset-0 flex flex-col justify-between p-6 text-surface sm:p-10 md:p-14"
-        >
+        <div className="absolute inset-0 flex flex-col justify-between p-6 text-surface sm:p-10 md:p-14">
           <div className="flex items-start justify-between gap-4">
             <div className="flex flex-col gap-2">
               <div className="flex items-center gap-2 font-mono text-[10px] font-bold tracking-widest text-surface/80 uppercase">
                 <Trophy size={12} aria-hidden="true" className="text-surface" />
                 <span>Featured Event</span>
               </div>
-              <span
-                className="self-start border border-surface/70 bg-transparent px-2.5 py-1 font-mono text-[10px] font-bold tracking-widest text-surface uppercase backdrop-blur-sm"
-              >
+              <span className="self-start border border-surface/70 bg-transparent px-2.5 py-1 font-mono text-[10px] font-bold tracking-widest text-surface uppercase backdrop-blur-sm">
                 {TIER_DISPLAY[event.tier]}
               </span>
             </div>
@@ -107,7 +103,7 @@ export function EventFeaturedHero({ event }: EventFeaturedHeroProps) {
                   </dt>
                   <dd className="font-display text-sm font-bold tracking-wide text-surface uppercase sm:text-base truncate">
                     {location.city}
-                    {location.country ? `, ${location.country}` : ''}
+                    {location.country ? `, ${location.country}` : ""}
                     {location.venue && (
                       <span className="block font-mono text-[10px] font-normal tracking-wider text-surface/70 normal-case">
                         {location.venue}
@@ -135,11 +131,8 @@ export function EventFeaturedHero({ event }: EventFeaturedHeroProps) {
               </a>
 
               {event.sports.length > 0 && (
-                <ul
-                  aria-label="Disciplines"
-                  className="flex flex-wrap gap-1.5"
-                >
-                  {event.sports.map(sport => (
+                <ul aria-label="Disciplines" className="flex flex-wrap gap-1.5">
+                  {event.sports.map((sport) => (
                     <li
                       key={sport}
                       className="border border-surface/40 bg-transparent px-2.5 py-1 font-mono text-[10px] font-bold tracking-widest text-surface uppercase backdrop-blur-sm"
@@ -156,4 +149,3 @@ export function EventFeaturedHero({ event }: EventFeaturedHeroProps) {
     </article>
   );
 }
-

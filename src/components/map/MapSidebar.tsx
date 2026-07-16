@@ -203,7 +203,7 @@ export function MapSidebar({
                   alt=""
                   fill
                   sizes="48px"
-                  className="object-cover grayscale"
+                  className="object-cover"
                   referrerPolicy="no-referrer"
                   unoptimized
                 />
