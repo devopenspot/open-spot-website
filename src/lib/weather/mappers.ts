@@ -78,9 +78,35 @@ export function mapIconName(icon: string | undefined): WeatherIconName {
   }
 }
 
-export function mapCurrentWeather(item: WeatherItem | null): number {
-  if (!item) return FALLBACK_TEMP;
-  return Math.round(item.main.temp);
+export interface MappedCurrentWeather {
+  temp: number;
+  description: string;
+  humidity: number | null;
+  precipitationMm: number | null;
+}
+
+export function mapCurrentWeather(
+  item: WeatherItem | null,
+): MappedCurrentWeather {
+  if (!item) {
+    return {
+      temp: FALLBACK_TEMP,
+      description: FALLBACK_DESCRIPTION,
+      humidity: null,
+      precipitationMm: null,
+    };
+  }
+  return {
+    temp: Math.round(item.main.temp),
+    description: item.weather[0]?.description ?? FALLBACK_DESCRIPTION,
+    humidity: item.main.humidity ?? null,
+    precipitationMm:
+      item.rain?.["1h"] ??
+      item.rain?.["3h"] ??
+      item.snow?.["1h"] ??
+      item.snow?.["3h"] ??
+      null,
+  };
 }
 
 export function mapForecast(

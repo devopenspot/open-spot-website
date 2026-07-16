@@ -17,11 +17,18 @@ export interface WeatherWind {
 	speed: number
 }
 
+export interface WeatherPrecipitation {
+	"1h"?: number
+	"3h"?: number
+}
+
 export interface WeatherItem {
 	dt: number
 	main: WeatherMain
 	weather: WeatherCondition[]
 	pop?: number
 	wind?: WeatherWind
+	rain?: WeatherPrecipitation
+	snow?: WeatherPrecipitation
 	weatherIconUrl?: string
 }

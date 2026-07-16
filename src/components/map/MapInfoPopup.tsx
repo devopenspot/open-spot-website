@@ -41,7 +41,7 @@ export function MapInfoPopup({
       role="dialog"
       aria-labelledby="map-info-popup-title"
       tabIndex={-1}
-      className="fixed -top-30 md:top-4 md:absolute left-0 right-4 z-[1000] md:left-auto md:right-4 w-full md:w-80 bg-surface/95 backdrop-blur-md rounded-xl border border-outline-variant shadow-lg p-4 animate-slide-up outline-none"
+      className="fixed top-0 md:top-4 md:absolute left-0 right-4 z-[1000] md:left-auto md:right-4 w-full md:w-80 bg-surface/95 backdrop-blur-md rounded-xl border border-outline-variant shadow-lg p-4 animate-slide-up outline-none"
     >
       <div className="flex space-x-3">
         <div className="relative h-16 w-16 bg-black rounded-lg overflow-hidden shrink-0">
@@ -56,7 +56,7 @@ export function MapInfoPopup({
           />
         </div>
 
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-16">
           <span className="inline-block rounded bg-primary/10 px-1.5 py-0.5 text-[8px] font-mono font-bold uppercase tracking-wider text-primary mb-1">
             {spot.type}
           </span>
@@ -72,6 +72,15 @@ export function MapInfoPopup({
             {spot.country ? ` • ${spot.country}` : ""}
           </p>
         </div>
+
+        <div>
+          <span className="block text-[8px] text-secondary">Air temp</span>
+          <span className="font-semibold text-on-surface flex items-center gap-1">
+            {weatherIcon ? <WeatherIcon name={weatherIcon} size={12} /> : null}
+            {current !== undefined ? `${current}°C` : "—"}
+          </span>
+        </div>
+
         <button
           type="button"
           onClick={onClose}
@@ -82,21 +91,7 @@ export function MapInfoPopup({
         </button>
       </div>
 
-      <div className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-outline-variant/60 text-[10px] font-mono">
-        <div>
-          <span className="block text-[8px] text-secondary">Crowd density</span>
-          <span className="font-semibold text-on-surface">
-            {spot.crowdLevel}% occupied
-          </span>
-        </div>
-        <div>
-          <span className="block text-[8px] text-secondary">Air temp</span>
-          <span className="font-semibold text-on-surface flex items-center gap-1">
-            {weatherIcon ? <WeatherIcon name={weatherIcon} size={12} /> : null}
-            {current !== undefined ? `${current}°C` : "—"}
-          </span>
-        </div>
-      </div>
+      <div className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-outline-variant/60 text-[10px] font-mono"></div>
 
       <div className="flex space-x-2 mt-4">
         <button

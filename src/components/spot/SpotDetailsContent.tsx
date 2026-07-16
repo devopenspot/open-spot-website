@@ -3,7 +3,15 @@
 import { useId } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { MapPin, Heart, Share2, ExternalLink, Navigation, Wind } from "lucide-react";
+import {
+  MapPin,
+  Heart,
+  Share2,
+  ExternalLink,
+  Navigation,
+  Wind,
+  Droplets,
+} from "lucide-react";
 import { WeatherIcon } from "./WeatherIcon";
 import { showToast } from "@/hooks/useToast";
 import { cn } from "@/lib/cn";
@@ -32,56 +40,6 @@ function groupForecastByDay(
     }
   }
   return groups;
-}
-
-function ForecastRow({
-  label,
-  dayEntries,
-  slot,
-}: {
-  label: string;
-  dayEntries: SpotForecast[][];
-  slot: ForecastSlot;
-}) {
-  return (
-    <>
-      <div className="px-2 py-2 border-t border-outline-variant/50 first:border-t-0">
-        <span className="text-[9px] font-mono tracking-wider text-secondary uppercase">
-          {label}
-        </span>
-      </div>
-      {dayEntries.map((entries, dayIdx) => {
-        const entry = entries.find((e) => e.slot === slot);
-        if (!entry) {
-          return (
-            <div
-              key={`${slot}-${dayIdx}`}
-              className="px-2 py-2 border-t border-l border-outline-variant/50 first:border-t-0 text-center text-[10px] text-secondary font-mono"
-            >
-              —
-            </div>
-          );
-        }
-        return (
-          <div
-            key={`${entry.day}-${slot}-${dayIdx}`}
-            className="px-2 py-2 border-t border-l border-outline-variant/50 first:border-t-0 text-center"
-            title={entry.description}
-          >
-            <div className="flex justify-center">
-              <WeatherIcon name={entry.icon} size={14} />
-            </div>
-            <span className="block text-[10px] font-semibold text-on-surface font-mono">
-              {entry.temp}°C
-            </span>
-            <span className="block text-[9px] text-secondary truncate font-sans">
-              {entry.description}
-            </span>
-          </div>
-        );
-      })}
-    </>
-  );
 }
 
 export function SpotDetailsContent({
@@ -116,11 +74,7 @@ export function SpotDetailsContent({
   const tempMax = weather?.tempMax ?? null;
   const currentIcon = weather?.forecast?.[0]?.icon ?? "sunny";
   const forecastByDay = groupForecastByDay(weather?.forecast);
-  const slotRows: Array<{ slot: ForecastSlot; label: string }> = [
-    { slot: "morning", label: "Morning" },
-    { slot: "afternoon", label: "Afternoon" },
-    { slot: "night", label: "Night" },
-  ];
+  const forecastSlots: ForecastSlot[] = ["morning", "afternoon", "night"];
   return (
     <div className="flex flex-col md:flex-row w-full">
       <div className="relative h-64 w-full bg-black md:h-auto md:w-1/2 overflow-hidden flex items-center justify-center group">
@@ -155,7 +109,6 @@ export function SpotDetailsContent({
           </p>
         </div>
       </div>
-
       <div className="flex-1 overflow-y-auto p-6 md:p-8 no-scrollbar flex flex-col justify-between bg-surface">
         <div>
           <div className="flex items-center justify-between border-b border-outline-variant pb-4 mb-6 gap-2">
@@ -197,85 +150,118 @@ export function SpotDetailsContent({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-1 mb-6">
-            <div className="rounded-xl bg-surface-container-low border border-outline-variant p-4">
-              <span className="block font-mono text-[10px] tracking-wider text-secondary uppercase mb-2">
-                Weather status
-              </span>
-              <div className="flex items-center justify-between mb-3 gap-3">
-                <div className="flex items-center space-x-2">
-                  <WeatherIcon name={currentIcon} size={24} />
-                  <div>
-                    <span className="text-2xl font-bold font-display">
-                      {weather?.current ?? "—"}°C
-                    </span>
-                    <span className="block text-[10px] text-secondary font-mono">
-                      Current temp
-                    </span>
-                  </div>
-                </div>
-                <dl className="flex items-center divide-x divide-outline-variant/60 text-right">
-                  <div className="px-3 first:pl-0 last:pr-0">
-                    <dt className="text-[9px] font-mono tracking-wider text-secondary uppercase flex items-center justify-end gap-1">
-                      <Wind size={9} aria-hidden="true" />
-                      Wind
-                    </dt>
-                    <dd className="text-xs font-semibold text-on-surface font-mono">
-                      {windKmh !== null ? `${windKmh} km/h` : "—"}
-                    </dd>
-                  </div>
-                  <div className="px-3 first:pl-0 last:pr-0">
-                    <dt className="text-[9px] font-mono tracking-wider text-secondary uppercase">
-                      Min / Max
-                    </dt>
-                    <dd className="text-xs font-semibold text-on-surface font-mono">
-                      {tempMin !== null && tempMax !== null
-                        ? `${tempMin}° / ${tempMax}°`
-                        : "—"}
-                    </dd>
-                  </div>
-                </dl>
+          <div className="mb-6 rounded-xl bg-surface-container-low border border-outline-variant p-4">
+            <span className="block font-mono text-[10px] tracking-wider text-secondary uppercase mb-3">
+              Weather status
+            </span>
+            <div className="mb-4 flex items-center gap-4 border-b border-outline-variant/40 pb-4">
+              <WeatherIcon name={currentIcon} size={40} />
+              <div>
+                <span className="block text-5xl font-display font-bold tracking-tight leading-none">
+                  {weather?.current ?? "—"}°C
+                </span>
+                <span className="mt-1 block text-[10px] text-secondary font-mono">
+                  {weather?.description ?? "—"}
+                </span>
               </div>
-              <span className="block font-mono text-[9px] tracking-wider text-secondary uppercase mb-1.5">
-                2-day forecast
-              </span>
-              {forecastByDay.length === 0 ? (
-                <p className="text-[10px] text-secondary font-mono py-2">
-                  Forecast unavailable
-                </p>
-              ) : (
-                <div
-                  className="grid border border-outline-variant/50 rounded bg-surface-container"
-                  style={{
-                    gridTemplateColumns: `70px repeat(${forecastByDay.length}, minmax(0, 1fr))`,
-                  }}
-                >
-                  <div className="px-2 py-1.5 border-b border-outline-variant/50">
-                    <span className="text-[9px] font-mono tracking-wider text-secondary uppercase">
-                      Slot
-                    </span>
-                  </div>
-                  {forecastByDay.map((dayEntries, dayIdx) => (
+            </div>
+            <dl className="mb-4 grid grid-cols-3 divide-x divide-outline-variant/60 text-right">
+              <div className="px-3 first:pl-0 last:pr-0">
+                <dt className="text-[9px] font-mono tracking-wider text-secondary uppercase flex items-center justify-end gap-1">
+                  <Wind size={9} aria-hidden="true" />
+                  Wind
+                </dt>
+                <dd className="text-xs font-semibold text-on-surface font-mono">
+                  {windKmh !== null ? `${windKmh} km/h` : "—"}
+                </dd>
+              </div>
+              <div className="px-3 first:pl-0 last:pr-0">
+                <dt className="text-[9px] font-mono tracking-wider text-secondary uppercase flex items-center justify-end gap-1">
+                  <Droplets size={9} aria-hidden="true" />
+                  Humidity
+                </dt>
+                <dd className="text-xs font-semibold text-on-surface font-mono">
+                  {weather?.humidity != null ? `${weather.humidity}%` : "—"}
+                </dd>
+              </div>
+              <div className="px-3 first:pl-0 last:pr-0">
+                <dt className="text-[9px] font-mono tracking-wider text-secondary uppercase">
+                  Min / Max
+                </dt>
+                <dd className="text-xs font-semibold text-on-surface font-mono">
+                  {tempMin !== null && tempMax !== null
+                    ? `${tempMin}° / ${tempMax}°`
+                    : "—"}
+                </dd>
+              </div>
+            </dl>
+
+            <span className="block font-mono text-[9px] tracking-wider text-secondary uppercase mb-2">
+              Forecast
+            </span>
+            {forecastByDay.length === 0 ? (
+              <p className="text-[10px] text-secondary font-mono py-2">
+                Forecast unavailable
+              </p>
+            ) : (
+              <div>
+                {forecastByDay.map((dayEntries, dayIdx) => {
+                  const temps = dayEntries.map((e) => e.temp);
+                  const dayMin =
+                    temps.length > 0 ? Math.min(...temps) : null;
+                  const dayMax =
+                    temps.length > 0 ? Math.max(...temps) : null;
+                  return (
                     <div
                       key={`${dayEntries[0]?.day ?? dayIdx}-${dayIdx}`}
-                      className="px-2 py-1.5 border-b border-outline-variant/50 border-l border-outline-variant/50 text-center"
+                      className="flex items-center gap-3 py-2 border-t border-outline-variant/40 first:border-t-0"
                     >
-                      <span className="text-[10px] font-bold font-mono text-on-surface">
+                      <span className="w-10 shrink-0 font-mono text-[10px] font-bold uppercase text-on-surface">
                         {dayEntries[0]?.day ?? "—"}
                       </span>
+                      <span className="font-display text-sm font-bold text-on-surface font-mono">
+                        {dayMin !== null && dayMax !== null
+                          ? `${dayMax}° / ${dayMin}°`
+                          : "—"}
+                      </span>
+                      <div className="ml-auto flex items-center gap-3">
+                        {forecastSlots.map((slot) => {
+                          const entry = dayEntries.find(
+                            (e) => e.slot === slot,
+                          );
+                          if (!entry) {
+                            return (
+                              <span
+                                key={slot}
+                                className="flex items-center gap-1 text-[10px] font-mono text-secondary"
+                                title={`${slot} unavailable`}
+                              >
+                                <span>—</span>
+                              </span>
+                            );
+                          }
+                          return (
+                            <span
+                              key={slot}
+                              className="flex items-center gap-1 text-[10px] font-mono"
+                              title={entry.description}
+                            >
+                              <WeatherIcon
+                                name={entry.icon}
+                                size={12}
+                              />
+                              <span className="font-semibold text-on-surface">
+                                {entry.temp}°
+                              </span>
+                            </span>
+                          );
+                        })}
+                      </div>
                     </div>
-                  ))}
-                  {slotRows.map(({ slot, label }) => (
-                    <ForecastRow
-                      key={slot}
-                      label={label}
-                      dayEntries={forecastByDay}
-                      slot={slot}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           <div className="mb-6 rounded-xl bg-surface-container-low border border-outline-variant p-4">
@@ -285,7 +271,7 @@ export function SpotDetailsContent({
             <p className="text-xs text-on-surface-variant font-medium leading-relaxed">
               {spot.address}
             </p>
-            <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1.5">
+            <div className="mt-3 pt-3 border-t border-outline-variant/40 flex flex-wrap items-center gap-x-4 gap-y-1.5">
               <a
                 href={directionsUrl}
                 target="_blank"
@@ -309,7 +295,7 @@ export function SpotDetailsContent({
           </div>
         </div>
 
-        <div className="mt-6 border-t border-outline-variant pt-4 flex flex-col sm:flex-row gap-2 sm:space-x-3">
+        <div className="mt-8 border-t border-outline-variant pt-4 flex flex-col sm:flex-row gap-2 sm:space-x-3">
           <a
             href={directionsUrl}
             target="_blank"
