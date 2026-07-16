@@ -147,15 +147,10 @@ function BaseSpotCardImpl({
           <div className="flex items-center space-x-1">
             <span
               aria-hidden="true"
-              className={cn(
-                "h-1.5 w-1.5 rounded-full",
-                spot.crowdLevel > CROWD_LEVEL.HIGH_MIN
-                  ? "bg-amber-600 animate-pulse-dot"
-                  : "bg-primary",
-              )}
+              className={cn("h-1.5 w-1.5 rounded-full", "bg-primary")}
             />
             <span className="text-secondary uppercase">
-              CROWD: {spot.crowdLevel}%
+              {spot.sports.join("|")}
             </span>
           </div>
           <span
