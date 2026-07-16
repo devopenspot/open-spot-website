@@ -160,7 +160,7 @@ export default function MapTab({ searchParams, nearbyRequested }: MapTabProps) {
     if (hasRegionFilter) {
       leafletRef.current?.fitBoundsToSpots();
     }
-  }, [nearYou, hasRegionFilter]);
+  }, [nearYou, hasRegionFilter, region, country]);
 
   const initialCenter: [number, number] =
     nearYou && userLatLon

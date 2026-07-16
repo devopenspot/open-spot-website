@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo } from "react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ChevronRight, Award, Globe } from "lucide-react";
 import { ROUTES } from "@/lib/nav";
 import { useSpotsStore } from "@/stores/spots-store";
@@ -15,6 +15,7 @@ import { EventCard } from "@/components/sport-events/EventCard";
 import { EventFeaturedHero } from "@/components/sport-events/EventFeaturedHero";
 import type { Spot } from "@/lib/types";
 import type { SportEventEnriched } from "@/types/sport-events";
+import { useUIStore } from "@/stores/ui-store";
 
 const SHELF_LIMIT = 4;
 
@@ -25,9 +26,11 @@ interface ExploreTabProps {
 
 export default function ExploreTab({ events, featured }: ExploreTabProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const spots = useSpotsStore((s) => s.spots);
   const regions = useSpotsStore((s) => s.regions);
   const user = useUser();
+  const openSearch = useUIStore((s) => s.openSearch);
   const { savedIds, toggle: toggleSaved } = useSavedSpots(user.id);
 
   const spotlightSpots = useMemo(() => spots.slice(0, 6), [spots]);
@@ -73,9 +76,13 @@ export default function ExploreTab({ events, featured }: ExploreTabProps) {
               key={region.name}
               className="group relative h-48 overflow-hidden rounded-xl bg-black border border-outline-variant shadow-sm"
             >
-              <a
-                href={region.link}
-                rel="noopener noreferrer"
+              <button
+                onClick={() => {
+                  const params = new URLSearchParams(searchParams.toString());
+                  params.set("searchRegion", region.name);
+                  router.replace(`/?${params.toString()}`, { scroll: false });
+                  openSearch();
+                }}
                 className="block relative h-full w-full"
               >
                 <Image
@@ -107,7 +114,7 @@ export default function ExploreTab({ events, featured }: ExploreTabProps) {
                     </p>
                   </div>
                 </div>
-              </a>
+              </button>
             </div>
           ))}
         </div>

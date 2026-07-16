@@ -95,7 +95,9 @@ export function RegionFilter({
     );
   }
 
-  return <RegionList regions={regions} region={region} onPick={handleRegionPick} />;
+  return (
+    <RegionList regions={regions} region={region} onPick={handleRegionPick} />
+  );
 }
 
 interface RegionListProps {
@@ -170,7 +172,9 @@ function RegionList({ regions, region, onPick }: RegionListProps) {
                   <span
                     className={cn(
                       "text-[11px] leading-snug line-clamp-2",
-                      active ? "text-surface/80" : "text-secondary group-hover:text-surface/80",
+                      active
+                        ? "text-surface/80"
+                        : "text-secondary group-hover:text-surface/80",
                     )}
                   >
                     {r.desc}

@@ -25,6 +25,8 @@ vi.mock("@/stores/ui-store", () => ({
 
 vi.mock("next/navigation", () => ({
   useSearchParams: () => new URLSearchParams(),
+  useRouter: () => ({ replace: vi.fn(), push: vi.fn() }),
+  usePathname: () => "/",
 }));
 
 const TEST_REGIONS: readonly Region[] = [

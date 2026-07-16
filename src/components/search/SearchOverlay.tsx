@@ -3,11 +3,12 @@
 import { useDeferredValue, useEffect, useId, useRef, useState } from "react";
 import { Search, X, MapPin, ArrowRight } from "lucide-react";
 import Image from "next/image";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { Overlay } from "@/components/feedback/Overlay";
 import { SEARCH_FOCUS_DELAY_MS } from "@/lib/constants";
 import { ROUTES } from "@/lib/nav";
 import { useUIStore } from "@/stores/ui-store";
+import { useSpotsStore } from "@/stores/spots-store";
 import type { Spot } from "@/lib/types";
 import { getSpotDistanceLabel } from "@/lib/spots/geo";
 import { RegionFilter } from "@/components/search/RegionFilter";
@@ -33,6 +34,9 @@ export function SearchOverlay({
   const inputRef = useRef<HTMLInputElement>(null);
   const openSearch = useUIStore((s) => s.openSearch);
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+  const regions = useSpotsStore((s) => s.regions);
 
   const {
     region,
@@ -62,6 +66,28 @@ export function SearchOverlay({
   useEffect(() => {
     if (isOpen) openSearch();
   }, [isOpen, openSearch]);
+
+  const searchRegionName = searchParams.get("searchRegion");
+  useEffect(() => {
+    if (!isOpen) return;
+    if (!searchRegionName) return;
+    if (!regions.some((r) => r.name === searchRegionName)) return;
+    setRegion(searchRegionName);
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("searchRegion");
+    const cleaned = params.toString();
+    router.replace(cleaned ? `${pathname}?${cleaned}` : pathname, {
+      scroll: false,
+    });
+  }, [
+    isOpen,
+    searchRegionName,
+    regions,
+    setRegion,
+    searchParams,
+    router,
+    pathname,
+  ]);
 
   const handleClose = () => {
     cancelPending();
