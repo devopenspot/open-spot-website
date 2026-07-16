@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useCallback } from "react";
+import { X } from "lucide-react";
 import { cn } from "@/lib/cn";
 import type { Spot } from "@/lib/types";
 import type { LatLon } from "@/lib/spots/geo";
@@ -20,6 +21,9 @@ interface MapSidebarProps {
   radiusMiles?: NearbyRadiusMiles;
   onRadiusChange?: (miles: NearbyRadiusMiles) => void;
   showRadiusChips?: boolean;
+  region?: string | null;
+  country?: string | null;
+  onClearFilter?: () => void;
 }
 
 export function MapSidebar({
@@ -31,12 +35,20 @@ export function MapSidebar({
   radiusMiles,
   onRadiusChange,
   showRadiusChips = true,
+  region = null,
+  country = null,
+  onClearFilter,
 }: MapSidebarProps) {
   const showChips =
     showRadiusChips &&
     userLocation !== null &&
     radiusMiles !== undefined &&
     onRadiusChange !== undefined;
+
+  const hasFilter = region !== null || country !== null;
+  const filterLabel = country
+    ? `${country} (${region})`
+    : region;
 
   const handleChipClick = useCallback(
     (miles: NearbyRadiusMiles) => {
@@ -63,6 +75,29 @@ export function MapSidebar({
             {spots.length} spots active
           </span>
         </div>
+        {hasFilter && filterLabel && (
+          <div
+            id="map-active-filter"
+            className="flex items-center gap-2"
+          >
+            <span className="font-mono text-[9px] font-bold tracking-widest uppercase text-secondary">
+              Filter
+            </span>
+            <span className="flex items-center gap-1 border border-primary px-2 py-0.5 text-[9px] font-mono font-bold uppercase tracking-wider text-primary">
+              <span>{filterLabel}</span>
+              {onClearFilter && (
+                <button
+                  type="button"
+                  onClick={onClearFilter}
+                  aria-label="Clear region and country filter"
+                  className="ml-0.5 -mr-1 p-0.5 hover:bg-primary hover:text-on-primary focus-visible:bg-primary focus-visible:text-on-primary"
+                >
+                  <X size={10} aria-hidden="true" />
+                </button>
+              )}
+            </span>
+          </div>
+        )}
         {showChips && radiusMiles && (
           <div
             id="map-radius-chips"
@@ -146,7 +181,9 @@ export function MapSidebar({
                   {spot.name}
                 </span>
                 <span className="flex items-center justify-between mt-1">
-                  <span className="text-[9px] text-secondary truncate">{spot.city}</span>
+                  <span className="text-[9px] text-secondary truncate">
+                    {spot.city}
+                  </span>
                   <span className="flex items-center space-x-1">
                     <span
                       aria-hidden="true"
@@ -163,10 +200,27 @@ export function MapSidebar({
           );
         })}
         {spots.length === 0 && (
-          <div className="p-6 text-center text-xs text-secondary font-mono">
-            {showChips
-              ? `No spots within ${radiusMiles} mi — expand the grid.`
-              : "No locations match filter"}
+          <div className="p-6 text-center text-xs text-secondary font-mono space-y-3">
+            {hasFilter && filterLabel ? (
+              <>
+                <p>
+                  No spots in {filterLabel}.
+                </p>
+                {onClearFilter && (
+                  <button
+                    type="button"
+                    onClick={onClearFilter}
+                    className="font-mono text-[10px] font-bold tracking-widest uppercase text-primary hover:underline focus-visible:underline"
+                  >
+                    Clear filter
+                  </button>
+                )}
+              </>
+            ) : showChips ? (
+              `No spots within ${radiusMiles} mi — expand the grid.`
+            ) : (
+              "No locations match filter"
+            )}
           </div>
         )}
       </div>

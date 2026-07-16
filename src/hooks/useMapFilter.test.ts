@@ -431,6 +431,38 @@ describe("useMapFilter with defer", () => {
     expect(result.current.hasPending).toBe(false);
   });
 
+  it("commit() writes the country to the URL when setCountry, commit, and cancelPending share one tick (picker flow)", () => {
+    mockPathname = "/";
+    mockSearchParams = new URLSearchParams("region=europe");
+    const { result } = renderDeferred({ targetPath: "/map" });
+    act(() => {
+      result.current.setCountry("France");
+      result.current.commit();
+      result.current.cancelPending();
+    });
+    expect(routerPush).toHaveBeenCalledTimes(1);
+    expect(routerReplace).not.toHaveBeenCalled();
+    const [url, options] = routerPush.mock.calls[0] as [string, { scroll: boolean }];
+    expect(url).toBe("/map?region=europe&country=france");
+    expect(options).toEqual({ scroll: false });
+    expect(result.current.hasPending).toBe(false);
+  });
+
+  it("commit() flushes the staged region for 'View all' within the same tick as cancelPending", () => {
+    mockPathname = "/";
+    const { result } = renderDeferred({ targetPath: "/map" });
+    act(() => {
+      result.current.setRegion("Asia");
+      result.current.commit();
+      result.current.cancelPending();
+    });
+    expect(routerPush).toHaveBeenCalledTimes(1);
+    expect(routerReplace).not.toHaveBeenCalled();
+    const [url] = routerPush.mock.calls[0] as [string, unknown];
+    expect(url).toBe("/map?region=asia");
+    expect(result.current.hasPending).toBe(false);
+  });
+
   it("cancelPending() discards pending and restores URL-derived reads", () => {
     mockSearchParams = new URLSearchParams("region=europe");
     const { result } = renderDeferred({ targetPath: "/map" });

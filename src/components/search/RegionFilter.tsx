@@ -67,8 +67,8 @@ export function RegionFilter({
   const handleCountryPick = (name: string) => {
     const next = country === name ? null : name;
     setCountry(next);
-    onAfterChange?.();
     onCommit?.();
+    onAfterChange?.();
   };
 
   const handleBack = () => {
@@ -76,8 +76,8 @@ export function RegionFilter({
   };
 
   const handleViewAll = () => {
-    onAfterChange?.();
     onCommit?.();
+    onAfterChange?.();
   };
 
   if (region && selectedRegion) {

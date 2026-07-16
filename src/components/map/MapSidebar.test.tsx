@@ -115,3 +115,94 @@ describe("<MapSidebar> radius chips", () => {
     expect(onRadiusChange).toHaveBeenCalledWith(25);
   });
 });
+
+describe("<MapSidebar> active filter chip", () => {
+  it("renders the chip with 'Country (Region)' when both are set", () => {
+    render(
+      <MapSidebar
+        spots={[]}
+        activeId={null}
+        savedIds={new Set()}
+        onSelect={vi.fn()}
+        region="Europe"
+        country="France"
+        onClearFilter={vi.fn()}
+      />,
+    );
+    expect(screen.getByText("France (Europe)")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /clear region and country filter/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("renders the chip with just the region when no country is set", () => {
+    render(
+      <MapSidebar
+        spots={[]}
+        activeId={null}
+        savedIds={new Set()}
+        onSelect={vi.fn()}
+        region="Europe"
+        onClearFilter={vi.fn()}
+      />,
+    );
+    expect(screen.getByText("Europe")).toBeInTheDocument();
+    expect(screen.queryByText(/Europe.*Europe/)).not.toBeInTheDocument();
+  });
+
+  it("does not render the chip when no filter is set", () => {
+    render(
+      <MapSidebar
+        spots={[NEARBY]}
+        activeId={null}
+        savedIds={new Set()}
+        onSelect={vi.fn()}
+        onClearFilter={vi.fn()}
+      />,
+    );
+    expect(screen.queryByText(/^Filter$/)).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /clear region and country filter/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("calls onClearFilter when the chip's X is clicked", async () => {
+    const onClearFilter = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <MapSidebar
+        spots={[]}
+        activeId={null}
+        savedIds={new Set()}
+        onSelect={vi.fn()}
+        region="Europe"
+        country="France"
+        onClearFilter={onClearFilter}
+      />,
+    );
+
+    await user.click(
+      screen.getByRole("button", { name: /clear region and country filter/i }),
+    );
+
+    expect(onClearFilter).toHaveBeenCalledTimes(1);
+  });
+
+  it("names the filter in the empty state and offers a clear action", () => {
+    render(
+      <MapSidebar
+        spots={[]}
+        activeId={null}
+        savedIds={new Set()}
+        onSelect={vi.fn()}
+        region="Europe"
+        country="France"
+        onClearFilter={vi.fn()}
+      />,
+    );
+    expect(screen.getByText(/No spots in France \(Europe\)/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /^clear filter$/i }),
+    ).toBeInTheDocument();
+  });
+});

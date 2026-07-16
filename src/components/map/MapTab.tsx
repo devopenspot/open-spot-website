@@ -42,7 +42,7 @@ export default function MapTab({ searchParams, nearbyRequested }: MapTabProps) {
   const user = useUser();
   const { savedIds, toggle: toggleSaved } = useSavedSpots(user.id);
   const { weather } = useWeather();
-  const { region, country, filteredSpots } = useMapFilter(spots, searchParams);
+  const { region, country, filteredSpots, clearAll } = useMapFilter(spots, searchParams);
   const {
     location,
     status,
@@ -189,6 +189,9 @@ export default function MapTab({ searchParams, nearbyRequested }: MapTabProps) {
         radiusMiles={nearYou ? radiusMiles : undefined}
         onRadiusChange={nearYou ? setRadiusMiles : undefined}
         showRadiusChips={nearYou}
+        region={region}
+        country={country}
+        onClearFilter={hasRegionFilter ? clearAll : undefined}
       />
 
       <div className="flex-1 flex flex-col">

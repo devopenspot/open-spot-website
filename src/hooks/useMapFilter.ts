@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, type ReadonlyURLSearchParams } from "next/navigation";
 import { useSpotsStore } from "@/stores/spots-store";
 import type { Spot } from "@/lib/types";
@@ -92,6 +92,12 @@ export function useMapFilter(
   const { targetPath, defer = false } = options;
   const regions = useSpotsStore((s) => s.regions);
   const [pending, setPending] = useState<PendingSelection | null>(null);
+  const pendingRef = useRef<PendingSelection | null>(null);
+
+  const stage = useCallback((next: PendingSelection | null) => {
+    pendingRef.current = next;
+    setPending(next);
+  }, []);
 
   const slugs = useMemo(() => buildSlugMaps(regions), [regions]);
   const validRegionNames = useMemo(
@@ -155,7 +161,7 @@ export function useMapFilter(
     (name: string | null) => {
       if (name === null) {
         if (defer) {
-          setPending({ region: null, country: null });
+          stage({ region: null, country: null });
           return;
         }
         writeQuery({ region: null, country: null });
@@ -168,19 +174,19 @@ export function useMapFilter(
           ? null
           : country;
       if (defer) {
-        setPending({ region: name, country: nextCountry });
+        stage({ region: name, country: nextCountry });
         return;
       }
       writeQuery({ region: name, country: nextCountry });
     },
-    [country, defer, regions, validRegionNames, writeQuery],
+    [country, defer, regions, stage, validRegionNames, writeQuery],
   );
 
   const setCountry = useCallback(
     (name: string | null) => {
       if (name === null) {
         if (defer) {
-          setPending({ region, country: null });
+          stage({ region, country: null });
           return;
         }
         writeQuery({ region, country: null });
@@ -188,30 +194,34 @@ export function useMapFilter(
       }
       if (!validCountryNames.has(name)) return;
       if (defer) {
-        setPending({ region, country: name });
+        stage({ region, country: name });
         return;
       }
       writeQuery({ region, country: name });
     },
-    [defer, region, validCountryNames, writeQuery],
+    [defer, region, stage, validCountryNames, writeQuery],
   );
 
   const clearAll = useCallback(() => {
     if (defer) {
-      setPending({ region: null, country: null });
+      stage({ region: null, country: null });
       return;
     }
     writeQuery({ region: null, country: null });
-  }, [defer, writeQuery]);
+  }, [defer, stage, writeQuery]);
 
   const commit = useCallback(() => {
-    if (!defer || !pending) return;
-    writeQuery(pending);
+    if (!defer) return;
+    const next = pendingRef.current;
+    if (!next) return;
+    writeQuery(next);
+    pendingRef.current = null;
     setPending(null);
-  }, [defer, pending, writeQuery]);
+  }, [defer, writeQuery]);
 
   const cancelPending = useCallback(() => {
     if (!defer) return;
+    pendingRef.current = null;
     setPending(null);
   }, [defer]);
 
