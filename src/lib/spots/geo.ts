@@ -31,7 +31,7 @@ export function formatDistanceMiles(miles: number): string {
   return `${Math.round(miles / 10) * 10} MILES AWAY`;
 }
 
-export const SPOT_DISTANCE_CTA_LABEL = "SHARE LOCATION FOR DISTANCE";
+export const SPOT_DISTANCE_CTA_LABEL = "CHECK DISTANCE";
 
 export type SpotDistanceInfo =
   | { kind: "distance"; label: string; miles: number }

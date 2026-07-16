@@ -130,7 +130,7 @@ export function SpotDetailsContent({
           </p>
         </div>
       </div>
-      <div className="flex-1 overflow-y-auto p-6 md:p-8 no-scrollbar flex flex-col justify-between bg-surface">
+      <div className="flex-1 overflow-y-auto py-6 md:p-8 no-scrollbar flex flex-col justify-between bg-surface">
         <div>
           <div className="flex items-center justify-between border-b border-outline-variant pb-4 mb-6 gap-2">
             {distanceInfo.kind === "distance" ? (
@@ -235,7 +235,7 @@ export function SpotDetailsContent({
                   <dt className="whitespace-nowrap text-[10px] font-mono tracking-wider text-secondary uppercase">
                     Min / Max
                   </dt>
-                  <dd className="w-full truncate text-xs font-semibold text-on-surface font-mono">
+                  <dd className="w-full truncate text-[9px] font-semibold text-on-surface font-mono">
                     {tempMin !== null && tempMax !== null
                       ? `${tempMin}° / ${tempMax}°`
                       : "—"}
