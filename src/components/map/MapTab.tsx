@@ -42,7 +42,10 @@ export default function MapTab({ searchParams, nearbyRequested }: MapTabProps) {
   const user = useUser();
   const { savedIds, toggle: toggleSaved } = useSavedSpots(user.id);
   const { weather } = useWeather();
-  const { region, country, filteredSpots, clearAll } = useMapFilter(spots, searchParams);
+  const { region, country, filteredSpots, clearAll } = useMapFilter(
+    spots,
+    searchParams,
+  );
   const {
     location,
     status,
@@ -59,22 +62,21 @@ export default function MapTab({ searchParams, nearbyRequested }: MapTabProps) {
     [location],
   );
 
+  const hasRegionFilter = region !== null || country !== null;
+  const nearYou =
+    nearbyRequested && status === "granted" && userLatLon !== null;
+
+  const sourceSpots = nearYou ? spots : filteredSpots;
+
   const orderedSpots = useMemo(() => {
-    if (!userLatLon) return filteredSpots;
+    if (!userLatLon) return sourceSpots;
     const origin = userLatLon;
-    return [...filteredSpots].sort(
+    return [...sourceSpots].sort(
       (a, b) =>
         haversineMiles(origin.lat, origin.lon, a.location.lat, a.location.lon) -
         haversineMiles(origin.lat, origin.lon, b.location.lat, b.location.lon),
     );
-  }, [filteredSpots, userLatLon]);
-
-  const hasRegionFilter = region !== null || country !== null;
-  const nearYou =
-    nearbyRequested &&
-    status === "granted" &&
-    userLatLon !== null &&
-    !hasRegionFilter;
+  }, [sourceSpots, userLatLon]);
 
   const sidebarSpots = useMemo(() => {
     if (!nearYou || !userLatLon) return orderedSpots;
@@ -144,6 +146,23 @@ export default function MapTab({ searchParams, nearbyRequested }: MapTabProps) {
     if (nearbyRequested) dismissNearby();
   }, [clearLocation, nearbyRequested, dismissNearby]);
 
+  const handleSelectMode = useCallback(
+    (next: "nearby" | "filtered") => {
+      if (next === "nearby") {
+        const params = new URLSearchParams(searchParams.toString());
+        params.set("nearby", "1");
+        const query = params.toString();
+        router.replace(query ? `${ROUTES.map}?${query}` : ROUTES.map, {
+          scroll: false,
+        });
+        void requestLocation();
+        return;
+      }
+      dismissNearby();
+    },
+    [searchParams, router, requestLocation, dismissNearby],
+  );
+
   const gridTitle = region
     ? country
       ? `${country} (${region})`
@@ -169,7 +188,7 @@ export default function MapTab({ searchParams, nearbyRequested }: MapTabProps) {
         ? [sidebarSpots[0].location.lat, sidebarSpots[0].location.lon]
         : [20, 0];
   const initialZoom = nearYou ? NEAR_YOU_INITIAL_ZOOM : 2;
-
+  const mapMode: "nearby" | "filtered" = nearbyRequested ? "nearby" : "filtered";
   return (
     <section
       id="map-tab"
@@ -192,6 +211,8 @@ export default function MapTab({ searchParams, nearbyRequested }: MapTabProps) {
         region={region}
         country={country}
         onClearFilter={hasRegionFilter ? clearAll : undefined}
+        mode={mapMode}
+        onSelectMode={handleSelectMode}
       />
 
       <div className="flex-1 flex flex-col">

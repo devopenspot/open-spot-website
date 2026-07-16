@@ -39,9 +39,13 @@ describe("<MapSidebar> radius chips", () => {
         activeId={null}
         savedIds={new Set()}
         onSelect={vi.fn()}
+        mode="filtered"
+        onSelectMode={vi.fn()}
       />,
     );
-    expect(screen.queryByRole("radiogroup")).toBeNull();
+    expect(
+      screen.queryByRole("radiogroup", { name: /nearby radius/i }),
+    ).toBeNull();
     expect(screen.getByText("3 spots active")).toBeInTheDocument();
   });
 
@@ -55,6 +59,8 @@ describe("<MapSidebar> radius chips", () => {
         userLocation={ORIGIN}
         radiusMiles={50}
         onRadiusChange={vi.fn()}
+        mode="filtered"
+        onSelectMode={vi.fn()}
       />,
     );
     const group = screen.getByRole("radiogroup", { name: /nearby radius/i });
@@ -73,6 +79,8 @@ describe("<MapSidebar> radius chips", () => {
         userLocation={ORIGIN}
         radiusMiles={50}
         onRadiusChange={vi.fn()}
+        mode="filtered"
+        onSelectMode={vi.fn()}
       />,
     );
     expect(screen.getByText("NEAR")).toBeInTheDocument();
@@ -90,6 +98,8 @@ describe("<MapSidebar> radius chips", () => {
         userLocation={ORIGIN}
         radiusMiles={10}
         onRadiusChange={vi.fn()}
+        mode="filtered"
+        onSelectMode={vi.fn()}
       />,
     );
     expect(
@@ -109,6 +119,8 @@ describe("<MapSidebar> radius chips", () => {
         userLocation={ORIGIN}
         radiusMiles={50}
         onRadiusChange={onRadiusChange}
+        mode="filtered"
+        onSelectMode={vi.fn()}
       />,
     );
     await user.click(screen.getByRole("radio", { name: "25 mi" }));
@@ -127,6 +139,8 @@ describe("<MapSidebar> active filter chip", () => {
         region="Europe"
         country="France"
         onClearFilter={vi.fn()}
+        mode="filtered"
+        onSelectMode={vi.fn()}
       />,
     );
     expect(screen.getByText("France (Europe)")).toBeInTheDocument();
@@ -144,6 +158,8 @@ describe("<MapSidebar> active filter chip", () => {
         onSelect={vi.fn()}
         region="Europe"
         onClearFilter={vi.fn()}
+        mode="filtered"
+        onSelectMode={vi.fn()}
       />,
     );
     expect(screen.getByText("Europe")).toBeInTheDocument();
@@ -158,6 +174,8 @@ describe("<MapSidebar> active filter chip", () => {
         savedIds={new Set()}
         onSelect={vi.fn()}
         onClearFilter={vi.fn()}
+        mode="filtered"
+        onSelectMode={vi.fn()}
       />,
     );
     expect(screen.queryByText(/^Filter$/)).not.toBeInTheDocument();
@@ -178,6 +196,8 @@ describe("<MapSidebar> active filter chip", () => {
         region="Europe"
         country="France"
         onClearFilter={onClearFilter}
+        mode="filtered"
+        onSelectMode={vi.fn()}
       />,
     );
 
@@ -198,11 +218,73 @@ describe("<MapSidebar> active filter chip", () => {
         region="Europe"
         country="France"
         onClearFilter={vi.fn()}
+        mode="filtered"
+        onSelectMode={vi.fn()}
       />,
     );
     expect(screen.getByText(/No spots in France \(Europe\)/i)).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /^clear filter$/i }),
     ).toBeInTheDocument();
+  });
+});
+
+describe("<MapSidebar> mode switcher", () => {
+  it("renders both options with the matching aria-checked for mode='filtered'", () => {
+    render(
+      <MapSidebar
+        spots={[]}
+        activeId={null}
+        savedIds={new Set()}
+        onSelect={vi.fn()}
+        mode="filtered"
+        onSelectMode={vi.fn()}
+      />,
+    );
+    const group = screen.getByRole("radiogroup", { name: /map mode/i });
+    expect(group).toBeInTheDocument();
+    const filtered = screen.getByRole("radio", { name: /filtered/i });
+    const nearby = screen.getByRole("radio", { name: /nearby/i });
+    expect(filtered).toHaveAttribute("aria-checked", "true");
+    expect(nearby).toHaveAttribute("aria-checked", "false");
+  });
+
+  it("renders both options with the matching aria-checked for mode='nearby'", () => {
+    render(
+      <MapSidebar
+        spots={[]}
+        activeId={null}
+        savedIds={new Set()}
+        onSelect={vi.fn()}
+        mode="nearby"
+        onSelectMode={vi.fn()}
+      />,
+    );
+    const filtered = screen.getByRole("radio", { name: /filtered/i });
+    const nearby = screen.getByRole("radio", { name: /nearby/i });
+    expect(filtered).toHaveAttribute("aria-checked", "false");
+    expect(nearby).toHaveAttribute("aria-checked", "true");
+  });
+
+  it("calls onSelectMode with the clicked mode", async () => {
+    const onSelectMode = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <MapSidebar
+        spots={[]}
+        activeId={null}
+        savedIds={new Set()}
+        onSelect={vi.fn()}
+        mode="filtered"
+        onSelectMode={onSelectMode}
+      />,
+    );
+
+    await user.click(screen.getByRole("radio", { name: /nearby/i }));
+    expect(onSelectMode).toHaveBeenCalledWith("nearby");
+
+    await user.click(screen.getByRole("radio", { name: /filtered/i }));
+    expect(onSelectMode).toHaveBeenCalledWith("filtered");
+    expect(onSelectMode).toHaveBeenCalledTimes(2);
   });
 });

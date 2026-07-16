@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useCallback } from "react";
-import { X } from "lucide-react";
+import { MapPin, SlidersHorizontal, X } from "lucide-react";
 import { cn } from "@/lib/cn";
 import type { Spot } from "@/lib/types";
 import type { LatLon } from "@/lib/spots/geo";
@@ -11,6 +11,8 @@ import {
   NEARBY_RADIUS_OPTIONS,
   type NearbyRadiusMiles,
 } from "@/stores/user-location-store";
+
+export type MapMode = "nearby" | "filtered";
 
 interface MapSidebarProps {
   spots: readonly Spot[];
@@ -24,6 +26,8 @@ interface MapSidebarProps {
   region?: string | null;
   country?: string | null;
   onClearFilter?: () => void;
+  mode: MapMode;
+  onSelectMode: (mode: MapMode) => void;
 }
 
 export function MapSidebar({
@@ -38,6 +42,8 @@ export function MapSidebar({
   region = null,
   country = null,
   onClearFilter,
+  mode,
+  onSelectMode,
 }: MapSidebarProps) {
   const showChips =
     showRadiusChips &&
@@ -64,6 +70,43 @@ export function MapSidebar({
       className="w-full lg:w-80 flex flex-col border border-outline-variant rounded-2xl bg-surface-bright overflow-hidden sm:h-[150px] lg:h-full"
     >
       <div className="p-4 border-b border-outline-variant bg-surface-container-low">
+        <div
+          id="map-mode-switcher"
+          role="radiogroup"
+          aria-label="Map mode"
+          className="flex items-stretch border border-outline-variant mb-3"
+        >
+          <button
+            type="button"
+            role="radio"
+            aria-checked={mode === "filtered"}
+            onClick={() => onSelectMode("filtered")}
+            className={cn(
+              "flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 text-[9px] font-mono font-bold tracking-wider uppercase transition-all",
+              mode === "filtered"
+                ? "bg-primary text-on-primary"
+                : "text-secondary hover:text-on-surface hover:bg-surface-container",
+            )}
+          >
+            <SlidersHorizontal size={11} aria-hidden="true" />
+            <span>Filtered</span>
+          </button>
+          <button
+            type="button"
+            role="radio"
+            aria-checked={mode === "nearby"}
+            onClick={() => onSelectMode("nearby")}
+            className={cn(
+              "flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 text-[9px] font-mono font-bold tracking-wider uppercase transition-all border-l border-outline-variant",
+              mode === "nearby"
+                ? "bg-primary text-on-primary"
+                : "text-secondary hover:text-on-surface hover:bg-surface-container",
+            )}
+          >
+            <MapPin size={11} aria-hidden="true" />
+            <span>Nearby</span>
+          </button>
+        </div>
         <div className="flex items-center justify-between mb-3">
           <span className="font-mono text-[10px] font-bold tracking-widest text-secondary uppercase">
             Results
