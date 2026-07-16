@@ -5,6 +5,9 @@ import type { SpotForecast } from "@/lib/types"
 
 export interface SpotWeather {
 	current: number
+	tempMin: number | null
+	tempMax: number | null
+	wind: number | null
 	forecast: SpotForecast[]
 	fetchedAt: number
 }
@@ -25,6 +28,9 @@ export async function getSpotWeather({
 
 	return {
 		current: mapCurrentWeather(current),
+		tempMin: current ? Math.round(current.main.temp_min) : null,
+		tempMax: current ? Math.round(current.main.temp_max) : null,
+		wind: current?.wind?.speed ?? null,
 		forecast: mapForecast(forecast, spotId),
 		fetchedAt: Date.now(),
 	}

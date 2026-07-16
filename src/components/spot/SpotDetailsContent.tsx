@@ -3,13 +3,12 @@
 import { useId } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { MapPin, Heart, Share2, ExternalLink } from "lucide-react";
+import { MapPin, Heart, Share2, ExternalLink, Navigation, Wind } from "lucide-react";
 import { WeatherIcon } from "./WeatherIcon";
 import { showToast } from "@/hooks/useToast";
 import { cn } from "@/lib/cn";
-import { CROWD_LEVEL, crowdLevelToLabel } from "@/lib/constants";
 import { getSpotDistanceLabel } from "@/lib/spots/geo";
-import type { Spot } from "@/lib/types";
+import type { ForecastSlot, Spot, SpotForecast } from "@/lib/types";
 import type { SpotWeather } from "@/lib/weather/weather-cached";
 
 interface SpotDetailsContentProps {
@@ -17,6 +16,72 @@ interface SpotDetailsContentProps {
   isSaved: boolean;
   onToggleSave: (id: string) => void;
   weather?: SpotWeather;
+}
+
+function groupForecastByDay(
+  forecast: readonly SpotForecast[] | undefined,
+): SpotForecast[][] {
+  if (!forecast || forecast.length === 0) return [];
+  const groups: SpotForecast[][] = [];
+  for (const entry of forecast) {
+    const last = groups[groups.length - 1];
+    if (last && last[0] && last[0].day === entry.day) {
+      last.push(entry);
+    } else {
+      groups.push([entry]);
+    }
+  }
+  return groups;
+}
+
+function ForecastRow({
+  label,
+  dayEntries,
+  slot,
+}: {
+  label: string;
+  dayEntries: SpotForecast[][];
+  slot: ForecastSlot;
+}) {
+  return (
+    <>
+      <div className="px-2 py-2 border-t border-outline-variant/50 first:border-t-0">
+        <span className="text-[9px] font-mono tracking-wider text-secondary uppercase">
+          {label}
+        </span>
+      </div>
+      {dayEntries.map((entries, dayIdx) => {
+        const entry = entries.find((e) => e.slot === slot);
+        if (!entry) {
+          return (
+            <div
+              key={`${slot}-${dayIdx}`}
+              className="px-2 py-2 border-t border-l border-outline-variant/50 first:border-t-0 text-center text-[10px] text-secondary font-mono"
+            >
+              —
+            </div>
+          );
+        }
+        return (
+          <div
+            key={`${entry.day}-${slot}-${dayIdx}`}
+            className="px-2 py-2 border-t border-l border-outline-variant/50 first:border-t-0 text-center"
+            title={entry.description}
+          >
+            <div className="flex justify-center">
+              <WeatherIcon name={entry.icon} size={14} />
+            </div>
+            <span className="block text-[10px] font-semibold text-on-surface font-mono">
+              {entry.temp}°C
+            </span>
+            <span className="block text-[9px] text-secondary truncate font-sans">
+              {entry.description}
+            </span>
+          </div>
+        );
+      })}
+    </>
+  );
 }
 
 export function SpotDetailsContent({
@@ -30,6 +95,7 @@ export function SpotDetailsContent({
   const directionsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
     spot.name + " " + spot.address,
   )}`;
+  const wazeUrl = `https://waze.com/ul?ll=${spot.location.lat},${spot.location.lon}&navigate=yes`;
 
   const handleShare = async () => {
     try {
@@ -45,6 +111,16 @@ export function SpotDetailsContent({
     }
   };
 
+  const windKmh = weather?.wind != null ? Math.round(weather.wind * 3.6) : null;
+  const tempMin = weather?.tempMin ?? null;
+  const tempMax = weather?.tempMax ?? null;
+  const currentIcon = weather?.forecast?.[0]?.icon ?? "sunny";
+  const forecastByDay = groupForecastByDay(weather?.forecast);
+  const slotRows: Array<{ slot: ForecastSlot; label: string }> = [
+    { slot: "morning", label: "Morning" },
+    { slot: "afternoon", label: "Afternoon" },
+    { slot: "night", label: "Night" },
+  ];
   return (
     <div className="flex flex-col md:flex-row w-full">
       <div className="relative h-64 w-full bg-black md:h-auto md:w-1/2 overflow-hidden flex items-center justify-center group">
@@ -121,14 +197,14 @@ export function SpotDetailsContent({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 mb-6">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-1 mb-6">
             <div className="rounded-xl bg-surface-container-low border border-outline-variant p-4">
               <span className="block font-mono text-[10px] tracking-wider text-secondary uppercase mb-2">
                 Weather status
               </span>
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center justify-between mb-3 gap-3">
                 <div className="flex items-center space-x-2">
-                  <WeatherIcon name="sunny" size={24} />
+                  <WeatherIcon name={currentIcon} size={24} />
                   <div>
                     <span className="text-2xl font-bold font-display">
                       {weather?.current ?? "—"}°C
@@ -138,67 +214,67 @@ export function SpotDetailsContent({
                     </span>
                   </div>
                 </div>
+                <dl className="flex items-center divide-x divide-outline-variant/60 text-right">
+                  <div className="px-3 first:pl-0 last:pr-0">
+                    <dt className="text-[9px] font-mono tracking-wider text-secondary uppercase flex items-center justify-end gap-1">
+                      <Wind size={9} aria-hidden="true" />
+                      Wind
+                    </dt>
+                    <dd className="text-xs font-semibold text-on-surface font-mono">
+                      {windKmh !== null ? `${windKmh} km/h` : "—"}
+                    </dd>
+                  </div>
+                  <div className="px-3 first:pl-0 last:pr-0">
+                    <dt className="text-[9px] font-mono tracking-wider text-secondary uppercase">
+                      Min / Max
+                    </dt>
+                    <dd className="text-xs font-semibold text-on-surface font-mono">
+                      {tempMin !== null && tempMax !== null
+                        ? `${tempMin}° / ${tempMax}°`
+                        : "—"}
+                    </dd>
+                  </div>
+                </dl>
               </div>
               <span className="block font-mono text-[9px] tracking-wider text-secondary uppercase mb-1.5">
-                3-day forecast
+                2-day forecast
               </span>
-              <div className="flex justify-between gap-1.5 text-center">
-                {(weather?.forecast ?? []).map((fc) => (
-                  <div
-                    key={fc.day}
-                    className="flex-1 rounded bg-surface-container p-2 border border-outline-variant/50"
-                  >
-                    <span className="block text-[10px] font-bold text-on-surface font-mono">
-                      {fc.day}
-                    </span>
-                    <div className="my-1 flex justify-center">
-                      <WeatherIcon name={fc.icon} size={14} />
-                    </div>
-                    <span className="text-[10px] font-medium text-secondary">
-                      {fc.temp}°C
+              {forecastByDay.length === 0 ? (
+                <p className="text-[10px] text-secondary font-mono py-2">
+                  Forecast unavailable
+                </p>
+              ) : (
+                <div
+                  className="grid border border-outline-variant/50 rounded bg-surface-container"
+                  style={{
+                    gridTemplateColumns: `70px repeat(${forecastByDay.length}, minmax(0, 1fr))`,
+                  }}
+                >
+                  <div className="px-2 py-1.5 border-b border-outline-variant/50">
+                    <span className="text-[9px] font-mono tracking-wider text-secondary uppercase">
+                      Slot
                     </span>
                   </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="rounded-xl bg-surface-container-low border border-outline-variant p-4 flex flex-col justify-between">
-              <div>
-                <span className="block font-mono text-[10px] tracking-wider text-secondary uppercase mb-2">
-                  Live crowd level
-                </span>
-                <div className="flex items-end space-x-2 mb-2">
-                  <span className="text-3xl font-bold font-display leading-none">
-                    {spot.crowdLevel}%
-                  </span>
-                  <span className="text-xs text-secondary font-mono mb-0.5">
-                    occupancy
-                  </span>
+                  {forecastByDay.map((dayEntries, dayIdx) => (
+                    <div
+                      key={`${dayEntries[0]?.day ?? dayIdx}-${dayIdx}`}
+                      className="px-2 py-1.5 border-b border-outline-variant/50 border-l border-outline-variant/50 text-center"
+                    >
+                      <span className="text-[10px] font-bold font-mono text-on-surface">
+                        {dayEntries[0]?.day ?? "—"}
+                      </span>
+                    </div>
+                  ))}
+                  {slotRows.map(({ slot, label }) => (
+                    <ForecastRow
+                      key={slot}
+                      label={label}
+                      dayEntries={forecastByDay}
+                      slot={slot}
+                    />
+                  ))}
                 </div>
-                <div
-                  className="h-2 w-full bg-surface-container rounded-full overflow-hidden border border-outline-variant/30"
-                  role="progressbar"
-                  aria-valuemin={0}
-                  aria-valuemax={100}
-                  aria-valuenow={spot.crowdLevel}
-                  aria-valuetext={`${spot.crowdLevel} percent occupied`}
-                >
-                  <div
-                    className={cn(
-                      "h-full rounded-full transition-all duration-1000",
-                      spot.crowdLevel > CROWD_LEVEL.HIGH_MIN
-                        ? "bg-amber-600"
-                        : spot.crowdLevel > CROWD_LEVEL.LOW_MAX
-                          ? "bg-primary"
-                          : "bg-emerald-600",
-                    )}
-                    style={{ width: `${spot.crowdLevel}%` }}
-                  />
-                </div>
-              </div>
-              <p className="mt-3 text-[11px] font-medium text-on-surface font-sans">
-                {crowdLevelToLabel(spot.crowdLevel)}
-              </p>
+              )}
             </div>
           </div>
 
@@ -209,15 +285,27 @@ export function SpotDetailsContent({
             <p className="text-xs text-on-surface-variant font-medium leading-relaxed">
               {spot.address}
             </p>
-            <a
-              href={directionsUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-2.5 inline-flex items-center text-[10px] font-bold tracking-wider uppercase text-primary hover:underline"
-            >
-              <span>Get directions</span>
-              <ExternalLink size={10} className="ml-1" aria-hidden="true" />
-            </a>
+            <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1.5">
+              <a
+                href={directionsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center text-[10px] font-bold tracking-wider uppercase text-primary hover:underline"
+              >
+                <span>Get directions</span>
+                <ExternalLink size={10} className="ml-1" aria-hidden="true" />
+              </a>
+              <a
+                href={wazeUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center text-[10px] font-bold tracking-wider uppercase text-primary hover:underline"
+              >
+                <Navigation size={10} className="mr-1" aria-hidden="true" />
+                <span>Open in Waze</span>
+                <ExternalLink size={10} className="ml-1" aria-hidden="true" />
+              </a>
+            </div>
           </div>
         </div>
 

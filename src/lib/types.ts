@@ -7,10 +7,14 @@ export type WeatherIconName =
   | "rain"
   | "snow";
 
+export type ForecastSlot = "morning" | "afternoon" | "night";
+
 export interface SpotForecast {
   day: string;
+  slot: ForecastSlot;
   icon: WeatherIconName;
   temp: number;
+  description: string;
 }
 
 /**
