@@ -150,7 +150,7 @@ function BaseSpotCardImpl({
               className={cn("h-1.5 w-1.5 rounded-full", "bg-primary")}
             />
             <span className="text-secondary uppercase">
-              {spot.sports.join("|")}
+              {spot.sports.join(" | ")}
             </span>
           </div>
           <span
