@@ -165,7 +165,7 @@ export function SpotDetailsContent({
                 </span>
               </div>
             </div>
-            <dl className="mb-4 grid grid-cols-3 divide-x divide-outline-variant/60 text-right">
+            <dl className="mb-4 grid grid-cols-3 border-b pb-4 border-outline-variant/40 divide-x divide-outline-variant/60 text-right">
               <div className="px-3 first:pl-0 last:pr-0">
                 <dt className="text-[9px] font-mono tracking-wider text-secondary uppercase flex items-center justify-end gap-1">
                   <Wind size={9} aria-hidden="true" />
@@ -196,9 +196,15 @@ export function SpotDetailsContent({
               </div>
             </dl>
 
-            <span className="block font-mono text-[9px] tracking-wider text-secondary uppercase mb-2">
-              Forecast
-            </span>
+            <div className="flex items-center justify-between mb-2">
+              <span className="block font-mono text-[9px] tracking-wider text-secondary uppercase mb-2">
+                Forecast Min / Max
+              </span>
+              <span className="block font-mono text-[9px] tracking-wider text-secondary uppercase mb-2">
+                Morning / Afternoon / Night
+              </span>
+            </div>
+
             {forecastByDay.length === 0 ? (
               <p className="text-[10px] text-secondary font-mono py-2">
                 Forecast unavailable
@@ -207,10 +213,8 @@ export function SpotDetailsContent({
               <div>
                 {forecastByDay.map((dayEntries, dayIdx) => {
                   const temps = dayEntries.map((e) => e.temp);
-                  const dayMin =
-                    temps.length > 0 ? Math.min(...temps) : null;
-                  const dayMax =
-                    temps.length > 0 ? Math.max(...temps) : null;
+                  const dayMin = temps.length > 0 ? Math.min(...temps) : null;
+                  const dayMax = temps.length > 0 ? Math.max(...temps) : null;
                   return (
                     <div
                       key={`${dayEntries[0]?.day ?? dayIdx}-${dayIdx}`}
@@ -226,9 +230,7 @@ export function SpotDetailsContent({
                       </span>
                       <div className="ml-auto flex items-center gap-3">
                         {forecastSlots.map((slot) => {
-                          const entry = dayEntries.find(
-                            (e) => e.slot === slot,
-                          );
+                          const entry = dayEntries.find((e) => e.slot === slot);
                           if (!entry) {
                             return (
                               <span
@@ -246,10 +248,7 @@ export function SpotDetailsContent({
                               className="flex items-center gap-1 text-[10px] font-mono"
                               title={entry.description}
                             >
-                              <WeatherIcon
-                                name={entry.icon}
-                                size={12}
-                              />
+                              <WeatherIcon name={entry.icon} size={12} />
                               <span className="font-semibold text-on-surface">
                                 {entry.temp}°
                               </span>
