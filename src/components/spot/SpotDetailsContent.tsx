@@ -91,8 +91,6 @@ export function SpotDetailsContent({
   };
 
   const windKmh = weather?.wind != null ? Math.round(weather.wind * 3.6) : null;
-  const tempMin = weather?.tempMin ?? null;
-  const tempMax = weather?.tempMax ?? null;
   const currentIcon = weather?.forecast?.[0]?.icon ?? "sunny";
   const forecastByDay = groupForecastByDay(weather?.forecast);
   const forecastSlots: ForecastSlot[] = ["morning", "afternoon", "night"];
@@ -231,19 +229,8 @@ export function SpotDetailsContent({
                     {weather?.humidity != null ? `${weather.humidity}%` : "—"}
                   </dd>
                 </div>
-                <div className="flex min-w-0 basis-0 flex-1 flex-col items-center justify-center gap-0.5 px-2">
-                  <dt className="whitespace-nowrap text-[10px] font-mono tracking-wider text-secondary uppercase">
-                    Min / Max
-                  </dt>
-                  <dd className="w-full truncate text-[9px] font-semibold text-on-surface font-mono">
-                    {tempMin !== null && tempMax !== null
-                      ? `${tempMin}° / ${tempMax}°`
-                      : "—"}
-                  </dd>
-                </div>
               </dl>
             </div>
-
             <div className="flex items-center justify-between mb-2 ">
               <span className="block font-mono text-[9px] tracking-wider text-secondary uppercase mb-2">
                 Forecast Min / Max
