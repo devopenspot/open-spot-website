@@ -6,8 +6,13 @@ import { getSpotRepositoryAsync } from "@/lib/repositories"
 import type { NewSpot } from "@/lib/repositories"
 import type { Spot } from "@/lib/types"
 import { uploadSpotImage } from "@/lib/supabase/storage"
-import { REFERENCE_LAT, REFERENCE_LON } from "@/lib/spots/geo"
 import { requireUser } from "@/lib/auth/server"
+
+// Placeholder coordinates for a newly-created spot. The admin form's
+// LatLonEditor (admin/spots/SpotFormFields) overrides this immediately
+// on edit, so it never reaches public surfaces in this state.
+const NEW_SPOT_PLACEHOLDER_LAT = 34.0522;
+const NEW_SPOT_PLACEHOLDER_LON = -118.2437;
 
 function strField(form: FormData, key: string): string {
   const v = form.get(key)
@@ -63,7 +68,7 @@ export async function createSpotAction(formData: FormData): Promise<Spot> {
     imagePath,
     crowdLevel,
     country,
-    location: { lat: REFERENCE_LAT, lon: REFERENCE_LON },
+    location: { lat: NEW_SPOT_PLACEHOLDER_LAT, lon: NEW_SPOT_PLACEHOLDER_LON },
     createdBy: user.id,
   }
 

@@ -6,7 +6,7 @@ import { MapPin, SlidersHorizontal, X } from "lucide-react";
 import { cn } from "@/lib/cn";
 import type { Spot } from "@/lib/types";
 import type { LatLon } from "@/lib/spots/geo";
-import { getSpotDistanceLabel } from "@/lib/spots/geo";
+import { getSpotDistanceInfo } from "@/lib/spots/geo";
 import {
   NEARBY_RADIUS_OPTIONS,
   type NearbyRadiusMiles,
@@ -187,6 +187,9 @@ export function MapSidebar({
           const isHovered = activeId === spot.id;
           const isSaved = savedIds.has(spot.id);
           const distanceOrigin = showChips ? userLocation : null;
+          const distanceInfo = getSpotDistanceInfo(spot, distanceOrigin);
+          const distanceLabel =
+            distanceInfo.kind === "distance" ? distanceInfo.label : "—";
           return (
             <button
               key={spot.id}
@@ -217,7 +220,7 @@ export function MapSidebar({
                     {spot.type}
                   </span>
                   <span className="text-[8px] font-mono font-medium text-secondary">
-                    {getSpotDistanceLabel(spot, distanceOrigin)}
+                    {distanceLabel}
                   </span>
                 </span>
                 <span className="block font-display text-xs font-bold uppercase tracking-wide truncate text-on-surface">

@@ -5,8 +5,9 @@ import { Heart, Trash2, MapPin } from 'lucide-react';
 import { memo, useCallback, type MouseEvent } from 'react';
 import { cn } from '@/lib/cn';
 import { CROWD_LEVEL } from '@/lib/constants';
+import { useUserLocation } from '@/hooks/useUserLocation';
+import { getSpotDistanceInfo } from '@/lib/spots/geo';
 import type { Spot } from '@/lib/types';
-import { getSpotDistanceLabel } from '@/lib/spots/geo';
 
 interface BaseSpotCardProps {
   spot: Spot;
@@ -64,6 +65,12 @@ function BaseSpotCardImpl({
       onToggleSave(spot.id);
     },
     [onToggleSave, spot.id],
+  );
+
+  const { location } = useUserLocation();
+  const distanceInfo = getSpotDistanceInfo(
+    spot,
+    location ? { lat: location.lat, lon: location.lon } : null,
   );
 
   const showRemoveIcon = toggleIconVariant === 'trash';
@@ -129,7 +136,7 @@ function BaseSpotCardImpl({
       >
         <div>
           <span className="font-mono text-[9px] font-bold text-secondary uppercase tracking-wider block mb-1">
-            {getSpotDistanceLabel(spot)}
+            {distanceInfo.kind === "distance" ? distanceInfo.label : "—"}
           </span>
           <h3 className="font-display text-base font-bold tracking-wide text-on-surface uppercase group-hover:underline">
             {spot.name}

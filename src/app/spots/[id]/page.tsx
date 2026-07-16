@@ -2,7 +2,6 @@ import { notFound } from 'next/navigation';
 import { connection } from 'next/server';
 import type { Metadata } from 'next';
 import { getSpotRepositoryAsync } from '@/lib/repositories';
-import { getSpotDistanceLabel } from '@/lib/spots/geo';
 import { SpotDetailsFullPage } from '@/components/spot/SpotDetailsFullPage';
 
 export async function generateMetadata({
@@ -18,7 +17,7 @@ export async function generateMetadata({
   }
   return {
     title: spot.name,
-    description: `${spot.type} spot in ${spot.city} — ${getSpotDistanceLabel(spot).toLowerCase()}.`,
+    description: `${spot.type} skate spot in ${spot.city}.`,
     openGraph: {
       title: spot.name,
       description: `${spot.type} skate spot in ${spot.city}.`,

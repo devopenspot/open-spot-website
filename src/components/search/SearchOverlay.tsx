@@ -1,6 +1,6 @@
 "use client";
 
-import { useDeferredValue, useEffect, useId, useRef, useState } from "react";
+import { useCallback, useDeferredValue, useEffect, useId, useRef, useState } from "react";
 import { Search, X, MapPin, ArrowRight } from "lucide-react";
 import Image from "next/image";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
@@ -9,8 +9,9 @@ import { SEARCH_FOCUS_DELAY_MS } from "@/lib/constants";
 import { ROUTES } from "@/lib/nav";
 import { useUIStore } from "@/stores/ui-store";
 import { useSpotsStore } from "@/stores/spots-store";
+import { useUserLocation } from "@/hooks/useUserLocation";
+import { getSpotDistanceInfo } from "@/lib/spots/geo";
 import type { Spot } from "@/lib/types";
-import { getSpotDistanceLabel } from "@/lib/spots/geo";
 import { RegionFilter } from "@/components/search/RegionFilter";
 import { useMapFilter } from "@/hooks/useMapFilter";
 
@@ -37,6 +38,18 @@ export function SearchOverlay({
   const router = useRouter();
   const pathname = usePathname();
   const regions = useSpotsStore((s) => s.regions);
+  const { location: userLocation } = useUserLocation();
+
+  const getDistanceLabel = useCallback(
+    (spot: Spot) => {
+      const info = getSpotDistanceInfo(
+        spot,
+        userLocation ? { lat: userLocation.lat, lon: userLocation.lon } : null,
+      );
+      return info.kind === "distance" ? info.label : "—";
+    },
+    [userLocation],
+  );
 
   const {
     region,
@@ -181,6 +194,7 @@ export function SearchOverlay({
               query={deferredQuery}
               spots={filteredSpots}
               onPick={handlePick}
+              distanceLabel={getDistanceLabel}
             />
           ) : (
             <RegionFilter
@@ -206,9 +220,15 @@ interface MatchedSpotsProps {
   query: string;
   spots: readonly Spot[];
   onPick: (spot: Spot) => void;
+  distanceLabel: (spot: Spot) => string;
 }
 
-function MatchedSpots({ query, spots, onPick }: MatchedSpotsProps) {
+function MatchedSpots({
+  query,
+  spots,
+  onPick,
+  distanceLabel,
+}: MatchedSpotsProps) {
   return (
     <div className="space-y-4">
       <h3
@@ -243,7 +263,7 @@ function MatchedSpots({ query, spots, onPick }: MatchedSpotsProps) {
                 <span className="flex-1 min-w-0">
                   <span className="flex items-center justify-between text-[9px] font-mono text-current opacity-70 mb-0.5">
                     <span className="font-bold uppercase">{spot.type}</span>
-                    <span>{getSpotDistanceLabel(spot)}</span>
+                    <span>{distanceLabel(spot)}</span>
                   </span>
                   <span className="block font-display text-sm font-bold tracking-wide uppercase truncate">
                     {spot.name}
