@@ -208,7 +208,7 @@ export function SpotDetailsContent({
                 Weather status
               </span>
               <a
-                href={`https://zoom.earth/maps/precipitation/#view=${spot.location.lat},${spot.location.lon},7z/model=icon`}
+                href={`https://zoom.earth/maps/precipitation/#view=${spot.location.lat},${spot.location.lon},10z/model=icon`}
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="View live precipitation on zoom.earth (opens in a new tab)"
