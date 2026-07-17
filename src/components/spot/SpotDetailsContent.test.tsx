@@ -205,7 +205,7 @@ describe("<SpotDetailsContent>", () => {
       />,
     );
     const rows = container.querySelectorAll(
-      ".flex.items-center.gap-2.md\\:gap-3.min-w-0",
+      ".flex.items-center.gap-3.md\\:gap-4.min-w-0",
     );
     expect(rows.length).toBeGreaterThan(0);
     const row = rows[0] as HTMLElement;

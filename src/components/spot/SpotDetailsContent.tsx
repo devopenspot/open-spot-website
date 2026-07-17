@@ -97,9 +97,8 @@ export function SpotDetailsContent({
   const forecastByDay = groupForecastByDay(weather?.forecast);
   const forecastSlots: ForecastSlot[] = ["morning", "afternoon", "night"];
   return (
-    // TODO: i need refine this styles, keeping the overall sense, colors, design, and distribution, only approach in fix sizing, margins & padding
     <div className="flex flex-col md:flex-row w-full">
-      <div className="relative h-64 w-full bg-black md:h-auto md:w-1/2 overflow-hidden flex items-center justify-center group">
+      <div className="relative h-64 w-full bg-black md:h-auto md:max-h-[640px] md:w-1/2 overflow-hidden group">
         <Image
           src={spot.image}
           alt={spot.name}
@@ -115,7 +114,7 @@ export function SpotDetailsContent({
           aria-hidden="true"
         />
 
-        <div className="absolute bottom-6 left-6 right-6 text-white">
+        <div className="absolute bottom-4 left-4 right-4 md:bottom-6 md:left-6 md:right-6 text-white">
           {spot.types.length > 0 ? (
             <div className="mb-2">
               <TypeBadges types={spot.types} variant="overlay" />
@@ -133,11 +132,11 @@ export function SpotDetailsContent({
           </p>
         </div>
       </div>
-      <div className="flex-1 overflow-y-auto py-6 md:p-8 no-scrollbar flex flex-col justify-between bg-surface">
+      <div className="flex-1 overflow-y-auto pt-6 md:pt-0 md:px-8 no-scrollbar flex flex-col justify-between bg-surface">
         <div>
-          <div className="flex items-center justify-between border-b border-outline-variant pb-4 mb-6 gap-2">
+          <div className="flex items-center justify-between border-b border-outline-variant pb-4 mb-5 gap-2">
             {distanceInfo.kind === "distance" ? (
-              <span className="font-mono text-xs font-semibold tracking-wider text-secondary uppercase">
+              <span className="inline-flex h-9 items-center font-mono text-xs font-semibold tracking-wider text-secondary uppercase">
                 {distanceInfo.label}
               </span>
             ) : (
@@ -147,7 +146,7 @@ export function SpotDetailsContent({
                 disabled={isRequestingLocation}
                 aria-busy={isRequestingLocation}
                 aria-label="Share your location to see distance from this spot"
-                className="group inline-flex items-center gap-1.5 font-mono text-xs font-semibold tracking-wider text-primary uppercase hover:underline disabled:opacity-60 disabled:cursor-wait disabled:no-underline"
+                className="group inline-flex h-9 items-center gap-1.5 font-mono text-xs font-semibold tracking-wider text-primary uppercase hover:underline disabled:opacity-60 disabled:cursor-wait disabled:no-underline"
               >
                 {isRequestingLocation ? (
                   <Loader2
@@ -188,7 +187,7 @@ export function SpotDetailsContent({
                   aria-hidden="true"
                   className={isSaved ? "fill-surface" : ""}
                 />
-                <span className="text-[10px] md:text-sm">
+                <span className="text-[10px]">
                   {isSaved ? "Saved" : "Save spot"}
                 </span>
               </button>
@@ -203,12 +202,12 @@ export function SpotDetailsContent({
               </button>
             </div>
           </div>
-          <div className="mb-6 rounded-xl bg-surface-container-low border border-outline-variant p-3 md:p-6">
+          <div className="mb-6 rounded-xl bg-surface-container-low border border-outline-variant p-4 md:p-6">
             <span className="block font-mono text-[10px] tracking-wider text-secondary uppercase mb-2">
               Weather status
             </span>
             <WeatherAccuracyNote variant="block" className="mb-3" />
-            <div className="mb-4 flex items-center gap-2 md:gap-3 min-w-0 overflow-hidden border-b border-outline-variant/40 pb-4">
+            <div className="mb-4 flex items-center gap-3 md:gap-4 min-w-0 overflow-hidden border-b border-outline-variant/40 pb-4">
               <WeatherIcon name={currentIcon} size={40} className="shrink-0" />
               <div className="flex min-w-0 shrink flex-col items-center justify-center text-center">
                 <span className="block whitespace-nowrap text-2xl font-display font-bold tracking-tight leading-none">
@@ -237,11 +236,11 @@ export function SpotDetailsContent({
                 </div>
               </dl>
             </div>
-            <div className="flex items-center justify-between mb-2 ">
-              <span className="block font-mono text-[9px] tracking-wider text-secondary uppercase mb-2">
+            <div className="flex items-center justify-between mb-3">
+              <span className="block font-mono text-[9px] tracking-wider text-secondary uppercase">
                 Forecast Min / Max
               </span>
-              <span className="block font-mono text-[9px] tracking-wider text-secondary uppercase mb-2">
+              <span className="block font-mono text-[9px] tracking-wider text-secondary uppercase">
                 Morning / Afternoon / Night
               </span>
             </div>
@@ -259,7 +258,7 @@ export function SpotDetailsContent({
                   return (
                     <div
                       key={`${dayEntries[0]?.day ?? dayIdx}-${dayIdx}`}
-                      className="flex items-center gap-3 py-2 border-t border-outline-variant/40 first:border-t-0"
+                      className="flex items-center gap-3 py-2.5 border-t border-outline-variant/40 first:border-t-0"
                     >
                       <span className="w-10 shrink-0 font-mono text-[10px] font-bold uppercase text-on-surface">
                         {dayEntries[0]?.day ?? "—"}
@@ -304,46 +303,39 @@ export function SpotDetailsContent({
             )}
           </div>
 
-          <div className="mb-6 rounded-xl bg-surface-container-low border border-outline-variant p-3 md:p-6">
-            <span className="block font-mono text-[10px] tracking-wider text-secondary uppercase mb-1">
+          <div className="mb-6 rounded-xl bg-surface-container-low border border-outline-variant p-4 md:p-6">
+            <span className="block font-mono text-[10px] tracking-wider text-secondary uppercase mb-2">
               Location address
             </span>
             <p className="text-xs text-on-surface-variant font-medium leading-relaxed">
               {spot.address}
             </p>
-            <div className="mt-3 pt-3 border-t border-outline-variant/40 flex flex-wrap items-center gap-x-4 gap-y-1.5">
-              <a
-                href={directionsUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center text-[10px] font-bold tracking-wider uppercase text-primary hover:underline"
-              >
-                <span>Get directions</span>
-                <ExternalLink size={10} className="ml-1" aria-hidden="true" />
-              </a>
-              <a
-                href={wazeUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center text-[10px] font-bold tracking-wider uppercase text-primary hover:underline"
-              >
-                <Navigation size={10} className="mr-1" aria-hidden="true" />
-                <span>Open in Waze</span>
-                <ExternalLink size={10} className="ml-1" aria-hidden="true" />
-              </a>
+            <div className="mt-4 pt-4 border-t border-outline-variant/40 flex flex-wrap items-center gap-x-4 gap-y-1.5">
+              <div>
+                {/* TODO: PUT HERE A list of the sports and spot type  */}
+              </div>
             </div>
           </div>
         </div>
 
-        <div className="mt-8 border-t border-outline-variant pt-4 flex flex-col sm:flex-row gap-2 sm:space-x-3">
+        <div className="border-t border-outline-variant pt-4 flex flex-col sm:flex-row gap-2 sm:gap-x-3">
           <a
             href={directionsUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="flex-1 flex min-h-10 items-center justify-center space-x-1.5 rounded-lg bg-on-surface text-surface text-xs font-bold tracking-widest uppercase hover:bg-on-surface/90 transition-all shadow-sm"
           >
-            <span>Launch route</span>
+            <span>G-Maps</span>
             <ExternalLink size={12} aria-hidden="true" />
+          </a>
+          <a
+            href={wazeUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex-1 flex min-h-10 items-center justify-center space-x-1.5 rounded-lg bg-on-surface text-surface text-xs font-bold tracking-widest uppercase hover:bg-on-surface/90 transition-all shadow-sm"
+          >
+            <span>Waze</span>
+            <Navigation size={12} className="mr-1" aria-hidden="true" />
           </a>
           <button
             type="button"
