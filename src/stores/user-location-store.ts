@@ -3,7 +3,7 @@ import { devtools } from "zustand/middleware";
 
 export const NEARBY_RADIUS_OPTIONS = [10, 25, 50, 100] as const;
 export type NearbyRadiusMiles = (typeof NEARBY_RADIUS_OPTIONS)[number];
-export const DEFAULT_NEARBY_RADIUS_MI: NearbyRadiusMiles = 50;
+export const DEFAULT_NEARBY_RADIUS_MI: NearbyRadiusMiles = 25;
 
 export type UserLocationStatus =
   | "idle"

@@ -1,5 +1,4 @@
 "use client";
-
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { useRouter, type ReadonlyURLSearchParams } from "next/navigation";
@@ -9,6 +8,7 @@ import { useSavedSpots } from "@/hooks/useSavedSpots";
 import { useUser } from "@/hooks/useUser";
 import { useMapFilter } from "@/hooks/useMapFilter";
 import { useUserLocation } from "@/hooks/useUserLocation";
+import { DEFAULT_NEARBY_RADIUS_MI } from "@/stores/user-location-store";
 import { MAP_VIEWPORT_OFFSET_PX } from "@/lib/constants";
 import { ROUTES } from "@/lib/nav";
 import { haversineMiles, milesToMeters } from "@/lib/spots/geo";
@@ -29,7 +29,7 @@ const LeafletCanvas = dynamic(
   },
 );
 
-const NEAR_YOU_INITIAL_ZOOM = 12;
+const NEAR_YOU_INITIAL_ZOOM = 10;
 
 interface MapTabProps {
   searchParams: ReadonlyURLSearchParams;
@@ -113,6 +113,17 @@ export default function MapTab({ searchParams, nearbyRequested }: MapTabProps) {
       dismissNearby();
     }
   }, [nearbyRequested, status, dismissNearby]);
+
+  const hasInitializedNearbyRef = useRef(false);
+  useEffect(() => {
+    if (!nearbyRequested) return;
+    if (hasInitializedNearbyRef.current) return;
+    hasInitializedNearbyRef.current = true;
+    setRadiusMiles(DEFAULT_NEARBY_RADIUS_MI);
+    if (status === "granted" && userLatLon) {
+      leafletRef.current?.fitRadius(milesToMeters(DEFAULT_NEARBY_RADIUS_MI));
+    }
+  }, [nearbyRequested, status, userLatLon, setRadiusMiles]);
 
   const handleResetMap = useCallback(() => {
     leafletRef.current?.fitBoundsToSpots();

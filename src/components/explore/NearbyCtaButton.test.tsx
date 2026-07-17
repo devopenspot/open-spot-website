@@ -75,7 +75,7 @@ beforeEach(() => {
   useUserLocationStore.setState({
     status: "idle",
     location: null,
-    radiusMiles: 50,
+    radiusMiles: 25,
   });
 });
 

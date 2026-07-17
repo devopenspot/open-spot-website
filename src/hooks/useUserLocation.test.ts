@@ -65,7 +65,7 @@ function resetStore() {
     useUserLocationStore.setState({
       status: "idle",
       location: null,
-      radiusMiles: 50,
+      radiusMiles: 25,
     });
   });
   Object.defineProperty(window, "isSecureContext", {
@@ -93,7 +93,7 @@ describe("useUserLocation", () => {
     const { result } = renderHook(() => useUserLocation());
     expect(result.current.status).toBe("idle");
     expect(result.current.location).toBeNull();
-    expect(result.current.radiusMiles).toBe(50);
+    expect(result.current.radiusMiles).toBe(25);
     expect(typeof result.current.request).toBe("function");
   });
 
@@ -190,7 +190,7 @@ describe("useUserLocation", () => {
       useUserLocationStore.setState({
         status: "granted",
         location: { lat: 1, lon: 2, accuracy: 5 },
-        radiusMiles: 50,
+        radiusMiles: 25,
       });
     });
     const { result } = renderHook(() => useUserLocation());
