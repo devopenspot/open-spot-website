@@ -9,6 +9,7 @@ interface SectionHeaderProps {
   description?: string;
   cta?: ReactNode;
   className?: string;
+  eyebrowClassName?: string;
 }
 
 export function SectionHeader({
@@ -19,6 +20,7 @@ export function SectionHeader({
   description,
   cta,
   className,
+  eyebrowClassName,
 }: SectionHeaderProps) {
   return (
     <div className={cn('mb-6 flex items-end justify-between gap-4', className)}>
@@ -26,7 +28,12 @@ export function SectionHeader({
         {eyebrow && (
           <div className="flex items-center space-x-2 mb-1">
             {eyebrowIcon}
-            <span className="font-mono text-[10px] font-bold tracking-widest text-secondary uppercase">
+            <span
+              className={cn(
+                'font-mono text-[10px] font-bold tracking-widest uppercase',
+                eyebrowClassName,
+              )}
+            >
               {eyebrow}
             </span>
           </div>
