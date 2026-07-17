@@ -30,7 +30,7 @@ Use `search_graph` / `get_code_snippet` / `trace_path` / `query_graph` over grep
 - `pnpm exec vitest run path/to/file.test.ts` — run a single test file
 - `pnpm exec vitest run -t "name"` — run tests matching a substring
 - `pnpm db:generate | push | migrate | studio` — drizzle-kit against `src/db/schema.ts`
-- `pnpm db:seed` → `tsx src/db/seed.ts` (typed TS constants from `src/db/seed-data/` → Postgres; idempotent upserts of regions, countries, spot types, sport disciplines, event tiers, spot features, preset images, 11 spot rows, 5 event rows)
+- `pnpm db:seed` → `tsx src/db/seed.ts` (typed TS constants from `src/db/seed-data/` → Postgres; idempotent upserts of regions, countries, spot types, sport disciplines, event tiers, spot features, preset images, 23 spot rows, 6 event rows)
 - `pnpm db:apply` / `db:deploy` → `tsx src/db/apply-sql.ts` (splits on `--> statement-breakpoint`, one tx per file, records in `schema_migrations`). Runs `0000_fresh.sql` (single consolidated migration).
 - `pnpm db:health` → `tsx src/db/health-cli.ts` (uses the cached `checkDbHealth`)
 
@@ -45,6 +45,7 @@ CI order (`.github/workflows/ci.yml`): `pnpm install --frozen-lockfile` → `typ
   - In local dev, a broken Supabase config or a thrown error in the cookie path **silently logs the user in as admin**. Don't trust "I tested it locally" as evidence of auth working — smoke-test the configured path.
 - **No local `docker-compose.yml` is checked in.** `.env.example` mentions `docker compose up -d infra-db`, but the compose file is yours to bring; ask before assuming infra is available. The default dev path is to point `.env.local` at the same Supabase project Vercel uses.
 - **Nominatim Usage Policy.** Set a descriptive `NOMINATIM_USER_AGENT` (default is a placeholder). `GET /api/geocode/reverse` is admin-only and uses `cache: "no-store"` to respect the 1 req/sec policy. The canonical example coordinates are in `nominatim-api.rest` (use those for manual smoke tests).
+- **Image config is strict.** `next.config.mjs` sets `images: { unoptimized: true }` and allows only `lh3.googleusercontent.com` as a remote pattern (for Google OAuth avatars). Other remote hosts will silently 404. If you add a new image source, update both `next.config.mjs` and the spot/event image upload paths.
 
 ## Architecture (the few facts that change how you work)
 
@@ -58,7 +59,7 @@ CI order (`.github/workflows/ci.yml`): `pnpm install --frozen-lockfile` → `typ
 - **Repository pattern (`src/lib/repositories/`)** has a single Drizzle implementation per entity (`DrizzleSpotRepository`, `DrizzleEventRepository`, `DrizzleSavedSpotsRepository`, `DrizzlePresetImagesRepository`). The async factories (`getSpotRepositoryAsync`, etc.) are lazy singletons — first call constructs the Drizzle client, subsequent calls reuse it. There is no JSON fallback and no env-driven runtime branching. If the DB is unreachable, the Drizzle query throws.
 - **Zod schemas in `src/lib/schemas/` are the single source of truth** for input shapes — `NewSpotSchema`, `SpotPatchSchema`, `NewSportEventSchema`, `SportEventPatchSchema`. They are `.strict()`; unknown keys throw. Server actions parse with `.parse(...)` (throws on invalid).
 - **Cache Components is on** (`cacheComponents: true` in `next.config.mjs`) for the static shell + streaming model. The data layer is **uncached** — no `use cache` / `cacheTag` / `cacheLife` in the public read path. `src/lib/db/health.ts` is the only `use cache` consumer; it's a diagnostic. Optimized package imports: `lucide-react` and `motion`.
-- **Dimension reads are DB-only.** Regions, countries, spot types, sport disciplines, event tiers, spot features, and preset images are seeded by `src/db/seed.ts` from typed TS constants in `src/db/seed-data/` and read from the DB at runtime. The 11 base spot rows + 5 base event rows are typed `NewSpot` / `NewSportEvent` consts in `src/db/seed-data/spots.ts` and `sport-events.ts`. Preset images are a `preset_images` DB table (Phase 2).
+- **Dimension reads are DB-only.** Regions, countries, spot types, sport disciplines, event tiers, spot features, and preset images are seeded by `src/db/seed.ts` from typed TS constants in `src/db/seed-data/` and read from the DB at runtime. The 23 base spot rows + 6 base event rows are typed `NewSpot` / `NewSportEvent` consts in `src/db/seed-data/spots.ts` and `sport-events.ts`. Preset images are a `preset_images` DB table (Phase 2).
 - **Server-only data assembly** lives in `src/lib/data/` (e.g. `getRegionsForClient()` in `regions.ts`, `getSpotTypesForClient()` in `spot-types.ts`). The client tree reads them through `useSpotsStore` (hydrated by `SpotsProvider` in `RootDataProviders`).
 - **Zustand `useSpotsStore` carries 4 reference-data slices** hydrated once at the root layout: `spots`, `regions`, `presetImages`, `spotTypes`. `useMapFilter`, `RegionFilter`, `ExploreTab`, and admin `ImageSourceField` all read from this store. The `useMapFilter` test seeds the store in `beforeEach`.
 - `DEPLOY.md` covers Vercel env + the `spot-images` Storage bucket step. `DESIGN.md` is the design system source of truth.
