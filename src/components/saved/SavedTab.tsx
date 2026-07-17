@@ -1,22 +1,22 @@
-'use client';
+"use client";
 
-import { useRouter } from 'next/navigation';
-import { Heart, Compass } from 'lucide-react';
-import { useSpotsStore } from '@/stores/spots-store';
-import { useSavedSpots } from '@/hooks/useSavedSpots';
-import { useUser } from '@/hooks/useUser';
-import { ROUTES } from '@/lib/nav';
-import { SavedSpotCard } from '@/components/spot/SpotCard';
+import { useRouter } from "next/navigation";
+import { Heart, Compass } from "lucide-react";
+import { useSpotsStore } from "@/stores/spots-store";
+import { useSavedSpots } from "@/hooks/useSavedSpots";
+import { useUser } from "@/hooks/useUser";
+import { ROUTES } from "@/lib/nav";
+import { SavedSpotCard } from "@/components/spot/SpotCard";
 
 export default function SavedTab() {
   const router = useRouter();
   const user = useUser();
   const spots = useSpotsStore((s) => s.spots);
   const { savedIds, toggle: toggleSaved } = useSavedSpots(user.id);
-  const savedSpots = spots.filter(s => savedIds.has(s.id));
+  const savedSpots = spots.filter((s) => savedIds.has(s.id));
 
   const openSpot = (spot: { id: string }) => router.push(ROUTES.spot(spot.id));
-
+  // TODO: must save in server only, not in local storage. remove local storage persistence.
   return (
     <section
       id="saved-tab"
@@ -32,7 +32,8 @@ export default function SavedTab() {
           Saved Locations
         </h1>
         <p className="mt-1.5 text-xs text-secondary leading-relaxed max-w-xl">
-          Your bookmarked street spots, parks, and DIY terrain. Active weather and crowd logs kept live.
+          Your bookmarked street spots, parks, and DIY terrain. Active weather
+          and crowd logs kept live.
         </p>
       </header>
 
@@ -48,11 +49,12 @@ export default function SavedTab() {
             No registered spots
           </h3>
           <p className="mt-2 text-xs text-secondary leading-relaxed">
-            Sift through our curated directory, tap the heart emblem, and compile your local blueprint for rapid reference.
+            Sift through our curated directory, tap the heart emblem, and
+            compile your local blueprint for rapid reference.
           </p>
           <button
             type="button"
-            onClick={() => router.push('/')}
+            onClick={() => router.push("/")}
             className="mt-6 inline-flex items-center space-x-2 rounded-lg bg-on-surface text-surface px-5 py-2 text-xs font-bold tracking-widest uppercase hover:bg-on-surface/90 transition-all"
           >
             <Compass size={14} aria-hidden="true" />
@@ -64,7 +66,7 @@ export default function SavedTab() {
           id="saved-spots-grid"
           className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
         >
-          {savedSpots.map(spot => (
+          {savedSpots.map((spot) => (
             <SavedSpotCard
               key={spot.id}
               spot={spot}

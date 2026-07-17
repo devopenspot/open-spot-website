@@ -17,5 +17,3 @@ export const MAP_VIEWPORT_OFFSET_PX = {
 } as const;
 
 export const SEARCH_FOCUS_DELAY_MS = 150;
-
-export const STORAGE_KEY_VERSION = 'v2';

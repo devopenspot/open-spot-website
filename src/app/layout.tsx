@@ -111,14 +111,14 @@ async function RootDataProviders({ children }: { children: React.ReactNode }) {
     name: p.name,
     url: p.url,
   }));
-  const initialSavedSpots =
-    initialUser.id === 'dev'
-      ? []
-      : (
-          await (await getSavedSpotsRepositoryAsync()).list(initialUser.id, {
-            limit: 200,
-          })
-        ).items
+  // In local dev without Supabase env, the dev placeholder user (`id === "dev"`)
+  // shares one bucket across every local session on the same Supabase project.
+  // That is acceptable — saved spots are server-only, no localStorage mirror.
+  const initialSavedSpots = (
+    await (await getSavedSpotsRepositoryAsync()).list(initialUser.id, {
+      limit: 200,
+    })
+  ).items
   return (
     <SpotsProvider
       initialSpots={initialSpots}

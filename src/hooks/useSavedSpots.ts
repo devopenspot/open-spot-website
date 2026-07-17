@@ -1,220 +1,181 @@
-import { useCallback, useEffect, useRef, useSyncExternalStore } from 'react';
-import { STORAGE_KEY_VERSION } from '@/lib/constants';
-import { showToast } from './useToast';
-import { toggleSavedAction } from '@/app/actions/saved-spots';
-import type { SavedSpot } from '@/types/saved-spot';
-import { useInitialSavedSpots } from '@/lib/saved-spots-context';
-
-const STORAGE_KEY_LEGACY = 'openspot_saved_ids_v1';
-const DEFAULT_USER_ID = 'dev';
+import { useCallback, useEffect, useMemo, useSyncExternalStore } from "react";
+import { showToast } from "./useToast";
+import { toggleSavedAction } from "@/app/actions/saved-spots";
+import type { SavedSpot } from "@/types/saved-spot";
+import { useInitialSavedSpots } from "@/lib/saved-spots-context";
 
 type Listener = () => void;
-type Entry = { raw: string | null; set: Set<string> };
 
 interface UserStore {
-  memoryCache: Map<string, string | null>;
-  cachedSnapshot: Entry | null;
+  ids: Set<string>;
+  channel: BroadcastChannel | null;
   listeners: Set<Listener>;
 }
 
 const userStores = new Map<string, UserStore>();
+const EMPTY_SET: Set<string> = new Set();
 
-function storageKeyFor(userId: string): string {
-  return `openspot_saved_ids_${STORAGE_KEY_VERSION}:${userId}`;
+function channelName(userId: string): string {
+  return `openspot:saved-spots:${userId}`;
 }
 
-function getUserStore(userId: string): UserStore {
+function ensureUserStore(userId: string, initialIds: readonly string[]): UserStore {
   let store = userStores.get(userId);
-  if (!store) {
-    store = { memoryCache: new Map(), cachedSnapshot: null, listeners: new Set() };
-    userStores.set(userId, store);
-  }
+  if (store) return store;
+  store = {
+    ids: new Set(initialIds),
+    channel: null,
+    listeners: new Set(),
+  };
+  userStores.set(userId, store);
   return store;
 }
 
-function readStorage(userId: string): string | null {
-  if (typeof window === 'undefined') return null;
-  const store = getUserStore(userId);
-  const key = storageKeyFor(userId);
-  if (store.memoryCache.has(key)) {
-    return store.memoryCache.get(key) ?? null;
-  }
-  try {
-    const raw = window.localStorage.getItem(key);
-    store.memoryCache.set(key, raw);
-    return raw;
-  } catch {
-    store.memoryCache.set(key, null);
-    return null;
-  }
-}
-
-function writeStorage(userId: string, value: string | null): string | null {
-  if (typeof window === 'undefined') return null;
-  const store = getUserStore(userId);
-  const key = storageKeyFor(userId);
-  store.memoryCache.set(key, value);
-  try {
-    if (value === null) {
-      window.localStorage.removeItem(key);
-    } else {
-      window.localStorage.setItem(key, value);
-    }
-    return null;
-  } catch (e) {
-    return e instanceof Error ? e.message : 'Failed to persist saved spots';
-  }
-}
-
 function notify(userId: string): void {
-  const store = getUserStore(userId);
+  const store = userStores.get(userId);
+  if (!store) return;
   for (const l of store.listeners) l();
 }
 
-function parseSavedIds(raw: string | null): Set<string> {
-  if (!raw) return new Set();
-  try {
-    const parsed: unknown = JSON.parse(raw);
-    if (Array.isArray(parsed)) {
-      return new Set(parsed.filter((v): v is string => typeof v === 'string'));
+function subscribe(userId: string, listener: Listener): () => void {
+  if (typeof window === "undefined") return () => {};
+  const store = ensureUserStore(userId, []);
+  store.listeners.add(listener);
+  if (!store.channel && typeof BroadcastChannel !== "undefined") {
+    try {
+      const channel = new BroadcastChannel(channelName(userId));
+      channel.addEventListener("message", (event) => {
+        const data = event.data as
+          | { type?: unknown; spotId?: unknown; isSaved?: unknown }
+          | null;
+        if (
+          !data ||
+          data.type !== "toggle" ||
+          typeof data.spotId !== "string" ||
+          typeof data.isSaved !== "boolean"
+        )
+          return;
+        const s = userStores.get(userId);
+        if (!s) return;
+        const next = new Set(s.ids);
+        if (data.isSaved) next.add(data.spotId);
+        else next.delete(data.spotId);
+        s.ids = next;
+        notify(userId);
+      });
+      store.channel = channel;
+    } catch {
+      store.channel = null;
     }
-  } catch {
-    // fall through
   }
-  return new Set();
+  return () => {
+    const s = userStores.get(userId);
+    if (!s) return;
+    s.listeners.delete(listener);
+    if (s.listeners.size === 0 && s.channel) {
+      try {
+        s.channel.close();
+      } catch {
+        // ignore
+      }
+      s.channel = null;
+    }
+  };
 }
 
 function getSnapshot(userId: string): Set<string> {
-  const store = getUserStore(userId);
-  const raw = readStorage(userId);
-  if (store.cachedSnapshot && store.cachedSnapshot.raw === raw) {
-    return store.cachedSnapshot.set;
-  }
-  const set = parseSavedIds(raw);
-  store.cachedSnapshot = { raw, set };
-  return set;
+  return userStores.get(userId)?.ids ?? EMPTY_SET;
 }
-
-const SERVER_SNAPSHOT: Set<string> = new Set();
 
 function getServerSnapshot(): Set<string> {
-  return SERVER_SNAPSHOT;
+  return EMPTY_SET;
 }
 
-function subscribe(userId: string, listener: Listener): () => void {
-  if (typeof window === 'undefined') return () => {};
-  const store = getUserStore(userId);
-  store.listeners.add(listener);
-  const onStorage = (e: StorageEvent) => {
-    const key = storageKeyFor(userId);
-    if (e.key === key || e.key === null) {
-      store.memoryCache.delete(key);
-      store.cachedSnapshot = null;
-      notify(userId);
+let legacyCleared = false;
+
+function clearLegacyStorage(): void {
+  if (legacyCleared) return;
+  if (typeof window === "undefined") return;
+  legacyCleared = true;
+  try {
+    const toRemove: string[] = [];
+    for (let i = 0; i < window.localStorage.length; i++) {
+      const k = window.localStorage.key(i);
+      if (k && k.startsWith("openspot_saved_ids_")) toRemove.push(k);
     }
-  };
-  window.addEventListener('storage', onStorage);
-  return () => {
-    store.listeners.delete(listener);
-    window.removeEventListener('storage', onStorage);
-  };
+    for (const k of toRemove) window.localStorage.removeItem(k);
+  } catch {
+    // ignore
+  }
 }
 
 export function __resetUserStoresForTests(): void {
+  for (const store of userStores.values()) {
+    try {
+      store.channel?.close();
+    } catch {
+      // ignore
+    }
+  }
   userStores.clear();
-}
-
-export function __migrateLegacyForTests(userId: string = DEFAULT_USER_ID): void {
-  migrateLegacy(userId);
+  legacyCleared = false;
 }
 
 export function useSavedSpots(
-  userId: string = DEFAULT_USER_ID,
+  userId: string,
   initialServerSavedSpotsArg?: readonly SavedSpot[],
 ) {
-  const contextInitial = useInitialSavedSpots()
-  const initialServerSavedSpots =
-    initialServerSavedSpotsArg ?? (contextInitial.length > 0 ? contextInitial : undefined)
-  const lastErrorRef = useRef<string | null>(null);
-  const hydratedRef = useRef(false);
-  const isServerHydratedRef = useRef(Boolean(initialServerSavedSpots))
+  const contextInitial = useInitialSavedSpots();
+  const initialIds = useMemo(() => {
+    const source =
+      initialServerSavedSpotsArg ??
+      (contextInitial.length > 0 ? contextInitial : undefined);
+    return (source ?? []).map((s) => s.spotId);
+  }, [initialServerSavedSpotsArg, contextInitial]);
 
-  const subscribeBound = useCallback(
-    (listener: Listener) => subscribe(userId, listener),
-    [userId],
-  );
-  const getSnapshotBound = useCallback(
-    () => getSnapshot(userId),
-    [userId],
-  );
+  useEffect(() => {
+    ensureUserStore(userId, initialIds);
+    clearLegacyStorage();
+    notify(userId);
+  }, [userId, initialIds]);
 
   const savedIds = useSyncExternalStore(
-    subscribeBound,
-    getSnapshotBound,
+    (listener) => subscribe(userId, listener),
+    () => getSnapshot(userId),
     getServerSnapshot,
   );
-
-  // Hydration: clear the in-memory cache so the next getSnapshot re-reads
-  // localStorage. Also seed from the server-fed list on first mount so
-  // the UI is correct without a fetch.
-  useEffect(() => {
-    migrateLegacy(userId);
-    const store = getUserStore(userId);
-    const key = storageKeyFor(userId);
-    if (isServerHydratedRef.current && initialServerSavedSpots) {
-      const ids = initialServerSavedSpots.map((s) => s.spotId)
-      const serialized = ids.length === 0 ? null : JSON.stringify(ids)
-      writeStorage(userId, serialized)
-      store.memoryCache.set(key, serialized)
-      store.cachedSnapshot = null
-      notify(userId)
-    } else if (store.memoryCache.has(key)) {
-      store.memoryCache.delete(key)
-      store.cachedSnapshot = null
-      notify(userId)
-    }
-    hydratedRef.current = true
-  }, [userId, initialServerSavedSpots])
-
-  // Persist localStorage on every change (after hydration).
-  useEffect(() => {
-    if (!hydratedRef.current) return;
-    const serialized =
-      savedIds.size === 0 ? null : JSON.stringify(Array.from(savedIds));
-    const err = writeStorage(userId, serialized);
-    if (err && err !== lastErrorRef.current) {
-      lastErrorRef.current = err;
-      showToast(`Saved spots could not be persisted: ${err}`, 'error');
-    }
-  }, [userId, savedIds]);
 
   const isSaved = useCallback((id: string) => savedIds.has(id), [savedIds]);
 
   const toggle = useCallback(
     async (id: string) => {
-      const store = getUserStore(userId)
-      const next = new Set(savedIds)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      const serialized = next.size === 0 ? null : JSON.stringify(Array.from(next))
-      writeStorage(userId, serialized)
-      store.cachedSnapshot = null
-      notify(userId)
+      const store = ensureUserStore(userId, []);
+      const prevIds = store.ids;
+      const next = new Set(prevIds);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      const isSaved = next.has(id);
+      store.ids = next;
+      notify(userId);
 
-      // Push to the server. On failure, roll back + toast.
       try {
-        await toggleSavedAction(id)
+        await toggleSavedAction(id);
+        try {
+          store.channel?.postMessage({ type: "toggle", spotId: id, isSaved });
+        } catch {
+          // best-effort cross-tab broadcast
+        }
       } catch (err) {
-        const prevSerialized =
-          savedIds.size === 0 ? null : JSON.stringify(Array.from(savedIds))
-        writeStorage(userId, prevSerialized)
-        store.cachedSnapshot = null
-        notify(userId)
-        const msg = err instanceof Error ? err.message : 'Toggle failed'
-        showToast(`Could not sync saved spot: ${msg}`, 'error')
+        const s = userStores.get(userId);
+        if (s) {
+          s.ids = prevIds;
+          notify(userId);
+        }
+        const msg = err instanceof Error ? err.message : "Toggle failed";
+        showToast(`Could not sync saved spot: ${msg}`, "error");
       }
     },
-    [userId, savedIds],
+    [userId],
   );
 
   return {
@@ -223,21 +184,4 @@ export function useSavedSpots(
     toggle,
     count: savedIds.size,
   } as const;
-}
-
-function migrateLegacy(userId: string): void {
-  if (typeof window === 'undefined') return;
-  try {
-    const key = storageKeyFor(userId);
-    const isDefault = userId === DEFAULT_USER_ID;
-    if (isDefault) {
-      const legacy = window.localStorage.getItem(STORAGE_KEY_LEGACY);
-      if (legacy && !window.localStorage.getItem(key)) {
-        window.localStorage.setItem(key, legacy);
-      }
-    }
-    window.localStorage.removeItem(STORAGE_KEY_LEGACY);
-  } catch {
-    // ignore
-  }
 }

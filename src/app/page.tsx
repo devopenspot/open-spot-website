@@ -1,3 +1,4 @@
+import { HeroSection } from "@/components/layout/HeroSection";
 import ExploreTab from "@/components/explore/ExploreTab";
 import { getFeaturedSportEvent, getSportEvents } from "@/lib/sport-events/loader";
 
@@ -6,5 +7,10 @@ export default async function HomePage() {
     getSportEvents(),
     getFeaturedSportEvent(),
   ]);
-  return <ExploreTab events={events} featured={featured} />;
+  return (
+    <>
+      <HeroSection />
+      <ExploreTab events={events} featured={featured} />
+    </>
+  );
 }
