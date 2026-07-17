@@ -57,13 +57,13 @@ export default function ExploreTab({ events, featured }: ExploreTabProps) {
         className="md:space-y-12 md:-mx-8"
       >
         <SectionHeader
-          eyebrow="Hall of Fame"
+          eyebrow="Coming soon"
           eyebrowIcon={
             <Award size={14} className="text-primary" aria-hidden="true" />
           }
           title="Events"
           titleId="legendary-heading"
-          description="The official circuit that defines the season — world tours, championships, and festivals."
+          description="The official circuits, world tours, championships, and festivals."
           cta={
             <button
               id="view-all-events-link"
