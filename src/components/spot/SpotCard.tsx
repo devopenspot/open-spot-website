@@ -4,7 +4,6 @@ import Image from "next/image";
 import { Heart, Trash2, MapPin } from "lucide-react";
 import { memo, useCallback, type MouseEvent } from "react";
 import { cn } from "@/lib/cn";
-import { CROWD_LEVEL } from "@/lib/constants";
 import { useUserLocation } from "@/hooks/useUserLocation";
 import { getSpotDistanceInfo } from "@/lib/spots/geo";
 import type { Spot } from "@/lib/types";
