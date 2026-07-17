@@ -23,10 +23,10 @@ export function SectionHeader({
   eyebrowClassName,
 }: SectionHeaderProps) {
   return (
-    <div className={cn("mb-6 flex items-end justify-between gap-4", className)}>
+    <div className={cn("mb-8 flex items-end justify-between gap-4", className)}>
       <div className="min-w-0 flex-1">
         {eyebrow && (
-          <div className="flex items-center space-x-2 mb-1">
+          <div className="flex items-center space-x-2 mb-2">
             {eyebrowIcon}
             <span
               className={cn(
@@ -45,7 +45,7 @@ export function SectionHeader({
           {title}
         </h2>
         {description && (
-          <p className="mt-1.5 text-xs text-secondary leading-relaxed max-w-xl">
+          <p className="mt-2 text-xs text-secondary leading-relaxed max-w-xl">
             {description}
           </p>
         )}

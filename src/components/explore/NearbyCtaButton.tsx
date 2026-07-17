@@ -52,7 +52,7 @@ export function NearbyCtaButton() {
       disabled={isRequesting}
       aria-busy={isRequesting}
       aria-describedby={`${NEARBY_BUTTON_ID}-status`}
-      className="group flex items-center space-x-1.5 text-xs font-semibold tracking-wider text-white uppercase hover:underline disabled:opacity-60 disabled:cursor-wait"
+      className="group flex space-x-1.5 text-xs font-semibold text-surface/80 uppercase hover:underline disabled:opacity-60 disabled:cursor-wait border p-4"
     >
       <Icon
         size={14}
