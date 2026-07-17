@@ -191,3 +191,82 @@ describe("useSavedSpots — server-only persistence", () => {
     expect(b.current.count).toBe(0);
   });
 });
+
+describe("useSavedSpots — save/unsave toasts", () => {
+  it("shows a success toast with the spot name after a save", async () => {
+    const { result } = renderWithProviders([]);
+
+    await act(async () => {
+      await result.current.toggle("spot-x", { name: "Downtown Plaza" });
+    });
+
+    expect(showToastMock).toHaveBeenCalledWith(
+      "Saved Downtown Plaza",
+      "success",
+      expect.objectContaining({ title: "Favorites" }),
+    );
+  });
+
+  it("falls back to a generic success message when no name is provided", async () => {
+    const { result } = renderWithProviders([]);
+
+    await act(async () => {
+      await result.current.toggle("spot-x");
+    });
+
+    expect(showToastMock).toHaveBeenCalledWith(
+      "Saved to favorites",
+      "success",
+      expect.objectContaining({ title: "Favorites" }),
+    );
+  });
+
+  it("shows an info toast with an Undo action after a remove", async () => {
+    const { result } = renderWithProviders(sample);
+
+    await act(async () => {
+      await result.current.toggle("spot-a", { name: "Hubba Hideout" });
+    });
+
+    const call = showToastMock.mock.calls.find(
+      (c) => c[0] === "Removed Hubba Hideout",
+    );
+    expect(call).toBeDefined();
+    const [, tone, options] = call as [
+      string,
+      string,
+      { title?: string; durationMs?: number; action?: { label: string; onClick: () => void } },
+    ];
+    expect(tone).toBe("info");
+    expect(options.title).toBe("Favorites");
+    expect(options.durationMs).toBe(5000);
+    expect(options.action?.label).toBe("Undo");
+  });
+
+  it("Undo restores the spot via the toggle pipeline", async () => {
+    const { result } = renderWithProviders(sample);
+
+    await act(async () => {
+      await result.current.toggle("spot-a", { name: "Hubba Hideout" });
+    });
+    expect(result.current.isSaved("spot-a")).toBe(false);
+
+    const removeCall = showToastMock.mock.calls.find(
+      (c) => c[0] === "Removed Hubba Hideout",
+    );
+    const undo = (
+      removeCall?.[2] as {
+        action?: { label: string; onClick: () => void };
+      }
+    )?.action?.onClick;
+    expect(undo).toBeDefined();
+
+    await act(async () => {
+      undo?.();
+    });
+
+    expect(result.current.isSaved("spot-a")).toBe(true);
+    expect(toggleSavedActionMock).toHaveBeenCalledTimes(2);
+    expect(toggleSavedActionMock).toHaveBeenNthCalledWith(2, "spot-a");
+  });
+});

@@ -13,7 +13,7 @@ interface BaseSpotCardProps {
   spot: Spot;
   isSaved: boolean;
   onOpen: (spot: Spot) => void;
-  onToggleSave: (id: string) => void;
+  onToggleSave: (id: string, meta?: { name?: string }) => void;
   className?: string;
 }
 
@@ -70,9 +70,9 @@ function BaseSpotCardImpl({
   const handleToggle = useCallback(
     (e: MouseEvent<HTMLButtonElement>) => {
       e.stopPropagation();
-      onToggleSave(spot.id);
+      onToggleSave(spot.id, { name: spot.name });
     },
-    [onToggleSave, spot.id],
+    [onToggleSave, spot.id, spot.name],
   );
 
   const { location } = useUserLocation();

@@ -24,7 +24,7 @@ import type { SpotWeather } from "@/lib/weather/weather-cached";
 interface SpotDetailsContentProps {
   spot: Spot;
   isSaved: boolean;
-  onToggleSave: (id: string) => void;
+  onToggleSave: (id: string, meta?: { name?: string }) => void;
   weather?: SpotWeather;
 }
 
@@ -120,9 +120,20 @@ export function SpotDetailsContent({
               <TypeBadges types={spot.types} variant="overlay" />
             </div>
           ) : null}
+          {(spot.types.length > 0 || spot.sports.length > 0) && (
+            <dl className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
+              {spot.sports.length > 0 && (
+                <div className="flex items-center gap-2">
+                  <dd className="font-mono text-[10px] font-bold uppercase tracking-widest text-variant/40">
+                    {spot.sports.join(", ")}
+                  </dd>
+                </div>
+              )}
+            </dl>
+          )}
           <h2
             id={titleId}
-            className="font-display text-2xl font-bold tracking-wide leading-tight uppercase sm:text-3xl"
+            className="mt-4 pt-4 border-t border-outline-variant/40 font-display text-2xl font-bold tracking-wide leading-tight uppercase sm:text-3xl"
           >
             {spot.name}
           </h2>
@@ -170,7 +181,7 @@ export function SpotDetailsContent({
             <div className="flex items-center space-x-2">
               <button
                 type="button"
-                onClick={() => onToggleSave(spot.id)}
+                onClick={() => onToggleSave(spot.id, { name: spot.name })}
                 aria-pressed={isSaved}
                 aria-label={
                   isSaved ? `Unsave ${spot.name}` : `Save ${spot.name}`
@@ -314,42 +325,17 @@ export function SpotDetailsContent({
               </div>
             )}
           </div>
+        </div>
 
-          <div className="mb-6 rounded-xl bg-surface-container-low border border-outline-variant p-4 md:p-6">
+        <div className="border-t border-outline-variant pt-4 flex flex-col sm:flex-row gap-2 sm:gap-x-3">
+          <div className="mb-2 rounded-xl bg-surface-container-low border border-outline-variant p-4 md:p-6">
             <span className="block font-mono text-[10px] tracking-wider text-secondary uppercase mb-2">
               Location address
             </span>
             <p className="text-xs text-on-surface-variant font-medium leading-relaxed">
               {spot.address}
             </p>
-            {(spot.types.length > 0 || spot.sports.length > 0) && (
-              <dl className="mt-4 pt-4 border-t border-outline-variant/40 flex flex-wrap items-center gap-x-4 gap-y-1.5">
-                {spot.types.length > 0 && (
-                  <div className="flex items-center gap-2">
-                    <dt className="font-mono text-[10px] font-bold uppercase tracking-widest text-secondary">
-                      Type
-                    </dt>
-                    <dd className="text-xs text-on-surface font-medium">
-                      {spot.types.map((t) => t.name).join(", ")}
-                    </dd>
-                  </div>
-                )}
-                {spot.sports.length > 0 && (
-                  <div className="flex items-center gap-2">
-                    <dt className="font-mono text-[10px] font-bold uppercase tracking-widest text-secondary">
-                      Disciplines
-                    </dt>
-                    <dd className="text-xs text-on-surface font-medium">
-                      {spot.sports.join(", ")}
-                    </dd>
-                  </div>
-                )}
-              </dl>
-            )}
           </div>
-        </div>
-
-        <div className="border-t border-outline-variant pt-4 flex flex-col sm:flex-row gap-2 sm:gap-x-3">
           <a
             href={directionsUrl}
             target="_blank"

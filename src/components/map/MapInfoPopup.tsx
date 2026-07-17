@@ -19,7 +19,7 @@ interface MapInfoPopupProps {
   isSaved: boolean;
   onClose: () => void;
   onOpen: (spot: Spot) => void;
-  onToggleSave: (id: string) => void;
+  onToggleSave: (id: string, meta?: { name?: string }) => void;
 }
 
 export function MapInfoPopup({
@@ -161,7 +161,7 @@ export function MapInfoPopup({
         </button>
         <button
           type="button"
-          onClick={() => onToggleSave(spot.id)}
+          onClick={() => onToggleSave(spot.id, { name: spot.name })}
           aria-pressed={isSaved}
           aria-label={isSaved ? `Unsave ${spot.name}` : `Save ${spot.name}`}
           className={cn(

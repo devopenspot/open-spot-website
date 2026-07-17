@@ -147,36 +147,58 @@ export function useSavedSpots(
 
   const isSaved = useCallback((id: string) => savedIds.has(id), [savedIds]);
 
-  const toggle = useCallback(
-    async (id: string) => {
-      const store = ensureUserStore(userId, []);
-      const prevIds = store.ids;
-      const next = new Set(prevIds);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      const isSaved = next.has(id);
-      store.ids = next;
-      notify(userId);
+  const doToggle = async (id: string, meta?: { name?: string }) => {
+    const store = ensureUserStore(userId, []);
+    const prevIds = store.ids;
+    const next = new Set(prevIds);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    const nowSaved = next.has(id);
+    store.ids = next;
+    notify(userId);
 
+    try {
+      await toggleSavedAction(id);
       try {
-        await toggleSavedAction(id);
-        try {
-          store.channel?.postMessage({ type: "toggle", spotId: id, isSaved });
-        } catch {
-          // best-effort cross-tab broadcast
-        }
-      } catch (err) {
-        const s = userStores.get(userId);
-        if (s) {
-          s.ids = prevIds;
-          notify(userId);
-        }
-        const msg = err instanceof Error ? err.message : "Toggle failed";
-        showToast(`Could not sync saved spot: ${msg}`, "error");
+        store.channel?.postMessage({ type: "toggle", spotId: id, isSaved: nowSaved });
+      } catch {
+        // best-effort cross-tab broadcast
       }
-    },
-    [userId],
-  );
+
+      if (nowSaved) {
+        showToast(
+          meta?.name ? `Saved ${meta.name}` : "Saved to favorites",
+          "success",
+          { title: "Favorites" },
+        );
+      } else {
+        showToast(
+          meta?.name ? `Removed ${meta.name}` : "Removed from favorites",
+          "info",
+          {
+            title: "Favorites",
+            durationMs: 5000,
+            action: {
+              label: "Undo",
+              onClick: () => {
+                void doToggle(id, meta);
+              },
+            },
+          },
+        );
+      }
+    } catch (err) {
+      const s = userStores.get(userId);
+      if (s) {
+        s.ids = prevIds;
+        notify(userId);
+      }
+      const msg = err instanceof Error ? err.message : "Toggle failed";
+      showToast(`Could not sync saved spot: ${msg}`, "error");
+    }
+  };
+
+  const toggle = doToggle;
 
   return {
     savedIds,

@@ -42,7 +42,7 @@ describe("<ExploreSpotCard>", () => {
     expect(saveButton).toHaveAttribute("aria-pressed", "false")
 
     await userEvent.click(saveButton)
-    expect(onToggleSave).toHaveBeenCalledWith("spot-1")
+    expect(onToggleSave).toHaveBeenCalledWith("spot-1", { name: "TEST SPOT" })
   })
 
   it("reflects isSaved=true via aria-pressed and label", () => {

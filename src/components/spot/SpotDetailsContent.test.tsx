@@ -258,7 +258,7 @@ describe("<SpotDetailsContent>", () => {
     expect(link).toBeInTheDocument();
     expect(link).toHaveAttribute(
       "href",
-      "https://zoom.earth/maps/precipitation/#view=34.0522,-118.2437,7z/model=icon",
+      "https://zoom.earth/maps/precipitation/#view=34.0522,-118.2437,10z/model=icon",
     );
     expect(link).toHaveAttribute("target", "_blank");
     expect(link).toHaveAttribute("rel", "noopener noreferrer");
