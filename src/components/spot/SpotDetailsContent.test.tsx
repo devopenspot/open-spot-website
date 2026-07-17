@@ -227,4 +227,19 @@ describe("<SpotDetailsContent>", () => {
     );
     expect(screen.getByText(/forecast unavailable/i)).toBeInTheDocument();
   });
+
+  it("renders the weather accuracy note in the weather status block", () => {
+    render(
+      <SpotDetailsContent
+        spot={fakeSpot()}
+        isSaved={false}
+        onToggleSave={vi.fn()}
+        weather={fakeWeather()}
+      />,
+    );
+    const note = screen.getByTestId("weather-accuracy-note-block");
+    expect(note).toBeInTheDocument();
+    expect(note).toHaveTextContent(/forecast is approximate/i);
+    expect(note.closest("div.rounded-xl")).not.toBeNull();
+  });
 });

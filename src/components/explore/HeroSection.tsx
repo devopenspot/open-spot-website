@@ -56,7 +56,7 @@ export function HeroSection() {
           className="space-y-6"
         >
           <SectionHeader
-            eyebrow="Weather & Forecasts"
+            eyebrow="Weather & Forecast"
             eyebrowIcon={
               <Globe size={14} className="text-surface/80" aria-hidden="true" />
             }

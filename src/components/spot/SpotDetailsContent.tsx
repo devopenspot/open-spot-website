@@ -12,6 +12,7 @@ import {
   Navigation,
 } from "lucide-react";
 import { WeatherIcon } from "./WeatherIcon";
+import { WeatherAccuracyNote } from "./WeatherAccuracyNote";
 import { TypeBadges } from "./TypeBadges";
 import { showToast } from "@/hooks/useToast";
 import { useUserLocation } from "@/hooks/useUserLocation";
@@ -202,9 +203,10 @@ export function SpotDetailsContent({
             </div>
           </div>
           <div className="mb-6 rounded-xl bg-surface-container-low border border-outline-variant p-2">
-            <span className="block font-mono text-[10px] tracking-wider text-secondary uppercase mb-3">
+            <span className="block font-mono text-[10px] tracking-wider text-secondary uppercase mb-2">
               Weather status
             </span>
+            <WeatherAccuracyNote variant="block" className="mb-3" />
             <div className="mb-4 flex items-center gap-2 md:gap-3 min-w-0 overflow-hidden border-b border-outline-variant/40 pb-4">
               <WeatherIcon name={currentIcon} size={40} className="shrink-0" />
               <div className="flex min-w-0 shrink flex-col items-center justify-center text-center">

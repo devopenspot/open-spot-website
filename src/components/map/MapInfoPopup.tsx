@@ -8,6 +8,7 @@ import { useRef } from "react";
 import type { Spot } from "@/lib/types";
 import type { SpotWeather } from "@/lib/weather/weather-cached";
 import { WeatherIcon } from "@/components/spot/WeatherIcon";
+import { WeatherAccuracyNote } from "@/components/spot/WeatherAccuracyNote";
 import { TypeBadges } from "@/components/spot/TypeBadges";
 
 interface MapInfoPopupProps {
@@ -77,7 +78,10 @@ export function MapInfoPopup({
         </div>
 
         <div>
-          <span className="block text-[8px] text-secondary">Air temp</span>
+          <div className="flex items-center justify-end gap-1">
+            <span className="block text-[8px] text-secondary">Air temp</span>
+            <WeatherAccuracyNote variant="compact" />
+          </div>
           <span className="font-semibold text-on-surface flex items-center gap-1">
             {weatherIcon ? <WeatherIcon name={weatherIcon} size={12} /> : null}
             {current !== undefined ? `${current}°C` : "—"}

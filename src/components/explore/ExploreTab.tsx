@@ -107,7 +107,7 @@ export default function ExploreTab({ events, featured }: ExploreTabProps) {
       >
         <SectionHeader
           eyebrow="Fresh"
-          title="Spotlight Spots"
+          title="Highlight Spots"
           titleId="spotlight-heading"
         />
         <div
