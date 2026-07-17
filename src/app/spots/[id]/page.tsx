@@ -15,12 +15,13 @@ export async function generateMetadata({
   if (!spot) {
     return { title: 'Spot not found' };
   }
+  const typeList = spot.types.map((t) => t.name).join(", ");
   return {
     title: spot.name,
-    description: `${spot.type} skate spot in ${spot.city}.`,
+    description: `${typeList} skate spot in ${spot.city}.`,
     openGraph: {
       title: spot.name,
-      description: `${spot.type} skate spot in ${spot.city}.`,
+      description: `${typeList} skate spot in ${spot.city}.`,
       images: [{ url: spot.image }],
     },
   };

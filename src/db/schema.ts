@@ -9,46 +9,51 @@ import {
   timestamp,
   uniqueIndex,
   uuid,
-} from "drizzle-orm/pg-core"
-import { relations } from "drizzle-orm"
+} from "drizzle-orm/pg-core";
+import { relations } from "drizzle-orm";
 
 const geometryPoint = customType<{
-  data: { lat: number; lon: number }
-  driverData: string
+  data: { lat: number; lon: number };
+  driverData: string;
 }>({
   dataType() {
-    return "geometry(Point, 4326)"
+    return "geometry(Point, 4326)";
   },
   toDriver(value) {
-    return `SRID=4326;POINT(${value.lon} ${value.lat})`
+    return `SRID=4326;POINT(${value.lon} ${value.lat})`;
   },
   fromDriver(value) {
     // postgres-js returns a `geometry(Point, 4326)` column as hex-encoded
     // EWKB (Extended Well-Known Binary). Accept that as the primary
     // format, with a WKT/EWKT fallback for any other future driver.
-    if (typeof value === "string" && /^[0-9A-Fa-f]+$/.test(value) && value.length >= 50) {
+    if (
+      typeof value === "string" &&
+      /^[0-9A-Fa-f]+$/.test(value) &&
+      value.length >= 50
+    ) {
       // EWKB Point with SRID = 25 bytes = 50 hex chars.
       // Layout: [0]=endian, [1..4]=type, [5..8]=SRID, [9..16]=X (lon), [17..24]=Y (lat)
-      const buf = Buffer.from(value, "hex")
-      const view = new DataView(buf.buffer, buf.byteOffset, buf.byteLength)
-      const lon = view.getFloat64(9, true)
-      const lat = view.getFloat64(17, true)
+      const buf = Buffer.from(value, "hex");
+      const view = new DataView(buf.buffer, buf.byteOffset, buf.byteLength);
+      const lon = view.getFloat64(9, true);
+      const lat = view.getFloat64(17, true);
       if (Number.isFinite(lat) && Number.isFinite(lon)) {
-        return { lat, lon }
+        return { lat, lon };
       }
     }
     // Fallback: WKT / EWKT ("POINT(<lon> <lat>)" or "SRID=4326;POINT(...)")
-    const match = /(?:SRID=\d+;)?POINT\s*\(\s*([-\d.eE]+)\s+([-\d.eE]+)\s*\)/i.exec(
-      value,
-    )
+    const match =
+      /(?:SRID=\d+;)?POINT\s*\(\s*([-\d.eE]+)\s+([-\d.eE]+)\s*\)/i.exec(value);
     if (match) {
-      return { lat: Number(match[2]), lon: Number(match[1]) }
+      return { lat: Number(match[2]), lon: Number(match[1]) };
     }
-    console.warn("geometryPoint.fromDriver: unparseable geometry", { value })
-    return { lat: 0, lon: 0 }
+    console.warn("geometryPoint.fromDriver: unparseable geometry", { value });
+    return { lat: 0, lon: 0 };
   },
-})
-
+});
+// `spots.type` is no longer a single FK — a spot has zero or more types
+// (plaza, bowl, rails, ...) via the `spot_spot_types` join table. The
+// `spot_types` dimension table is unchanged.
 export const spots = pgTable(
   "spots",
   {
@@ -58,9 +63,6 @@ export const spots = pgTable(
     city: text("city").notNull(),
     citySlug: text("city_slug").notNull(),
     address: text("address").notNull(),
-    typeSlug: text("type_slug")
-      .notNull()
-      .references(() => spotTypes.slug, { onDelete: "restrict" }),
     imageUrl: text("image_url").notNull(),
     imagePath: text("image_path"),
     crowdLevel: integer("crowd_level").notNull().default(0),
@@ -78,11 +80,10 @@ export const spots = pgTable(
   },
   (t) => [
     uniqueIndex("spots_slug_unique").on(t.slug),
-    index("spots_type_slug_idx").on(t.typeSlug),
     index("spots_country_code_idx").on(t.countryCode),
     index("spots_city_slug_idx").on(t.citySlug),
   ],
-)
+);
 
 export const sportEvents = pgTable(
   "sport_events",
@@ -94,8 +95,7 @@ export const sportEvents = pgTable(
     url: text("url").notNull(),
     image: text("image").notNull(),
     description: text("description").notNull().default(""),
-    startAt: timestamp("start_at", { withTimezone: true })
-      .notNull(),
+    startAt: timestamp("start_at", { withTimezone: true }).notNull(),
     endAt: timestamp("end_at", { withTimezone: true }),
     city: text("city").notNull(),
     countryCode: text("country_code")
@@ -124,7 +124,7 @@ export const sportEvents = pgTable(
     index("sport_events_tier_slug_idx").on(t.tierSlug),
     index("sport_events_start_at_idx").on(t.startAt),
   ],
-)
+);
 
 export const savedSpots = pgTable(
   "saved_spots",
@@ -146,7 +146,7 @@ export const savedSpots = pgTable(
     index("saved_spots_user_created_idx").on(t.userId, t.createdAt),
     index("saved_spots_spot_idx").on(t.spotId),
   ],
-)
+);
 
 export const profiles = pgTable("profiles", {
   id: uuid("id").primaryKey(),
@@ -159,7 +159,7 @@ export const profiles = pgTable("profiles", {
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
-})
+});
 
 export const regions = pgTable(
   "regions",
@@ -178,7 +178,7 @@ export const regions = pgTable(
       .defaultNow(),
   },
   (t) => [index("regions_sort_order_idx").on(t.sortOrder)],
-)
+);
 
 export const countries = pgTable(
   "countries",
@@ -197,7 +197,7 @@ export const countries = pgTable(
       .defaultNow(),
   },
   (t) => [index("countries_region_idx").on(t.regionId)],
-)
+);
 
 export const spotTypes = pgTable(
   "spot_types",
@@ -207,7 +207,7 @@ export const spotTypes = pgTable(
     sortOrder: integer("sort_order").notNull().default(0),
   },
   (t) => [index("spot_types_sort_order_idx").on(t.sortOrder)],
-)
+);
 
 export const sportDisciplines = pgTable(
   "sport_disciplines",
@@ -217,7 +217,7 @@ export const sportDisciplines = pgTable(
     sortOrder: integer("sort_order").notNull().default(0),
   },
   (t) => [index("sport_disciplines_sort_order_idx").on(t.sortOrder)],
-)
+);
 
 export const eventTiers = pgTable(
   "event_tiers",
@@ -227,7 +227,7 @@ export const eventTiers = pgTable(
     sortOrder: integer("sort_order").notNull().default(0),
   },
   (t) => [index("event_tiers_sort_order_idx").on(t.sortOrder)],
-)
+);
 
 export const presetImages = pgTable(
   "preset_images",
@@ -248,7 +248,7 @@ export const presetImages = pgTable(
       .defaultNow(),
   },
   (t) => [index("preset_images_sort_order_idx").on(t.sortOrder)],
-)
+);
 
 export const spotSports = pgTable(
   "spot_sports",
@@ -264,7 +264,7 @@ export const spotSports = pgTable(
     primaryKey({ columns: [t.spotId, t.disciplineSlug] }),
     index("spot_sports_discipline_idx").on(t.disciplineSlug),
   ],
-)
+);
 
 export const eventSports = pgTable(
   "event_sports",
@@ -280,19 +280,38 @@ export const eventSports = pgTable(
     primaryKey({ columns: [t.eventId, t.disciplineSlug] }),
     index("event_sports_discipline_idx").on(t.disciplineSlug),
   ],
-)
+);
+
+// Many-to-many join between `spots` and `spot_types` (mirrors the
+// `spot_sports` / `event_sports` shape — the parent entity is the
+// first segment of the table name, the related dimension is the
+// second). `ON DELETE cascade` from the spot so removing a spot
+// tears down its links; `ON DELETE restrict` on the type so removing
+// a type in active use fails loudly (caller must reassign first).
+export const spotSpotTypes = pgTable(
+  "spot_spot_types",
+  {
+    spotId: uuid("spot_id")
+      .notNull()
+      .references(() => spots.id, { onDelete: "cascade" }),
+    typeSlug: text("type_slug")
+      .notNull()
+      .references(() => spotTypes.slug, { onDelete: "restrict" }),
+  },
+  (t) => [
+    primaryKey({ columns: [t.spotId, t.typeSlug] }),
+    index("spot_spot_types_type_idx").on(t.typeSlug),
+  ],
+);
 
 export const spotsRelations = relations(spots, ({ one, many }) => ({
-  type: one(spotTypes, {
-    fields: [spots.typeSlug],
-    references: [spotTypes.slug],
-  }),
   country: one(countries, {
     fields: [spots.countryCode],
     references: [countries.iso2],
   }),
   sports: many(spotSports),
-}))
+  types: many(spotSpotTypes),
+}));
 
 export const sportEventsRelations = relations(sportEvents, ({ one, many }) => ({
   tier: one(eventTiers, {
@@ -308,7 +327,7 @@ export const sportEventsRelations = relations(sportEvents, ({ one, many }) => ({
     fields: [sportEvents.createdBy],
     references: [profiles.id],
   }),
-}))
+}));
 
 export const countriesRelations = relations(countries, ({ one, many }) => ({
   region: one(regions, {
@@ -317,11 +336,11 @@ export const countriesRelations = relations(countries, ({ one, many }) => ({
   }),
   spots: many(spots),
   events: many(sportEvents),
-}))
+}));
 
 export const regionsRelations = relations(regions, ({ many }) => ({
   countries: many(countries),
-}))
+}));
 
 export const spotSportsRelations = relations(spotSports, ({ one }) => ({
   spot: one(spots, { fields: [spotSports.spotId], references: [spots.id] }),
@@ -329,7 +348,7 @@ export const spotSportsRelations = relations(spotSports, ({ one }) => ({
     fields: [spotSports.disciplineSlug],
     references: [sportDisciplines.slug],
   }),
-}))
+}));
 
 export const eventSportsRelations = relations(eventSports, ({ one }) => ({
   event: one(sportEvents, {
@@ -340,35 +359,46 @@ export const eventSportsRelations = relations(eventSports, ({ one }) => ({
     fields: [eventSports.disciplineSlug],
     references: [sportDisciplines.slug],
   }),
-}))
+}));
+
+export const spotSpotTypesRelations = relations(spotSpotTypes, ({ one }) => ({
+  spot: one(spots, { fields: [spotSpotTypes.spotId], references: [spots.id] }),
+  type: one(spotTypes, {
+    fields: [spotSpotTypes.typeSlug],
+    references: [spotTypes.slug],
+  }),
+}));
 
 export const savedSpotsRelations = relations(savedSpots, ({ one }) => ({
   spot: one(spots, { fields: [savedSpots.spotId], references: [spots.id] }),
-}))
+}));
 
-export type SpotRow = typeof spots.$inferSelect
-export type NewSpotRow = typeof spots.$inferInsert
-export type SportEventRow = typeof sportEvents.$inferSelect
-export type NewSportEventRow = typeof sportEvents.$inferInsert
-export type SavedSpotRow = typeof savedSpots.$inferSelect
-export type NewSavedSpotRow = typeof savedSpots.$inferInsert
-export type ProfileRow = typeof profiles.$inferSelect
+export type SpotRow = typeof spots.$inferSelect;
+export type NewSpotRow = typeof spots.$inferInsert;
+export type SportEventRow = typeof sportEvents.$inferSelect;
+export type NewSportEventRow = typeof sportEvents.$inferInsert;
+export type SavedSpotRow = typeof savedSpots.$inferSelect;
+export type NewSavedSpotRow = typeof savedSpots.$inferInsert;
+export type ProfileRow = typeof profiles.$inferSelect;
 
-export type RegionRow = typeof regions.$inferSelect
-export type NewRegionRow = typeof regions.$inferInsert
-export type CountryRow = typeof countries.$inferSelect
-export type NewCountryRow = typeof countries.$inferInsert
-export type SpotTypeRow = typeof spotTypes.$inferSelect
-export type NewSpotTypeRow = typeof spotTypes.$inferInsert
-export type SportDisciplineRow = typeof sportDisciplines.$inferSelect
-export type NewSportDisciplineRow = typeof sportDisciplines.$inferInsert
-export type EventTierRow = typeof eventTiers.$inferSelect
-export type NewEventTierRow = typeof eventTiers.$inferInsert
-export type SpotFeatureRow = never
-export type NewSpotFeatureRow = never
-export type SpotSportRow = typeof spotSports.$inferSelect
-export type NewSpotSportRow = typeof spotSports.$inferInsert
-export type EventSportRow = typeof eventSports.$inferSelect
-export type NewEventSportRow = typeof eventSports.$inferInsert
-export type PresetImageRow = typeof presetImages.$inferSelect
-export type NewPresetImageRow = typeof presetImages.$inferInsert
+export type SpotSpotTypeRow = typeof spotSpotTypes.$inferSelect;
+export type NewSpotSpotTypeRow = typeof spotSpotTypes.$inferInsert;
+
+export type RegionRow = typeof regions.$inferSelect;
+export type NewRegionRow = typeof regions.$inferInsert;
+export type CountryRow = typeof countries.$inferSelect;
+export type NewCountryRow = typeof countries.$inferInsert;
+export type SpotTypeRow = typeof spotTypes.$inferSelect;
+export type NewSpotTypeRow = typeof spotTypes.$inferInsert;
+export type SportDisciplineRow = typeof sportDisciplines.$inferSelect;
+export type NewSportDisciplineRow = typeof sportDisciplines.$inferInsert;
+export type EventTierRow = typeof eventTiers.$inferSelect;
+export type NewEventTierRow = typeof eventTiers.$inferInsert;
+export type SpotFeatureRow = never;
+export type NewSpotFeatureRow = never;
+export type SpotSportRow = typeof spotSports.$inferSelect;
+export type NewSpotSportRow = typeof spotSports.$inferInsert;
+export type EventSportRow = typeof eventSports.$inferSelect;
+export type NewEventSportRow = typeof eventSports.$inferInsert;
+export type PresetImageRow = typeof presetImages.$inferSelect;
+export type NewPresetImageRow = typeof presetImages.$inferInsert;

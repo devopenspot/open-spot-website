@@ -16,9 +16,15 @@ function strField(form: FormData, key: string): string {
   return typeof v === "string" ? v : ""
 }
 
-function numberField(form: FormData, key: string): number {
-  const v = Number(strField(form, key))
+function numberField(form: FormData, key: number | string): number {
+  const v = Number(strField(form, String(key)))
   return Number.isFinite(v) ? v : 0
+}
+
+function strListField(form: FormData, key: string): string[] {
+  return form
+    .getAll(key)
+    .filter((v): v is string => typeof v === "string")
 }
 
 function deriveCitySlug(city: string): string {
@@ -40,7 +46,7 @@ function readSports(form: FormData): SportDiscipline[] {
 
 /**
  * Cached lookup of the current set of valid `spot_types` slugs. Used
- * to validate incoming `type` values from forms before they reach the
+ * to validate incoming `types` arrays from forms before they reach the
  * repository (the DB has a FK with `onDelete: "restrict"`, but we'd
  * rather throw a clean error than surface a constraint violation).
  */
@@ -50,12 +56,14 @@ async function getValidSpotTypeSlugs(): Promise<ReadonlySet<string>> {
   return new Set(rows.map((r) => r.slug))
 }
 
-function assertValidSpotType(
-  type: string,
+function assertValidSpotTypes(
+  types: readonly string[],
   validSlugs: ReadonlySet<string>,
 ): void {
-  if (!validSlugs.has(type)) {
-    throw new Error(`Unknown spot type: ${type}`)
+  for (const t of types) {
+    if (!validSlugs.has(t)) {
+      throw new Error(`Unknown spot type: ${t}`)
+    }
   }
 }
 
@@ -69,8 +77,8 @@ export type LookupAddress = ProjectedAddress
 /**
  * Server-side classifier delegate. The form sends the raw Nominatim
  * response as a JSON blob in `rawNominatim`; the action runs the
- * classifier server-side and returns the default spot type. The admin
- * can override it on the form.
+ * classifier server-side and returns the default spot type slug. The
+ * admin can override it (and add more) on the form.
  */
 function defaultTypeFromLookup(raw: unknown): string | null {
   if (!raw || typeof raw !== "object") return null
@@ -109,7 +117,7 @@ export async function createSpotFromLookupAction(
   const city = strField(formData, "city")
   const name = strField(formData, "name")
   const address = strField(formData, "address")
-  const type = strField(formData, "type")
+  const types = strListField(formData, "type")
   const imageUrl = strField(formData, "imageUrl")
   const country = strField(formData, "country")
   const countryCode = strField(formData, "countryCode").toUpperCase()
@@ -119,7 +127,7 @@ export async function createSpotFromLookupAction(
   const lon = numberField(formData, "lon")
 
   const validSpotTypeSlugs = await getValidSpotTypeSlugs()
-  assertValidSpotType(type, validSpotTypeSlugs)
+  assertValidSpotTypes(types, validSpotTypeSlugs)
 
   const input = {
     id: providedId,
@@ -127,7 +135,7 @@ export async function createSpotFromLookupAction(
     city,
     citySlug: providedCitySlug,
     address,
-    type,
+    types,
     sports,
     image: imageUrl,
     imagePath,
@@ -157,14 +165,15 @@ export async function updateSpotAction(
   if (text("city")) patch.city = text("city")
   if (text("citySlug")) patch.citySlug = text("citySlug")
   if (text("address")) patch.address = text("address")
-  const incomingType = text("type")
-  if (incomingType) patch.type = incomingType
   if (text("imageUrl")) patch.image = text("imageUrl")
   if (text("country")) patch.country = text("country")
   const countryCode = strField(formData, "countryCode").toUpperCase()
   if (countryCode) patch.countryCode = countryCode
   if (formData.has("sports")) {
     patch.sports = readSports(formData)
+  }
+  if (formData.has("type")) {
+    patch.types = strListField(formData, "type")
   }
   if (formData.has("crowdLevel")) {
     patch.crowdLevel = numberField(formData, "crowdLevel")
@@ -176,9 +185,9 @@ export async function updateSpotAction(
     }
   }
 
-  if (incomingType) {
+  if (Array.isArray(patch.types)) {
     const validSpotTypeSlugs = await getValidSpotTypeSlugs()
-    assertValidSpotType(incomingType, validSpotTypeSlugs)
+    assertValidSpotTypes(patch.types as string[], validSpotTypeSlugs)
   }
 
   const parsed = SpotPatchSchema.parse(patch)
@@ -202,7 +211,8 @@ export async function deleteSpotAction(id: string): Promise<void> {
  * server-side without re-implementing the heuristic on the client.
  * Returns the spot type slug (e.g. "plaza"); falls back to "plaza"
  * (the first row seeded by `src/db/seed-data/taxonomy.ts`) if the
- * classifier yields nothing.
+ * classifier yields nothing. The form pre-selects this as the first
+ * type chip; the admin can add more.
  */
 export async function defaultSpotTypeForLookup(
   rawNominatim: unknown,

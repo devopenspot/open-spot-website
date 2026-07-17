@@ -30,6 +30,16 @@ export interface SpotTypeEntity {
   name: string;
 }
 
+/**
+ * A single type tag attached to a spot. Carries both the slug
+ * (canonical id) and the display name, denormalized from `spot_types`
+ * so consumers don't have to look it up.
+ */
+export interface SpotTypeRef {
+  slug: string;
+  name: string;
+}
+
 export interface SpotLocation {
   lat: number;
   lon: number;
@@ -42,8 +52,7 @@ export interface Spot {
   city: string;
   citySlug: string;
   address: string;
-  type: string;
-  typeSlug: string;
+  types: readonly SpotTypeRef[];
   sports: readonly SportDiscipline[];
   image: string;
   crowdLevel: number;

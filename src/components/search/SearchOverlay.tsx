@@ -21,6 +21,7 @@ import { getSpotDistanceInfo } from "@/lib/spots/geo";
 import type { Spot } from "@/lib/types";
 import { RegionFilter } from "@/components/search/RegionFilter";
 import { useMapFilter } from "@/hooks/useMapFilter";
+import { TypeBadges } from "@/components/spot/TypeBadges";
 
 interface SearchOverlayProps {
   isOpen: boolean;
@@ -269,7 +270,13 @@ function MatchedSpots({
 
                 <span className="flex-1 min-w-0">
                   <span className="flex items-center justify-between text-[9px] font-mono text-current opacity-70 mb-0.5">
-                    <span className="font-bold uppercase">{spot.type}</span>
+                    {spot.types.length > 0 ? (
+                      <TypeBadges
+                        types={spot.types}
+                        variant="surface"
+                        className="text-[8px]"
+                      />
+                    ) : null}
                     <span>{distanceLabel(spot)}</span>
                   </span>
                   <span className="block font-display text-sm font-bold tracking-wide uppercase truncate">

@@ -2,11 +2,21 @@ import { z } from "zod";
 import { SportDisciplineSchema } from "./event";
 
 /**
- * Spot category identifier. The set of valid values lives in the
+ * A single spot type slug. The set of valid values lives in the
  * `spot_types` DB table — the runtime server action validates the
- * incoming string against that set. This schema only enforces "non-empty".
+ * incoming string against that set. This schema only enforces
+ * "non-empty". Note: a spot carries *zero or more* of these (see
+ * `SpotTypeListSchema`), and the canonical `Spot.types` is the
+ * denormalized `{slug, name}[]` shape (`SpotTypeRefSchema`).
  */
-export const SpotTypeSchema = z.string().min(1);
+export const SpotTypeSlugSchema = z.string().min(1);
+
+export const SpotTypeRefSchema = z.object({
+  slug: z.string(),
+  name: z.string(),
+});
+
+export const SpotTypeListSchema = z.array(SpotTypeSlugSchema).default([]);
 
 export const SpotLocationSchema = z.object({
   lat: z.number(),
@@ -20,7 +30,7 @@ export const SpotSchema = z.object({
   city: z.string(),
   citySlug: z.string(),
   address: z.string(),
-  type: SpotTypeSchema,
+  types: z.array(SpotTypeRefSchema).default([]),
   sports: z.array(SportDisciplineSchema),
   image: z.string(),
   crowdLevel: z.number().int().min(0).max(100),
@@ -39,7 +49,7 @@ export const NewSpotSchema = z
     city: z.string().min(1),
     citySlug: z.string().min(1).optional(),
     address: z.string(),
-    type: SpotTypeSchema,
+    types: SpotTypeListSchema,
     sports: z.array(SportDisciplineSchema).default([]),
     image: z.string(),
     imagePath: z.string().nullable().optional(),
@@ -60,7 +70,7 @@ export const SpotPatchSchema = z
     city: z.string().min(1).optional(),
     citySlug: z.string().optional(),
     address: z.string().optional(),
-    type: SpotTypeSchema.optional(),
+    types: SpotTypeListSchema.optional(),
     sports: z.array(SportDisciplineSchema).optional(),
     image: z.string().optional(),
     crowdLevel: z.number().int().min(0).max(100).optional(),
@@ -76,7 +86,12 @@ export const SpotPatchSchema = z
 export const SpotQuerySchema = z
   .object({
     q: z.string().optional(),
-    type: SpotTypeSchema.optional(),
+    /**
+     * Filter to spots that have at least one of the given type slugs
+     * (OR semantics). A spot with `types: ["skatepark", "bowl"]` matches
+     * `types: ["bowl"]` (and `types: ["skatepark", "rails"]`).
+     */
+    types: z.array(SpotTypeSlugSchema).optional(),
     country: z.string().optional(),
     city: z.string().optional(),
     ids: z.array(z.string()).optional(),

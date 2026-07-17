@@ -168,6 +168,8 @@ CREATE TABLE "profiles" (
 -- ─── spots ──────────────────────────────────────────────────────────
 -- (post-refactor: dropped `community_note` and `crowd_level_label`
 --  columns; their JSX form fields are gone too.)
+-- (post-multi-type: dropped `type_slug` column. A spot now has zero
+--  or more types via the `spot_spot_types` join table — see below.)
 DROP TABLE IF EXISTS "spots" CASCADE;
 --> statement-breakpoint
 CREATE TABLE "spots" (
@@ -177,7 +179,6 @@ CREATE TABLE "spots" (
   "city" text NOT NULL CHECK (length("city") > 0),
   "city_slug" text NOT NULL CHECK (length("city_slug") > 0),
   "address" text NOT NULL CHECK (length("address") > 0),
-  "type_slug" text NOT NULL REFERENCES "spot_types"("slug") ON DELETE restrict ON UPDATE no action,
   "image_url" text NOT NULL CHECK (length("image_url") > 0),
   "image_path" text,
   "crowd_level" integer DEFAULT 0 NOT NULL CHECK ("crowd_level" BETWEEN 0 AND 100),
@@ -192,8 +193,6 @@ CREATE TABLE "spots" (
 );
 --> statement-breakpoint
 
-CREATE INDEX "spots_type_slug_idx" ON "spots" USING btree ("type_slug");
---> statement-breakpoint
 CREATE INDEX "spots_country_code_idx" ON "spots" USING btree ("country_code");
 --> statement-breakpoint
 CREATE INDEX "spots_city_slug_idx" ON "spots" USING btree ("city_slug");
@@ -328,6 +327,25 @@ WHERE ss.spot_id = r.spot_id
 
 DELETE FROM sport_disciplines
   WHERE slug IN ('inline','wakeboard','snowboard','ski');
+--> statement-breakpoint
+
+-- ─── spot_spot_types (join) ──────────────────────────────────────────
+-- Many-to-many between `spots` and the `spot_types` dimension. A spot
+-- has zero or more types (plaza, bowl, rails, ...). Mirror of
+-- `spot_sports` / `event_sports` for the sport-disciplines side.
+-- Cascade from the spot, restrict on the type (you must reassign
+-- before deleting a type that's in use).
+
+DROP TABLE IF EXISTS "spot_spot_types" CASCADE;
+--> statement-breakpoint
+CREATE TABLE "spot_spot_types" (
+  "spot_id" uuid NOT NULL REFERENCES "spots"("id") ON DELETE cascade ON UPDATE no action,
+  "type_slug" text NOT NULL REFERENCES "spot_types"("slug") ON DELETE restrict ON UPDATE no action,
+  CONSTRAINT "spot_spot_types_spot_id_type_slug_pk" PRIMARY KEY("spot_id","type_slug")
+);
+--> statement-breakpoint
+
+CREATE INDEX "spot_spot_types_type_idx" ON "spot_spot_types" USING btree ("type_slug");
 --> statement-breakpoint
 
 -- ─── sport_events_with_status view ────────────────────────────────
@@ -561,6 +579,41 @@ CREATE POLICY "spot_sports_select_public"
   FOR SELECT
   TO anon, authenticated
   USING (true);
+--> statement-breakpoint
+
+-- spot_spot_types: public read; owner-only writes (owner = the
+-- spot's created_by, mirroring the spot owner policy).
+ALTER TABLE "public"."spot_spot_types" ENABLE ROW LEVEL SECURITY;
+--> statement-breakpoint
+CREATE POLICY "spot_spot_types_select_public"
+  ON "public"."spot_spot_types"
+  FOR SELECT
+  TO anon, authenticated
+  USING (true);
+--> statement-breakpoint
+CREATE POLICY "spot_spot_types_insert_owner"
+  ON "public"."spot_spot_types"
+  FOR INSERT
+  TO authenticated
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM "public"."spots" s
+      WHERE s."id" = "spot_id"
+        AND (select auth.uid())::text = s."created_by"
+    )
+  );
+--> statement-breakpoint
+CREATE POLICY "spot_spot_types_delete_owner"
+  ON "public"."spot_spot_types"
+  FOR DELETE
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM "public"."spots" s
+      WHERE s."id" = "spot_id"
+        AND (select auth.uid())::text = s."created_by"
+    )
+  );
 --> statement-breakpoint
 
 -- event_sports: public read; writes are service-role only.

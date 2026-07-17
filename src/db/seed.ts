@@ -149,12 +149,11 @@ async function seedSpots(
     const citySlug = spot.citySlug
     const [row] = await sql<{ id: string }[]>`
       insert into spots (
-        id, slug, name, city, city_slug, address, type_slug,
+        id, slug, name, city, city_slug, address,
         image_url, crowd_level, country_code, location, created_by
       ) values (
         gen_random_uuid(), ${slug}, ${spot.name}, ${spot.city},
         ${citySlug}, ${spot.address},
-        ${spot.type.toLowerCase()},
         ${spot.image}, ${spot.crowdLevel},
         (select iso2 from countries where name = ${spot.country} limit 1),
         ${pointWkt(spot.location.lat, spot.location.lon)}::geometry,
@@ -165,7 +164,6 @@ async function seedSpots(
         city = excluded.city,
         city_slug = excluded.city_slug,
         address = excluded.address,
-        type_slug = excluded.type_slug,
         image_url = excluded.image_url,
         crowd_level = excluded.crowd_level,
         country_code = excluded.country_code,
@@ -180,6 +178,20 @@ async function seedSpots(
         const slug = sport.toLowerCase()
         await sql`
           insert into spot_sports (spot_id, discipline_slug)
+          values (${spotId}, ${slug})
+          on conflict do nothing
+        `
+      }
+      // Delete-then-insert the join rows (mirrors `syncSpotTypes` in
+      // the repository). This makes the seed self-healing across
+      // taxonomy renames — without it, renaming a type in
+      // `SPOT_TYPE_SEED` leaves the old join rows in place and a spot
+      // ends up carrying both the old and the new type.
+      await sql`delete from spot_spot_types where spot_id = ${spotId}`
+      for (const typeSlug of spot.types) {
+        const slug = typeSlug.toLowerCase()
+        await sql`
+          insert into spot_spot_types (spot_id, type_slug)
           values (${spotId}, ${slug})
           on conflict do nothing
         `

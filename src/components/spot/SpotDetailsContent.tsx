@@ -12,6 +12,7 @@ import {
   Navigation,
 } from "lucide-react";
 import { WeatherIcon } from "./WeatherIcon";
+import { TypeBadges } from "./TypeBadges";
 import { showToast } from "@/hooks/useToast";
 import { useUserLocation } from "@/hooks/useUserLocation";
 import { cn } from "@/lib/cn";
@@ -113,9 +114,11 @@ export function SpotDetailsContent({
         />
 
         <div className="absolute bottom-6 left-6 right-6 text-white">
-          <span className="inline-block rounded-full bg-white/20 px-2.5 py-1 text-[10px] font-bold tracking-widest uppercase backdrop-blur-sm mb-2">
-            {spot.type}
-          </span>
+          {spot.types.length > 0 ? (
+            <div className="mb-2">
+              <TypeBadges types={spot.types} variant="overlay" />
+            </div>
+          ) : null}
           <h2
             id={titleId}
             className="font-display text-2xl font-bold tracking-wide leading-tight uppercase sm:text-3xl"

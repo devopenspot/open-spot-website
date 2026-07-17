@@ -9,7 +9,7 @@ export const SPOT_TYPE_SEED: readonly TaxonomyEntry[] = [
   { slug: "diy", name: "DIY", sortOrder: 1 },
   { slug: "stair", name: "Stair", sortOrder: 2 },
   { slug: "bowl", name: "Bowl", sortOrder: 3 },
-  { slug: "park", name: "Park", sortOrder: 4 },
+  { slug: "skatepark", name: "skatepark", sortOrder: 4 },
   { slug: "ledges", name: "Ledges", sortOrder: 5 },
 ];
 
@@ -26,4 +26,3 @@ export const EVENT_TIER_SEED: readonly TaxonomyEntry[] = [
   { slug: "festival", name: "Festival", sortOrder: 2 },
   { slug: "federation", name: "Federation", sortOrder: 3 },
 ];
-

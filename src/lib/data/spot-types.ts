@@ -1,6 +1,7 @@
 import "server-only"
 import { connection } from "next/server"
 import { getSpotRepositoryAsync } from "@/lib/repositories"
+import { withDbRetry } from "@/lib/db/client"
 import type { SpotTypeEntity } from "@/lib/types"
 
 /**
@@ -14,6 +15,6 @@ import type { SpotTypeEntity } from "@/lib/types"
 export async function getSpotTypesForClient(): Promise<readonly SpotTypeEntity[]> {
   await connection()
   const repo = await getSpotRepositoryAsync()
-  const rows = await repo.listAllSpotTypes()
+  const rows = await withDbRetry(() => repo.listAllSpotTypes())
   return rows.map((r) => ({ slug: r.slug, name: r.name }))
 }

@@ -18,7 +18,7 @@ function buildInitialState(initialTypeSlug: string): SpotFormState {
     address: "",
     country: "",
     countryCode: "",
-    type: initialTypeSlug,
+    types: initialTypeSlug ? [initialTypeSlug] : [],
     sports: [],
     crowdLevel: 35,
     image: { imageUrl: "", file: null },
@@ -58,7 +58,9 @@ function buildFormData(state: SpotFormState): FormData {
   fd.set("address", state.address)
   fd.set("country", state.country)
   fd.set("countryCode", state.countryCode)
-  fd.set("type", state.type)
+  for (const t of state.types) {
+    fd.append("type", t)
+  }
   for (const sport of state.sports as readonly SportDiscipline[]) {
     fd.append("sports", sport)
   }
@@ -94,7 +96,8 @@ export function AdminNewSpotForm({
     return createSpotFromLookupAction(formData)
   }
 
-  const submitDisabled = !state.name || !state.city
+  const submitDisabled =
+    !state.name || !state.city || state.types.length === 0
 
   return (
     <section

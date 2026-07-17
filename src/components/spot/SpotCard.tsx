@@ -6,6 +6,7 @@ import { memo, useCallback, type MouseEvent } from "react";
 import { cn } from "@/lib/cn";
 import { useUserLocation } from "@/hooks/useUserLocation";
 import { getSpotDistanceInfo } from "@/lib/spots/geo";
+import { TypeBadges } from "@/components/spot/TypeBadges";
 import type { Spot } from "@/lib/types";
 
 interface BaseSpotCardProps {
@@ -28,9 +29,6 @@ const TOGGLE_SAVED_CLASSES = "border-primary bg-primary text-surface";
 const TOGGLE_DEFAULT_CLASSES =
   "border-outline-variant bg-white/80 text-on-surface backdrop-blur-sm hover:bg-white";
 
-const TYPE_BADGE_CLASSES =
-  "absolute bottom-3 left-3 rounded bg-black/60 px-2 py-0.5 text-[9px] font-mono tracking-widest uppercase text-white backdrop-blur-sm";
-
 const CONTENT_CLASSES =
   "flex flex-1 flex-col justify-between p-4 text-left w-full";
 
@@ -46,6 +44,14 @@ function toggleAriaLabel(
     return `Remove ${spot.name} from saved spots`;
   }
   return `Save ${spot.name}`;
+}
+
+function openAriaLabel(spot: Spot): string {
+  const noun = spot.types.length === 1 ? "spot" : "spots";
+  const typePart = spot.types.length
+    ? ` (${spot.types.map((t) => t.name).join(", ")} ${noun})`
+    : "";
+  return `Open ${spot.name} in ${spot.city}${typePart}`;
 }
 
 function BaseSpotCardImpl({
@@ -91,7 +97,7 @@ function BaseSpotCardImpl({
         <button
           type="button"
           onClick={handleOpen}
-          aria-label={`Open ${spot.name} in ${spot.city} (${spot.type} spot)`}
+          aria-label={openAriaLabel(spot)}
           className="absolute inset-0 z-0 cursor-pointer"
         >
           <span className="visually-hidden">Open {spot.name}</span>
@@ -123,9 +129,11 @@ function BaseSpotCardImpl({
           />
         </button>
 
-        <span aria-hidden="true" className={TYPE_BADGE_CLASSES}>
-          {spot.type}
-        </span>
+        {spot.types.length > 0 ? (
+          <div className="absolute bottom-3 left-3 right-12 z-[1]">
+            <TypeBadges types={spot.types} variant="overlay" />
+          </div>
+        ) : null}
       </div>
 
       <button type="button" onClick={handleOpen} className={CONTENT_CLASSES}>

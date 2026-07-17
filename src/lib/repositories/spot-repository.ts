@@ -8,7 +8,7 @@ export interface SpotRepository {
   findNearby(params: { lat: number; lon: number; radiusMeters: number }): Promise<readonly Spot[]>
   listCountries(): Promise<readonly { name: string; region: string; count: number }[]>
   listCountriesForRegion(region: string): Promise<readonly { name: string; count: number }[]>
-  listTypes(): Promise<readonly { name: Spot['type']; count: number }[]>
+  listTypes(): Promise<readonly { name: string; count: number }[]>
   listAllSpotTypes(): Promise<
     readonly { slug: string; name: string; sortOrder: number }[]
   >

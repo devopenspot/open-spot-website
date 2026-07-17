@@ -2,13 +2,14 @@ import { eq, sql } from "drizzle-orm"
 import type { drizzle } from "drizzle-orm/postgres-js"
 import {
   countries,
+  spotSpotTypes,
   spotSports,
-  spotTypes,
   sportDisciplines,
   spots,
+  spotTypes,
 } from "@/db/schema"
 import type { SportDiscipline } from "@/types/sport-events"
-import type { Spot, SpotLocation } from "@/lib/types"
+import type { Spot, SpotLocation, SpotTypeRef } from "@/lib/types"
 import type { SpotWithImagePath } from "@/lib/supabase/storage"
 
 export const sportsAgg = sql<string[]>`
@@ -23,6 +24,27 @@ export const sportsAgg = sql<string[]>`
   )
 `.as("sports")
 
+/**
+ * Aggregates the spot's type tags into a denormalized `{slug, name}[]
+ * ordered by the type dimension's `sort_order` then `name`. Each row
+ * is a `json` object (Postgres `jsonb_build_object`), so the driver
+ * returns the array as a list of plain objects.
+ */
+export const typesAgg = sql<SpotTypeRef[]>`
+  coalesce(
+    (
+      select array_agg(
+        json_build_object('slug', st.slug, 'name', st.name)
+        order by st.sort_order, st.name
+      )
+      from ${spotSpotTypes} sst
+      join ${spotTypes} st on st.slug = sst.type_slug
+      where sst.spot_id = ${spots.id}
+    ),
+    '{}'::json[]
+  )
+`.as("types")
+
 export interface JoinedSpotRow {
   id: string
   slug: string
@@ -30,8 +52,7 @@ export interface JoinedSpotRow {
   city: string
   citySlug: string
   address: string
-  type: string
-  typeSlug: string
+  types: SpotTypeRef[]
   sports: string[]
   imageUrl: string
   imagePath: string | null
@@ -55,8 +76,7 @@ export function joinedSpotSelect(
       city: spots.city,
       citySlug: spots.citySlug,
       address: spots.address,
-      type: spotTypes.name,
-      typeSlug: spotTypes.slug,
+      types: typesAgg,
       sports: sportsAgg,
       imageUrl: spots.imageUrl,
       imagePath: spots.imagePath,
@@ -69,7 +89,6 @@ export function joinedSpotSelect(
       updatedAt: spots.updatedAt,
     })
     .from(spots)
-    .leftJoin(spotTypes, eq(spotTypes.slug, spots.typeSlug))
     .leftJoin(countries, eq(countries.iso2, spots.countryCode))
     .$dynamic()
 }
@@ -82,8 +101,7 @@ export function rowToSpot(row: JoinedSpotRow): Spot {
     city: row.city,
     citySlug: row.citySlug,
     address: row.address,
-    type: row.type,
-    typeSlug: row.typeSlug,
+    types: row.types ?? [],
     sports: row.sports as readonly SportDiscipline[],
     image: row.imagePath ?? row.imageUrl,
     crowdLevel: row.crowdLevel,

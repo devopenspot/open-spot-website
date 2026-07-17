@@ -19,6 +19,12 @@ function strField(form: FormData, key: string): string {
   return typeof v === "string" ? v : ""
 }
 
+function strListField(form: FormData, key: string): string[] {
+  return form
+    .getAll(key)
+    .filter((v): v is string => typeof v === "string")
+}
+
 function deriveCitySlug(city: string): string {
   return city
     .toLowerCase()
@@ -51,7 +57,7 @@ export async function createSpotAction(formData: FormData): Promise<Spot> {
   const city = strField(formData, "city")
   const name = strField(formData, "name")
   const address = strField(formData, "address")
-  const type = strField(formData, "type")
+  const types = strListField(formData, "type")
   const imageUrl = strField(formData, "imageUrl")
   const country = strField(formData, "country")
   const providedCitySlug = strField(formData, "citySlug") || deriveCitySlug(city)
@@ -62,7 +68,7 @@ export async function createSpotAction(formData: FormData): Promise<Spot> {
     city,
     citySlug: providedCitySlug,
     address,
-    type,
+    types,
     sports: [],
     image: imageUrl,
     imagePath,

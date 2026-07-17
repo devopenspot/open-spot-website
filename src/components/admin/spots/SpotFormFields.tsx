@@ -17,7 +17,15 @@ export interface SpotFormState {
   address: string;
   country: string;
   countryCode: string;
-  type: string;
+  /**
+   * Slugs of every type this spot carries (zero or more). The
+   * server action validates each against the `spot_types` dimension
+   * and persists them via the `spot_spot_types` join table. A spot
+   * with no types is allowed at the form level; the submit button
+   * on `AdminNewSpotForm` enforces "at least one" on the new-spot
+   * page (creation requires a classification).
+   */
+  types: string[];
   sports: SportDiscipline[];
   crowdLevel: number;
   image: ImageSourceFieldValue;
@@ -47,7 +55,7 @@ interface SpotFormFieldsProps {
   /** Forwarded to the lat/lon editor for its API + validation errors. */
   onError?: (message: string) => void;
   /**
-   * The available spot types for the type dropdown. The server page
+   * The available spot types for the type picker. The server page
    * fetches this from the `spot_types` DB table via
    * `repo.listAllSpotTypes()` and passes it down.
    */
@@ -64,10 +72,10 @@ export function SpotFormFields({
   spotTypes,
 }: SpotFormFieldsProps) {
   const nameId = useId();
-  const typeId = useId();
   const cityId = useId();
   const addressId = useId();
   const countryId = useId();
+  const typesFieldsetId = useId();
   const sportsFieldsetId = useId();
   const errorId = useId();
 
@@ -84,6 +92,17 @@ export function SpotFormFields({
       );
     } else {
       update("sports", [...state.sports, sport]);
+    }
+  };
+
+  const toggleType = (slug: string) => {
+    if (state.types.includes(slug)) {
+      update(
+        "types",
+        state.types.filter((s) => s !== slug),
+      );
+    } else {
+      update("types", [...state.types, slug]);
     }
   };
 
@@ -119,29 +138,6 @@ export function SpotFormFields({
         </div>
         <div>
           <label
-            htmlFor={typeId}
-            className="mb-1.5 block font-mono text-[10px] font-bold uppercase tracking-wider text-secondary"
-          >
-            Spot type <span aria-hidden="true">*</span>
-          </label>
-          <select
-            id={typeId}
-            value={state.type}
-            onChange={(e) => update("type", e.target.value)}
-            className="w-full rounded-lg border border-outline-variant bg-surface-bright p-3 text-xs font-medium text-on-surface shadow-sm focus:border-outline focus:outline-none"
-          >
-            {spotTypes.map((opt) => (
-              <option key={opt.slug} value={opt.slug}>
-                {opt.name.toUpperCase()}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-        <div>
-          <label
             htmlFor={cityId}
             className="mb-1.5 block font-mono text-[10px] font-bold uppercase tracking-wider text-secondary"
           >
@@ -158,6 +154,55 @@ export function SpotFormFields({
             className="w-full rounded-lg border border-outline-variant bg-surface-bright p-3 text-xs font-medium text-on-surface shadow-sm focus:border-outline focus:outline-none"
           />
         </div>
+      </div>
+
+      <fieldset
+        id={typesFieldsetId}
+        className="rounded-xl border border-outline-variant bg-surface-container-low p-5"
+      >
+        <legend className="flex items-center px-1 font-mono text-[10px] font-bold uppercase tracking-wider text-secondary">
+          Spot types <span aria-hidden="true" className="ml-1 text-primary">*</span>
+        </legend>
+        <p className="mb-3 text-[10px] text-secondary">
+          Pick every type this spot supports — plaza, bowl, rails, DIY, etc.
+        </p>
+        <ul className="flex flex-wrap gap-1.5">
+          {spotTypes.map((opt) => {
+            const active = state.types.includes(opt.slug);
+            return (
+              <li key={opt.slug}>
+                <label
+                  className={`inline-flex cursor-pointer items-center rounded-full border px-3 py-1 text-[10px] font-semibold transition-all ${
+                    active
+                      ? "border-primary bg-primary text-surface"
+                      : "border-outline-variant bg-surface text-on-surface hover:border-outline"
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={active}
+                    onChange={() => toggleType(opt.slug)}
+                    className="sr-only"
+                    aria-label={opt.name}
+                  />
+                  {opt.name}
+                </label>
+              </li>
+            );
+          })}
+        </ul>
+        {errors?.types ? (
+          <p
+            id={errorId}
+            role="alert"
+            className="mt-3 text-[10px] text-error"
+          >
+            {errors.types}
+          </p>
+        ) : null}
+      </fieldset>
+
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
         <div>
           <label
             htmlFor={countryId}
@@ -174,23 +219,22 @@ export function SpotFormFields({
             className="w-full rounded-lg border border-outline-variant bg-surface-bright p-3 text-xs font-medium text-on-surface shadow-sm focus:border-outline focus:outline-none"
           />
         </div>
-      </div>
-
-      <div>
-        <label
-          htmlFor={addressId}
-          className="mb-1.5 block font-mono text-[10px] font-bold uppercase tracking-wider text-secondary"
-        >
-          Address
-        </label>
-        <input
-          id={addressId}
-          type="text"
-          value={state.address}
-          onChange={(e) => update("address", e.target.value)}
-          placeholder="e.g. Hope Street, L.A."
-          className="w-full rounded-lg border border-outline-variant bg-surface-bright p-3 text-xs font-medium text-on-surface shadow-sm focus:border-outline focus:outline-none"
-        />
+        <div>
+          <label
+            htmlFor={addressId}
+            className="mb-1.5 block font-mono text-[10px] font-bold uppercase tracking-wider text-secondary"
+          >
+            Address
+          </label>
+          <input
+            id={addressId}
+            type="text"
+            value={state.address}
+            onChange={(e) => update("address", e.target.value)}
+            placeholder="e.g. Hope Street, L.A."
+            className="w-full rounded-lg border border-outline-variant bg-surface-bright p-3 text-xs font-medium text-on-surface shadow-sm focus:border-outline focus:outline-none"
+          />
+        </div>
       </div>
 
       <ImageSourceField

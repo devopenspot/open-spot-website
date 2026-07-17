@@ -7,6 +7,7 @@ import { cn } from "@/lib/cn";
 import type { Spot } from "@/lib/types";
 import type { LatLon } from "@/lib/spots/geo";
 import { getSpotDistanceInfo } from "@/lib/spots/geo";
+import { TypeBadges } from "@/components/spot/TypeBadges";
 import {
   NEARBY_RADIUS_OPTIONS,
   type NearbyRadiusMiles,
@@ -211,9 +212,13 @@ export function MapSidebar({
 
               <span className="flex-1 min-w-0">
                 <span className="flex items-center justify-between">
-                  <span className="font-mono text-[9px] font-semibold text-secondary uppercase">
-                    {spot.type}
-                  </span>
+                  {spot.types.length > 0 ? (
+                    <TypeBadges
+                      types={spot.types}
+                      variant="surface"
+                      className="text-[8px]"
+                    />
+                  ) : null}
                   <span className="text-[8px] font-mono font-medium text-secondary">
                     {distanceLabel}
                   </span>

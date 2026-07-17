@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Pencil, Trash2 } from "lucide-react"
 import { DeleteConfirmDialog } from "@/components/admin/common/DeleteConfirmDialog"
+import { TypeBadges } from "@/components/spot/TypeBadges"
 import { showToast } from "@/hooks/useToast"
 import { deleteSpotAction } from "@/app/actions/admin-spots"
 import type { Spot } from "@/lib/types"
@@ -68,8 +69,12 @@ export function SpotTable({ spots }: SpotTableProps) {
                   </a>
                 </td>
                 <td className="px-4 py-3 text-secondary">{spot.city}</td>
-                <td className="px-4 py-3 font-mono text-[10px] uppercase tracking-widest text-secondary">
-                  {spot.type}
+                <td className="px-4 py-3">
+                  {spot.types.length > 0 ? (
+                    <TypeBadges types={spot.types} variant="ghost" />
+                  ) : (
+                    <span className="font-mono text-[10px] uppercase tracking-widest text-secondary">—</span>
+                  )}
                 </td>
                 <td className="px-4 py-3 text-secondary">{spot.country || "—"}</td>
                 <td className="px-4 py-3 text-right">

@@ -7,6 +7,11 @@ import { SpotTableFilters } from "@/components/admin/spots/SpotTableFilters"
 interface AdminSpotsPageProps {
   searchParams: Promise<{
     q?: string
+    /**
+     * CSV of type slugs. Matched with OR semantics by the repository
+     * (a spot matches if it carries at least one of these types).
+     * Backed by the `spot_spot_types` join table.
+     */
     type?: string
     country?: string
   }>
@@ -16,16 +21,29 @@ export const metadata = {
   title: "Admin · Spots",
 }
 
+function parseTypesParam(value: string | undefined): string[] | undefined {
+  if (!value) return undefined
+  const list = Array.from(
+    new Set(
+      value
+        .split(",")
+        .map((s) => s.trim().toLowerCase())
+        .filter((s) => s.length > 0),
+    ),
+  )
+  return list.length > 0 ? list : undefined
+}
+
 export default async function AdminSpotsPage({ searchParams }: AdminSpotsPageProps) {
   const params = await searchParams
   const q = (params.q ?? "").trim()
-  const type = (params.type ?? "").trim() || undefined
+  const types = parseTypesParam(params.type)
   const country = (params.country ?? "").trim()
 
   const repo = await getSpotRepositoryAsync()
   const result = await repo.list({
     q: q || undefined,
-    type,
+    types,
     country: country || undefined,
     limit: 100,
   })

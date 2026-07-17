@@ -3,6 +3,7 @@ import type { drizzle } from "drizzle-orm/postgres-js"
 import {
   countries,
   regions,
+  spotSpotTypes,
   spotSports,
   spotTypes,
   spots,
@@ -60,7 +61,16 @@ export class DrizzleSpotRepository implements SpotRepository {
   async list(query?: SpotQuery): Promise<SpotListResult> {
     const limit = query?.limit ?? 50
     const conditions: SQL[] = []
-    if (query?.type) conditions.push(eq(spots.typeSlug, query.type))
+    if (query?.types && query.types.length > 0) {
+      // OR semantics: a spot matches if any of its types is in the
+      // filter set. Single EXISTS subquery against the join table.
+      const typeList = [...query.types]
+      conditions.push(sql`exists (
+        select 1 from ${spotSpotTypes} sst
+        where sst.spot_id = ${spots.id}
+          and sst.type_slug in ${typeList}
+      )`)
+    }
     if (query?.country)
       conditions.push(eq(countries.name, query.country))
     if (query?.city) conditions.push(eq(spots.citySlug, query.city))
@@ -189,12 +199,16 @@ export class DrizzleSpotRepository implements SpotRepository {
   }
 
   async listTypes(): Promise<readonly { name: string; count: number }[]> {
+    // Group by type via the join table. A spot with two types
+    // contributes one count to each of its type rows. We constrain
+    // to the `spot_types.sort_order` ordering by joining the
+    // dimension table.
     const rows = await this.db.execute<{ type: string; count: string }>(sql`
       select st.name as type, count(*)::int as count
-      from ${spots} s
-      join ${spotTypes} st on st.slug = s.type_slug
-      group by st.name
-      order by st.name
+      from ${spotSpotTypes} sst
+      join ${spotTypes} st on st.slug = sst.type_slug
+      group by st.name, st.sort_order
+      order by st.sort_order, st.name
     `)
     return rows.map((r) => ({
       name: r.type,
@@ -252,6 +266,22 @@ export class DrizzleSpotRepository implements SpotRepository {
       .values(slugs.map((disciplineSlug) => ({ spotId, disciplineSlug })))
   }
 
+  private async syncSpotTypes(
+    spotId: string,
+    typeSlugs: readonly string[],
+  ): Promise<void> {
+    await this.db.delete(spotSpotTypes).where(eq(spotSpotTypes.spotId, spotId))
+    if (typeSlugs.length === 0) return
+    const normalized = typeSlugs
+      .map((s) => s.trim().toLowerCase())
+      .filter((s) => s.length > 0)
+    const unique = Array.from(new Set(normalized))
+    if (unique.length === 0) return
+    await this.db
+      .insert(spotSpotTypes)
+      .values(unique.map((typeSlug) => ({ spotId, typeSlug })))
+  }
+
   async create(input: NewSpot): Promise<Spot> {
     const id = input.id ?? crypto.randomUUID()
     const insertValues: NewSpotRow = {
@@ -262,7 +292,6 @@ export class DrizzleSpotRepository implements SpotRepository {
       citySlug:
         input.citySlug ?? input.city.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
       address: input.address,
-      typeSlug: input.type,
       imageUrl: input.imagePath
         ? input.image
         : input.image || pickFallbackImage(id, await getPresetImageUrls()),
@@ -280,6 +309,7 @@ export class DrizzleSpotRepository implements SpotRepository {
       .returning()
     if (!row) throw new Error("Insert returned no row")
     await this.syncSpotSports(id, input.sports)
+    await this.syncSpotTypes(id, input.types)
     const reloaded = await this.findById(id)
     if (!reloaded) throw new Error("Spot not found after insert")
     return reloaded
@@ -293,9 +323,6 @@ export class DrizzleSpotRepository implements SpotRepository {
     if (patch.city !== undefined) setValues.city = patch.city
     if (patch.citySlug !== undefined) setValues.citySlug = patch.citySlug
     if (patch.address !== undefined) setValues.address = patch.address
-    if (patch.type !== undefined) {
-      setValues.typeSlug = patch.type
-    }
     if (patch.image !== undefined) {
       setValues.imageUrl =
         patch.image || pickFallbackImage(id, await getPresetImageUrls())
@@ -318,6 +345,9 @@ export class DrizzleSpotRepository implements SpotRepository {
     if (!row) throw new Error(`Spot not found: ${id}`)
     if (patch.sports !== undefined) {
       await this.syncSpotSports(id, patch.sports)
+    }
+    if (patch.types !== undefined) {
+      await this.syncSpotTypes(id, patch.types)
     }
     const reloaded = await this.findById(id)
     if (!reloaded) throw new Error(`Spot not found: ${id}`)

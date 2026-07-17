@@ -8,6 +8,7 @@ import { useRef } from "react";
 import type { Spot } from "@/lib/types";
 import type { SpotWeather } from "@/lib/weather/weather-cached";
 import { WeatherIcon } from "@/components/spot/WeatherIcon";
+import { TypeBadges } from "@/components/spot/TypeBadges";
 
 interface MapInfoPopupProps {
   spot: Spot;
@@ -57,9 +58,11 @@ export function MapInfoPopup({
         </div>
 
         <div className="flex-1 min-w-16">
-          <span className="inline-block rounded bg-primary/10 px-1.5 py-0.5 text-[8px] font-mono font-bold uppercase tracking-wider text-primary mb-1">
-            {spot.type}
-          </span>
+          {spot.types.length > 0 ? (
+            <div className="mb-1">
+              <TypeBadges types={spot.types} variant="surface" />
+            </div>
+          ) : null}
           <h4
             id="map-info-popup-title"
             className="font-display text-sm font-bold tracking-wide uppercase text-on-surface truncate"

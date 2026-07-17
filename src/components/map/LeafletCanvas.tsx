@@ -349,9 +349,13 @@ function buildRenderedMarkers(
   zoom: number,
 ): RenderedMarker[] {
   if (zoom <= CLUSTER_ZOOM_MAX && spots.length > 1) {
+    // A spot may carry multiple types now, so we group by city alone
+    // (clustering by type would fragment the same spot across
+    // clusters). The chip label uses the first type for context
+    // and falls back to "spots" when the spot has none.
     const groups = new Map<string, Spot[]>();
     for (const s of spots) {
-      const key = `${s.citySlug}::${s.type}`;
+      const key = s.citySlug;
       const arr = groups.get(key);
       if (arr) arr.push(s);
       else groups.set(key, [s]);
@@ -367,10 +371,11 @@ function buildRenderedMarkers(
       }
       const anchor = arr[0];
       if (!anchor) continue;
-      const html = buildClusterHTML(arr.length, anchor.type);
+      const label = anchor.types[0]?.name ?? "spots";
+      const html = buildClusterHTML(arr.length, label);
       const icon = makeIcon(html, [48, 48], [14, 14]);
       out.push({
-        key: `cluster:${anchor.citySlug}:${anchor.type}`,
+        key: `cluster:${anchor.citySlug}`,
         position: [anchor.location.lat, anchor.location.lon],
         icon,
         spot: anchor,

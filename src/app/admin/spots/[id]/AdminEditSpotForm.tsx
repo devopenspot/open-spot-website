@@ -16,7 +16,7 @@ function stateFromSpot(spot: Spot): SpotFormState {
     address: spot.address,
     country: spot.country,
     countryCode: spot.countryCode,
-    type: spot.typeSlug,
+    types: spot.types.map((t) => t.slug),
     sports: spot.sports.filter(
       (s): s is SportDiscipline =>
         SPORT_DISCIPLINES.includes(s as SportDiscipline),
@@ -36,7 +36,9 @@ function buildFormData(state: SpotFormState): FormData {
   fd.set("address", state.address)
   fd.set("country", state.country)
   fd.set("countryCode", state.countryCode)
-  fd.set("type", state.type)
+  for (const t of state.types) {
+    fd.append("type", t)
+  }
   for (const sport of state.sports as readonly SportDiscipline[]) {
     fd.append("sports", sport)
   }
