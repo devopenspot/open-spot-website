@@ -6,10 +6,11 @@ import { useRouter } from "next/navigation";
 import {
   Loader2,
   MapPin,
+  Radar,
   Heart,
   Share2,
-  ExternalLink,
   Navigation,
+  Radio,
 } from "lucide-react";
 import { WeatherIcon } from "./WeatherIcon";
 import { WeatherAccuracyNote } from "./WeatherAccuracyNote";
@@ -166,7 +167,7 @@ export function SpotDetailsContent({
                     className="animate-spin"
                   />
                 ) : (
-                  <MapPin
+                  <Radar
                     size={12}
                     aria-hidden="true"
                     className="transition-transform group-hover:scale-110"
@@ -226,7 +227,7 @@ export function SpotDetailsContent({
                 className="inline-flex h-7 items-center gap-1.5 border border-outline px-2.5 font-mono text-[10px] font-bold tracking-widest uppercase text-on-surface hover:bg-surface-container transition-all"
               >
                 <span>Live</span>
-                <ExternalLink size={11} aria-hidden="true" />
+                <Radio size={11} aria-hidden="true" />
               </a>
             </div>
             <WeatherAccuracyNote variant="block" className="mb-3" />
@@ -327,15 +328,16 @@ export function SpotDetailsContent({
           </div>
         </div>
 
-        <div className="border-t border-outline-variant pt-4 flex flex-col sm:flex-row gap-2 sm:gap-x-3">
-          <div className="mb-2 rounded-xl bg-surface-container-low border border-outline-variant p-4 md:p-6">
-            <span className="block font-mono text-[10px] tracking-wider text-secondary uppercase mb-2">
-              Location address
-            </span>
-            <p className="text-xs text-on-surface-variant font-medium leading-relaxed">
-              {spot.address}
-            </p>
-          </div>
+        <div className="mb-2 rounded-xl bg-surface-container-low border border-outline-variant p-4 md:p-6">
+          <span className="block font-mono text-[10px] tracking-wider text-secondary uppercase mb-2">
+            Location address
+          </span>
+          <p className="text-xs text-on-surface-variant font-medium leading-relaxed">
+            {spot.address}
+          </p>
+        </div>
+
+        <div className="py-4 flex flex-col sm:flex-row gap-2 sm:gap-x-3">
           <a
             href={directionsUrl}
             target="_blank"
@@ -343,7 +345,7 @@ export function SpotDetailsContent({
             className="flex-1 flex min-h-10 items-center justify-center space-x-1.5 rounded-lg bg-on-surface text-surface text-xs font-bold tracking-widest uppercase hover:bg-on-surface/90 transition-all shadow-sm"
           >
             <span>G-Maps</span>
-            <ExternalLink size={12} aria-hidden="true" />
+            <MapPin size={12} aria-hidden="true" />
           </a>
           <a
             href={wazeUrl}
