@@ -97,6 +97,7 @@ export function SpotDetailsContent({
   const forecastByDay = groupForecastByDay(weather?.forecast);
   const forecastSlots: ForecastSlot[] = ["morning", "afternoon", "night"];
   return (
+    // TODO: i need refine this styles, keeping the overall sense, colors, design, and distribution, only approach in fix sizing, margins & padding
     <div className="flex flex-col md:flex-row w-full">
       <div className="relative h-64 w-full bg-black md:h-auto md:w-1/2 overflow-hidden flex items-center justify-center group">
         <Image
@@ -202,7 +203,7 @@ export function SpotDetailsContent({
               </button>
             </div>
           </div>
-          <div className="mb-6 rounded-xl bg-surface-container-low border border-outline-variant p-2">
+          <div className="mb-6 rounded-xl bg-surface-container-low border border-outline-variant p-3 md:p-6">
             <span className="block font-mono text-[10px] tracking-wider text-secondary uppercase mb-2">
               Weather status
             </span>
@@ -303,7 +304,7 @@ export function SpotDetailsContent({
             )}
           </div>
 
-          <div className="mb-6 rounded-xl bg-surface-container-low border border-outline-variant p-4">
+          <div className="mb-6 rounded-xl bg-surface-container-low border border-outline-variant p-3 md:p-6">
             <span className="block font-mono text-[10px] tracking-wider text-secondary uppercase mb-1">
               Location address
             </span>
