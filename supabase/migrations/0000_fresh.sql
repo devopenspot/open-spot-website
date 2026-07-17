@@ -32,6 +32,15 @@
 -- keeps every existing event/spot row intact and only adjusts the
 -- discipline link.
 --
+-- User-keyed columns are `text`, not `uuid`: the dev placeholder user
+-- (`id === "dev"`) is a first-class citizen in local dev (no Supabase
+-- env) and is representable in `saved_spots`, `spots`,
+-- `sport_events`, and `preset_images`. Real Supabase users still have
+-- UUIDs; the `auth.uid()`-based RLS policies cast to text for
+-- comparison (`(select auth.uid())::text = "column"`). The
+-- `sport_events.created_by` FK to `profiles(id)` is dropped (the dev
+-- user has no profile row).
+--
 -- Every statement is separated by the statement-breakpoint marker
 -- (see src/db/apply-sql.ts).
 
@@ -131,7 +140,9 @@ CREATE TABLE "preset_images" (
   "name" text NOT NULL CHECK (length("name") > 0),
   "url" text NOT NULL CHECK (length("url") > 0),
   "sort_order" integer DEFAULT 0 NOT NULL CHECK ("sort_order" >= 0),
-  "created_by" uuid,
+  -- `text` (not `uuid`) so the dev placeholder user is representable.
+  -- RLS casts `(auth.uid())::text` for owner comparison.
+  "created_by" text,
   "created_at" timestamp with time zone DEFAULT now() NOT NULL,
   "updated_at" timestamp with time zone DEFAULT now() NOT NULL,
   CONSTRAINT "preset_images_slug_unique" UNIQUE("slug")
@@ -172,7 +183,9 @@ CREATE TABLE "spots" (
   "crowd_level" integer DEFAULT 0 NOT NULL CHECK ("crowd_level" BETWEEN 0 AND 100),
   "country_code" text NOT NULL REFERENCES "countries"("iso2") ON DELETE restrict ON UPDATE no action CHECK ("country_code" ~ '^[A-Z]{2}$'),
   "location" geometry(Point, 4326) NOT NULL,
-  "created_by" uuid,
+  -- `text` (not `uuid`) so the dev placeholder user is representable.
+  -- RLS casts `(auth.uid())::text` for owner comparison.
+  "created_by" text,
   "created_at" timestamp with time zone DEFAULT now() NOT NULL,
   "updated_at" timestamp with time zone DEFAULT now() NOT NULL,
   CONSTRAINT "spots_slug_unique" UNIQUE("slug")
@@ -205,7 +218,10 @@ CREATE TABLE "sport_events" (
   "location" geometry(Point, 4326),
   "tier_slug" text NOT NULL REFERENCES "event_tiers"("slug") ON DELETE restrict ON UPDATE no action CHECK (length("tier_slug") > 0),
   "featured" boolean DEFAULT false NOT NULL,
-  "created_by" uuid REFERENCES "profiles"("id") ON DELETE set null ON UPDATE no action,
+  -- `text` (not `uuid`) so the dev placeholder user is representable.
+  -- FK to `profiles(id)` dropped (dev has no profile row). RLS on
+  -- this table is service-role-only, so no `auth.uid()` cast needed.
+  "created_by" text,
   "created_at" timestamp with time zone DEFAULT now() NOT NULL,
   "updated_at" timestamp with time zone DEFAULT now() NOT NULL,
   CONSTRAINT "sport_events_slug_unique" UNIQUE("slug")
@@ -223,7 +239,10 @@ CREATE INDEX "sport_events_start_at_idx" ON "sport_events" USING btree ("start_a
 DROP TABLE IF EXISTS "saved_spots" CASCADE;
 --> statement-breakpoint
 CREATE TABLE "saved_spots" (
-  "user_id" uuid NOT NULL,
+  -- `text` (not `uuid`) so the dev placeholder user (`id === "dev"`)
+  -- is representable. Real Supabase users have UUIDs; the
+  -- `auth.uid()`-based RLS policies cast to text for comparison.
+  "user_id" text NOT NULL,
   "spot_id" uuid NOT NULL REFERENCES "spots"("id") ON DELETE cascade ON UPDATE no action,
   "created_at" timestamp with time zone DEFAULT now() NOT NULL,
   CONSTRAINT "saved_spots_user_id_spot_id_pk" PRIMARY KEY("user_id","spot_id")
@@ -360,6 +379,17 @@ FROM "sport_events" se;
 -- Note: RLS policies on the domain tables are dropped automatically
 -- when the table is dropped via `DROP TABLE … CASCADE`, so we don't
 -- need explicit `DROP POLICY` statements for them here.
+--
+-- User-keyed columns are `text` (see file header). Every policy that
+-- compares `auth.uid()` (a UUID) to one of these columns casts to
+-- text: `(select auth.uid())::text = "column"`. Real users with a
+-- Supabase session match (their UUID casts to the same string as
+-- their `user_id` / `created_by`). The dev placeholder has no
+-- `auth.uid()` (no session), so RLS through Supabase evaluates to
+-- `null::text = "dev"` = false — the dev user cannot read/write
+-- their own rows through Supabase. The app's data path uses Drizzle
+-- (which connects as `postgres` and bypasses RLS), so the dev user
+-- still sees and mutates their own bucket.
 
 -- Dimension tables: public read, writes are service-role (admin/seed).
 ALTER TABLE "public"."regions" ENABLE ROW LEVEL SECURITY;
@@ -420,20 +450,20 @@ CREATE POLICY "preset_images_insert_owner"
   ON "public"."preset_images"
   FOR INSERT
   TO authenticated
-  WITH CHECK ((select auth.uid()) = "created_by");
+  WITH CHECK ((select auth.uid())::text = "created_by");
 --> statement-breakpoint
 CREATE POLICY "preset_images_update_owner"
   ON "public"."preset_images"
   FOR UPDATE
   TO authenticated
-  USING ((select auth.uid()) = "created_by")
-  WITH CHECK ((select auth.uid()) = "created_by");
+  USING ((select auth.uid())::text = "created_by")
+  WITH CHECK ((select auth.uid())::text = "created_by");
 --> statement-breakpoint
 CREATE POLICY "preset_images_delete_owner"
   ON "public"."preset_images"
   FOR DELETE
   TO authenticated
-  USING ((select auth.uid()) = "created_by");
+  USING ((select auth.uid())::text = "created_by");
 --> statement-breakpoint
 
 -- spots: public read; writes by the creator only.
@@ -449,20 +479,20 @@ CREATE POLICY "spots_insert_self"
   ON "public"."spots"
   FOR INSERT
   TO authenticated
-  WITH CHECK ((select auth.uid()) = "created_by");
+  WITH CHECK ((select auth.uid())::text = "created_by");
 --> statement-breakpoint
 CREATE POLICY "spots_update_owner"
   ON "public"."spots"
   FOR UPDATE
   TO authenticated
-  USING ((select auth.uid()) = "created_by")
-  WITH CHECK ((select auth.uid()) = "created_by");
+  USING ((select auth.uid())::text = "created_by")
+  WITH CHECK ((select auth.uid())::text = "created_by");
 --> statement-breakpoint
 CREATE POLICY "spots_delete_owner"
   ON "public"."spots"
   FOR DELETE
   TO authenticated
-  USING ((select auth.uid()) = "created_by");
+  USING ((select auth.uid())::text = "created_by");
 --> statement-breakpoint
 
 -- sport_events: public read; writes are service-role only (admin
@@ -484,19 +514,19 @@ CREATE POLICY "saved_spots_select_owner"
   ON "public"."saved_spots"
   FOR SELECT
   TO authenticated
-  USING ((select auth.uid()) = "user_id");
+  USING ((select auth.uid())::text = "user_id");
 --> statement-breakpoint
 CREATE POLICY "saved_spots_insert_self"
   ON "public"."saved_spots"
   FOR INSERT
   TO authenticated
-  WITH CHECK ((select auth.uid()) = "user_id");
+  WITH CHECK ((select auth.uid())::text = "user_id");
 --> statement-breakpoint
 CREATE POLICY "saved_spots_delete_owner"
   ON "public"."saved_spots"
   FOR DELETE
   TO authenticated
-  USING ((select auth.uid()) = "user_id");
+  USING ((select auth.uid())::text = "user_id");
 --> statement-breakpoint
 
 -- profiles: public read; owner can update their own row.

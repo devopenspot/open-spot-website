@@ -9,13 +9,16 @@ export function HeroSection() {
         className="pointer-events-none absolute inset-0 opacity-[0.04]"
         aria-hidden="true"
       >
-        <div className="h-full w-full" style={{
-          backgroundImage: `
+        <div
+          className="h-full w-full"
+          style={{
+            backgroundImage: `
             linear-gradient(to right, #ffffff 1px, transparent 1px),
             linear-gradient(to bottom, #ffffff 1px, transparent 1px)
           `,
-          backgroundSize: "64px 64px",
-        }} />
+            backgroundSize: "64px 64px",
+          }}
+        />
       </div>
 
       <div className="relative mx-auto max-w-7xl">
@@ -36,8 +39,8 @@ export function HeroSection() {
           </h1>
 
           <p className="mt-6 max-w-xl text-sm leading-relaxed text-surface/70 sm:text-base">
-            A high-contrast directory for skateboarders and riders. Find plazas,
-            DIYs, bowls, ledges, and pools. Save your spots. Share intel.
+            A high-contrast directory for Riders & Athletes. Find plazas, DIYs,
+            bowls, ledges, and pools. Save your spots.
           </p>
 
           <div className="mt-8 flex flex-wrap items-center gap-6">
@@ -54,7 +57,9 @@ export function HeroSection() {
               className="inline-flex items-center gap-1.5 font-display text-xs font-bold tracking-widest text-surface/80 uppercase underline underline-offset-4 transition-colors hover:text-surface"
             >
               <span>View events</span>
-              <span aria-hidden="true" className="inline-block ml-0.5">→</span>
+              <span aria-hidden="true" className="inline-block ml-0.5">
+                →
+              </span>
             </Link>
           </div>
         </div>

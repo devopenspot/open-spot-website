@@ -37,6 +37,7 @@ export const REGION_SEED: readonly (Region & { slug: string })[] = [
       "Netherlands",
       "Portugal",
       "Sweden",
+      "Finland",
     ],
   },
   {

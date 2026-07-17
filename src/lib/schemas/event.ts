@@ -96,6 +96,7 @@ export const NewSportEventSchema = z
     longitude: z.number().min(-180).max(180).optional(),
     tier: SportEventTierSchema,
     featured: z.boolean().default(false),
+    createdBy: z.string().nullable().optional(),
   })
   .strict();
 

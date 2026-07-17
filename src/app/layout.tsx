@@ -111,9 +111,11 @@ async function RootDataProviders({ children }: { children: React.ReactNode }) {
     name: p.name,
     url: p.url,
   }));
-  // In local dev without Supabase env, the dev placeholder user (`id === "dev"`)
-  // shares one bucket across every local session on the same Supabase project.
-  // That is acceptable — saved spots are server-only, no localStorage mirror.
+  // The dev placeholder user (`id === "dev"`) is a first-class citizen of
+  // `saved_spots` — the column is `text` (not `uuid`) so "dev" is
+  // representable. The dev user has a seeded bucket of all 23 base spots
+  // in `src/db/seed-data/saved-spots.ts`. Real Supabase users with a
+  // session fetch their own bucket the same way.
   const initialSavedSpots = (
     await (await getSavedSpotsRepositoryAsync()).list(initialUser.id, {
       limit: 200,

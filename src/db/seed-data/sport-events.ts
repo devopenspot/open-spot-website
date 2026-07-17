@@ -23,6 +23,7 @@ interface EventRow {
   longitude?: number
   tier: SportEventTier
   featured?: boolean
+  createdBy?: string | null
 }
 
 const ROWS: readonly EventRow[] = [
@@ -45,6 +46,7 @@ const ROWS: readonly EventRow[] = [
     longitude: -118.2673,
     tier: "world-tour",
     featured: true,
+    createdBy: "dev",
   },
   {
     id: "fise",
@@ -64,6 +66,7 @@ const ROWS: readonly EventRow[] = [
     latitude: 43.6047,
     longitude: 3.8767,
     tier: "festival",
+    createdBy: "dev",
   },
   {
     id: "winterclash",
@@ -82,6 +85,7 @@ const ROWS: readonly EventRow[] = [
     latitude: 52.4732,
     longitude: 13.4038,
     tier: "championship",
+    createdBy: "dev",
   },
   {
     id: "x-games",
@@ -101,6 +105,7 @@ const ROWS: readonly EventRow[] = [
     latitude: 44.974,
     longitude: -93.2581,
     tier: "championship",
+    createdBy: "dev",
   },
   {
     id: "world-skate",
@@ -120,6 +125,7 @@ const ROWS: readonly EventRow[] = [
     latitude: -34.6433,
     longitude: -58.4601,
     tier: "federation",
+    createdBy: "dev",
   },
 ]
 
@@ -145,5 +151,6 @@ export const SOURCE_SPORT_EVENTS: readonly NewSportEvent[] = ROWS.map(
     longitude: row.longitude,
     tier: row.tier,
     featured: row.featured ?? false,
+    createdBy: row.createdBy ?? "dev",
   }),
 )

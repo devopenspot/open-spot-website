@@ -68,7 +68,7 @@ export const spots = pgTable(
       .notNull()
       .references(() => countries.iso2, { onDelete: "restrict" }),
     location: geometryPoint("location").notNull(),
-    createdBy: uuid("created_by"),
+    createdBy: text("created_by"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -107,9 +107,10 @@ export const sportEvents = pgTable(
       .notNull()
       .references(() => eventTiers.slug, { onDelete: "restrict" }),
     featured: boolean("featured").notNull().default(false),
-    createdBy: uuid("created_by").references(() => profiles.id, {
-      onDelete: "set null",
-    }),
+    // `text` (not `uuid`) so the dev placeholder user is representable.
+    // The FK to `profiles(id)` is dropped (dev has no profile row); RLS
+    // is service-role-only on this table, so no auth.uid() cast needed.
+    createdBy: text("created_by"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -128,7 +129,11 @@ export const sportEvents = pgTable(
 export const savedSpots = pgTable(
   "saved_spots",
   {
-    userId: uuid("user_id").notNull(),
+    // `text` (not `uuid`) so the dev placeholder user (`id === "dev"`)
+    // is representable in this table. Real Supabase users still have
+    // UUIDs; the `auth.uid()`-based RLS policies cast to text for
+    // comparison. See `supabase/migrations/0000_fresh.sql`.
+    userId: text("user_id").notNull(),
     spotId: uuid("spot_id")
       .notNull()
       .references(() => spots.id, { onDelete: "cascade" }),
@@ -232,7 +237,9 @@ export const presetImages = pgTable(
     name: text("name").notNull(),
     url: text("url").notNull(),
     sortOrder: integer("sort_order").notNull().default(0),
-    createdBy: uuid("created_by"),
+    // `text` (not `uuid`) so the dev placeholder user is representable.
+    // RLS casts `(auth.uid())::text` for owner comparison.
+    createdBy: text("created_by"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
