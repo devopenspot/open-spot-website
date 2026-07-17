@@ -1,5 +1,5 @@
-import type { ReactNode } from 'react';
-import { cn } from '@/lib/cn';
+import type { ReactNode } from "react";
+import { cn } from "@/lib/cn";
 
 interface SectionHeaderProps {
   eyebrow?: string;
@@ -23,14 +23,14 @@ export function SectionHeader({
   eyebrowClassName,
 }: SectionHeaderProps) {
   return (
-    <div className={cn('mb-6 flex items-end justify-between gap-4', className)}>
+    <div className={cn("mb-6 flex items-end justify-between gap-4", className)}>
       <div className="min-w-0 flex-1">
         {eyebrow && (
           <div className="flex items-center space-x-2 mb-1">
             {eyebrowIcon}
             <span
               className={cn(
-                'font-mono text-[10px] font-bold tracking-widest uppercase',
+                "font-mono text-[10px] font-bold tracking-widest uppercase",
                 eyebrowClassName,
               )}
             >
@@ -40,7 +40,7 @@ export function SectionHeader({
         )}
         <h2
           id={titleId}
-          className="font-display text-2xl font-bold tracking-tight text-on-surface uppercase sm:text-3xl"
+          className="font-display text-2xl font-bold tracking-tight text-pink-300 uppercase sm:text-3xl"
         >
           {title}
         </h2>

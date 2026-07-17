@@ -42,12 +42,12 @@ export function HeroSection() {
             Discover
             <br />
             <span className="inline-block border-t-2 border-surface/30 pt-2 mt-1">
-              Map. Ride.
+              Spots.
             </span>
           </h1>
           <p className="mt-6 max-w-xl text-sm leading-relaxed text-surface/70 sm:text-base">
-            A high-contrast directory for Riders & Athletes. Find plazas, DIYs,
-            bowls, ledges, and pools. Save your spots.
+            A directory for Riders & Athletes. Find plazas, DIYs, and
+            Skateparks.
           </p>
         </div>
         <section
@@ -58,11 +58,11 @@ export function HeroSection() {
           <SectionHeader
             eyebrow="Global Perspectives"
             eyebrowIcon={
-              <Globe size={14} className="text-surface/60" aria-hidden="true" />
+              <Globe size={14} className="text-surface/80" aria-hidden="true" />
             }
             title="Browse Regions"
             titleId="regions-heading"
-            eyebrowClassName="text-surface/60"
+            eyebrowClassName="text-surface/80"
             cta={<NearbyCtaButton />}
           />
 

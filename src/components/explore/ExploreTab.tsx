@@ -46,7 +46,7 @@ export default function ExploreTab({ events, featured }: ExploreTabProps) {
       id="explore-tab"
       role="tabpanel"
       aria-labelledby="nav-btn-explore"
-      className="space-y-12 pb-24 animate-fade-in"
+      className="animate-fade-in space-y-12"
     >
       <h1 className="visually-hidden">Explore Open Spot</h1>
 
@@ -54,7 +54,7 @@ export default function ExploreTab({ events, featured }: ExploreTabProps) {
         id="sport-events"
         aria-label="Sport Events"
         aria-labelledby="legendary-heading"
-        className="space-y-6"
+        className="md:space-y-12 md:-mx-8"
       >
         <SectionHeader
           eyebrow="Hall of Fame"
@@ -100,9 +100,13 @@ export default function ExploreTab({ events, featured }: ExploreTabProps) {
         ) : null}
       </section>
 
-      <section id="spotlight-spots" aria-labelledby="spotlight-heading">
+      <section
+        id="spotlight-spots"
+        aria-labelledby="spotlight-heading"
+        className="md:space-y-12 md:-mx-8"
+      >
         <SectionHeader
-          eyebrow="Curated Archive"
+          eyebrow="Fresh"
           title="Spotlight Spots"
           titleId="spotlight-heading"
         />
