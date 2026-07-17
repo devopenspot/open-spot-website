@@ -310,11 +310,30 @@ export function SpotDetailsContent({
             <p className="text-xs text-on-surface-variant font-medium leading-relaxed">
               {spot.address}
             </p>
-            <div className="mt-4 pt-4 border-t border-outline-variant/40 flex flex-wrap items-center gap-x-4 gap-y-1.5">
-              <div>
-                {/* TODO: PUT HERE A list of the sports and spot type  */}
-              </div>
-            </div>
+            {(spot.types.length > 0 || spot.sports.length > 0) && (
+              <dl className="mt-4 pt-4 border-t border-outline-variant/40 flex flex-wrap items-center gap-x-4 gap-y-1.5">
+                {spot.types.length > 0 && (
+                  <div className="flex items-center gap-2">
+                    <dt className="font-mono text-[10px] font-bold uppercase tracking-widest text-secondary">
+                      Type
+                    </dt>
+                    <dd className="text-xs text-on-surface font-medium">
+                      {spot.types.map((t) => t.name).join(", ")}
+                    </dd>
+                  </div>
+                )}
+                {spot.sports.length > 0 && (
+                  <div className="flex items-center gap-2">
+                    <dt className="font-mono text-[10px] font-bold uppercase tracking-widest text-secondary">
+                      Disciplines
+                    </dt>
+                    <dd className="text-xs text-on-surface font-medium">
+                      {spot.sports.join(", ")}
+                    </dd>
+                  </div>
+                )}
+              </dl>
+            )}
           </div>
         </div>
 

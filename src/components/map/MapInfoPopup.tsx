@@ -91,11 +91,7 @@ export function MapInfoPopup({
             {spot.name}
           </h4>
           <p className="flex items-center text-[11px] text-secondary truncate">
-            <MapPin
-              size={11}
-              className="mr-1 shrink-0"
-              aria-hidden="true"
-            />
+            <MapPin size={11} className="mr-1 shrink-0" aria-hidden="true" />
             <span className="truncate">
               {spot.city}
               {spot.country ? ` · ${spot.country}` : ""}
@@ -116,11 +112,7 @@ export function MapInfoPopup({
       <div className="border-t border-outline-variant/60 pt-3">
         <div className="flex items-center gap-3">
           {weatherIcon ? (
-            <WeatherIcon
-              name={weatherIcon}
-              size={28}
-              className="shrink-0"
-            />
+            <WeatherIcon name={weatherIcon} size={28} className="shrink-0" />
           ) : (
             <span className="w-7 h-7 shrink-0" aria-hidden="true" />
           )}
@@ -154,7 +146,7 @@ export function MapInfoPopup({
           </dl>
         </div>
         <div className="mt-2">
-          <WeatherAccuracyNote variant="compact" />
+          <WeatherAccuracyNote variant="block" />
         </div>
       </div>
 
