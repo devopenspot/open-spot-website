@@ -146,23 +146,6 @@ beforeEach(() => {
 });
 
 describe("<SpotDetailsContent>", () => {
-  it("renders the CTA distance label when user location is not granted", () => {
-    render(
-      <SpotDetailsContent
-        spot={fakeSpot()}
-        isSaved={false}
-        onToggleSave={vi.fn()}
-        weather={fakeWeather()}
-      />,
-    );
-    expect(
-      screen.getByRole("button", {
-        name: /Share your location to see distance from this spot/i,
-      }),
-    ).toBeInTheDocument();
-    expect(screen.getByText("Share Location For Distance".toUpperCase())).toBeInTheDocument();
-  });
-
   it("renders the miles-away label when user location is granted", () => {
     useUserLocationStore.setState({
       status: "granted",

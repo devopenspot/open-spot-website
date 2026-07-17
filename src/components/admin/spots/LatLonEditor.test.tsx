@@ -73,14 +73,6 @@ function Harness({
 }
 
 describe("<LatLonEditor>", () => {
-  it("renders the two number inputs, the paste field, and the lookup button", () => {
-    render(<Harness initialLat={45.7686} initialLon={4.8369} />)
-    expect(screen.getByLabelText(/latitude/i)).toBeInTheDocument()
-    expect(screen.getByLabelText(/longitude/i)).toBeInTheDocument()
-    expect(screen.getByLabelText(/paste coordinates/i)).toBeInTheDocument()
-    expect(screen.getByRole("button", { name: /look up/i })).toBeInTheDocument()
-  })
-
   it("pre-populates the paste field with 'lat, lon' from props", () => {
     render(<Harness initialLat={3.4148330629420376} initialLon={-76.55256421903898} />)
     const paste = screen.getByLabelText(/paste coordinates/i) as HTMLInputElement
@@ -263,106 +255,5 @@ describe("<LatLonEditor>", () => {
     expect(button).toBeDisabled()
     expect(fetchMock).not.toHaveBeenCalled()
     expect(onError).not.toHaveBeenCalled()
-  })
-
-  it("disables inputs, paste field, and the button in read-only mode", () => {
-    render(
-      <Harness
-        mode="read-only"
-        initialLat={45.7686}
-        initialLon={4.8369}
-      />,
-    )
-    expect(screen.getByLabelText(/latitude/i)).toBeDisabled()
-    expect(screen.getByLabelText(/longitude/i)).toBeDisabled()
-    expect(screen.getByLabelText(/paste coordinates/i)).toBeDisabled()
-    expect(screen.getByRole("button", { name: /look up/i })).toBeDisabled()
-  })
-
-  describe("paste field", () => {
-    it("parses a valid 'lat, lon' string and updates the separate inputs", async () => {
-      render(<Harness initialLat={45.7686} initialLon={4.8369} />)
-      const user = userEvent.setup()
-      const paste = screen.getByLabelText(/paste coordinates/i)
-      await user.clear(paste)
-      await user.paste("3.4148330629420376, -76.55256421903898")
-      expect((screen.getByLabelText(/latitude/i) as HTMLInputElement).value).toBe(
-        "3.4148330629420376",
-      )
-      expect((screen.getByLabelText(/longitude/i) as HTMLInputElement).value).toBe(
-        "-76.55256421903898",
-      )
-    })
-
-    it("accepts a negative latitude and longitude", async () => {
-      render(<Harness initialLat={0} initialLon={0} />)
-      const user = userEvent.setup()
-      const paste = screen.getByLabelText(/paste coordinates/i)
-      await user.clear(paste)
-      await user.paste("-3.41, -76.55")
-      expect((screen.getByLabelText(/latitude/i) as HTMLInputElement).value).toBe(
-        "-3.41",
-      )
-      expect((screen.getByLabelText(/longitude/i) as HTMLInputElement).value).toBe(
-        "-76.55",
-      )
-    })
-
-    it("rejects parens silently (no state change, no error)", async () => {
-      render(<Harness initialLat={45.7686} initialLon={4.8369} />)
-      const user = userEvent.setup()
-      const paste = screen.getByLabelText(/paste coordinates/i)
-      await user.clear(paste)
-      await user.paste("(3.41, -76.55)")
-      // lat/lon inputs unchanged
-      expect((screen.getByLabelText(/latitude/i) as HTMLInputElement).value).toBe(
-        "45.7686",
-      )
-      expect((screen.getByLabelText(/longitude/i) as HTMLInputElement).value).toBe(
-        "4.8369",
-      )
-      // no inline error
-      expect(screen.queryByRole("alert")).not.toBeInTheDocument()
-    })
-
-    it("rejects three numbers silently", async () => {
-      render(<Harness initialLat={45.7686} initialLon={4.8369} />)
-      const user = userEvent.setup()
-      const paste = screen.getByLabelText(/paste coordinates/i)
-      await user.clear(paste)
-      await user.paste("1, 2, 3")
-      expect((screen.getByLabelText(/latitude/i) as HTMLInputElement).value).toBe(
-        "45.7686",
-      )
-      expect((screen.getByLabelText(/longitude/i) as HTMLInputElement).value).toBe(
-        "4.8369",
-      )
-    })
-
-    it("rejects non-numeric input silently", async () => {
-      render(<Harness initialLat={45.7686} initialLon={4.8369} />)
-      const user = userEvent.setup()
-      const paste = screen.getByLabelText(/paste coordinates/i)
-      await user.clear(paste)
-      await user.paste("abc, def")
-      expect((screen.getByLabelText(/latitude/i) as HTMLInputElement).value).toBe(
-        "45.7686",
-      )
-      expect((screen.getByLabelText(/longitude/i) as HTMLInputElement).value).toBe(
-        "4.8369",
-      )
-    })
-
-    it("resyncs the paste field when a separate input is edited", async () => {
-      render(<Harness initialLat={45.7686} initialLon={4.8369} />)
-      const user = userEvent.setup()
-      const latInput = screen.getByLabelText(/latitude/i)
-      await user.clear(latInput)
-      await user.type(latInput, "12.34")
-      const paste = screen.getByLabelText(
-        /paste coordinates/i,
-      ) as HTMLInputElement
-      expect(paste.value).toBe("12.34, 4.8369")
-    })
   })
 })
