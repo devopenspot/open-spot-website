@@ -203,9 +203,21 @@ export function SpotDetailsContent({
             </div>
           </div>
           <div className="mb-6 rounded-xl bg-surface-container-low border border-outline-variant p-4 md:p-6">
-            <span className="block font-mono text-[10px] tracking-wider text-secondary uppercase mb-2">
-              Weather status
-            </span>
+            <div className="mb-2 flex items-center justify-between gap-3">
+              <span className="block font-mono text-[10px] tracking-wider text-secondary uppercase">
+                Weather status
+              </span>
+              <a
+                href={`https://zoom.earth/maps/precipitation/#view=${spot.location.lat},${spot.location.lon},7z/model=icon`}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="View live precipitation on zoom.earth (opens in a new tab)"
+                className="inline-flex h-7 items-center gap-1.5 border border-outline px-2.5 font-mono text-[10px] font-bold tracking-widest uppercase text-on-surface hover:bg-surface-container transition-all"
+              >
+                <span>Live</span>
+                <ExternalLink size={11} aria-hidden="true" />
+              </a>
+            </div>
             <WeatherAccuracyNote variant="block" className="mb-3" />
             <div className="mb-4 flex items-center gap-3 md:gap-4 min-w-0 overflow-hidden border-b border-outline-variant/40 pb-4">
               <WeatherIcon name={currentIcon} size={40} className="shrink-0" />

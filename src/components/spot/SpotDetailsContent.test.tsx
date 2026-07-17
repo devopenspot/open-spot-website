@@ -242,4 +242,25 @@ describe("<SpotDetailsContent>", () => {
     expect(note).toHaveTextContent(/forecast is approximate/i);
     expect(note.closest("div.rounded-xl")).not.toBeNull();
   });
+
+  it("renders a live precipitation link bound to the spot's lat/lon", () => {
+    render(
+      <SpotDetailsContent
+        spot={fakeSpot()}
+        isSaved={false}
+        onToggleSave={vi.fn()}
+        weather={fakeWeather()}
+      />,
+    );
+    const link = screen.getByRole("link", {
+      name: /View live precipitation on zoom\.earth/i,
+    });
+    expect(link).toBeInTheDocument();
+    expect(link).toHaveAttribute(
+      "href",
+      "https://zoom.earth/maps/precipitation/#view=34.0522,-118.2437,7z/model=icon",
+    );
+    expect(link).toHaveAttribute("target", "_blank");
+    expect(link).toHaveAttribute("rel", "noopener noreferrer");
+  });
 });
