@@ -42,15 +42,15 @@ describe("haversineMiles", () => {
 
 describe("formatDistanceMiles", () => {
   it("formats sub-10 mile distances with one decimal", () => {
-    expect(formatDistanceMiles(3.4)).toBe("3.4 MILES AWAY");
+    expect(formatDistanceMiles(3.4)).toBe("3.4 MI AWAY");
   });
 
   it("rounds 10-100 mile distances to the nearest integer", () => {
-    expect(formatDistanceMiles(47.4)).toBe("47 MILES AWAY");
+    expect(formatDistanceMiles(47.4)).toBe("47 MI AWAY");
   });
 
   it("rounds 100+ mile distances to the nearest 10", () => {
-    expect(formatDistanceMiles(347)).toBe("350 MILES AWAY");
+    expect(formatDistanceMiles(347)).toBe("350 MI AWAY");
   });
 });
 
@@ -69,11 +69,11 @@ describe("getSpotDistanceInfo", () => {
     expect(info.kind).toBe("distance");
     if (info.kind !== "distance") return;
     expect(info.miles).toBeGreaterThan(0);
-    expect(info.label).toMatch(/MILES AWAY$/);
+    expect(info.label).toMatch(/MI AWAY$/);
   });
 
   it("returns 0 miles when origin equals the spot location", () => {
     const info = getSpotDistanceInfo(spot, { lat: 34.0522, lon: -118.2437 });
-    expect(info).toEqual({ kind: "distance", label: "0.0 MILES AWAY", miles: 0 });
+    expect(info).toEqual({ kind: "distance", label: "0.0 MI AWAY", miles: 0 });
   });
 });

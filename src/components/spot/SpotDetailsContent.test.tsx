@@ -13,10 +13,9 @@ vi.mock("next/navigation", () => ({
 }));
 
 vi.mock("@/hooks/useUserLocation", async () => {
-  const actual =
-    await vi.importActual<typeof import("@/hooks/useUserLocation")>(
-      "@/hooks/useUserLocation",
-    );
+  const actual = await vi.importActual<
+    typeof import("@/hooks/useUserLocation")
+  >("@/hooks/useUserLocation");
   return actual;
 });
 
@@ -159,7 +158,7 @@ describe("<SpotDetailsContent>", () => {
         weather={fakeWeather()}
       />,
     );
-    expect(screen.getByText(/MILES AWAY$/)).toBeInTheDocument();
+    expect(screen.getByText(/MI AWAY$/)).toBeInTheDocument();
     expect(
       screen.queryByRole("button", {
         name: /Share your location to see distance from this spot/i,
@@ -191,7 +190,7 @@ describe("<SpotDetailsContent>", () => {
       expect(useUserLocationStore.getState().status).toBe("granted");
     });
     await waitFor(() => {
-      expect(screen.getByText(/MILES AWAY$/)).toBeInTheDocument();
+      expect(screen.getByText(/MI AWAY$/)).toBeInTheDocument();
     });
   });
 

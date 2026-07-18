@@ -26,9 +26,9 @@ export function haversineMiles(
 }
 
 export function formatDistanceMiles(miles: number): string {
-  if (miles < 10) return `${miles.toFixed(1)} MILES AWAY`;
-  if (miles < 100) return `${Math.round(miles)} MILES AWAY`;
-  return `${Math.round(miles / 10) * 10} MILES AWAY`;
+  if (miles < 10) return `${miles.toFixed(1)} MI AWAY`;
+  if (miles < 100) return `${Math.round(miles)} MI AWAY`;
+  return `${Math.round(miles / 10) * 10} MI AWAY`;
 }
 
 export const SPOT_DISTANCE_CTA_LABEL = "CHECK DISTANCE";

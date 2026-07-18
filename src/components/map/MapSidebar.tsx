@@ -211,7 +211,7 @@ export function MapSidebar({
               </span>
 
               <span className="flex-1 min-w-0">
-                <span className="flex items-center justify-between">
+                <span className="flex flex-col md:flex-row items-start justify-between">
                   {spot.types.length > 0 ? (
                     <TypeBadges
                       types={spot.types}
@@ -227,10 +227,8 @@ export function MapSidebar({
                   {spot.name}
                 </span>
                 <span className="flex items-center justify-between mt-1">
-                  <span className="text-[9px] text-secondary truncate">
-                    {spot.city}
-                  </span>
-                  <span className="flex items-center space-x-1">
+                  <span className="text-[9px] text-secondary">{spot.city}</span>
+                  <span className="flex items-center space-x-1 truncate">
                     <span
                       aria-hidden="true"
                       className="h-1 w-1 rounded-full bg-primary"
