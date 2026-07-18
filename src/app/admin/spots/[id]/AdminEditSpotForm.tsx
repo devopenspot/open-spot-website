@@ -59,7 +59,13 @@ export function AdminEditSpotForm({ spot, spotTypes }: AdminEditSpotFormProps) {
 
   const handleAction = async (formData: FormData) => {
     // Edit form sends JSON (no image upload) — PATCH /api/admin/spots/[id]
+    // The JSON shape must match `SpotPatchSchema` exactly: flat scalars
+    // stay flat, but `lat`/`lon` are nested under `location`, and the
+    // image URL is sent as `image` (the form's FormData uses `imageUrl`
+    // to match the multipart POST, but the JSON patch schema keys it
+    // as `image`).
     const obj: Record<string, unknown> = {}
+    const location: { lat?: number; lon?: number } = {}
     for (const [k, v] of formData.entries()) {
       if (typeof v !== "string") continue
       if (k === "type") {
@@ -70,15 +76,20 @@ export function AdminEditSpotForm({ spot, spotTypes }: AdminEditSpotFormProps) {
         const arr = (obj.sports as string[] | undefined) ?? []
         arr.push(v)
         obj.sports = arr
-      } else if (k === "lat" || k === "lon" || k === "crowdLevel") {
-        obj[k] = Number(v)
-      } else if (k === "image") {
-        // image file is not supported in JSON mode; the URL is
-        // sent as `image` instead.
-        continue
+      } else if (k === "lat" || k === "lon") {
+        location[k] = Number(v)
+      } else if (k === "crowdLevel") {
+        obj.crowdLevel = Number(v)
+      } else if (k === "imageUrl") {
+        obj.image = v
+      } else if (k === "countryCode") {
+        obj.countryCode = v.toUpperCase()
       } else {
         obj[k] = v
       }
+    }
+    if (location.lat !== undefined || location.lon !== undefined) {
+      obj.location = { lat: location.lat ?? 0, lon: location.lon ?? 0 }
     }
     const res = await fetch(`/api/admin/spots/${encodeURIComponent(spot.id)}`, {
       method: "PATCH",
@@ -91,9 +102,14 @@ export function AdminEditSpotForm({ spot, spotTypes }: AdminEditSpotFormProps) {
     }
     if (!res.ok) {
       const body = (await res.json().catch(() => null)) as
-        | { error?: string }
+        | { error?: string; details?: unknown }
         | null
-      throw new Error(body?.error ?? `HTTP ${res.status}`)
+      const base = body?.error ?? `HTTP ${res.status}`
+      const detail =
+        body?.details && process.env.NODE_ENV !== "production"
+          ? `: ${JSON.stringify(body.details)}`
+          : ""
+      throw new Error(`${base}${detail}`)
     }
     return (await res.json()) as { id: string }
   }

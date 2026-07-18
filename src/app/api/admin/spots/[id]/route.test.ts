@@ -83,6 +83,51 @@ describe("PATCH /api/admin/spots/[id]", () => {
     expect(updateSpotMock).toHaveBeenCalledWith("spot-1", expect.objectContaining({ name: "Updated" }))
   })
 
+  it("returns 200 for the full admin-edit-form payload", async () => {
+    // Mirrors the JSON shape `AdminEditSpotForm.handleAction` builds
+    // from FormData: `image` (not `imageUrl`), `location: { lat, lon }`
+    // (not flat `lat`/`lon`). Without those keys, the strict
+    // `SpotPatchSchema` rejects with 400. This pins the form/schema
+    // contract so a future drift is caught here, not in the browser.
+    const fullPatch = {
+      name: "Hubba Hideout",
+      city: "San Francisco",
+      citySlug: "san-francisco",
+      address: "1 Embarcadero",
+      country: "United States",
+      countryCode: "US",
+      types: ["plaza", "bowl"],
+      sports: ["Skateboard"],
+      crowdLevel: 42,
+      image: "https://example.com/img.jpg",
+      location: { lat: 37.7749, lon: -122.4194 },
+    }
+    const res = await PATCH(
+      makeJsonRequest("PATCH", fullPatch),
+      fakeContext("spot-1") as never,
+    )
+    expect(res.status).toBe(200)
+    expect(updateSpotMock).toHaveBeenCalledWith("spot-1", fullPatch)
+  })
+
+  it("returns 400 when the payload has the wrong key shape", async () => {
+    // Regression: the edit form used to send `imageUrl` and flat
+    // `lat`/`lon` instead of `image` and `location: { lat, lon }`.
+    // The strict schema rejects unrecognized keys with 400.
+    const badPatch = {
+      name: "Hubba Hideout",
+      imageUrl: "https://example.com/img.jpg",
+      lat: 37.7749,
+      lon: -122.4194,
+    }
+    const res = await PATCH(
+      makeJsonRequest("PATCH", badPatch),
+      fakeContext("spot-1") as never,
+    )
+    expect(res.status).toBe(400)
+    expect(updateSpotMock).not.toHaveBeenCalled()
+  })
+
   it("returns 401 when not signed in", async () => {
     requireAdminMock.mockRejectedValue(new Error("Not signed in"))
     const res = await PATCH(
