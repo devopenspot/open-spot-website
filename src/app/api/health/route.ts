@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { checkDbHealth } from "@/lib/db/health"
+import { checkDbHealth } from "@/lib/services/health"
 import { APP_VERSION } from "@/lib/system-info"
 
 export async function GET() {

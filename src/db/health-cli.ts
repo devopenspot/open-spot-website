@@ -1,8 +1,8 @@
 import "./load-env"
-import { checkDbHealth } from "../lib/db/health"
+import { runDbHealthCheck } from "../lib/services/health"
 
 async function main() {
-  const result = await checkDbHealth()
+  const result = await runDbHealthCheck()
   const status = result.ok ? "ok" : "fail"
   console.log(
     `db:health → ${status}  source=${result.source}  latencyMs=${result.latencyMs}` +

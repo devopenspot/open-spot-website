@@ -40,11 +40,11 @@ export function Header() {
         />
 
         <div id="header-actions" className="flex items-center space-x-3">
-          <SearchTrigger onClick={openSearch} />
+          {/* <SearchTrigger onClick={openSearch} /> */}
 
           <SignInLink variant="header" />
 
-          <UserAvatar user={user} size="sm" className="hidden sm:inline-flex" />
+          {/* <UserAvatar user={user} size="sm" className="hidden sm:inline-flex" /> */}
 
           <SignOutButton className="hidden sm:inline-flex" />
 

@@ -1,4 +1,4 @@
-import { getDbClient } from "@/lib/db/client"
+import { getDbClient, withDbRetry } from "@/lib/db/client"
 import { DrizzleSpotRepository } from "./drizzle-spot-repository"
 import { DrizzleEventRepository } from "./drizzle-event-repository"
 import { DrizzleSavedSpotsRepository } from "./drizzle-saved-spots-repository"
@@ -13,13 +13,36 @@ let eventRepository: EventRepository | null = null
 let savedSpotsRepository: SavedSpotsRepository | null = null
 let presetImagesRepository: PresetImagesRepository | null = null
 
+/**
+ * Wraps every method of a repository instance in `withDbRetry`.
+ * Returns a Proxy that preserves the original type. The retry happens
+ * at the method boundary so every DB call — read or write, including
+ * ones callers forget to wrap — gets the standard 15s deadline and
+ * 3-attempt retry on transient connection errors.
+ */
+function withRetryAll<T extends object>(repo: T): T {
+  return new Proxy(repo, {
+    get(target, prop, receiver) {
+      const value = Reflect.get(target, prop, receiver)
+      if (typeof value !== "function") return value
+      return (...args: unknown[]) =>
+        withDbRetry(() =>
+          (value as (...a: unknown[]) => Promise<unknown>).apply(
+            target,
+            args,
+          ),
+        )
+    },
+  })
+}
+
 function getDrizzleRepos() {
   const { db } = getDbClient()
   return {
-    spot: new DrizzleSpotRepository(db),
-    event: new DrizzleEventRepository(db),
-    savedSpots: new DrizzleSavedSpotsRepository(db),
-    presetImages: new DrizzlePresetImagesRepository(db),
+    spot: withRetryAll(new DrizzleSpotRepository(db)),
+    event: withRetryAll(new DrizzleEventRepository(db)),
+    savedSpots: withRetryAll(new DrizzleSavedSpotsRepository(db)),
+    presetImages: withRetryAll(new DrizzlePresetImagesRepository(db)),
   }
 }
 
