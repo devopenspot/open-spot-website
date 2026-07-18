@@ -11,9 +11,9 @@ export default async function HomePage() {
     getFeaturedSportEvent(),
   ]);
   return (
-    <>
+    <div className="space-y-8">
       <HeroSection />
       <ExploreTab events={events} featured={featured} />
-    </>
+    </div>
   );
 }

@@ -51,6 +51,33 @@ export default function ExploreTab({ events, featured }: ExploreTabProps) {
       <h1 className="visually-hidden">Explore Open Spot</h1>
 
       <section
+        id="spotlight-spots"
+        aria-labelledby="spotlight-heading"
+        className="md:space-y-12 "
+      >
+        <SectionHeader
+          eyebrow="Fresh"
+          title="Highlight Spots"
+          titleId="spotlight-heading"
+          className="pl-4 md:pl-0"
+        />
+        <div
+          id="spotlight-grid"
+          className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
+        >
+          {spotlightSpots.map((spot) => (
+            <ExploreSpotCard
+              key={spot.id}
+              spot={spot}
+              isSaved={savedIds.has(spot.id)}
+              onOpen={openSpot}
+              onToggleSave={toggleSaved}
+            />
+          ))}
+        </div>
+      </section>
+
+      <section
         id="sport-events"
         aria-label="Sport Events"
         aria-labelledby="legendary-heading"
@@ -64,6 +91,7 @@ export default function ExploreTab({ events, featured }: ExploreTabProps) {
           title="Events"
           titleId="legendary-heading"
           description="The official circuits, world tours, championships, and festivals."
+          className="pl-4 md:pl-0"
           cta={
             <button
               id="view-all-events-link"
@@ -98,32 +126,6 @@ export default function ExploreTab({ events, featured }: ExploreTabProps) {
             ))}
           </div>
         ) : null}
-      </section>
-
-      <section
-        id="spotlight-spots"
-        aria-labelledby="spotlight-heading"
-        className="md:space-y-12 "
-      >
-        <SectionHeader
-          eyebrow="Fresh"
-          title="Highlight Spots"
-          titleId="spotlight-heading"
-        />
-        <div
-          id="spotlight-grid"
-          className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
-        >
-          {spotlightSpots.map((spot) => (
-            <ExploreSpotCard
-              key={spot.id}
-              spot={spot}
-              isSaved={savedIds.has(spot.id)}
-              onOpen={openSpot}
-              onToggleSave={toggleSaved}
-            />
-          ))}
-        </div>
       </section>
     </section>
   );

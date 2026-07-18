@@ -13,7 +13,7 @@ export function HeroSection() {
   const regions = useSpotsStore((s) => s.regions);
   const openSearch = useUIStore((s) => s.openSearch);
   return (
-    <section className="relative mb-12 overflow-hidden bg-primary px-4 py-12 md:py-20  md:px-8 lg:py-20">
+    <section className="relative overflow-hidden bg-primary px-4 md:px-8 h-screen flex items-center justify-around w-full">
       <div
         className="pointer-events-none absolute inset-0 opacity-[0.04]"
         aria-hidden="true"
