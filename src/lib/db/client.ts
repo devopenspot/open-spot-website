@@ -145,7 +145,7 @@ export function withDbRetry<T>(fn: () => Promise<T>): Promise<T> {
 export function getDbClient() {
   if (db && client) return { db, client }
   const url = getDatabaseUrl()
-  if (!url) throw new Error("DATABASE_URL is not configured")
+  if (!url) throw new Error("SUPABASE_DATABASE_URL is not configured")
   client = postgres(url, {
     ssl: "require",
     max: POOL_MAX,

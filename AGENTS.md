@@ -26,6 +26,7 @@ non-code files (`.env*`, YAML, SQL, shell).
 - **Auth + storage**: `@supabase/ssr`; proxy at `src/proxy.ts` refreshes the
   cookie JWT on every request via `supabase.auth.getClaims()`. Admin client
   (`sb_secret_…`) only used server-side for `public.profiles` upserts.
+- **Deploy**: Vercel. There is no CI workflow in this repo.
 - **Tests**: Vitest 4 + happy-dom. Single test entry: `pnpm test`.
 
 ## Commands
@@ -45,11 +46,10 @@ All commands are run with `pnpm`.
 - `pnpm db:health` — `tsx src/db/health-cli.ts`
 - `pnpm db:apply` / `db:deploy` — `tsx src/db/apply-sql.ts` (splits
   `supabase/migrations/*.sql` on `--> statement-breakpoint`; records in
-  `schema_migrations`). This is what CI runs to migrate.
+  `schema_migrations`). Run from a local machine; not part of the build or
+  deploy pipeline.
 
-**CI order** (`.github/workflows/ci.yml`, pnpm 11 / Node 22):
-`typecheck` → `lint` → `test` → `db:apply`. Mirror this locally before
-pushing.
+Pre-push local check: `pnpm typecheck && pnpm lint && pnpm test`.
 
 ## Environment variables
 
@@ -61,31 +61,31 @@ Never commit secrets.
 **Postgres URL resolution order** (`getDatabaseUrl()`):
 
 1. `SUPABASE_DATABASE_URL` — pgBouncer **Transaction** pooler, port 6543.
-   This is the runtime default and the only thing reachable from Vercel
+   The runtime default and the only thing reachable from Vercel
    (the Vercel function network cannot resolve `db.<project>.supabase.co`).
-2. `SUPABASE_DIRECT_URL` — direct, port 5432. Local/long-lived only.
-3. `DB_CONNETION_STRING` — legacy typo, kept for CI back-compat. The CI
-   secret is named `DB_CONNETION_STRING` in GitHub Actions on purpose.
-4. `DATABASE_URL` — escape hatch for non-Supabase setups.
+2. `SUPABASE_DIRECT_URL` — direct, port 5432. Local-only — used by
+   `drizzle.config.ts` for DDL (the pooler is unsafe for migrations). Not
+   reachable from Vercel, so do not set it there.
 
-`drizzle-kit` (`drizzle.config.ts`) reads `SUPABASE_DIRECT_URL` /
-`DB_CONNETION_STRING` / `DATABASE_URL` directly — it does **not** go
-through `getDatabaseUrl()`. For local DDL via `drizzle-kit`, set
-`SUPABASE_DIRECT_URL` in `.env.local`.
+`drizzle-kit` (`drizzle.config.ts`) reads `SUPABASE_DIRECT_URL` directly —
+it does not go through `getDatabaseUrl()`.
 
-**Supabase key rename**: the new publishable/secret keys replace the
-legacy `anon` / `service_role` JWTs. The runtime reads:
+**Supabase keys**: the new publishable/secret keys replace the legacy
+`anon` / `service_role` JWTs. The runtime reads:
+- `NEXT_PUBLIC_SUPABASE_URL` — project URL. Used by the SSR client, the
+  proxy, and `getAdminClient()` (Next inlines it for server code).
 - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (browser-safe, `sb_publishable_…`)
 - `SUPABASE_SECRET_KEY` (server-only, `sb_secret_…`) — never prefix with
   `NEXT_PUBLIC_`
-
-Legacy names `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` are **not** read
-by the runtime.
 
 **The dev placeholder user** (`id === "dev"`) is first-class in
 `saved_spots` — the column is `text`, not `uuid`. When Supabase is
 unconfigured, the dev user is auto-admin (see `isAdminUser` in
 `src/lib/admin.ts`).
+
+This is a single-package repo (not a monorepo). `pnpm-workspace.yaml`
+exists only to set the `allowBuilds` allowlist (`esbuild`, `sharp`,
+`unrs-resolver`) — it is not a workspace manifest.
 
 ## Repo layout (high-signal only)
 
@@ -138,6 +138,8 @@ unconfigured, the dev user is auto-admin (see `isAdminUser` in
   pooler gotchas) — keep those when editing nearby code.
 - **No client-side DB imports.** The Drizzle client and the admin
   Supabase client are server-only.
+- **Never commit `.env*` files.** The repo `.gitignore` already excludes
+  them.
 
 ## Testing gotchas
 
@@ -155,15 +157,6 @@ unconfigured, the dev user is auto-admin (see `isAdminUser` in
   pattern.
 - Tests must be runnable without a live DB — do not call real Drizzle
   repos from tests; instantiate in-memory fakes or stub the repo factory.
-
-## Workflow
-
-- Branch from `main`. PR runs CI on push to any branch.
-- Never force-push, skip hooks, or amend published commits.
-- Never commit `.env*` files. The repo `.gitignore` already excludes
-  them.
-- No `REVALIDATE_SECRET` — the weather revalidate route was removed
-  when the project moved to fully dynamic rendering.
 
 ## Where to look when confused
 

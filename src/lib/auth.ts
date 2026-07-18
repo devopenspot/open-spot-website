@@ -2,10 +2,11 @@ import { createClient } from "@supabase/supabase-js"
 import { getCurrentUser as getDevUser } from "@/lib/user"
 import type { User } from "@/lib/user"
 import { isAdminUser } from "@/lib/admin"
+import { getSupabaseUrl } from "@/lib/env"
 
 let cachedAdmin: ReturnType<typeof createClient> | null = null
 function getAdminClient() {
-  const url = process.env.SUPABASE_URL
+  const url = getSupabaseUrl()
   const key = process.env.SUPABASE_SECRET_KEY
   if (!url || !key) return null
   if (cachedAdmin) return cachedAdmin

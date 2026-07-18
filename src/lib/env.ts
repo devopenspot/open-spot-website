@@ -25,23 +25,18 @@ const EnvSchema = z
       .string()
       .default("open-spot-website/1.0 (contact@example.com)"),
 
-    // Postgres — single source of connection for dev and Vercel. The
-    // runtime (Drizzle client), the build (none), and the dev-console
-    // scripts (`db:seed`, `db:apply`, `db:health`) all read through
-    // `getDatabaseUrl()`, which resolves `SUPABASE_DIRECT_URL` first.
-    // No docker default — local dev points at the same Supabase project.
-    DATABASE_URL: z.string().optional(),
-
     // Supabase server-only admin key (`sb_secret_...`). Used only for
     // server-side admin operations (e.g. upserting into `profiles` with
     // RLS bypass). Never read by the SSR client or the proxy.
-    SUPABASE_URL: z.string().url().optional(),
     SUPABASE_SECRET_KEY: z.string().optional(),
 
-    // Browser-public Supabase publishable key (`sb_publishable_...`). The
-    // proxy and the @supabase/ssr SSR client both use this — the SSR
+    // Browser-public Supabase URL and publishable key (`sb_publishable_...`).
+    // The proxy and the @supabase/ssr SSR client both use these — the SSR
     // client because it represents a user-context call that must respect
     // RLS, the proxy because it refreshes the cookie-based user session.
+    // The publishable key is safe to expose to the browser; Next.js inlines
+    // it at build time, so server-only code (e.g. the admin client) can
+    // read the URL through the same getter.
     NEXT_PUBLIC_SUPABASE_URL: z.string().url().optional(),
     NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: z.string().optional(),
 
@@ -49,14 +44,11 @@ const EnvSchema = z
     //   SUPABASE_DATABASE_URL — pgBouncer Transaction pooler (port 6543).
     //     The runtime reads this first. IPv4-only, designed for serverless,
     //     and DNS-resolvable from Vercel. Required on Vercel.
-    //   SUPABASE_DIRECT_URL — direct connection (port 5432). Fallback for
-    //     operators who point at the direct endpoint (the Vercel function
-    //     network cannot resolve `db.<project>.supabase.co`, so this
-    //     hostname will not work from Vercel — use it only from a local
-    //     machine or a long-lived server).
-    //   DB_CONNETION_STRING — legacy typo, kept for CI back-compat.
+    //   SUPABASE_DIRECT_URL — direct connection (port 5432). Local-only,
+    //     used by drizzle-kit for DDL (the pooler is unsafe for migrations).
+    //     Not reachable from the Vercel function network — do not set on
+    //     Vercel.
     SUPABASE_DIRECT_URL: z.string().optional(),
-    DB_CONNETION_STRING: z.string().optional(),
     SUPABASE_DATABASE_URL: z.string().optional(),
 
     // Supabase Storage bucket for user-contributed spot images.
@@ -103,18 +95,10 @@ export const env = readEnv()
  *
  * Resolution order:
  *   1. SUPABASE_DATABASE_URL (port 6543, pgBouncer pooler — runtime default)
- *   2. SUPABASE_DIRECT_URL   (port 5432, direct — operator override)
- *   3. DB_CONNETION_STRING   (legacy typo, kept for CI / existing operators)
- *   4. DATABASE_URL          (optional escape hatch for non-Supabase setups)
+ *   2. SUPABASE_DIRECT_URL   (port 5432, direct — local DDL only)
  */
 export function getDatabaseUrl(): string | null {
-  return (
-    env.SUPABASE_DATABASE_URL ??
-    env.SUPABASE_DIRECT_URL ??
-    env.DB_CONNETION_STRING ??
-    env.DATABASE_URL ??
-    null
-  )
+  return env.SUPABASE_DATABASE_URL ?? env.SUPABASE_DIRECT_URL ?? null
 }
 
 export function isSupabaseConfigured(): boolean {
@@ -122,7 +106,7 @@ export function isSupabaseConfigured(): boolean {
 }
 
 export function getSupabaseUrl(): string | null {
-  return env.NEXT_PUBLIC_SUPABASE_URL ?? env.SUPABASE_URL ?? null
+  return env.NEXT_PUBLIC_SUPABASE_URL ?? null
 }
 
 export function getSupabasePublishableKey(): string | null {

@@ -293,7 +293,7 @@ async function seedDevSavedSpots(
 
 async function main() {
   const url = getDatabaseUrl()
-  if (!url) throw new Error("DATABASE_URL is not configured")
+  if (!url) throw new Error("SUPABASE_DATABASE_URL is not configured")
   const sql = postgres(url, { ssl: "require", max: 1, connect_timeout: 10 })
   try {
     await seedRegions(sql)

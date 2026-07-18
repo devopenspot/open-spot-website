@@ -1,6 +1,6 @@
 # Deploying to Vercel
 
-The runtime is fully dynamic and reads exclusively from Postgres via Drizzle. The build is DB-free, so the only thing that has to be reachable at request time is the `SUPABASE_DATABASE_URL` Postgres endpoint (the pgBouncer Transaction pooler).
+The runtime is fully dynamic and reads exclusively from Postgres via Drizzle. The build is DB-free, so the only thing that has to be reachable at request time is the `SUPABASE_DATABASE_URL` Postgres endpoint (the pgBouncer Transaction pooler). Migrations are run manually from a local machine via `pnpm db:apply`; there is no CI pipeline.
 
 ## 1. Vercel env vars
 
@@ -17,15 +17,6 @@ Set the following in **Project Settings → Environment Variables** for the **Pr
 | `NOMINATIM_USER_AGENT` | recommended | You choose | Descriptive UA with a contact channel, per the [Nominatim Usage Policy](https://operations.osmfoundation.org/policies/nominatim/). |
 | `ADMIN_EMAILS` | recommended | You choose | CSV of admin Google-auth emails. Without this, the dev placeholder user is the only admin. |
 | `SUPABASE_STORAGE_BUCKET_SPOTS` | optional | — | Defaults to `spot-images`. Set only if you renamed the bucket. |
-
-Optional / fallback:
-
-- `SUPABASE_DIRECT_URL` — direct endpoint (port 5432). Kept as a fallback for operators who point at it from a non-Vercel environment. The Vercel function network cannot resolve `db.<project>.supabase.co`, so do not rely on this from Vercel.
-- `DB_CONNETION_STRING` — legacy typo, kept for CI back-compat. Not needed on Vercel.
-- `DATABASE_URL` — optional escape hatch. Not needed on Vercel.
-- `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` — legacy names. Replaced by `NEXT_PUBLIC_SUPABASE_URL` + `SUPABASE_SECRET_KEY`. Not read by the runtime.
-
-> Do **not** set `REVALIDATE_SECRET` — the weather revalidate route was removed when we moved to fully dynamic rendering.
 
 ### Why the pooler (and not the direct endpoint)?
 
@@ -51,7 +42,7 @@ In the dashboard, open **Settings** → **Database** → **Connection string** a
 The `spot-images` bucket is **not** provisioned by this repo. Create it once in the Supabase dashboard:
 
 1. Supabase dashboard → **Storage** → **New bucket** → name `spot-images`, set to **Public bucket** (the bucket is read by the public spot page without an authenticated request).
-2. Add a policy on the `storage.objects` table that allows public read of objects in the bucket. Suggested policies (see `supabase/migrations/0000_initial_data_model.sql` for the canonical SQL used in this repo):
+2. Add a policy on the `storage.objects` table that allows public read of objects in the bucket. Suggested policies (see `supabase/migrations/0000_fresh.sql` for the canonical SQL used in this repo):
 
    ```sql
    create policy "spot-images public read"
@@ -86,9 +77,16 @@ Both environments set the same env vars to the same values:
 - `.env.local` is gitignored. Set `SUPABASE_DATABASE_URL` and the four Supabase keys there.
 - Vercel env vars mirror `.env.local`.
 - `pnpm db:seed`, `pnpm db:apply`, `pnpm db:health` read the same `SUPABASE_DATABASE_URL` (via `getDatabaseUrl()` in `src/lib/env.ts`). Run them from the dev console only — they are not part of the build or deploy pipeline.
-- For local migrations that benefit from the direct endpoint (DDL via `drizzle-kit`), set `SUPABASE_DIRECT_URL` or `DATABASE_URL` in `.env.local` — those are read by `drizzle.config.ts` directly, not by `getDatabaseUrl()`.
+- For local migrations that benefit from the direct endpoint (DDL via `drizzle-kit`), set `SUPABASE_DIRECT_URL` in `.env.local` — `drizzle.config.ts` reads it directly. The direct endpoint is local-only; the Vercel function network cannot resolve its hostname.
 
-## 5. If you need to reset
+## 5. Migrations
+
+Migrations are authored with `pnpm db:generate` and applied with `pnpm db:apply`, both run from a local machine. There is no automated deploy step.
+
+- **Author SQL**: edit `src/db/schema.ts`, then `pnpm db:generate` to write the next `supabase/migrations/<id>_<name>.sql` file. Commit the file.
+- **Apply SQL**: from a local machine with `SUPABASE_DIRECT_URL` (or `SUPABASE_DATABASE_URL`) set, run `pnpm db:apply`. The script splits each file on `--> statement-breakpoint` and applies in a single transaction per file, recording in `schema_migrations`.
+
+## 6. If you need to reset
 
 - **Re-seed**: `pnpm db:seed` (idempotent upserts of regions, countries, spot types, sport disciplines, event tiers, spot features, preset images, 11 base spots, 5 base events).
 - **Re-apply migrations**: `pnpm db:apply` (splits `supabase/migrations/*.sql` on `--> statement-breakpoint` and applies in a single transaction per file, recording in `schema_migrations`).
