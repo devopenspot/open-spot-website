@@ -22,9 +22,9 @@ export default function SavedTab() {
       id="saved-tab"
       role="tabpanel"
       aria-labelledby="nav-btn-saved"
-      className="space-y-8 pb-24 animate-fade-in"
+      className="space-y-8 py-8 animate-fade-in"
     >
-      <header className="border-b border-outline-variant pb-5">
+      <header className="border-b border-outline-variant pb-5 px-4 md:px-0">
         <span className="font-mono text-[10px] font-bold tracking-widest text-secondary uppercase block mb-1">
           Favorites Spots
         </span>

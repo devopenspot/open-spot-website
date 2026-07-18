@@ -13,7 +13,7 @@ export function HeroSection() {
   const regions = useSpotsStore((s) => s.regions);
   const openSearch = useUIStore((s) => s.openSearch);
   return (
-    <section className="relative overflow-hidden bg-primary px-4 md:px-8 h-screen flex items-center justify-around w-full">
+    <section className="relative overflow-hidden bg-primary px-4 md:pl-0 md:px-8 h-screen flex items-center justify-around w-full">
       <div
         className="pointer-events-none absolute inset-0 opacity-[0.04]"
         aria-hidden="true"
@@ -57,6 +57,7 @@ export function HeroSection() {
         >
           <SectionHeader
             eyebrow="Weather & Forecast"
+            className="-ml-4 md:ml-0"
             eyebrowIcon={
               <Globe size={14} className="text-surface/80" aria-hidden="true" />
             }

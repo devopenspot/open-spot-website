@@ -1,11 +1,14 @@
-import { Suspense } from 'react';
-import { SportEventsTab } from '@/components/sport-events/SportEventsTab';
-import { getFeaturedSportEvent, getSportEvents } from '@/lib/sport-events/loader';
+import { Suspense } from "react";
+import { SportEventsTab } from "@/components/sport-events/SportEventsTab";
+import {
+  getFeaturedSportEvent,
+  getSportEvents,
+} from "@/lib/sport-events/loader";
 
 export const metadata = {
-  title: 'Sport Events',
+  title: "Sport Events",
   description:
-    'The official circuit for action sports: Street League, FISE, Winterclash, X Games, and the World Skate Games. Live, upcoming, and past events in one place.',
+    "The official circuit for action sports: Street League, FISE, Winterclash, X Games, and the World Skate Games. Live, upcoming, and past events in one place.",
 };
 
 async function SportEventsContent() {
@@ -28,7 +31,7 @@ export default function SportEventsPage() {
           <div className="h-10 w-48 rounded-none bg-surface-container animate-pulse" />
           <div className="h-[420px] rounded-none bg-surface-container animate-pulse" />
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {[0, 1, 2, 3, 4].map(i => (
+            {[0, 1, 2, 3, 4].map((i) => (
               <div
                 key={i}
                 className="h-80 rounded-none bg-surface-container animate-pulse"

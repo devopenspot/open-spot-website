@@ -1,8 +1,8 @@
-import { Trophy } from 'lucide-react';
-import { EventCard } from './EventCard';
-import { EventFeaturedHero } from './EventFeaturedHero';
-import type { SportEventEnriched } from '@/types/sport-events';
-import { cn } from '@/lib/cn';
+import { Trophy } from "lucide-react";
+import { EventCard } from "./EventCard";
+import { EventFeaturedHero } from "./EventFeaturedHero";
+import type { SportEventEnriched } from "@/types/sport-events";
+import { cn } from "@/lib/cn";
 
 interface SportEventsTabProps {
   featured: SportEventEnriched | undefined;
@@ -11,7 +11,7 @@ interface SportEventsTabProps {
 
 export function SportEventsTab({ featured, events }: SportEventsTabProps) {
   const gridEvents = featured
-    ? events.filter(event => event.id !== featured.id)
+    ? events.filter((event) => event.id !== featured.id)
     : events;
 
   const counts = events.reduce(
@@ -30,11 +30,11 @@ export function SportEventsTab({ featured, events }: SportEventsTabProps) {
       id="sport-events-tab"
       role="tabpanel"
       aria-labelledby="nav-btn-events"
-      className="space-y-12 pb-24 animate-fade-in"
+      className="space-y-12 py-8 animate-fade-in"
     >
       <h1 className="visually-hidden">Sport Events</h1>
 
-      <header className="border-b border-outline-variant pb-6">
+      <header className="border-b border-outline-variant pb-6 px-4 md:px-0">
         <div className="flex items-center gap-2 mb-2 font-mono text-[10px] font-bold tracking-widest text-secondary uppercase">
           <Trophy size={12} className="text-primary" aria-hidden="true" />
           <span>Action Sports Calendar</span>
@@ -78,7 +78,7 @@ export function SportEventsTab({ featured, events }: SportEventsTabProps) {
           aria-labelledby="featured-event-heading"
           className="space-y-4"
         >
-          <div className="flex items-end justify-between gap-4">
+          <div className="flex items-end justify-between gap-4 px-4 md:px-0">
             <div>
               <h3
                 id="featured-event-heading"
@@ -100,7 +100,7 @@ export function SportEventsTab({ featured, events }: SportEventsTabProps) {
         aria-labelledby="events-grid-heading"
         className="space-y-4"
       >
-        <div className="flex items-end justify-between gap-4">
+        <div className="flex items-end justify-between gap-4 px-4 md:px-0">
           <div>
             <h3
               id="events-grid-heading"
@@ -136,11 +136,7 @@ export function SportEventsTab({ featured, events }: SportEventsTabProps) {
             className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
           >
             {gridList.map((event, idx) => (
-              <EventCard
-                key={event.id}
-                event={event}
-                priority={idx === 0}
-              />
+              <EventCard key={event.id} event={event} priority={idx === 0} />
             ))}
           </div>
         )}
@@ -148,10 +144,11 @@ export function SportEventsTab({ featured, events }: SportEventsTabProps) {
 
       <footer className="border-t border-outline-variant pt-6 text-center">
         <p className="font-mono text-[10px] font-bold tracking-widest text-secondary uppercase">
-          All dates are subject to change. Tap a card to verify on the official site.
+          All dates are subject to change. Tap a card to verify on the official
+          site.
         </p>
         <p className="mt-1.5 text-[10px] text-secondary">
-          Looking for a missing event?{' '}
+          Looking for a missing event?{" "}
           <a
             href="https://www.worldskate.org/"
             target="_blank"
@@ -177,20 +174,19 @@ function StatusStat({ label, value, dotClass, separator }: StatusStatProps) {
   return (
     <div
       className={cn(
-        'flex flex-col items-start gap-1.5 px-4 py-3 min-w-[90px]',
-        separator && 'border-l border-outline-variant',
+        "flex flex-col items-start gap-1.5 px-4 py-3 min-w-[90px]",
+        separator && "border-l border-outline-variant",
       )}
     >
       <div className="flex items-center gap-1.5">
-        <span aria-hidden="true" className={cn('h-1.5 w-1.5', dotClass)} />
+        <span aria-hidden="true" className={cn("h-1.5 w-1.5", dotClass)} />
         <dt className="font-mono text-[9px] font-bold tracking-widest text-secondary uppercase">
           {label}
         </dt>
       </div>
       <dd className="font-display text-xl font-bold tracking-tight text-on-surface">
-        {value.toString().padStart(2, '0')}
+        {value.toString().padStart(2, "0")}
       </dd>
     </div>
   );
 }
-
