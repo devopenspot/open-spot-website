@@ -2,9 +2,7 @@
 
 import {
   Component,
-  forwardRef,
   useEffect,
-  useImperativeHandle,
   useMemo,
   useRef,
   useState,
@@ -22,6 +20,12 @@ import L from "leaflet";
 import type { Spot, WeatherIconName } from "@/lib/types";
 import type { SpotWeather } from "@/lib/weather/weather-cached";
 import { weatherIconGlyph } from "@/components/spot/WeatherIcon";
+import { useMapStore, type MapController } from "@/stores/map-store";
+import { useUserLocation } from "@/hooks/useUserLocation";
+import { useSavedSpots } from "@/hooks/useSavedSpots";
+import { useUser } from "@/hooks/useUser";
+import { useWeather } from "@/components/layout/WeatherContext";
+import { milesToMeters } from "@/lib/spots/geo";
 
 const FOCUS_ZOOM = 13;
 const FLY_DURATION_SEC = 0.6;
@@ -146,28 +150,8 @@ function pickTemperature(
   return w.current;
 }
 
-export interface LeafletUserLocation {
-  lat: number;
-  lon: number;
-  accuracy: number;
-}
-
-export interface LeafletCanvasHandle {
-  flyTo: (spot: Spot) => void;
-  fitBoundsToSpots: () => void;
-  flyToUserLocation: () => void;
-  fitRadius: (radiusMeters: number) => void;
-}
-
 interface LeafletCanvasProps {
   spots: readonly Spot[];
-  activeId: string | null;
-  savedIds?: ReadonlySet<string>;
-  weather?: Record<string, SpotWeather>;
-  onTogglePin: (spot: Spot) => void;
-  userLocation?: LeafletUserLocation | null;
-  radiusMeters?: number;
-  showRadius?: boolean;
   initialCenter?: [number, number];
   initialZoom?: number;
 }
@@ -229,17 +213,14 @@ function flyBoundsOrSetView(
 function MapController({
   spots,
   userLocation,
-  ref,
 }: {
   spots: readonly Spot[];
-  userLocation: LeafletUserLocation | null;
-  ref: React.Ref<LeafletCanvasHandle>;
+  userLocation: { lat: number; lon: number; accuracy: number } | null;
 }) {
   const map = useMap();
   const hasInitialFit = useRef(false);
 
-  useImperativeHandle(
-    ref,
+  const handle = useMemo<MapController>(
     () => ({
       flyTo: (spot) => {
         flyOrSetView(
@@ -302,6 +283,16 @@ function MapController({
   );
 
   useEffect(() => {
+    useMapStore.getState().bindController(handle);
+    return () => {
+      const current = useMapStore.getState().controller;
+      if (current === handle) {
+        useMapStore.getState().bindController(null);
+      }
+    };
+  }, [handle]);
+
+  useEffect(() => {
     if (spots.length === 0) return;
     if (hasInitialFit.current) return;
     if (userLocation) return;
@@ -349,10 +340,6 @@ function buildRenderedMarkers(
   zoom: number,
 ): RenderedMarker[] {
   if (zoom <= CLUSTER_ZOOM_MAX && spots.length > 1) {
-    // A spot may carry multiple types now, so we group by city alone
-    // (clustering by type would fragment the same spot across
-    // clusters). The chip label uses the first type for context
-    // and falls back to "spots" when the spot has none.
     const groups = new Map<string, Spot[]>();
     for (const s of spots) {
       const key = s.citySlug;
@@ -440,24 +427,19 @@ class LeafletErrorBoundary extends Component<
   }
 }
 
-export const LeafletCanvas = forwardRef<
-  LeafletCanvasHandle,
-  LeafletCanvasProps
->(function LeafletCanvas(
-  {
-    spots,
-    activeId,
-    savedIds = new Set(),
-    weather,
-    onTogglePin,
-    userLocation = null,
-    radiusMeters,
-    showRadius = true,
-    initialCenter,
-    initialZoom,
-  },
-  ref,
-) {
+export function LeafletCanvas({
+  spots,
+  initialCenter,
+  initialZoom,
+}: LeafletCanvasProps) {
+  const activeId = useMapStore((s) => s.activePinId);
+  const toggleActivePin = useMapStore((s) => s.toggleActivePin);
+  const flyToSpot = useMapStore((s) => s.flyToSpot);
+  const { location: userLocation, radiusMiles } = useUserLocation();
+  const user = useUser();
+  const { savedIds } = useSavedSpots(user?.id ?? null);
+  const { weather } = useWeather();
+
   const initialZoomState = initialZoom ?? (userLocation ? USER_FOCUS_ZOOM : 2);
   const initialCenterState: [number, number] =
     initialCenter ??
@@ -492,9 +474,19 @@ export const LeafletCanvas = forwardRef<
 
   const showCircle =
     userLocation !== null &&
-    showRadius &&
-    typeof radiusMeters === "number" &&
-    radiusMeters > 0;
+    typeof radiusMiles === "number" &&
+    radiusMiles > 0;
+  const radiusMeters =
+    userLocation !== null ? milesToMeters(radiusMiles) : undefined;
+
+  const handleMarkerClick = (spot: Spot) => {
+    if (activeId === spot.id) {
+      toggleActivePin(spot.id);
+    } else {
+      flyToSpot(spot);
+      toggleActivePin(spot.id);
+    }
+  };
 
   return (
     <LeafletErrorBoundary
@@ -517,14 +509,14 @@ export const LeafletCanvas = forwardRef<
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           maxZoom={19}
         />
-        <MapController spots={spots} userLocation={userLocation} ref={ref} />
+        <MapController spots={spots} userLocation={userLocation} />
         <ZoomListener onZoomChange={setZoom} />
         {markers.map((m) => (
           <Marker
             key={m.key}
             position={m.position}
             icon={m.icon}
-            eventHandlers={{ click: () => onTogglePin(m.spot) }}
+            eventHandlers={{ click: () => handleMarkerClick(m.spot) }}
           />
         ))}
         {userLocation && (
@@ -537,10 +529,10 @@ export const LeafletCanvas = forwardRef<
             alt="Your current location"
           />
         )}
-        {showCircle && userLocation && (
+        {showCircle && userLocation && radiusMeters !== undefined && (
           <Circle
             center={[userLocation.lat, userLocation.lon]}
-            radius={radiusMeters as number}
+            radius={radiusMeters}
             pathOptions={{
               color: "#000000",
               weight: 1,
@@ -554,4 +546,4 @@ export const LeafletCanvas = forwardRef<
       </MapContainer>
     </LeafletErrorBoundary>
   );
-});
+}

@@ -1,66 +1,75 @@
 "use client";
 
 import Image from "next/image";
-import { useCallback } from "react";
+import { memo, useCallback } from "react";
+import { useSearchParams } from "next/navigation";
 import { MapPin, SlidersHorizontal, X } from "lucide-react";
 import { cn } from "@/lib/cn";
-import type { Spot } from "@/lib/types";
-import type { LatLon } from "@/lib/spots/geo";
-import { getSpotDistanceInfo } from "@/lib/spots/geo";
-import { TypeBadges } from "@/components/spot/TypeBadges";
+import { useSpotsStore } from "@/stores/spots-store";
+import { useMapStore } from "@/stores/map-store";
+import { useUserLocation } from "@/hooks/useUserLocation";
+import { useSavedSpots } from "@/hooks/useSavedSpots";
+import { useUser } from "@/hooks/useUser";
+import { useMapFilter } from "@/hooks/useMapFilter";
 import {
   NEARBY_RADIUS_OPTIONS,
   type NearbyRadiusMiles,
 } from "@/stores/user-location-store";
-
-export type MapMode = "nearby" | "filtered";
+import { useMapActions } from "./use-map-actions";
+import type { Spot } from "@/lib/types";
+import { getSpotDistanceInfo } from "@/lib/spots/geo";
+import { TypeBadges } from "@/components/spot/TypeBadges";
 
 interface MapSidebarProps {
   spots: readonly Spot[];
-  activeId: string | null;
-  savedIds: Set<string>;
-  onSelect: (spot: Spot) => void;
-  userLocation?: LatLon | null;
-  radiusMiles?: NearbyRadiusMiles;
-  onRadiusChange?: (miles: NearbyRadiusMiles) => void;
-  showRadiusChips?: boolean;
-  region?: string | null;
-  country?: string | null;
-  onClearFilter?: () => void;
-  mode: MapMode;
-  onSelectMode: (mode: MapMode) => void;
 }
 
-export function MapSidebar({
-  spots,
-  activeId,
-  savedIds,
-  onSelect,
-  userLocation = null,
-  radiusMiles,
-  onRadiusChange,
-  showRadiusChips = true,
-  region = null,
-  country = null,
-  onClearFilter,
-  mode,
-  onSelectMode,
-}: MapSidebarProps) {
-  const showChips =
-    showRadiusChips &&
-    userLocation !== null &&
-    radiusMiles !== undefined &&
-    onRadiusChange !== undefined;
+function MapSidebarBase({ spots }: MapSidebarProps) {
+  const fullSpots = useSpotsStore((s) => s.spots);
+  const activeId = useMapStore((s) => s.activePinId);
+  const mapMode = useMapStore((s) => s.mapMode);
+  const setActivePin = useMapStore((s) => s.setActivePin);
+  const flyToSpot = useMapStore((s) => s.flyToSpot);
+  const user = useUser();
+  const { savedIds } = useSavedSpots(user?.id ?? null);
+  const {
+    location: userLocation,
+    radiusMiles,
+    setRadiusMiles,
+  } = useUserLocation();
+  const { selectMode } = useMapActions();
+  const searchParams = useSearchParams();
+  const { region, country, clearAll } = useMapFilter(fullSpots, searchParams);
+
+  const showRadiusChips = mapMode === "nearby";
+  const showChips = showRadiusChips && userLocation !== null;
 
   const hasFilter = region !== null || country !== null;
   const filterLabel = country ? `${country} (${region})` : region;
 
-  const handleChipClick = useCallback(
+  const handleRadiusChip = useCallback(
     (miles: NearbyRadiusMiles) => {
-      onRadiusChange?.(miles);
+      setRadiusMiles(miles);
     },
-    [onRadiusChange],
+    [setRadiusMiles],
   );
+
+  const handleSelect = useCallback(
+    (spot: Spot) => {
+      setActivePin(spot.id);
+      flyToSpot(spot);
+    },
+    [setActivePin, flyToSpot],
+  );
+
+  const handleModeChange = useCallback(
+    (next: "nearby" | "filtered") => {
+      selectMode(next);
+    },
+    [selectMode],
+  );
+
+  const distanceOrigin = showChips ? userLocation : null;
 
   return (
     <aside
@@ -78,11 +87,11 @@ export function MapSidebar({
           <button
             type="button"
             role="radio"
-            aria-checked={mode === "filtered"}
-            onClick={() => onSelectMode("filtered")}
+            aria-checked={mapMode === "filtered"}
+            onClick={() => handleModeChange("filtered")}
             className={cn(
               "flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 text-[9px] font-mono font-bold tracking-wider uppercase transition-all",
-              mode === "filtered"
+              mapMode === "filtered"
                 ? "bg-primary text-on-primary"
                 : "text-secondary hover:text-on-surface hover:bg-surface-container",
             )}
@@ -93,11 +102,11 @@ export function MapSidebar({
           <button
             type="button"
             role="radio"
-            aria-checked={mode === "nearby"}
-            onClick={() => onSelectMode("nearby")}
+            aria-checked={mapMode === "nearby"}
+            onClick={() => handleModeChange("nearby")}
             className={cn(
               "flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 text-[9px] font-mono font-bold tracking-wider uppercase transition-all border-l border-outline-variant",
-              mode === "nearby"
+              mapMode === "nearby"
                 ? "bg-primary text-on-primary"
                 : "text-secondary hover:text-on-surface hover:bg-surface-container",
             )}
@@ -117,17 +126,17 @@ export function MapSidebar({
             {spots.length} spots active
           </span>
         </div>
-        {hasFilter && filterLabel && !radiusMiles && (
+        {hasFilter && filterLabel && !showRadiusChips && (
           <div id="map-active-filter" className="flex items-center gap-2">
             <span className="font-mono text-[9px] font-bold tracking-widest uppercase text-secondary">
               Filter
             </span>
             <span className="flex items-center gap-1 border border-primary px-2 py-0.5 text-[9px] font-mono font-bold uppercase tracking-wider text-primary">
               <span>{filterLabel}</span>
-              {onClearFilter && (
+              {clearAll && (
                 <button
                   type="button"
-                  onClick={onClearFilter}
+                  onClick={clearAll}
                   aria-label="Clear region and country filter"
                   className="ml-0.5 -mr-1 p-0.5 hover:bg-primary hover:text-on-primary focus-visible:bg-primary focus-visible:text-on-primary"
                 >
@@ -137,7 +146,7 @@ export function MapSidebar({
             </span>
           </div>
         )}
-        {showChips && radiusMiles && (
+        {showChips && (
           <div
             id="map-radius-chips"
             role="radiogroup"
@@ -158,7 +167,7 @@ export function MapSidebar({
                   type="button"
                   role="radio"
                   aria-checked={active}
-                  onClick={() => handleChipClick(miles)}
+                  onClick={() => handleRadiusChip(miles)}
                   className={cn(
                     "px-2 py-0.5 text-[9px] font-mono font-bold tracking-wider uppercase border transition-all",
                     active
@@ -179,79 +188,25 @@ export function MapSidebar({
         aria-label="Filtered spots"
         className="ml-1 md:ml-0 flex-1 flex flex-row lg:flex-col overflow-x-auto lg:overflow-y-auto p-1 space-x-1 lg:space-x-0 lg:space-y-2 no-scrollbar snap-x lg:snap-none snap-mandatory"
       >
-        {spots.map((spot) => {
-          const isHovered = activeId === spot.id;
-          const isSaved = savedIds.has(spot.id);
-          const distanceOrigin = showChips ? userLocation : null;
-          const distanceInfo = getSpotDistanceInfo(spot, distanceOrigin);
-          const distanceLabel =
-            distanceInfo.kind === "distance" ? distanceInfo.label : "—";
-          return (
-            <button
-              key={spot.id}
-              id={`sidebar-spot-item-${spot.id}`}
-              type="button"
-              onClick={() => onSelect(spot)}
-              className={`shrink-0 lg:shrink w-48 lg:w-full snap-start p-3 rounded-xl border text-left transition-all flex space-x-3 items-center ${
-                isHovered
-                  ? "border-primary bg-surface-container-high shadow-sm"
-                  : "border-outline-variant/60 bg-surface-container-low hover:border-outline hover:bg-surface-container"
-              }`}
-            >
-              <span className="relative h-12 w-12 rounded-lg bg-black overflow-hidden shrink-0">
-                <Image
-                  src={spot.image}
-                  alt=""
-                  fill
-                  sizes="48px"
-                  className="object-cover"
-                  referrerPolicy="no-referrer"
-                  unoptimized
-                />
-              </span>
-
-              <span className="flex-1 min-w-0">
-                <span className="flex flex-col md:flex-row items-start justify-between">
-                  {spot.types.length > 0 ? (
-                    <TypeBadges
-                      types={spot.types}
-                      variant="surface"
-                      className="text-[8px]"
-                    />
-                  ) : null}
-                  <span className="text-[8px] font-mono font-medium text-secondary">
-                    {distanceLabel}
-                  </span>
-                </span>
-                <span className="block font-display text-xs font-bold uppercase tracking-wide truncate text-on-surface">
-                  {spot.name}
-                </span>
-                <span className="flex items-center justify-between mt-1">
-                  <span className="text-[9px] text-secondary">{spot.city}</span>
-                  <span className="flex items-center space-x-1 truncate">
-                    <span
-                      aria-hidden="true"
-                      className="h-1 w-1 rounded-full bg-primary"
-                    />
-                    <span className="text-[8px] font-mono text-secondary">
-                      {spot.sports.join("|")}
-                    </span>
-                  </span>
-                </span>
-                {isSaved && <span className="visually-hidden">Saved spot</span>}
-              </span>
-            </button>
-          );
-        })}
+        {spots.map((spot) => (
+          <SidebarSpotItem
+            key={spot.id}
+            spot={spot}
+            isActive={activeId === spot.id}
+            isSaved={savedIds.has(spot.id)}
+            distanceOrigin={distanceOrigin}
+            onSelect={handleSelect}
+          />
+        ))}
         {spots.length === 0 && (
           <div className="p-6 text-center text-xs text-secondary font-mono space-y-3">
             {hasFilter && filterLabel ? (
               <>
                 <p>No spots in {filterLabel}.</p>
-                {onClearFilter && (
+                {clearAll && (
                   <button
                     type="button"
-                    onClick={onClearFilter}
+                    onClick={clearAll}
                     className="font-mono text-[10px] font-bold tracking-widest uppercase text-primary hover:underline focus-visible:underline"
                   >
                     Clear filter
@@ -269,3 +224,83 @@ export function MapSidebar({
     </aside>
   );
 }
+
+interface SidebarSpotItemProps {
+  spot: Spot;
+  isActive: boolean;
+  isSaved: boolean;
+  distanceOrigin: { lat: number; lon: number } | null;
+  onSelect: (spot: Spot) => void;
+}
+
+const SidebarSpotItem = memo(function SidebarSpotItem({
+  spot,
+  isActive,
+  isSaved,
+  distanceOrigin,
+  onSelect,
+}: SidebarSpotItemProps) {
+  const distanceInfo = getSpotDistanceInfo(spot, distanceOrigin);
+  const distanceLabel =
+    distanceInfo.kind === "distance" ? distanceInfo.label : "—";
+
+  const handleClick = useCallback(() => onSelect(spot), [onSelect, spot]);
+
+  return (
+    <button
+      id={`sidebar-spot-item-${spot.id}`}
+      type="button"
+      onClick={handleClick}
+      className={`shrink-0 lg:shrink w-48 lg:w-full snap-start p-3 rounded-xl border text-left transition-all flex space-x-3 items-center ${
+        isActive
+          ? "border-primary bg-surface-container-high shadow-sm"
+          : "border-outline-variant/60 bg-surface-container-low hover:border-outline hover:bg-surface-container"
+      }`}
+    >
+      <span className="relative h-12 w-12 rounded-lg bg-black overflow-hidden shrink-0">
+        <Image
+          src={spot.image}
+          alt=""
+          fill
+          sizes="48px"
+          className="object-cover"
+          referrerPolicy="no-referrer"
+          unoptimized
+        />
+      </span>
+
+      <span className="flex-1 min-w-0">
+        <span className="flex flex-col md:flex-row items-start justify-between">
+          {spot.types.length > 0 ? (
+            <TypeBadges
+              types={spot.types}
+              variant="surface"
+              className="text-[8px]"
+            />
+          ) : null}
+          <span className="text-[8px] font-mono font-medium text-secondary">
+            {distanceLabel}
+          </span>
+        </span>
+        <span className="block font-display text-xs font-bold uppercase tracking-wide truncate text-on-surface">
+          {spot.name}
+        </span>
+        <span className="flex items-center justify-between mt-1">
+          <span className="text-[9px] text-secondary">{spot.city}</span>
+          <span className="flex items-center space-x-1 truncate">
+            <span
+              aria-hidden="true"
+              className="h-1 w-1 rounded-full bg-primary"
+            />
+            <span className="text-[8px] font-mono text-secondary">
+              {spot.sports.join("|")}
+            </span>
+          </span>
+        </span>
+        {isSaved && <span className="visually-hidden">Saved spot</span>}
+      </span>
+    </button>
+  );
+});
+
+export const MapSidebar = memo(MapSidebarBase);

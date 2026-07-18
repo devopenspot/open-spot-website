@@ -1,9 +1,11 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, memo } from "react";
 import { Crosshair, Loader2, MapPin, X } from "lucide-react";
 import { showToast } from "@/hooks/useToast";
 import { useUserLocation } from "@/hooks/useUserLocation";
+import { useMapStore } from "@/stores/map-store";
+import { useMapActions } from "./use-map-actions";
 
 const NEARBY_CONTROL_ID = "nearby-control";
 
@@ -23,35 +25,27 @@ function tooltipFor(status: string, hasLocation: boolean): string {
   return "Use your location to find nearby spots.";
 }
 
-interface NearbyControlProps {
-  onReCenter?: () => void;
-  onClear?: () => void;
-  active?: boolean;
-}
-
-export function NearbyControl({
-  onReCenter,
-  onClear,
-  active = false,
-}: NearbyControlProps = {}) {
+function NearbyControlBase() {
   const { status, location, request, clear } = useUserLocation();
+  const mapMode = useMapStore((s) => s.mapMode);
+  const { reCenter, clearLocationAndNearby } = useMapActions();
   const isRequesting = status === "requesting";
   const isGranted = status === "granted" && location !== null;
 
   const handleClick = useCallback(async () => {
     if (isRequesting) return;
     if (isGranted) {
-      onReCenter?.();
+      reCenter();
       return;
     }
     await request();
-  }, [isGranted, isRequesting, onReCenter, request]);
+  }, [isGranted, isRequesting, reCenter, request]);
 
   const handleClear = useCallback(() => {
     clear();
-    onClear?.();
+    clearLocationAndNearby();
     showToast("Location cleared — showing global grid.", "info");
-  }, [clear, onClear]);
+  }, [clear, clearLocationAndNearby]);
 
   const Icon = isRequesting
     ? Loader2
@@ -73,7 +67,7 @@ export function NearbyControl({
         title={tooltipFor(status, isGranted)}
         aria-label={tooltipFor(status, isGranted)}
         data-nearby-status={status}
-        data-nearby-active={active ? "true" : "false"}
+        data-nearby-active={mapMode === "nearby" ? "true" : "false"}
         className="flex items-center space-x-1 px-2 py-1 text-[9px] font-mono font-bold tracking-wider uppercase text-primary hover:bg-surface-container rounded transition-all disabled:opacity-60 disabled:cursor-wait"
       >
         <Icon
@@ -103,3 +97,5 @@ export function NearbyControl({
     </div>
   );
 }
+
+export const NearbyControl = memo(NearbyControlBase);

@@ -1,4 +1,6 @@
 export { useUIStore } from "./ui-store"
 export { useSpotsStore } from "./spots-store"
 export { useUserLocationStore } from "./user-location-store"
+export { useMapStore } from "./map-store"
+export type { MapMode, MapController } from "./map-store"
 export { HydrationGate } from "./HydrationGate"

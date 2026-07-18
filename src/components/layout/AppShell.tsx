@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Header } from "./Header";
 import { MobileDrawer } from "./MobileDrawer";
-import { SearchOverlay } from "@/components/search/SearchOverlay";
+import { SearchOverlay } from "@/components/map-search/SearchOverlay";
 import { ToastViewport } from "@/components/feedback/Toast";
 import { useUIStore } from "@/stores/ui-store";
 import { useSpotsStore } from "@/stores/spots-store";

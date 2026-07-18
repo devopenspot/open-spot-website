@@ -1,23 +1,18 @@
 "use client";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import dynamic from "next/dynamic";
-import { useRouter, type ReadonlyURLSearchParams } from "next/navigation";
+import type { ReadonlyURLSearchParams } from "next/navigation";
 import { useSpotsStore } from "@/stores/spots-store";
-import { useWeather } from "@/components/layout/WeatherContext";
-import { useSavedSpots } from "@/hooks/useSavedSpots";
-import { useUser } from "@/hooks/useUser";
-import { useMapFilter } from "@/hooks/useMapFilter";
+import { useMapStore } from "@/stores/map-store";
 import { useUserLocation } from "@/hooks/useUserLocation";
+import { useMapFilter } from "@/hooks/useMapFilter";
+import { useMapActions } from "./use-map-actions";
 import { DEFAULT_NEARBY_RADIUS_MI } from "@/stores/user-location-store";
 import { MAP_VIEWPORT_OFFSET_PX } from "@/lib/constants";
-import { ROUTES } from "@/lib/nav";
 import { haversineMiles, milesToMeters } from "@/lib/spots/geo";
 import { MapSidebar } from "./MapSidebar";
 import { MapInfoPopup } from "./MapInfoPopup";
-// import { MapLegend } from "./MapLegend";
-import { NearbyControl } from "./NearbyControl";
-import type { Spot } from "@/lib/types";
-import type { LeafletCanvasHandle } from "./LeafletCanvas";
+import { MapHeaderBar } from "./MapHeaderBar";
 
 const LeafletCanvas = dynamic(
   () => import("./LeafletCanvas").then((m) => m.LeafletCanvas),
@@ -37,25 +32,18 @@ interface MapTabProps {
 }
 
 export default function MapTab({ searchParams, nearbyRequested }: MapTabProps) {
-  const router = useRouter();
   const spots = useSpotsStore((s) => s.spots);
-  const user = useUser();
-  const { savedIds, toggle: toggleSaved } = useSavedSpots(user?.id ?? null);
-  const { weather } = useWeather();
-  const { region, country, filteredSpots, clearAll } = useMapFilter(
-    spots,
-    searchParams,
-  );
   const {
     location,
     status,
     radiusMiles,
     setRadiusMiles,
     request: requestLocation,
-    clear: clearLocation,
   } = useUserLocation();
-  const [activePin, setActivePin] = useState<Spot | null>(null);
-  const leafletRef = useRef<LeafletCanvasHandle | null>(null);
+  const { region, country, filteredSpots } = useMapFilter(spots, searchParams);
+  const { dismissNearby } = useMapActions();
+  const fitRadius = useMapStore((s) => s.fitRadius);
+  const fitBoundsToSpots = useMapStore((s) => s.fitBoundsToSpots);
 
   const userLatLon = useMemo(
     () => (location ? { lat: location.lat, lon: location.lon } : null),
@@ -92,14 +80,11 @@ export default function MapTab({ searchParams, nearbyRequested }: MapTabProps) {
     );
   }, [orderedSpots, userLatLon, radiusMiles, nearYou]);
 
-  const dismissNearby = useCallback(() => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.delete("nearby");
-    const query = params.toString();
-    router.replace(query ? `${ROUTES.map}?${query}` : ROUTES.map, {
-      scroll: false,
-    });
-  }, [router, searchParams]);
+  useEffect(() => {
+    useMapStore
+      .getState()
+      .setMapMode(nearbyRequested ? "nearby" : "filtered");
+  }, [nearbyRequested]);
 
   useEffect(() => {
     if (!nearbyRequested) return;
@@ -121,76 +106,21 @@ export default function MapTab({ searchParams, nearbyRequested }: MapTabProps) {
     hasInitializedNearbyRef.current = true;
     setRadiusMiles(DEFAULT_NEARBY_RADIUS_MI);
     if (status === "granted" && userLatLon) {
-      leafletRef.current?.fitRadius(milesToMeters(DEFAULT_NEARBY_RADIUS_MI));
+      fitRadius(milesToMeters(DEFAULT_NEARBY_RADIUS_MI));
     }
-  }, [nearbyRequested, status, userLatLon, setRadiusMiles]);
-
-  const handleResetMap = useCallback(() => {
-    leafletRef.current?.fitBoundsToSpots();
-    setActivePin(null);
-  }, []);
-
-  const handlePinToggle = useCallback((spot: Spot) => {
-    setActivePin((prev) => {
-      if (prev?.id === spot.id) return null;
-      leafletRef.current?.flyTo(spot);
-      return spot;
-    });
-  }, []);
-
-  const handleSidebarSelect = useCallback((spot: Spot) => {
-    setActivePin(spot);
-    leafletRef.current?.flyTo(spot);
-  }, []);
-
-  const openSpot = useCallback(
-    (spot: Spot) => router.push(ROUTES.spot(spot.id)),
-    [router],
-  );
-
-  const handleReCenter = useCallback(() => {
-    leafletRef.current?.fitRadius(milesToMeters(radiusMiles));
-  }, [radiusMiles]);
-
-  const handleClearLocation = useCallback(() => {
-    clearLocation();
-    if (nearbyRequested) dismissNearby();
-  }, [clearLocation, nearbyRequested, dismissNearby]);
-
-  const handleSelectMode = useCallback(
-    (next: "nearby" | "filtered") => {
-      if (next === "nearby") {
-        const params = new URLSearchParams(searchParams.toString());
-        params.set("nearby", "1");
-        const query = params.toString();
-        router.replace(query ? `${ROUTES.map}?${query}` : ROUTES.map, {
-          scroll: false,
-        });
-        void requestLocation();
-        return;
-      }
-      dismissNearby();
-    },
-    [searchParams, router, requestLocation, dismissNearby],
-  );
-
-  const gridTitle = region
-    ? country
-      ? `${country} (${region})`
-      : region
-    : "Global grid";
+  }, [nearbyRequested, status, userLatLon, setRadiusMiles, fitRadius]);
 
   useEffect(() => {
     if (!nearYou || !userLatLon) return;
-    leafletRef.current?.fitRadius(milesToMeters(radiusMiles));
-  }, [nearYou, userLatLon, radiusMiles]);
+    fitRadius(milesToMeters(radiusMiles));
+  }, [nearYou, userLatLon, radiusMiles, fitRadius]);
 
   useEffect(() => {
     if (nearYou) return;
     if (hasRegionFilter) {
-      leafletRef.current?.fitBoundsToSpots();
+      fitBoundsToSpots();
     }
-  }, [nearYou, hasRegionFilter, region, country]);
+  }, [nearYou, hasRegionFilter, region, country, fitBoundsToSpots]);
 
   const initialCenter: [number, number] =
     nearYou && userLatLon
@@ -199,9 +129,7 @@ export default function MapTab({ searchParams, nearbyRequested }: MapTabProps) {
         ? [sidebarSpots[0].location.lat, sidebarSpots[0].location.lon]
         : [20, 0];
   const initialZoom = nearYou ? NEAR_YOU_INITIAL_ZOOM : 2;
-  const mapMode: "nearby" | "filtered" = nearbyRequested
-    ? "nearby"
-    : "filtered";
+
   return (
     <section
       id="map-tab"
@@ -212,81 +140,23 @@ export default function MapTab({ searchParams, nearbyRequested }: MapTabProps) {
     >
       <h1 className="visually-hidden">Spot Map</h1>
 
-      <MapSidebar
-        spots={sidebarSpots}
-        activeId={activePin?.id ?? null}
-        savedIds={savedIds}
-        onSelect={handleSidebarSelect}
-        userLocation={userLatLon}
-        radiusMiles={nearYou ? radiusMiles : undefined}
-        onRadiusChange={nearYou ? setRadiusMiles : undefined}
-        showRadiusChips={nearYou}
-        region={region}
-        country={country}
-        onClearFilter={hasRegionFilter ? clearAll : undefined}
-        mode={mapMode}
-        onSelectMode={handleSelectMode}
-      />
+      <MapSidebar spots={sidebarSpots} />
 
       <div className="flex-1 flex flex-col">
         <div
           id="map-canvas-container"
           className="flex-1 border border-outline-variant rounded-2xl bg-surface-container-low overflow-hidden relative flex flex-col"
         >
-          <div className="absolute top-4 left-4 right-4 z-10 flex items-center justify-between pointer-events-none">
-            <div className="flex items-center space-x-2 bg-surface/90 backdrop-blur-md px-3 py-1.5 rounded-lg border border-outline-variant shadow-sm pointer-events-auto">
-              <span
-                aria-hidden="true"
-                className={`h-2 w-2 rounded-full ${nearYou ? "bg-primary" : "bg-emerald-500 animate-ping"}`}
-              />
-              <span className="font-mono text-[10px] font-bold tracking-wider text-on-surface uppercase">
-                {nearYou ? `Near you · ${gridTitle}` : `${gridTitle} Active`}
-              </span>
-            </div>
-
-            <div className="flex items-center space-x-1 pointer-events-auto">
-              <NearbyControl
-                onReCenter={handleReCenter}
-                onClear={handleClearLocation}
-                active={nearbyRequested}
-              />
-              <div className="flex items-center space-x-1 bg-surface/90 backdrop-blur-md p-1 rounded-lg border border-outline-variant shadow-sm">
-                <button
-                  type="button"
-                  onClick={handleResetMap}
-                  className="px-2 py-1 text-[9px] font-mono font-bold tracking-wider uppercase text-primary hover:bg-surface-container rounded transition-all"
-                >
-                  Reset view
-                </button>
-              </div>
-            </div>
-          </div>
+          <MapHeaderBar />
 
           <LeafletCanvas
-            ref={leafletRef}
             spots={sidebarSpots}
-            activeId={activePin?.id ?? null}
-            savedIds={savedIds}
-            weather={weather}
-            onTogglePin={handlePinToggle}
-            userLocation={location}
-            radiusMeters={milesToMeters(radiusMiles)}
             initialCenter={initialCenter}
             initialZoom={initialZoom}
           />
 
-          {activePin && (
-            <MapInfoPopup
-              spot={activePin}
-              weather={weather}
-              isSaved={savedIds.has(activePin.id)}
-              onClose={() => setActivePin(null)}
-              onOpen={openSpot}
-              onToggleSave={toggleSaved}
-            />
-          )}
+          <MapInfoPopup />
         </div>
-        {/* <MapLegend /> */}
       </div>
     </section>
   );

@@ -4,44 +4,46 @@ import Image from "next/image";
 import { MapPin, Share2, X } from "lucide-react";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
-import { useRef } from "react";
+import { memo, useCallback, useMemo, useRef } from "react";
 import { showToast } from "@/hooks/useToast";
 import { cn } from "@/lib/cn";
-import type { Spot } from "@/lib/types";
+import { useSpotsStore } from "@/stores/spots-store";
+import { useWeather } from "@/components/layout/WeatherContext";
+import { useSavedSpots } from "@/hooks/useSavedSpots";
+import { useUser } from "@/hooks/useUser";
+import { useMapStore } from "@/stores/map-store";
+import { useMapActions } from "./use-map-actions";
 import type { SpotWeather } from "@/lib/weather/weather-cached";
 import { WeatherIcon } from "@/components/spot/WeatherIcon";
 import { WeatherAccuracyNote } from "@/components/spot/WeatherAccuracyNote";
 import { TypeBadges } from "@/components/spot/TypeBadges";
 
-interface MapInfoPopupProps {
-  spot: Spot;
-  weather: Record<string, SpotWeather>;
-  isSaved: boolean;
-  onClose: () => void;
-  onOpen: (spot: Spot) => void;
-  onToggleSave: (id: string, meta?: { name?: string }) => void;
-}
-
-export function MapInfoPopup({
-  spot,
-  weather,
-  isSaved,
-  onClose,
-  onOpen,
-  onToggleSave,
-}: MapInfoPopupProps) {
+function MapInfoPopupBase() {
   const panelRef = useRef<HTMLDivElement>(null);
-  useFocusTrap(panelRef, true);
-  useKeyboardShortcuts([{ key: "Escape", handler: onClose }]);
+  const activePinId = useMapStore((s) => s.activePinId);
+  const spots = useSpotsStore((s) => s.spots);
+  const user = useUser();
+  const { savedIds, toggle: toggleSaved } = useSavedSpots(user?.id ?? null);
+  const { weather } = useWeather();
+  const { clearActivePin, openSpot } = useMapActions();
 
-  const w = weather[spot.id];
-  const current = w?.current;
-  const description = w?.description;
-  const weatherIcon = w?.forecast[0]?.icon;
-  const windKmh = w?.wind != null ? Math.round(w.wind * 3.6) : null;
-  const hasWeather = w != null;
+  const spot = useMemo(
+    () => (activePinId ? spots.find((s) => s.id === activePinId) ?? null : null),
+    [activePinId, spots],
+  );
 
-  const handleShare = async () => {
+  useFocusTrap(panelRef, spot !== null);
+  const shortcuts = useMemo(
+    () =>
+      spot !== null
+        ? [{ key: "Escape", handler: clearActivePin }]
+        : [],
+    [spot, clearActivePin],
+  );
+  useKeyboardShortcuts(shortcuts);
+
+  const handleShare = useCallback(async () => {
+    if (!spot) return;
     const url =
       typeof window !== "undefined"
         ? `${window.location.origin}/spots/${spot.id}`
@@ -56,7 +58,17 @@ export function MapInfoPopup({
     } catch {
       showToast("Could not copy link", "error");
     }
-  };
+  }, [spot]);
+
+  if (!spot) return null;
+
+  const w: SpotWeather | undefined = weather[spot.id];
+  const current = w?.current;
+  const description = w?.description;
+  const weatherIcon = w?.forecast[0]?.icon;
+  const windKmh = w?.wind != null ? Math.round(w.wind * 3.6) : null;
+  const hasWeather = w != null;
+  const isSaved = savedIds.has(spot.id);
 
   return (
     <div
@@ -101,7 +113,7 @@ export function MapInfoPopup({
 
         <button
           type="button"
-          onClick={onClose}
+          onClick={clearActivePin}
           aria-label="Close details"
           className="shrink-0 -mt-1 -mr-1 flex h-7 w-7 items-center justify-center text-secondary hover:text-on-surface hover:bg-surface-container transition-all"
         >
@@ -161,7 +173,7 @@ export function MapInfoPopup({
         </button>
         <button
           type="button"
-          onClick={() => onToggleSave(spot.id, { name: spot.name })}
+          onClick={() => toggleSaved(spot.id, { name: spot.name })}
           aria-pressed={isSaved}
           aria-label={isSaved ? `Unsave ${spot.name}` : `Save ${spot.name}`}
           className={cn(
@@ -175,7 +187,7 @@ export function MapInfoPopup({
         </button>
         <button
           type="button"
-          onClick={() => onOpen(spot)}
+          onClick={() => openSpot(spot)}
           className="flex-1 h-9 bg-on-surface text-surface text-[10px] font-bold tracking-widest uppercase hover:bg-on-surface/90 transition-all text-center"
         >
           Full info
@@ -184,3 +196,5 @@ export function MapInfoPopup({
     </div>
   );
 }
+
+export const MapInfoPopup = memo(MapInfoPopupBase);
