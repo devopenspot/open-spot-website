@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { Plus } from "lucide-react"
-import { getEventRepositoryAsync } from "@/lib/repositories"
+import { listEventsRaw } from "@/lib/services/events"
 import { EventTable } from "@/components/admin/events/EventTable"
 import { EventTableFilters } from "@/components/admin/events/EventTableFilters"
 import type { SportEventTier } from "@/types/sport-events"
@@ -24,8 +24,7 @@ export default async function AdminEventsPage({ searchParams }: AdminEventsPageP
     (params.tier as SportEventTier | undefined) || undefined
   const country = (params.country ?? "").trim()
 
-  const repo = await getEventRepositoryAsync()
-  const result = await repo.list({
+  const result = await listEventsRaw({
     q: q || undefined,
     tier,
     country: country || undefined,

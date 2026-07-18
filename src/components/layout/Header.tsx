@@ -4,18 +4,18 @@ import { useRouter } from "next/navigation";
 // import { BrandLogo } from "./BrandLogo";
 import { NavList } from "./NavList";
 import { MobileDrawerTrigger } from "./MobileDrawerTrigger";
-import { SearchTrigger } from "./SearchTrigger";
+// import { SearchTrigger } from "./SearchTrigger";
 import { SignInLink } from "./SignInLink";
 import { SignOutButton } from "./SignOutButton";
-import { UserAvatar } from "@/components/ui";
-import { useUIStore } from "@/stores/ui-store";
+// import { UserAvatar } from "@/components/ui";
+// import { useUIStore } from "@/stores/ui-store";
 import { useSavedSpots } from "@/hooks/useSavedSpots";
 import { useUser } from "@/hooks/useUser";
 import { MAIN_CONTENT_ID } from "@/lib/constants";
 
 export function Header() {
   const router = useRouter();
-  const openSearch = useUIStore((s) => s.openSearch);
+  //   const openSearch = useUIStore((s) => s.openSearch);
   const user = useUser();
   const { count: savedCount } = useSavedSpots(user.id);
 

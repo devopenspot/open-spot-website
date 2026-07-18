@@ -3,7 +3,6 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { showToast } from "@/hooks/useToast"
-import { createSpotFromLookupAction } from "@/app/actions/admin-spots"
 import { SpotFormFields, type SpotFormState } from "@/components/admin/spots/SpotFormFields"
 import { SpotFormSubmit } from "@/components/admin/spots/SpotFormSubmit"
 import type { ProjectedAddress } from "@/lib/geocode/project"
@@ -93,7 +92,21 @@ export function AdminNewSpotForm({
   }
 
   const handleAction = async (formData: FormData) => {
-    return createSpotFromLookupAction(formData)
+    const res = await fetch("/api/admin/spots", {
+      method: "POST",
+      body: formData,
+    })
+    if (res.status === 401) {
+      router.push("/login")
+      throw new Error("Unauthorized")
+    }
+    if (!res.ok) {
+      const body = (await res.json().catch(() => null)) as
+        | { error?: string }
+        | null
+      throw new Error(body?.error ?? `HTTP ${res.status}`)
+    }
+    return (await res.json()) as { id: string }
   }
 
   const submitDisabled =

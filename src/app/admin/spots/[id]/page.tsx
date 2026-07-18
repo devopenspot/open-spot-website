@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation"
-import { getSpotRepositoryAsync } from "@/lib/repositories"
+import { findSpotById } from "@/lib/services/spots"
+import { listSpotTypes } from "@/lib/services/spot-types"
 import type { SpotTypeEntity } from "@/lib/types"
 import { AdminEditSpotForm } from "./AdminEditSpotForm"
 
@@ -13,14 +14,12 @@ interface AdminEditSpotPageProps {
 
 export default async function AdminEditSpotPage({ params }: AdminEditSpotPageProps) {
   const { id } = await params
-  const repo = await getSpotRepositoryAsync()
-  const spot = await repo.findById(id)
+  const [spot, spotTypes] = await Promise.all([
+    findSpotById(id),
+    listSpotTypes(),
+  ])
   if (!spot) notFound()
-  const spotTypes = await repo.listAllSpotTypes()
-  const spotTypeOptions: readonly SpotTypeEntity[] = spotTypes.map((t) => ({
-    slug: t.slug,
-    name: t.name,
-  }))
+  const spotTypeOptions: readonly SpotTypeEntity[] = spotTypes
   return (
     <AdminEditSpotForm spot={spot} spotTypes={spotTypeOptions} />
   )

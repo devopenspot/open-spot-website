@@ -4,13 +4,13 @@ import { connection } from 'next/server';
 import { Inter, Archivo_Narrow } from 'next/font/google';
 import { cn } from '@/lib/cn';
 import { env } from '@/lib/env';
-import { getPresetImagesRepositoryAsync } from '@/lib/repositories';
 import { listSpots } from '@/lib/services/spots';
 import { listSavedSpotsForUser } from '@/lib/services/saved-spots';
+import { listRegions } from '@/lib/services/regions';
+import { listSpotTypes } from '@/lib/services/spot-types';
+import { listPresetImages } from '@/lib/services/preset-images';
 import { getWeatherForAllSpots } from '@/lib/weather/weather-bundle';
 import { getServerUserFromCookies } from '@/lib/auth';
-import { getRegionsForClient } from '@/lib/data/regions';
-import { getSpotTypesForClient } from '@/lib/data/spot-types';
 import { SpotsProvider } from '@/components/layout/SpotsProvider';
 import './globals.css';
 
@@ -97,19 +97,18 @@ async function RootDataProviders({ children }: { children: React.ReactNode }) {
   // derivation — the BFF pattern. `getWeatherForAllSpots(spots)`
   // derives the per-spot weather from the already-fetched spots,
   // so we no longer pay for a second `spots.list()` round trip.
-  const [spotsList, initialUser, initialRegions, initialSpotTypes, presetImagesRepo] =
+  const [spotsList, initialUser, initialRegions, initialSpotTypes, presetImages] =
     await Promise.all([
       listSpots(),
       getServerUserFromCookies(),
-      getRegionsForClient(),
-      getSpotTypesForClient(),
-      getPresetImagesRepositoryAsync(),
+      listRegions(),
+      listSpotTypes(),
+      listPresetImages(),
     ]);
   const initialSpots = spotsList.items;
-  const [initialWeather, savedSpotsResult, presetImages] = await Promise.all([
+  const [initialWeather, savedSpotsResult] = await Promise.all([
     getWeatherForAllSpots(initialSpots),
     listSavedSpotsForUser(initialUser.id, { limit: 200 }),
-    presetImagesRepo.list(),
   ]);
   const initialPresetImages = presetImages.map((p) => ({
     id: p.id,

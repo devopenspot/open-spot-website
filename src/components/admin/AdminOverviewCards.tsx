@@ -2,11 +2,9 @@ import Link from "next/link"
 import { Bookmark, MapPin, Trophy } from "lucide-react"
 import { SurfaceCard } from "@/components/ui"
 import { getServerUserFromCookies } from "@/lib/auth"
-import {
-  getEventRepositoryAsync,
-  getSavedSpotsRepositoryAsync,
-  getSpotRepositoryAsync,
-} from "@/lib/repositories"
+import { listSpots } from "@/lib/services/spots"
+import { listEventsRaw } from "@/lib/services/events"
+import { listSavedSpotsForUser } from "@/lib/services/saved-spots"
 
 interface OverviewCard {
   href: string
@@ -19,18 +17,15 @@ interface OverviewCard {
 const COUNT_LIMIT = 500
 
 export async function AdminOverviewCards() {
-  const [spotRepo, eventRepo, savedRepo, user] = await Promise.all([
-    getSpotRepositoryAsync(),
-    getEventRepositoryAsync(),
-    getSavedSpotsRepositoryAsync(),
+  const [user, spotsResult, eventsResult] = await Promise.all([
     getServerUserFromCookies(),
+    listSpots({ limit: COUNT_LIMIT }),
+    listEventsRaw({ limit: COUNT_LIMIT }),
   ])
 
-  const [spotsResult, eventsResult, savedResult] = await Promise.all([
-    spotRepo.list({ limit: COUNT_LIMIT }),
-    eventRepo.list({ limit: COUNT_LIMIT }),
-    savedRepo.list(user.id, { limit: COUNT_LIMIT }),
-  ])
+  const savedResult = user
+    ? await listSavedSpotsForUser(user.id, { limit: COUNT_LIMIT })
+    : { items: [], nextCursor: null }
 
   const cards: OverviewCard[] = [
     {

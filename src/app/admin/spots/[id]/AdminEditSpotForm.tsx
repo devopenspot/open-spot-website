@@ -2,7 +2,6 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { updateSpotAction } from "@/app/actions/admin-spots"
 import { SpotFormFields, type SpotFormState } from "@/components/admin/spots/SpotFormFields"
 import { SpotFormSubmit } from "@/components/admin/spots/SpotFormSubmit"
 import { SPORT_DISCIPLINES, type SportDiscipline } from "@/types/sport-events"
@@ -59,7 +58,44 @@ export function AdminEditSpotForm({ spot, spotTypes }: AdminEditSpotFormProps) {
   const [state, setState] = useState<SpotFormState>(stateFromSpot(spot))
 
   const handleAction = async (formData: FormData) => {
-    return updateSpotAction(spot.id, formData)
+    // Edit form sends JSON (no image upload) — PATCH /api/admin/spots/[id]
+    const obj: Record<string, unknown> = {}
+    for (const [k, v] of formData.entries()) {
+      if (typeof v !== "string") continue
+      if (k === "type") {
+        const arr = (obj.types as string[] | undefined) ?? []
+        arr.push(v)
+        obj.types = arr
+      } else if (k === "sports") {
+        const arr = (obj.sports as string[] | undefined) ?? []
+        arr.push(v)
+        obj.sports = arr
+      } else if (k === "lat" || k === "lon" || k === "crowdLevel") {
+        obj[k] = Number(v)
+      } else if (k === "image") {
+        // image file is not supported in JSON mode; the URL is
+        // sent as `image` instead.
+        continue
+      } else {
+        obj[k] = v
+      }
+    }
+    const res = await fetch(`/api/admin/spots/${encodeURIComponent(spot.id)}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(obj),
+    })
+    if (res.status === 401) {
+      router.push("/login")
+      throw new Error("Unauthorized")
+    }
+    if (!res.ok) {
+      const body = (await res.json().catch(() => null)) as
+        | { error?: string }
+        | null
+      throw new Error(body?.error ?? `HTTP ${res.status}`)
+    }
+    return (await res.json()) as { id: string }
   }
 
   return (

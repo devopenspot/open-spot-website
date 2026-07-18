@@ -1,9 +1,13 @@
-import { cacheLife, cacheTag } from "next/cache"
+import { cacheLife, cacheTag, revalidatePath, revalidateTag } from "next/cache"
 import { getEventRepositoryAsync } from "@/lib/repositories"
 import type {
   SportEvent,
   SportEventEnriched,
 } from "@/types/sport-events"
+import type {
+  NewSportEvent,
+  SportEventPatch,
+} from "@/lib/repositories/types"
 import type {
   SportEventListResult,
   SportEventQuery,
@@ -188,4 +192,60 @@ export async function findEventById(
   cacheTag(`events:item:${id}`)
   cacheLife(ITEM_CACHE_LIFE)
   return runFindEventById(id)
+}
+
+// ---------- mutators ----------
+
+export async function runCreateEvent(
+  input: NewSportEvent,
+): Promise<SportEvent> {
+  const repo = await getEventRepositoryAsync()
+  return repo.create(input)
+}
+
+export async function createEvent(input: NewSportEvent): Promise<SportEvent> {
+  const event = await runCreateEvent(input)
+  revalidateTag("events:list", LIST_CACHE_LIFE)
+  revalidateTag("events:featured", ITEM_CACHE_LIFE)
+  revalidateTag(`events:item:${event.id}`, ITEM_CACHE_LIFE)
+  revalidatePath("/sport-events")
+  revalidatePath("/admin/events")
+  return event
+}
+
+export async function runUpdateEvent(
+  id: string,
+  patch: SportEventPatch,
+): Promise<SportEvent> {
+  const repo = await getEventRepositoryAsync()
+  return repo.update(id, patch)
+}
+
+export async function updateEvent(
+  id: string,
+  patch: SportEventPatch,
+): Promise<SportEvent> {
+  const event = await runUpdateEvent(id, patch)
+  revalidateTag("events:list", LIST_CACHE_LIFE)
+  revalidateTag("events:featured", ITEM_CACHE_LIFE)
+  revalidateTag(`events:item:${id}`, ITEM_CACHE_LIFE)
+  revalidatePath("/sport-events")
+  revalidatePath(`/admin/events/${id}`)
+  revalidatePath("/admin/events")
+  return event
+}
+
+export async function runDeleteEvent(id: string): Promise<void> {
+  const repo = await getEventRepositoryAsync()
+  return repo.delete(id)
+}
+
+export async function deleteEvent(id: string): Promise<void> {
+  await runDeleteEvent(id)
+  revalidateTag("events:list", LIST_CACHE_LIFE)
+  revalidateTag("events:featured", ITEM_CACHE_LIFE)
+  revalidateTag(`events:item:${id}`, ITEM_CACHE_LIFE)
+  revalidatePath("/sport-events")
+  revalidatePath(`/admin/events/${id}`)
+  revalidatePath("/admin/events")
 }

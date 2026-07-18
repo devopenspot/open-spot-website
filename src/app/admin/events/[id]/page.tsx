@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation"
-import { getEventRepositoryAsync } from "@/lib/repositories"
+import { findEventById } from "@/lib/services/events"
 import { AdminEditEventForm } from "./AdminEditEventForm"
 
 export const metadata = {
@@ -12,8 +12,7 @@ interface AdminEditEventPageProps {
 
 export default async function AdminEditEventPage({ params }: AdminEditEventPageProps) {
   const { id } = await params
-  const repo = await getEventRepositoryAsync()
-  const event = await repo.findById(id)
+  const event = await findEventById(id)
   if (!event) notFound()
   return <AdminEditEventForm event={event} />
 }

@@ -2,7 +2,6 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { updateEventAction } from "@/app/actions/admin-events"
 import { EventFormFields, type EventFormState } from "@/components/admin/events/EventFormFields"
 import { EventFormSubmit } from "@/components/admin/events/EventFormSubmit"
 import { SPORT_DISCIPLINES, type SportDiscipline, type SportEvent } from "@/types/sport-events"
@@ -75,7 +74,40 @@ export function AdminEditEventForm({ event }: AdminEditEventFormProps) {
   const [state, setState] = useState<EventFormState>(stateFromEvent(event))
 
   const handleAction = async (formData: FormData) => {
-    return updateEventAction(event.id, formData)
+    const obj: Record<string, unknown> = {}
+    for (const [k, v] of formData.entries()) {
+      if (typeof v !== "string") continue
+      if (k === "sports") {
+        const arr = (obj.sports as string[] | undefined) ?? []
+        arr.push(v)
+        obj.sports = arr
+      } else if (k === "latitude" || k === "longitude") {
+        obj[k] = v === "" ? undefined : Number(v)
+      } else {
+        obj[k] = v === "" ? undefined : v
+      }
+    }
+    if (obj.featured === "on") obj.featured = true
+    else delete obj.featured
+    const res = await fetch(
+      `/api/admin/events/${encodeURIComponent(event.id)}`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(obj),
+      },
+    )
+    if (res.status === 401) {
+      router.push("/login")
+      throw new Error("Unauthorized")
+    }
+    if (!res.ok) {
+      const body = (await res.json().catch(() => null)) as
+        | { error?: string }
+        | null
+      throw new Error(body?.error ?? `HTTP ${res.status}`)
+    }
+    return (await res.json()) as { id: string }
   }
 
   return (

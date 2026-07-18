@@ -6,7 +6,6 @@ import { Pencil, Trash2 } from "lucide-react"
 import { DeleteConfirmDialog } from "@/components/admin/common/DeleteConfirmDialog"
 import { TypeBadges } from "@/components/spot/TypeBadges"
 import { showToast } from "@/hooks/useToast"
-import { deleteSpotAction } from "@/app/actions/admin-spots"
 import type { Spot } from "@/lib/types"
 
 interface SpotTableProps {
@@ -19,7 +18,21 @@ export function SpotTable({ spots }: SpotTableProps) {
 
   const handleDeleted = async () => {
     if (!pendingDelete) return
-    await deleteSpotAction(pendingDelete.id)
+    const res = await fetch(
+      `/api/admin/spots/${encodeURIComponent(pendingDelete.id)}`,
+      { method: "DELETE" },
+    )
+    if (res.status === 401) {
+      router.push("/login")
+      return
+    }
+    if (!res.ok && res.status !== 204) {
+      const body = (await res.json().catch(() => null)) as
+        | { error?: string }
+        | null
+      showToast(body?.error ?? `Delete failed (${res.status})`, "error")
+      return
+    }
     showToast(`Deleted ${pendingDelete.name}`, "success")
     setPendingDelete(null)
     router.refresh()

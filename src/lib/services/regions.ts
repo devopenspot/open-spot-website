@@ -1,10 +1,14 @@
-import "server-only"
+import { cacheLife, cacheTag } from "next/cache"
 import { asc, eq } from "drizzle-orm"
-import { connection } from "next/server"
-import { getDbClient, withDbRetry } from "@/lib/db/client"
-import { getSpotRepositoryAsync } from "@/lib/repositories"
+import { getDbClient } from "@/lib/db/client"
 import { countries, regions } from "@/db/schema"
 import type { Region } from "@/lib/types"
+
+const LIST_CACHE_LIFE = {
+  revalidate: 60,
+  stale: 300,
+  expire: 3600,
+} as const
 
 function slugify(value: string): string {
   return value
@@ -19,18 +23,9 @@ function formatCount(spotCount: number): string {
   return `${spotCount} Spots`
 }
 
-/**
- * Server-only. Joins the `regions` + `countries` tables, merges with the
- * spot-count aggregate from `listRegions()`, and returns the `Region[]`
- * shape consumed by the client tree (via `SpotsProvider`).
- *
- * Called once per request from `RootDataProviders` and cached in the
- * spots store.
- */
-export async function getRegionsForClient(): Promise<readonly Region[]> {
-  await connection()
+export async function runListRegions(): Promise<readonly Region[]> {
   const { db } = getDbClient()
-  const rows = await withDbRetry(() =>
+  const [regionRows, spotRepo] = await Promise.all([
     db
       .select({
         name: regions.name,
@@ -41,16 +36,19 @@ export async function getRegionsForClient(): Promise<readonly Region[]> {
       .from(regions)
       .leftJoin(countries, eq(countries.regionId, regions.id))
       .orderBy(asc(regions.sortOrder), asc(countries.name)),
-  )
+    (async () => {
+      const { getSpotRepositoryAsync } = await import("@/lib/repositories")
+      return getSpotRepositoryAsync()
+    })(),
+  ])
 
-  const spotRepo = await getSpotRepositoryAsync()
-  const regionCounts = await withDbRetry(() => spotRepo.listRegions())
+  const regionCounts = await spotRepo.listRegions()
   const countByName = new Map(
     regionCounts.map((r) => [r.name, r.spotCount] as const),
   )
 
   const grouped = new Map<string, { region: Region; countries: string[] }>()
-  for (const row of rows) {
+  for (const row of regionRows) {
     const countryName = row.countryName ?? null
     const existing = grouped.get(row.name)
     if (existing) {
@@ -77,4 +75,11 @@ export async function getRegionsForClient(): Promise<readonly Region[]> {
       countries: countryList,
     }),
   )
+}
+
+export async function listRegions(): Promise<readonly Region[]> {
+  "use cache"
+  cacheTag("regions:all")
+  cacheLife(LIST_CACHE_LIFE)
+  return runListRegions()
 }

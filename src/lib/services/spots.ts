@@ -1,7 +1,9 @@
-import { cacheLife, cacheTag } from "next/cache"
+import { cacheLife, cacheTag, revalidatePath, revalidateTag } from "next/cache"
 import { getSpotRepositoryAsync } from "@/lib/repositories"
 import type {
+  NewSpot,
   SpotListResult,
+  SpotPatch,
   SpotQuery,
 } from "@/lib/repositories/types"
 import type { Spot } from "@/lib/types"
@@ -99,4 +101,64 @@ export async function findNearbySpots(params: {
     lon: params.lon,
     radiusMeters: Math.min(params.radiusMeters, NEARBY_DEFAULT_LIMIT),
   })
+}
+
+// ---------- mutators ----------
+// `revalidateTag` is called with the same cache-life profile the
+// original `"use cache"` block was configured with (Next.js 16
+// requires the profile arg).
+
+export async function runCreateSpot(input: NewSpot): Promise<Spot> {
+  const repo = await getSpotRepositoryAsync()
+  return repo.create(input)
+}
+
+export async function createSpot(input: NewSpot): Promise<Spot> {
+  const spot = await runCreateSpot(input)
+  revalidateTag("spots:list", LIST_CACHE_LIFE)
+  revalidateTag(`spots:item:${spot.id}`, ITEM_CACHE_LIFE)
+  revalidateTag(`spots:slug:${spot.slug}`, ITEM_CACHE_LIFE)
+  revalidatePath("/admin/spots")
+  revalidatePath("/")
+  revalidatePath("/map")
+  return spot
+}
+
+export async function runUpdateSpot(
+  id: string,
+  patch: SpotPatch,
+): Promise<Spot> {
+  const repo = await getSpotRepositoryAsync()
+  return repo.update(id, patch)
+}
+
+export async function updateSpot(
+  id: string,
+  patch: SpotPatch,
+): Promise<Spot> {
+  const spot = await runUpdateSpot(id, patch)
+  revalidateTag("spots:list", LIST_CACHE_LIFE)
+  revalidateTag(`spots:item:${id}`, ITEM_CACHE_LIFE)
+  revalidateTag(`spots:slug:${spot.slug}`, ITEM_CACHE_LIFE)
+  revalidatePath(`/spots/${id}`)
+  revalidatePath("/admin/spots")
+  revalidatePath("/")
+  revalidatePath("/map")
+  return spot
+}
+
+export async function runDeleteSpot(id: string): Promise<void> {
+  const repo = await getSpotRepositoryAsync()
+  return repo.delete(id)
+}
+
+export async function deleteSpot(id: string): Promise<void> {
+  await runDeleteSpot(id)
+  revalidateTag("spots:list", LIST_CACHE_LIFE)
+  revalidateTag(`spots:item:${id}`, ITEM_CACHE_LIFE)
+  revalidatePath(`/spots/${id}`)
+  revalidatePath("/admin/spots")
+  revalidatePath("/")
+  revalidatePath("/map")
+  revalidatePath("/explore")
 }

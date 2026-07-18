@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation"
 import { Pencil, Trash2 } from "lucide-react"
 import { DeleteConfirmDialog } from "@/components/admin/common/DeleteConfirmDialog"
 import { showToast } from "@/hooks/useToast"
-import { deleteEventAction } from "@/app/actions/admin-events"
 import type { SportEvent } from "@/types/sport-events"
 
 interface EventTableProps {
@@ -25,7 +24,21 @@ export function EventTable({ events }: EventTableProps) {
 
   const handleDeleted = async () => {
     if (!pendingDelete) return
-    await deleteEventAction(pendingDelete.id)
+    const res = await fetch(
+      `/api/admin/events/${encodeURIComponent(pendingDelete.id)}`,
+      { method: "DELETE" },
+    )
+    if (res.status === 401) {
+      router.push("/login")
+      return
+    }
+    if (!res.ok && res.status !== 204) {
+      const body = (await res.json().catch(() => null)) as
+        | { error?: string }
+        | null
+      showToast(body?.error ?? `Delete failed (${res.status})`, "error")
+      return
+    }
     showToast(`Deleted ${pendingDelete.name}`, "success")
     setPendingDelete(null)
     router.refresh()

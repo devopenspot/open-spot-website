@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { Plus } from "lucide-react"
-import { getSpotRepositoryAsync } from "@/lib/repositories"
+import { listSpots } from "@/lib/services/spots"
 import { SpotTable } from "@/components/admin/spots/SpotTable"
 import { SpotTableFilters } from "@/components/admin/spots/SpotTableFilters"
 
@@ -40,8 +40,7 @@ export default async function AdminSpotsPage({ searchParams }: AdminSpotsPagePro
   const types = parseTypesParam(params.type)
   const country = (params.country ?? "").trim()
 
-  const repo = await getSpotRepositoryAsync()
-  const result = await repo.list({
+  const result = await listSpots({
     q: q || undefined,
     types,
     country: country || undefined,
