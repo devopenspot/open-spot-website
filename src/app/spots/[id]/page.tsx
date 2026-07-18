@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 import { connection } from 'next/server';
 import type { Metadata } from 'next';
-import { getSpotRepositoryAsync } from '@/lib/repositories';
+import { listSpots, findSpotById } from '@/lib/services/spots';
 import { getWeatherForAllSpots } from '@/lib/weather/weather-bundle';
 import { SpotDetailsFullPage } from '@/components/spot/SpotDetailsFullPage';
 
@@ -35,13 +35,16 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   await connection();
   const { id } = await params;
-  const spot = await (await getSpotRepositoryAsync()).findById(id);
+  const [spot, allSpotsList] = await Promise.all([
+    findSpotById(id),
+    listSpots(),
+  ]);
   if (!spot) {
     return { title: 'Spot not found' };
   }
   const typeList = spot.types.map((t) => t.name).join(', ');
   const dateLabel = formatOgDate(new Date());
-  const weatherById = await getWeatherForAllSpots();
+  const weatherById = await getWeatherForAllSpots(allSpotsList.items);
   const w = weatherById[spot.id];
   const weatherLabel = w ? `${w.current}°C ${w.description}` : null;
   const description = [typeList, weatherLabel, dateLabel]
@@ -65,7 +68,7 @@ export default async function SpotPage({
 }) {
   await connection();
   const { id } = await params;
-  const spot = await (await getSpotRepositoryAsync()).findById(id);
+  const spot = await findSpotById(id);
   if (!spot) {
     notFound();
   }

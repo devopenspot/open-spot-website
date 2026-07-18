@@ -1,7 +1,7 @@
 import type { MetadataRoute } from 'next';
 import { connection } from 'next/server';
 import { env } from '@/lib/env';
-import { getSpotRepositoryAsync } from '@/lib/repositories';
+import { listSpots } from '@/lib/services/spots';
 
 const BASE_URL = env.APP_URL;
 
@@ -21,8 +21,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // follow: false }`, and `src/app/robots.ts` disallows `/admin/` for all
   // user-agents. We keep the static list hand-curated to public pages.
 
-  const repo = await getSpotRepositoryAsync()
-  const { items: spots } = await repo.list();
+  const { items: spots } = await listSpots();
   const spotEntries: MetadataRoute.Sitemap = spots.map(spot => ({
     url: `${BASE_URL}/spots/${spot.id}`,
     lastModified: now,

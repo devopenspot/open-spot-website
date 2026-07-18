@@ -5,10 +5,10 @@ import { Inter, Archivo_Narrow } from 'next/font/google';
 import { cn } from '@/lib/cn';
 import { env } from '@/lib/env';
 import {
-  getSpotRepositoryAsync,
   getSavedSpotsRepositoryAsync,
   getPresetImagesRepositoryAsync,
 } from '@/lib/repositories';
+import { listSpots } from '@/lib/services/spots';
 import { getWeatherForAllSpots } from '@/lib/weather/weather-bundle';
 import { getServerUserFromCookies } from '@/lib/auth';
 import { getRegionsForClient } from '@/lib/data/regions';
@@ -95,17 +95,25 @@ export default function RootLayout({
 
 async function RootDataProviders({ children }: { children: React.ReactNode }) {
   await connection();
-  const [spotsResult, initialWeather, initialUser, initialRegions, initialSpotTypes, presetImagesRepo] =
+  // The spots list is fetched once and shared with the weather
+  // derivation — the BFF pattern. `getWeatherForAllSpots(spots)`
+  // derives the per-spot weather from the already-fetched spots,
+  // so we no longer pay for a second `spots.list()` round trip.
+  const [spotsList, initialUser, initialRegions, initialSpotTypes, presetImagesRepo] =
     await Promise.all([
-      getSpotRepositoryAsync(),
-      getWeatherForAllSpots(),
+      listSpots(),
       getServerUserFromCookies(),
       getRegionsForClient(),
       getSpotTypesForClient(),
       getPresetImagesRepositoryAsync(),
     ]);
-  const { items: initialSpots } = await spotsResult.list();
-  const initialPresetImages = (await presetImagesRepo.list()).map((p) => ({
+  const initialSpots = spotsList.items;
+  const [initialWeather, savedSpotsResult, presetImages] = await Promise.all([
+    getWeatherForAllSpots(initialSpots),
+    (await getSavedSpotsRepositoryAsync()).list(initialUser.id, { limit: 200 }),
+    presetImagesRepo.list(),
+  ]);
+  const initialPresetImages = presetImages.map((p) => ({
     id: p.id,
     slug: p.slug,
     name: p.name,
@@ -116,11 +124,7 @@ async function RootDataProviders({ children }: { children: React.ReactNode }) {
   // representable. The dev user has a seeded bucket of all 23 base spots
   // in `src/db/seed-data/saved-spots.ts`. Real Supabase users with a
   // session fetch their own bucket the same way.
-  const initialSavedSpots = (
-    await (await getSavedSpotsRepositoryAsync()).list(initialUser.id, {
-      limit: 200,
-    })
-  ).items
+  const initialSavedSpots = savedSpotsResult.items;
   return (
     <SpotsProvider
       initialSpots={initialSpots}
