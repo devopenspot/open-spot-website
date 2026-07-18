@@ -54,7 +54,7 @@ export default function ExploreTab({ events, featured }: ExploreTabProps) {
         id="sport-events"
         aria-label="Sport Events"
         aria-labelledby="legendary-heading"
-        className="md:space-y-12 md:-mx-8"
+        className="md:space-y-12 "
       >
         <SectionHeader
           eyebrow="Coming soon"
@@ -103,7 +103,7 @@ export default function ExploreTab({ events, featured }: ExploreTabProps) {
       <section
         id="spotlight-spots"
         aria-labelledby="spotlight-heading"
-        className="md:space-y-12 md:-mx-8"
+        className="md:space-y-12 "
       >
         <SectionHeader
           eyebrow="Fresh"

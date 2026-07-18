@@ -30,7 +30,7 @@ export function SectionHeader({
             {eyebrowIcon}
             <span
               className={cn(
-                "font-mono text-[10px] font-bold tracking-widest uppercase",
+                "font-mono text-[8px] md:text-[10px] font-bold tracking-widest uppercase",
                 eyebrowClassName,
               )}
             >
@@ -40,7 +40,7 @@ export function SectionHeader({
         )}
         <h2
           id={titleId}
-          className="font-display text-xl font-bold tracking-tight text-pink-300 uppercase md:text-3xl"
+          className="font-display font-bold tracking-tight text-pink-300 uppercase md:text-3xl"
         >
           {title}
         </h2>

@@ -26,7 +26,7 @@ export function Header() {
   return (
     <header
       id="app-header"
-      className="sticky top-0 z-40 w-full border-b border-outline-variant bg-surface px-4 py-3 md:px-8"
+      className="sticky top-0 z-40 w-full border-b border-outline-variant bg-surface p-4"
     >
       <div className="mx-auto flex max-w-7xl items-center justify-between">
         <BrandLogo />
@@ -50,13 +50,6 @@ export function Header() {
           <MobileDrawerTrigger />
         </div>
       </div>
-
-      {/* <NavList
-        variant="mobile-tab"
-        savedCount={savedCount}
-        controlsId={MAIN_CONTENT_ID}
-        onSelect={handleSelect}
-      /> */}
     </header>
   );
 }

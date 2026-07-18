@@ -26,7 +26,7 @@ export default function SavedTab() {
     >
       <header className="border-b border-outline-variant pb-5">
         <span className="font-mono text-[10px] font-bold tracking-widest text-secondary uppercase block mb-1">
-          Personal Matrix
+          Favorites Spots
         </span>
         <h1 className="font-display text-2xl font-bold tracking-tight text-on-surface uppercase sm:text-3xl">
           Saved Locations
