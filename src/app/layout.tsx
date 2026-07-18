@@ -10,6 +10,8 @@ import { listRegions } from '@/lib/services/regions';
 import { listSpotTypes } from '@/lib/services/spot-types';
 import { getWeatherForAllSpots } from '@/lib/weather/weather-bundle';
 import { getServerUserFromCookies } from '@/lib/auth';
+import { getDbPoolMax } from '@/lib/db/client';
+import { withDbConcurrency } from '@/lib/db/concurrency';
 import { SpotsProvider } from '@/components/layout/SpotsProvider';
 import './globals.css';
 
@@ -96,20 +98,25 @@ async function RootDataProviders({ children }: { children: React.ReactNode }) {
   // derivation — the BFF pattern. `getWeatherForAllSpots(spots)`
   // derives the per-spot weather from the already-fetched spots,
   // so we no longer pay for a second `spots.list()` round trip.
+  const poolMax = getDbPoolMax();
   const [spotsList, initialUser, initialRegions, initialSpotTypes] =
-    await Promise.all([
-      listSpots(),
-      getServerUserFromCookies(),
-      listRegions(),
-      listSpotTypes(),
+    await withDbConcurrency(poolMax, [
+      () => listSpots(),
+      () => getServerUserFromCookies(),
+      () => listRegions(),
+      () => listSpotTypes(),
     ]);
   const initialSpots = spotsList.items;
-  const [initialWeather, savedSpotsResult] = await Promise.all([
-    getWeatherForAllSpots(initialSpots),
-    initialUser
-      ? listSavedSpotsForUser(initialUser.id, { limit: 200 })
-      : Promise.resolve({ items: [], nextCursor: null }),
-  ]);
+  const [initialWeather, savedSpotsResult] = await withDbConcurrency(
+    poolMax,
+    [
+      () => getWeatherForAllSpots(initialSpots),
+      () =>
+        initialUser
+          ? listSavedSpotsForUser(initialUser.id, { limit: 200 })
+          : Promise.resolve({ items: [], nextCursor: null }),
+    ],
+  );
   const initialSavedSpots = savedSpotsResult.items;
   return (
     <SpotsProvider

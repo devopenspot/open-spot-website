@@ -5,17 +5,25 @@
 // inside the pool's internal waiter and a single slow query can block
 // every other query past its 15s client deadline.
 
-export async function withDbConcurrency<T>(
+type AsyncFn = () => unknown
+
+type AwaitedResults<T> = {
+  [K in keyof T]: T[K] extends AsyncFn
+    ? Awaited<ReturnType<T[K]>>
+    : T[K]
+}
+
+export async function withDbConcurrency<const T extends ReadonlyArray<AsyncFn>>(
   limit: number,
-  fns: ReadonlyArray<() => Promise<T>>,
-): Promise<T[]> {
+  fns: T,
+): Promise<AwaitedResults<T>> {
   if (limit < 1) {
     throw new Error(`withDbConcurrency: limit must be >= 1, got ${limit}`)
   }
   const total = fns.length
-  if (total === 0) return []
+  if (total === 0) return [] as unknown as AwaitedResults<T>
 
-  const results: T[] = new Array(total)
+  const results: unknown[] = new Array(total)
   let cursor = 0
 
   async function worker(): Promise<void> {
@@ -30,5 +38,5 @@ export async function withDbConcurrency<T>(
 
   const workerCount = Math.min(limit, total)
   await Promise.all(Array.from({ length: workerCount }, () => worker()))
-  return results
+  return results as AwaitedResults<T>
 }
