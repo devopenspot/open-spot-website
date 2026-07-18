@@ -3,24 +3,11 @@ import type { ForecastSlot, SpotForecast, WeatherIconName } from "@/lib/types";
 
 const DAY_NAMES = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"] as const;
 
-const FALLBACK_ICON: WeatherIconName = "sunny";
-const FALLBACK_TEMP = 22;
-const FALLBACK_DAY = "TUE";
-const FALLBACK_DESCRIPTION = "Clear sky";
-
 const SLOT_TARGET_HOURS: Record<ForecastSlot, number> = {
   morning: 9,
   afternoon: 15,
   night: 21,
 };
-
-function hash(s: string): number {
-  let h = 0;
-  for (let i = 0; i < s.length; i++) {
-    h = (h * 31 + s.charCodeAt(i)) | 0;
-  }
-  return Math.abs(h);
-}
 
 function localDayKey(dt: number): string {
   const d = new Date(dt * 1000);
@@ -33,10 +20,10 @@ function localDayKey(dt: number): string {
 function dayNameFromKey(key: string): string {
   const [yRaw, mRaw, dRaw] = key.split("-").map(Number);
   if (yRaw === undefined || mRaw === undefined || dRaw === undefined) {
-    return FALLBACK_DAY;
+    return "";
   }
   const dayIndex = new Date(yRaw, mRaw - 1, dRaw).getDay();
-  return DAY_NAMES[dayIndex] ?? FALLBACK_DAY;
+  return DAY_NAMES[dayIndex] ?? "";
 }
 
 function pickItemForSlot(
@@ -90,15 +77,15 @@ export function mapCurrentWeather(
 ): MappedCurrentWeather {
   if (!item) {
     return {
-      temp: FALLBACK_TEMP,
-      description: FALLBACK_DESCRIPTION,
+      temp: 0,
+      description: "",
       humidity: null,
       precipitationMm: null,
     };
   }
   return {
     temp: Math.round(item.main.temp),
-    description: item.weather[0]?.description ?? FALLBACK_DESCRIPTION,
+    description: item.weather[0]?.description ?? "",
     humidity: item.main.humidity ?? null,
     precipitationMm:
       item.rain?.["1h"] ??
@@ -111,9 +98,8 @@ export function mapCurrentWeather(
 
 export function mapForecast(
   items: WeatherItem[],
-  seed: string,
 ): SpotForecast[] {
-  if (items.length === 0) return fallbackForecastForSeed(seed);
+  if (items.length === 0) return [];
 
   const byDay = new Map<string, WeatherItem[]>();
   for (const item of items) {
@@ -132,53 +118,17 @@ export function mapForecast(
     const dayName = dayNameFromKey(key);
     for (const slot of slots) {
       const rep = pickItemForSlot(dayItems, slot);
-      if (!rep) {
-        result.push(makeFallbackSlot(dayName, slot));
-        continue;
-      }
+      if (!rep) continue;
       const condition = rep.weather[0];
       result.push({
         day: dayName,
         slot,
         icon: mapIconName(condition?.icon),
         temp: Math.round(rep.main.temp),
-        description: condition?.description ?? FALLBACK_DESCRIPTION,
+        description: condition?.description ?? "",
       });
     }
   }
 
-  while (result.length < 6) {
-    const day = result[result.length - 1]?.day ?? FALLBACK_DAY;
-    const slot = slots[result.length % 3] ?? "morning";
-    result.push(makeFallbackSlot(day, slot));
-  }
   return result;
-}
-
-function makeFallbackSlot(
-  day: string,
-  slot: ForecastSlot,
-): SpotForecast {
-  return {
-    day,
-    slot,
-    icon: FALLBACK_ICON,
-    temp: FALLBACK_TEMP,
-    description: FALLBACK_DESCRIPTION,
-  };
-}
-
-function fallbackForecastForSeed(seed: string): SpotForecast[] {
-  const h = hash(seed);
-  const base = 18 + (h % 14);
-  const day1 = FALLBACK_DAY;
-  const day2 = DAY_NAMES[(DAY_NAMES.indexOf(day1 as never) + 1) % 7] ?? FALLBACK_DAY;
-  return [
-    { day: day1, slot: "morning", icon: "sunny", temp: base - 2, description: "Clear sky" },
-    { day: day1, slot: "afternoon", icon: "sunny", temp: base, description: "Clear sky" },
-    { day: day1, slot: "night", icon: h % 2 === 0 ? "partly_cloudy_day" : "sunny", temp: base - 4, description: "Partly cloudy" },
-    { day: day2, slot: "morning", icon: "sunny", temp: base - 1, description: "Clear sky" },
-    { day: day2, slot: "afternoon", icon: h % 2 === 0 ? "sunny" : "partly_cloudy_day", temp: base + 1, description: "Sunny" },
-    { day: day2, slot: "night", icon: "cloudy", temp: base - 3, description: "Cloudy" },
-  ];
 }

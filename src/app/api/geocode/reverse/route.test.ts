@@ -1,40 +1,16 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
 import { NextRequest } from "next/server"
-import { DEV_USER_ID, type User } from "@/lib/user"
+import type { NominatimResponse } from "@/lib/geocode/project"
 
-const getUserMock = vi.fn()
+const requireAdminMock = vi.fn()
 
-vi.mock("@/lib/auth", () => ({
-  getServerUserFromCookies: () => getUserMock(),
+vi.mock("@/lib/auth/server", () => ({
+  requireAdmin: () => requireAdminMock(),
 }))
 
 import { GET } from "./route"
-import type { NominatimResponse } from "@/lib/geocode/project"
 
 const fetchMock = vi.fn()
-
-function makeUser(overrides: Partial<User> = {}): User {
-  return {
-    id: "user-1",
-    name: "Test",
-    email: "user@example.com",
-    initials: "TU",
-    avatarUrl: null,
-    isAdmin: false,
-    ...overrides,
-  }
-}
-
-const adminUser: User = makeUser({
-  id: DEV_USER_ID,
-  email: "devopenspot@gmail.com",
-  isAdmin: true,
-})
-
-const nonAdminUser: User = makeUser({
-  id: "user-regular",
-  email: "regular@example.com",
-})
 
 const sampleNominatim: NominatimResponse = {
   place_id: 12345,
@@ -75,8 +51,17 @@ afterEach(() => {
 })
 
 describe("GET /api/geocode/reverse", () => {
-  it("returns 403 for non-admin without calling Nominatim", async () => {
-    getUserMock.mockResolvedValue(nonAdminUser)
+  it("returns 401 when not signed in", async () => {
+    requireAdminMock.mockRejectedValue(new Error("Not signed in"))
+    const res = await GET(makeRequest("?lat=45.7&lon=4.8"))
+    expect(res.status).toBe(401)
+    const body = (await res.json()) as { error?: string }
+    expect(body.error).toBe("Not signed in")
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it("returns 403 for non-admin", async () => {
+    requireAdminMock.mockRejectedValue(new Error("Admin only"))
     const res = await GET(makeRequest("?lat=45.7&lon=4.8"))
     expect(res.status).toBe(403)
     const body = (await res.json()) as { error?: string }
@@ -85,35 +70,35 @@ describe("GET /api/geocode/reverse", () => {
   })
 
   it("returns 400 for non-numeric lat", async () => {
-    getUserMock.mockResolvedValue(adminUser)
+    requireAdminMock.mockResolvedValue({ id: "user-1" })
     const res = await GET(makeRequest("?lat=abc&lon=4.8"))
     expect(res.status).toBe(400)
     expect(fetchMock).not.toHaveBeenCalled()
   })
 
   it("returns 400 for out-of-range latitude", async () => {
-    getUserMock.mockResolvedValue(adminUser)
+    requireAdminMock.mockResolvedValue({ id: "user-1" })
     const res = await GET(makeRequest("?lat=99&lon=4.8"))
     expect(res.status).toBe(400)
     expect(fetchMock).not.toHaveBeenCalled()
   })
 
   it("returns 400 for out-of-range longitude", async () => {
-    getUserMock.mockResolvedValue(adminUser)
+    requireAdminMock.mockResolvedValue({ id: "user-1" })
     const res = await GET(makeRequest("?lat=45.7&lon=200"))
     expect(res.status).toBe(400)
     expect(fetchMock).not.toHaveBeenCalled()
   })
 
   it("returns 400 when lat or lon is missing", async () => {
-    getUserMock.mockResolvedValue(adminUser)
+    requireAdminMock.mockResolvedValue({ id: "user-1" })
     const res = await GET(makeRequest("?lat=45.7"))
     expect(res.status).toBe(400)
     expect(fetchMock).not.toHaveBeenCalled()
   })
 
   it("returns 200 with a projected address for valid coords", async () => {
-    getUserMock.mockResolvedValue(adminUser)
+    requireAdminMock.mockResolvedValue({ id: "user-1" })
     fetchMock.mockResolvedValue({
       ok: true,
       json: () => Promise.resolve(sampleNominatim),
@@ -137,7 +122,7 @@ describe("GET /api/geocode/reverse", () => {
   })
 
   it("forwards lat/lon, the User-Agent, and cache=no-store to Nominatim", async () => {
-    getUserMock.mockResolvedValue(adminUser)
+    requireAdminMock.mockResolvedValue({ id: "user-1" })
     fetchMock.mockResolvedValue({
       ok: true,
       json: () => Promise.resolve(sampleNominatim),
@@ -161,21 +146,21 @@ describe("GET /api/geocode/reverse", () => {
   })
 
   it("returns 502 when Nominatim responds non-OK", async () => {
-    getUserMock.mockResolvedValue(adminUser)
+    requireAdminMock.mockResolvedValue({ id: "user-1" })
     fetchMock.mockResolvedValue({ ok: false, status: 500, json: () => Promise.reject(new Error("no body")) })
     const res = await GET(makeRequest("?lat=45.7&lon=4.8"))
     expect(res.status).toBe(502)
   })
 
   it("returns 502 when fetch throws", async () => {
-    getUserMock.mockResolvedValue(adminUser)
+    requireAdminMock.mockResolvedValue({ id: "user-1" })
     fetchMock.mockRejectedValue(new Error("network down"))
     const res = await GET(makeRequest("?lat=45.7&lon=4.8"))
     expect(res.status).toBe(502)
   })
 
   it("falls back to town/village/municipality when city is missing", async () => {
-    getUserMock.mockResolvedValue(adminUser)
+    requireAdminMock.mockResolvedValue({ id: "user-1" })
     fetchMock.mockResolvedValue({
       ok: true,
       json: () =>
@@ -194,7 +179,7 @@ describe("GET /api/geocode/reverse", () => {
   })
 
   it("uppercases the country code", async () => {
-    getUserMock.mockResolvedValue(adminUser)
+    requireAdminMock.mockResolvedValue({ id: "user-1" })
     fetchMock.mockResolvedValue({
       ok: true,
       json: () => Promise.resolve(sampleNominatim),

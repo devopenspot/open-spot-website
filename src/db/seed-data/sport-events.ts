@@ -1,6 +1,7 @@
-// Phase 2 — hand-curated typed SportEvent seed rows. These were
-// previously in `src/data/sport-events.json`. The data is now version-
-// controlled typed TypeScript, mirroring the spot seed (`spots.ts`).
+// Phase 2 — hand-curated typed SportEvent seed rows. Every row is
+// seeded with `createdBy: null` — ownership is only assigned when a
+// real Supabase admin creates or edits the event through the
+// dashboard.
 
 import type { SportEventTier, SportDiscipline } from "@/types/sport-events"
 import type { NewSportEvent } from "@/lib/repositories/types"
@@ -46,7 +47,7 @@ const ROWS: readonly EventRow[] = [
     longitude: -118.2673,
     tier: "world-tour",
     featured: true,
-    createdBy: "dev",
+    createdBy: null,
   },
   {
     id: "fise",
@@ -66,7 +67,7 @@ const ROWS: readonly EventRow[] = [
     latitude: 43.6047,
     longitude: 3.8767,
     tier: "festival",
-    createdBy: "dev",
+    createdBy: null,
   },
   {
     id: "winterclash",
@@ -85,7 +86,7 @@ const ROWS: readonly EventRow[] = [
     latitude: 52.4732,
     longitude: 13.4038,
     tier: "championship",
-    createdBy: "dev",
+    createdBy: null,
   },
   {
     id: "x-games",
@@ -105,7 +106,7 @@ const ROWS: readonly EventRow[] = [
     latitude: 44.974,
     longitude: -93.2581,
     tier: "championship",
-    createdBy: "dev",
+    createdBy: null,
   },
   {
     id: "world-skate",
@@ -125,7 +126,7 @@ const ROWS: readonly EventRow[] = [
     latitude: -34.6433,
     longitude: -58.4601,
     tier: "federation",
-    createdBy: "dev",
+    createdBy: null,
   },
 ]
 
@@ -151,6 +152,6 @@ export const SOURCE_SPORT_EVENTS: readonly NewSportEvent[] = ROWS.map(
     longitude: row.longitude,
     tier: row.tier,
     featured: row.featured ?? false,
-    createdBy: row.createdBy ?? "dev",
+    createdBy: row.createdBy ?? null,
   }),
 )

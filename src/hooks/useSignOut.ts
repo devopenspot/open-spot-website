@@ -4,7 +4,6 @@ import { useRouter } from 'next/navigation';
 import { useTransition } from 'react';
 import { useUser } from '@/hooks/useUser';
 import { showToast } from '@/hooks/useToast';
-import { DEV_USER_ID } from '@/lib/user';
 
 export function useSignOut() {
   const router = useRouter();
@@ -12,7 +11,7 @@ export function useSignOut() {
   const [pending, startTransition] = useTransition();
 
   const signOut = () => {
-    if (user.id === DEV_USER_ID) return;
+    if (!user) return;
     startTransition(async () => {
       try {
         const res = await fetch('/api/auth/signout', { method: 'POST' });
@@ -33,5 +32,5 @@ export function useSignOut() {
     });
   };
 
-  return { signOut, pending, isSignedIn: user.id !== DEV_USER_ID } as const;
+  return { signOut, pending, isSignedIn: user !== null } as const;
 }

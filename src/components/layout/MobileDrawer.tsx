@@ -11,7 +11,6 @@ import { useUIStore } from '@/stores/ui-store';
 import { useSavedSpots } from '@/hooks/useSavedSpots';
 import { useUser } from '@/hooks/useUser';
 import { APP_VERSION, BUILD_TZ } from '@/lib/system-info';
-import { DEV_USER_ID } from '@/lib/user';
 import { BrandLogo } from './BrandLogo';
 
 const DRAWER_ID = 'mobile-hamburger-portal';
@@ -22,7 +21,7 @@ export function MobileDrawer() {
   const isDrawerOpen = useUIStore((s) => s.isDrawerOpen);
   const closeDrawer = useUIStore((s) => s.closeDrawer);
   const user = useUser();
-  const { count: savedCount } = useSavedSpots(user.id);
+  const { count: savedCount } = useSavedSpots(user?.id ?? null);
 
   const handleSelect = (path: string) => {
     router.push(path);
@@ -91,15 +90,13 @@ export function MobileDrawer() {
       </div>
 
       <div className="border-t border-outline-variant pt-4 space-y-4">
-        {user.id === DEV_USER_ID ? (
-          <SignInLink variant="drawer" />
-        ) : (
+        {user ? (
           <>
             <div className="flex items-center space-x-3 p-1.5 rounded-lg">
               <UserAvatar user={user} size="md" />
               <div className="min-w-0 flex-1">
                 <span className="block text-[10px] font-mono font-bold uppercase text-secondary">
-                  Active Scout
+                  Signed in
                 </span>
                 <span className="block text-xs font-bold text-on-surface truncate">
                   {user.email}
@@ -108,6 +105,8 @@ export function MobileDrawer() {
             </div>
             <SignOutButton variant="drawer" />
           </>
+        ) : (
+          <SignInLink variant="drawer" />
         )}
 
         <div className="flex items-center justify-between text-[9px] font-mono text-secondary px-1">

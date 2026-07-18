@@ -37,6 +37,7 @@ export interface SportEvent {
   endDate?: string;
   location: SportEventLocation;
   tier: SportEventTier;
+  tierName: string;
   featured?: boolean;
   createdAt: string;
   updatedAt: string;

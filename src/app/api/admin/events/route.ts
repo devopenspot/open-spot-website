@@ -1,27 +1,18 @@
 import { NextResponse, type NextRequest } from "next/server"
 import { requireAdmin } from "@/lib/auth/server"
-import { getServerUserFromCookies } from "@/lib/auth"
-import { isSupabaseConfigured } from "@/lib/env"
 import { NewSportEventSchema } from "@/lib/schemas/event"
 import { createEvent } from "@/lib/services/events"
 import { log } from "@/lib/log"
 
-async function currentUserOrThrow() {
-  if (!isSupabaseConfigured()) {
-    return getServerUserFromCookies()
-  }
-  return requireAdmin()
-}
-
 export async function POST(request: NextRequest) {
   try {
-    await currentUserOrThrow()
+    await requireAdmin()
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Unauthorized"
     if (msg === "Admin only") {
       return NextResponse.json({ error: msg }, { status: 403 })
     }
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    return NextResponse.json({ error: msg }, { status: 401 })
   }
 
   let body: unknown

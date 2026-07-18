@@ -14,15 +14,6 @@ import type {
 } from "@/lib/repositories/event-repository"
 import { deriveStatus } from "@/lib/sport-events/status"
 
-const STATUS_PRIORITY: Record<
-  "live" | "upcoming" | "completed",
-  number
-> = {
-  live: 0,
-  upcoming: 1,
-  completed: 2,
-}
-
 const MONTH_FORMAT = new Intl.DateTimeFormat("en-US", {
   month: "short",
   day: "numeric",
@@ -68,29 +59,11 @@ function enrich(event: SportEvent, now: Date): SportEventEnriched {
   }
 }
 
-function sortEvents(
-  events: readonly SportEventEnriched[],
-): readonly SportEventEnriched[] {
-  return [...events].sort((a, b) => {
-    const aFeatured = a.featured ? 0 : 1
-    const bFeatured = b.featured ? 0 : 1
-    if (aFeatured !== bFeatured) return aFeatured - bFeatured
-
-    const statusDiff = STATUS_PRIORITY[a.status] - STATUS_PRIORITY[b.status]
-    if (statusDiff !== 0) return statusDiff
-
-    const aDate = toUTCDate(a.startDate).getTime()
-    const bDate = toUTCDate(b.startDate).getTime()
-    if (a.status === "completed") return bDate - aDate
-    return aDate - bDate
-  })
-}
-
 function enrichAll(
   items: readonly SportEvent[],
   now: Date,
 ): readonly SportEventEnriched[] {
-  return Object.freeze(sortEvents(items.map((e) => enrich(e, now))))
+  return Object.freeze(items.map((e) => enrich(e, now)))
 }
 
 // `listEvents` is the second-heaviest read on the home page (after

@@ -103,15 +103,6 @@ export function dismissToast(id: string) {
   if (queue.length !== before) emit();
 }
 
-export function __resetToastsForTests() {
-  for (const timer of activeTimers.values()) {
-    clearTimeout(timer);
-  }
-  activeTimers.clear();
-  queue = [];
-  emit();
-}
-
 export function useToast() {
   const [toasts, setToasts] = useState<Toast[]>(visibleToasts());
   const [overflow, setOverflow] = useState(0);

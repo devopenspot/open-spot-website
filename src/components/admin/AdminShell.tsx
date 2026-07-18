@@ -12,6 +12,7 @@ import type { ReactNode } from "react";
 
 export function AdminShell({ children }: { children: ReactNode }) {
   const user = useUser();
+  if (!user) return null;
   return (
     <div
       id="app-root"

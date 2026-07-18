@@ -4,12 +4,11 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useUser } from "@/hooks/useUser"
 import { cn } from "@/lib/cn"
-import { DEV_USER_ID } from "@/lib/user"
 
 type Variant = "header" | "drawer"
 
 const BASE_CLASSES =
-  "inline-flex items-center justify-center font-mono font-bold uppercase tracking-widest transition-all rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-on-surface focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
+  "inline-flex items-center justify-center font-mono font-bold uppercase tracking-widest transition-all rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-on-surface focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
 
 const VARIANT_CLASSES: Record<Variant, string> = {
   header:
@@ -26,7 +25,7 @@ interface SignInLinkProps {
 export function SignInLink({ variant, className }: SignInLinkProps) {
   const user = useUser()
   const pathname = usePathname()
-  if (user.id !== DEV_USER_ID) return null
+  if (user) return null
   const search =
     pathname && pathname !== "/login"
       ? `?next=${encodeURIComponent(pathname)}`

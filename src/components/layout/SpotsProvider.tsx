@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, type ReactNode } from 'react';
-import type { Spot, Region, PresetImage, SpotTypeEntity } from '@/lib/types';
+import type { Spot, Region, SpotTypeEntity } from '@/lib/types';
 import type { SpotWeather } from '@/lib/weather/weather-cached';
 import type { User } from '@/lib/user';
 import { useSpotsStore } from '@/stores/spots-store';
@@ -16,7 +16,6 @@ export function SpotsProvider({
   children,
   initialSpots,
   initialRegions,
-  initialPresetImages,
   initialSpotTypes,
   initialWeather,
   initialUser,
@@ -25,15 +24,13 @@ export function SpotsProvider({
   children: ReactNode;
   initialSpots: readonly Spot[];
   initialRegions: readonly Region[];
-  initialPresetImages: readonly PresetImage[];
   initialSpotTypes: readonly SpotTypeEntity[];
   initialWeather: Record<string, SpotWeather>;
-  initialUser: User;
+  initialUser: User | null;
   initialSavedSpots?: readonly SavedSpot[];
 }) {
   const setSpots = useSpotsStore((s) => s.setSpots);
   const setRegions = useSpotsStore((s) => s.setRegions);
-  const setPresetImages = useSpotsStore((s) => s.setPresetImages);
   const setSpotTypes = useSpotsStore((s) => s.setSpotTypes);
 
   useEffect(() => {
@@ -43,10 +40,6 @@ export function SpotsProvider({
   useEffect(() => {
     setRegions(initialRegions);
   }, [initialRegions, setRegions]);
-
-  useEffect(() => {
-    setPresetImages(initialPresetImages);
-  }, [initialPresetImages, setPresetImages]);
 
   useEffect(() => {
     setSpotTypes(initialSpotTypes);

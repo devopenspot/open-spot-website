@@ -25,7 +25,7 @@ export default function ExploreTab({ events, featured }: ExploreTabProps) {
   const router = useRouter();
   const spots = useSpotsStore((s) => s.spots);
   const user = useUser();
-  const { savedIds, toggle: toggleSaved } = useSavedSpots(user.id);
+  const { savedIds, toggle: toggleSaved } = useSavedSpots(user?.id ?? null);
 
   const spotlightSpots = useMemo(() => spots.slice(0, 6), [spots]);
   const shelfEvents = useMemo(() => {

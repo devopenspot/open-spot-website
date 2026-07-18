@@ -20,8 +20,6 @@ import type {
 } from "./types"
 import type { SpotRepository } from "./spot-repository"
 import { withImageUrls } from "@/lib/supabase/storage"
-import { pickFallbackImage } from "@/lib/spot-fallback"
-import { getPresetImagesRepositoryAsync } from "./index"
 import {
   joinedSpotSelect,
   rowToSpotWithImagePath,
@@ -47,12 +45,6 @@ function haversineMeters(
 
 function sportDisciplineTitleToSlug(title: string): string {
   return title.toLowerCase()
-}
-
-async function getPresetImageUrls(): Promise<readonly { url: string }[]> {
-  const repo = await getPresetImagesRepositoryAsync()
-  const rows = await repo.list()
-  return rows.map((r) => ({ url: r.url }))
 }
 
 export class DrizzleSpotRepository implements SpotRepository {
@@ -292,9 +284,7 @@ export class DrizzleSpotRepository implements SpotRepository {
       citySlug:
         input.citySlug ?? input.city.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
       address: input.address,
-      imageUrl: input.imagePath
-        ? input.image
-        : input.image || pickFallbackImage(id, await getPresetImageUrls()),
+      imageUrl: input.imagePath ? input.image : input.image,
       imagePath: input.imagePath ?? null,
       crowdLevel: input.crowdLevel,
       countryCode: input.countryCode
@@ -324,8 +314,7 @@ export class DrizzleSpotRepository implements SpotRepository {
     if (patch.citySlug !== undefined) setValues.citySlug = patch.citySlug
     if (patch.address !== undefined) setValues.address = patch.address
     if (patch.image !== undefined) {
-      setValues.imageUrl =
-        patch.image || pickFallbackImage(id, await getPresetImageUrls())
+      setValues.imageUrl = patch.image
     }
     if (patch.crowdLevel !== undefined) setValues.crowdLevel = patch.crowdLevel
     if (patch.countryCode !== undefined) {

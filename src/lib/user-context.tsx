@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, type ReactNode } from 'react'
-import { DEV_USER_ID, type User } from '@/lib/user'
+import type { User } from '@/lib/user'
 
 const UserCtx = createContext<User | null>(null)
 
@@ -9,23 +9,23 @@ export function UserProvider({
   user,
   children,
 }: {
-  user: User
+  user: User | null
   children: ReactNode
 }) {
   return <UserCtx.Provider value={user}>{children}</UserCtx.Provider>
 }
 
-export function useUser(): User {
+/**
+ * Returns the current signed-in user, or `null` when there is no real
+ * Supabase session. The root layout always wraps the app in a
+ * `<UserProvider>` (passing `null` on the server when the visitor is
+ * unauthenticated), so the only "no provider" case is a programming
+ * error — throw loudly in that situation.
+ */
+export function useUser(): User | null {
   const ctx = useContext(UserCtx)
-  if (!ctx) {
-    return {
-      id: DEV_USER_ID,
-      name: 'Active Scout',
-      email: 'devopenspot@gmail.com',
-      initials: 'OS',
-      avatarUrl: null,
-      isAdmin: true,
-    }
+  if (ctx === undefined) {
+    throw new Error("useUser() must be called inside <UserProvider>")
   }
   return ctx
 }

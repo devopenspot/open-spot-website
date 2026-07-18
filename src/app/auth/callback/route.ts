@@ -1,7 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { ensureProfileRow, userFromClaims, type AuthClaims } from '@/lib/auth'
-import { isSupabaseConfigured } from '@/lib/env'
 import { sanitizeNext } from '@/lib/auth/server'
 import { log } from '@/lib/log'
 
@@ -15,9 +14,6 @@ export async function GET(request: NextRequest) {
   const presentKeys = Array.from(url.searchParams.keys())
   log.info('auth/callback: hit', { presentKeys, hasCode: Boolean(code) })
 
-  if (!isSupabaseConfigured()) {
-    return NextResponse.redirect(new URL(next, url))
-  }
   if (!code) {
     log.error('auth/callback: missing code', {
       error: url.searchParams.get('error'),

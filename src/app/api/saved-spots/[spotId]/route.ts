@@ -1,17 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server"
 import { revalidatePath } from "next/cache"
 import { requireUser } from "@/lib/auth/server"
-import { getServerUserFromCookies } from "@/lib/auth"
-import { isSupabaseConfigured } from "@/lib/env"
 import { unsaveSpotForUser } from "@/lib/services/saved-spots"
 import { log } from "@/lib/log"
-
-async function currentUserOrThrow() {
-  if (!isSupabaseConfigured()) {
-    return getServerUserFromCookies()
-  }
-  return requireUser()
-}
 
 export async function DELETE(
   _request: NextRequest,
@@ -19,9 +10,11 @@ export async function DELETE(
 ) {
   let user
   try {
-    user = await currentUserOrThrow()
-  } catch {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    user = await requireUser()
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "Unauthorized"
+    log.warn("api.saved_spots.delete_unauthorized", msg)
+    return NextResponse.json({ error: msg }, { status: 401 })
   }
   const { spotId } = await context.params
   if (!spotId) {

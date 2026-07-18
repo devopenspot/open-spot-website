@@ -1,7 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server"
 import { z } from "zod"
-import { getServerUserFromCookies } from "@/lib/auth"
-import { isAdminUser } from "@/lib/admin"
+import { requireAdmin } from "@/lib/auth/server"
 import { env } from "@/lib/env"
 import { log } from "@/lib/log"
 import { projectAddress, type NominatimResponse } from "@/lib/geocode/project"
@@ -14,9 +13,12 @@ const Query = z.object({
 const REVERSE_TIMEOUT_MS = 8_000
 
 export async function GET(request: NextRequest) {
-  const user = await getServerUserFromCookies()
-  if (!isAdminUser(user)) {
-    return NextResponse.json({ error: "Admin only" }, { status: 403 })
+  try {
+    await requireAdmin()
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "Admin only"
+    const status = msg === "Admin only" ? 403 : 401
+    return NextResponse.json({ error: msg }, { status })
   }
 
   const url = new URL(request.url)

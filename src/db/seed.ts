@@ -9,10 +9,8 @@ import {
 } from "./seed-data/taxonomy"
 import { REGION_SEED } from "./seed-data/regions"
 import { buildCountrySeed, type CountrySeed } from "./seed-data/countries"
-import { PRESET_IMAGE_SEED } from "./seed-data/preset-images"
 import { SOURCE_SPOTS } from "./seed-data/spots"
 import { SOURCE_SPORT_EVENTS } from "./seed-data/sport-events"
-import { DEV_SAVED_SPOTS } from "./seed-data/saved-spots"
 
 // ─── Helpers ────────────────────────────────────────────────────────
 
@@ -113,32 +111,10 @@ async function seedEventTiers(sql: ReturnType<typeof postgres>): Promise<void> {
   log.info("seed.event_tiers.done", { count: EVENT_TIER_SEED.length })
 }
 
-async function seedPresetImages(
-  sql: ReturnType<typeof postgres>,
-): Promise<void> {
-  log.info("seed.preset_images.start")
-  for (const p of PRESET_IMAGE_SEED) {
-    await sql`
-      insert into preset_images (slug, name, url, sort_order, created_by)
-      values (${p.slug}, ${p.name}, ${p.url}, ${p.sortOrder}, ${p.createdBy ?? null})
-    on conflict (slug) do update set
-      name = excluded.name,
-      url = excluded.url,
-      sort_order = excluded.sort_order,
-      created_by = excluded.created_by,
-      updated_at = now()
-    `
-  }
-  log.info("seed.preset_images.done", { count: PRESET_IMAGE_SEED.length })
-}
-
 // ─── Content seeds ────────────────────────────────────────────────
 
-async function seedSpots(
-  sql: ReturnType<typeof postgres>,
-): Promise<Map<string, string>> {
+async function seedSpots(sql: ReturnType<typeof postgres>): Promise<void> {
   log.info("seed.spots.start")
-  const slugToId = new Map<string, string>()
   let count = 0
   for (const spot of SOURCE_SPOTS) {
     if (!spot.id || !spot.citySlug) {
@@ -173,7 +149,6 @@ async function seedSpots(
     `
     const spotId = row?.id
     if (spotId) {
-      slugToId.set(slug, spotId)
       for (const sport of spot.sports) {
         const slug = sport.toLowerCase()
         await sql`
@@ -200,7 +175,6 @@ async function seedSpots(
     count++
   }
   log.info("seed.spots.done", { count })
-  return slugToId
 }
 
 async function seedSportEvents(
@@ -262,32 +236,6 @@ async function seedSportEvents(
   log.info("seed.sport_events.done", { count })
 }
 
-async function seedDevSavedSpots(
-  sql: ReturnType<typeof postgres>,
-  slugToId: Map<string, string>,
-): Promise<void> {
-  log.info("seed.dev_saved_spots.start")
-  let count = 0
-  for (const saved of DEV_SAVED_SPOTS) {
-    // The seed file uses slugs as the `spotId` key; look up the actual
-    // UUID that the spots insert assigned to that slug. If a spot was
-    // skipped during seeding, its slug won't have a UUID — skip the
-    // saved row too.
-    const spotUuid = slugToId.get(saved.spotId)
-    if (!spotUuid) {
-      log.warn("seed.dev_saved_spots.skip_no_spot", { spotId: saved.spotId })
-      continue
-    }
-    await sql`
-      insert into saved_spots (user_id, spot_id)
-      values (${saved.userId}, ${spotUuid})
-      on conflict (user_id, spot_id) do nothing
-    `
-    count++
-  }
-  log.info("seed.dev_saved_spots.done", { count })
-}
-
 
 // ─── Orchestrator ───────────────────────────────────────────────────
 
@@ -301,9 +249,7 @@ async function main() {
     await seedSpotTypes(sql)
     await seedSportDisciplines(sql)
     await seedEventTiers(sql)
-    await seedPresetImages(sql)
-    const slugToId = await seedSpots(sql)
-    await seedDevSavedSpots(sql, slugToId)
+    await seedSpots(sql)
     await seedSportEvents(sql)
     log.info("seed.complete")
   } finally {

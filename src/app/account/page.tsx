@@ -1,15 +1,14 @@
-'use client';
+import { UserAvatar } from "@/components/ui"
+import { requireUserOrRedirect } from "@/lib/auth/server"
+import { SignOutButton } from "@/components/layout/SignOutButton"
 
-// SPEC §A.1: no server actions for auth. Sign-out is a client `fetch` to
-// the dedicated `/api/auth/signout` route handler.
-import { useUser } from '@/hooks/useUser'
-import { useSignOut } from '@/hooks/useSignOut'
-import { UserAvatar } from '@/components/ui'
+export const metadata = {
+  title: "Account",
+  description: "Your Open Spot profile and sign-out controls.",
+}
 
-export default function AccountPage() {
-  const user = useUser()
-  const { signOut, pending } = useSignOut()
-
+export default async function AccountPage() {
+  const user = await requireUserOrRedirect("/account")
   return (
     <section
       id="account-tab"
@@ -53,15 +52,9 @@ export default function AccountPage() {
         </div>
       </dl>
 
-      <button
-        type="button"
-        onClick={signOut}
-        disabled={pending}
-        aria-busy={pending}
-        className="mt-6 w-full px-5 py-3 rounded-lg border border-outline text-xs font-bold tracking-widest uppercase hover:bg-surface-container transition-all disabled:opacity-60 disabled:cursor-not-allowed"
-      >
-        {pending ? 'Signing out…' : 'Sign out'}
-      </button>
+      <div className="mt-6">
+        <SignOutButton className="w-full rounded-lg border border-outline px-5 py-3 text-xs font-bold tracking-widest uppercase hover:bg-surface-container transition-all" />
+      </div>
     </section>
   )
 }

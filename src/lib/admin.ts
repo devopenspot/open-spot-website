@@ -1,5 +1,5 @@
 import { env } from "@/lib/env"
-import { DEV_USER_ID, type User } from "@/lib/user"
+import type { User } from "@/lib/user"
 
 function parseAdminEmails(raw: string): readonly string[] {
   return raw
@@ -17,9 +17,9 @@ export function getAdminEmails(): readonly string[] {
 }
 
 /**
- * Returns `true` if the given user is an admin. The dev placeholder user
- * (`id === "dev"`) is always treated as admin so the dashboard is
- * accessible in local dev without configuring Supabase or env vars.
+ * Returns `true` if the given user's email is in the admin allow-list
+ * (case-insensitive). A real Supabase session is required — there is no
+ * dev shortcut: admin access is granted only via `ADMIN_EMAILS`.
  *
  * `adminEmails` is exposed as an optional parameter so unit tests can
  * exercise the membership check without depending on `process.env`.
@@ -28,6 +28,5 @@ export function isAdminUser(
   user: User,
   adminEmails: readonly string[] = getAdminEmails(),
 ): boolean {
-  if (user.id === DEV_USER_ID) return true
   return adminEmails.includes(user.email.toLowerCase())
 }

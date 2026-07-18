@@ -19,8 +19,8 @@ export function useNavList({ variant, onSelect }: UseNavListOptions) {
   // Items flagged `adminOnly` are only shown to admins. Filter once per
   // render; the user rarely changes mid-session, so this is cheap.
   const navItems = useMemo(
-    () => NAV_ITEMS.filter((item) => !item.adminOnly || user.isAdmin),
-    [user.isAdmin],
+    () => NAV_ITEMS.filter((item) => !item.adminOnly || user?.isAdmin === true),
+    [user?.isAdmin],
   );
 
   const handleSelect = useCallback(

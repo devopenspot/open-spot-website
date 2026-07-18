@@ -1,9 +1,6 @@
 import { Suspense } from "react";
 import { SportEventsTab } from "@/components/sport-events/SportEventsTab";
-import {
-  getFeaturedSportEvent,
-  getSportEvents,
-} from "@/lib/sport-events/loader";
+import { findFeaturedEvent, listEvents } from "@/lib/services/events";
 
 export const metadata = {
   title: "Sport Events",
@@ -13,8 +10,8 @@ export const metadata = {
 
 async function SportEventsContent() {
   const [events, featured] = await Promise.all([
-    getSportEvents(),
-    getFeaturedSportEvent(),
+    listEvents(),
+    findFeaturedEvent(),
   ]);
   return <SportEventsTab featured={featured} events={events} />;
 }

@@ -12,7 +12,7 @@ export default function SavedTab() {
   const router = useRouter();
   const user = useUser();
   const spots = useSpotsStore((s) => s.spots);
-  const { savedIds, toggle: toggleSaved } = useSavedSpots(user.id);
+  const { savedIds, toggle: toggleSaved } = useSavedSpots(user?.id ?? null);
   const savedSpots = spots.filter((s) => savedIds.has(s.id));
 
   const openSpot = (spot: { id: string }) => router.push(ROUTES.spot(spot.id));

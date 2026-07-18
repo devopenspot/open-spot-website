@@ -3,9 +3,7 @@ import { MapPin, ExternalLink, Calendar } from "lucide-react";
 import type {
   SportEventEnriched,
   SportEventStatus,
-  SportEventTier,
 } from "@/types/sport-events";
-import { TIER_DISPLAY, STATUS_LABELS } from "@/lib/sport-events";
 import { cn } from "@/lib/cn";
 
 interface EventCardProps {
@@ -25,21 +23,27 @@ const STATUS_TEXT_STYLES: Record<SportEventStatus, string> = {
   completed: "text-secondary",
 };
 
-function TierBadge({ tier }: { tier: SportEventTier }) {
+function TierBadge({ tierName }: { tierName: string }) {
   return (
     <span
       aria-hidden="true"
       className="rounded-none border border-outline bg-surface/95 px-2 py-0.5 font-mono text-[9px] font-bold tracking-widest text-on-surface uppercase backdrop-blur-sm"
     >
-      {TIER_DISPLAY[tier]}
+      {tierName}
     </span>
   );
 }
 
+const STATUS_LABEL: Record<SportEventStatus, string> = {
+  live: "Live",
+  upcoming: "Upcoming",
+  completed: "Completed",
+};
+
 export function EventCard({ event, priority = false }: EventCardProps) {
   const { location } = event;
   const isCompleted = event.status === "completed";
-  const statusLabel = STATUS_LABELS[event.status];
+  const statusLabel = STATUS_LABEL[event.status];
   const showStatus = event.status !== "upcoming";
 
   return (
@@ -80,7 +84,7 @@ export function EventCard({ event, priority = false }: EventCardProps) {
         />
 
         <div className="absolute top-3 left-3 z-10">
-          <TierBadge tier={event.tier} />
+          <TierBadge tierName={event.tierName} />
         </div>
 
         {event.status === "live" && (

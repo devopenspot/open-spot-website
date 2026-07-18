@@ -2,20 +2,10 @@ import { describe, it, expect, vi, beforeEach } from "vitest"
 import { NextRequest } from "next/server"
 
 const requireAdminMock = vi.fn()
-const getServerUserFromCookiesMock = vi.fn()
-const isSupabaseConfiguredMock = vi.fn()
 const createEventMock = vi.fn()
 
 vi.mock("@/lib/auth/server", () => ({
   requireAdmin: () => requireAdminMock(),
-}))
-
-vi.mock("@/lib/auth", () => ({
-  getServerUserFromCookies: () => getServerUserFromCookiesMock(),
-}))
-
-vi.mock("@/lib/env", () => ({
-  isSupabaseConfigured: () => isSupabaseConfiguredMock(),
 }))
 
 vi.mock("@/lib/services/events", () => ({
@@ -45,6 +35,7 @@ const sampleEvent = {
   endDate: "2025-07-05",
   location: { city: "Montpellier", country: "France" },
   tier: "festival" as const,
+  tierName: "Festival",
   featured: false,
   createdAt: "2025-01-01T00:00:00Z",
   updatedAt: "2025-01-01T00:00:00Z",
@@ -74,7 +65,6 @@ const validBody = {
 
 beforeEach(() => {
   vi.resetAllMocks()
-  isSupabaseConfiguredMock.mockReturnValue(true)
   requireAdminMock.mockResolvedValue({ id: "user-1" })
   createEventMock.mockResolvedValue(sampleEvent)
 })

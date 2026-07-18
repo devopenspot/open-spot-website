@@ -2,21 +2,11 @@ import { describe, it, expect, vi, beforeEach } from "vitest"
 import { NextRequest } from "next/server"
 
 const requireAdminMock = vi.fn()
-const getServerUserFromCookiesMock = vi.fn()
-const isSupabaseConfiguredMock = vi.fn()
 const createSpotMock = vi.fn()
 const uploadSpotImageMock = vi.fn()
 
 vi.mock("@/lib/auth/server", () => ({
   requireAdmin: () => requireAdminMock(),
-}))
-
-vi.mock("@/lib/auth", () => ({
-  getServerUserFromCookies: () => getServerUserFromCookiesMock(),
-}))
-
-vi.mock("@/lib/env", () => ({
-  isSupabaseConfigured: () => isSupabaseConfiguredMock(),
 }))
 
 vi.mock("@/lib/services/spots", () => ({
@@ -68,7 +58,6 @@ function makeFormRequest(fields: Record<string, string>): NextRequest {
 
 beforeEach(() => {
   vi.resetAllMocks()
-  isSupabaseConfiguredMock.mockReturnValue(true)
   requireAdminMock.mockResolvedValue({ id: "user-1" })
   createSpotMock.mockResolvedValue(sampleSpot)
   uploadSpotImageMock.mockResolvedValue({ path: "spots/test.png" })
@@ -136,4 +125,3 @@ describe("POST /api/admin/spots", () => {
     expect(res.status).toBe(500)
   })
 })
-

@@ -40,7 +40,7 @@ export default function MapTab({ searchParams, nearbyRequested }: MapTabProps) {
   const router = useRouter();
   const spots = useSpotsStore((s) => s.spots);
   const user = useUser();
-  const { savedIds, toggle: toggleSaved } = useSavedSpots(user.id);
+  const { savedIds, toggle: toggleSaved } = useSavedSpots(user?.id ?? null);
   const { weather } = useWeather();
   const { region, country, filteredSpots, clearAll } = useMapFilter(
     spots,

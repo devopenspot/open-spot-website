@@ -10,7 +10,7 @@ import type { Spot } from "@/lib/types";
 export function SpotDetailsFullPage({ spot }: { spot: Spot }) {
   const titleId = useId();
   const user = useUser();
-  const { isSaved, toggle: toggleSaved } = useSavedSpots(user.id);
+  const { isSaved, toggle: toggleSaved } = useSavedSpots(user?.id ?? null);
   const { getWeather } = useWeather();
 
   return (

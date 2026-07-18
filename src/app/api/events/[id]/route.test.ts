@@ -24,6 +24,7 @@ const sampleEvent = {
   endDate: "2025-07-05",
   location: { city: "Montpellier", country: "France" },
   tier: "festival" as const,
+  tierName: "Festival",
   featured: true,
   createdAt: "2025-01-01T00:00:00Z",
   updatedAt: "2025-01-01T00:00:00Z",

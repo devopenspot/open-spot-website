@@ -1,14 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server"
-import { revalidatePath } from "next/cache"
-import { z } from "zod"
 import { requireUser } from "@/lib/auth/server"
-import { getServerUserFromCookies } from "@/lib/auth"
-import { isSupabaseConfigured } from "@/lib/env"
-import {
-  listSavedSpotsForUser,
-  saveSpotForUser,
-} from "@/lib/services/saved-spots"
+import { listSavedSpotsForUser, saveSpotForUser } from "@/lib/services/saved-spots"
 import { log } from "@/lib/log"
+import { z } from "zod"
 
 const PostBody = z
   .object({
@@ -16,24 +10,14 @@ const PostBody = z
   })
   .strict()
 
-/**
- * Resolves the current user for an API route. Throws if the visitor
- * is not signed in and Supabase is configured. Returns the dev
- * placeholder in unconfigured environments.
- */
-async function currentUserOrThrow() {
-  if (!isSupabaseConfigured()) {
-    return getServerUserFromCookies()
-  }
-  return requireUser()
-}
-
 export async function GET() {
   let user
   try {
-    user = await currentUserOrThrow()
-  } catch {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    user = await requireUser()
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "Unauthorized"
+    log.warn("api.saved_spots.get_unauthorized", msg)
+    return NextResponse.json({ error: msg }, { status: 401 })
   }
   try {
     const result = await listSavedSpotsForUser(user.id, { limit: 200 })
@@ -50,9 +34,11 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   let user
   try {
-    user = await currentUserOrThrow()
-  } catch {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    user = await requireUser()
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "Unauthorized"
+    log.warn("api.saved_spots.post_unauthorized", msg)
+    return NextResponse.json({ error: msg }, { status: 401 })
   }
 
   let body: unknown
@@ -72,10 +58,6 @@ export async function POST(request: NextRequest) {
 
   try {
     await saveSpotForUser(user.id, parsed.data.spotId)
-    // `revalidatePath` keeps the `/saved` page in sync on next
-    // navigation. `revalidateTag` inside the service invalidates
-    // the per-user cache.
-    revalidatePath("/saved")
     return NextResponse.json({ ok: true })
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Internal error"

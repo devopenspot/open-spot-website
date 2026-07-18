@@ -16,7 +16,6 @@ export interface SpotWeather {
 }
 
 export async function getSpotWeather({
-	spotId,
 	latitude,
 	longitude,
 }: {
@@ -39,7 +38,7 @@ export async function getSpotWeather({
 		wind: current?.wind?.speed ?? null,
 		humidity: mapped.humidity,
 		precipitationMm: mapped.precipitationMm,
-		forecast: mapForecast(forecast, spotId),
+		forecast: mapForecast(forecast),
 		fetchedAt: Date.now(),
 	}
 }

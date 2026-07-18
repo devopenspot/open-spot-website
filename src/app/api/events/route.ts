@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server"
 import { z } from "zod"
 import { SportEventQuerySchema } from "@/lib/schemas/event"
-import { listEvents, listEventsRaw } from "@/lib/services/events"
+import { listEvents } from "@/lib/services/events"
 import { log } from "@/lib/log"
 
 // `limit` arrives as a query string (always a string), and
@@ -29,14 +29,12 @@ const Query = z
   })
   .strict()
 
-const RAW_QUERY = Query
-
 export async function GET(request: NextRequest) {
   const url = new URL(request.url)
   const raw: Record<string, string> = {}
   for (const [k, v] of url.searchParams.entries()) raw[k] = v
 
-  const parsed = RAW_QUERY.safeParse(raw)
+  const parsed = Query.safeParse(raw)
   if (!parsed.success) {
     return NextResponse.json(
       { error: "Invalid query", details: parsed.error.flatten() },
@@ -55,8 +53,3 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Internal error" }, { status: 500 })
   }
 }
-
-// Re-export the raw variant for callers that want the
-// `{ items, nextCursor }` shape (matches the repository contract
-// without enrichment). Kept here so clients have one place to read.
-void listEventsRaw

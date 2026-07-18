@@ -1,4 +1,4 @@
-import { and, asc, eq, sql, type SQL } from "drizzle-orm"
+import { and, asc, desc, eq, sql, type SQL } from "drizzle-orm"
 import { drizzle } from "drizzle-orm/postgres-js"
 import {
   countries,
@@ -48,6 +48,7 @@ interface JoinedEventRow {
   description: string
   sports: string[]
   tier: string
+  tierName: string
   startAt: Date
   endAt: Date | null
   city: string
@@ -87,6 +88,7 @@ function toEvent(row: JoinedEventRow): SportEvent {
       longitude: row.location?.lon,
     },
     tier: row.tier as SportEventTier,
+    tierName: row.tierName,
     featured: row.featured,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
@@ -112,6 +114,7 @@ export class DrizzleEventRepository implements EventRepository {
         description: sportEvents.description,
         sports: sportsAgg,
         tier: eventTiers.slug,
+        tierName: eventTiers.name,
         startAt: sportEvents.startAt,
         endAt: sportEvents.endAt,
         city: sportEvents.city,
@@ -175,7 +178,7 @@ export class DrizzleEventRepository implements EventRepository {
       ? this.selectJoined().where(where)
       : this.selectJoined()
     )
-      .orderBy(asc(sportEvents.startAt))
+      .orderBy(desc(sportEvents.featured), asc(sportEvents.startAt))
       .limit(limit + 1)
     const items = (rows as unknown as JoinedEventRow[])
       .slice(0, limit)

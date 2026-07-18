@@ -1,25 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import { NextRequest } from "next/server"
-import { DEV_USER_ID, type User } from "@/lib/user"
+import { type User } from "@/lib/user"
 
 const requireUserMock = vi.fn()
-const getServerUserFromCookiesMock = vi.fn()
-const isSupabaseConfiguredMock = vi.fn()
-
 const listSavedSpotsForUserMock = vi.fn()
 const saveSpotForUserMock = vi.fn()
 const revalidatePathMock = vi.fn()
 
 vi.mock("@/lib/auth/server", () => ({
   requireUser: () => requireUserMock(),
-}))
-
-vi.mock("@/lib/auth", () => ({
-  getServerUserFromCookies: () => getServerUserFromCookiesMock(),
-}))
-
-vi.mock("@/lib/env", () => ({
-  isSupabaseConfigured: () => isSupabaseConfiguredMock(),
 }))
 
 vi.mock("@/lib/services/saved-spots", () => ({
@@ -40,10 +29,10 @@ vi.mock("@/lib/log", () => ({
 import { GET, POST } from "./route"
 
 const user: User = {
-  id: DEV_USER_ID,
-  name: "Scout",
-  email: "scout@example.com",
-  initials: "OS",
+  id: "user-1",
+  name: "Test User",
+  email: "test@example.com",
+  initials: "TU",
   avatarUrl: null,
   isAdmin: true,
 }
@@ -57,7 +46,6 @@ function makePostRequest(body: unknown): NextRequest {
 
 beforeEach(() => {
   vi.resetAllMocks()
-  isSupabaseConfiguredMock.mockReturnValue(true)
   requireUserMock.mockResolvedValue(user)
 })
 
@@ -73,7 +61,7 @@ describe("GET /api/saved-spots", () => {
     })
   })
 
-  it("returns 401 when not signed in (configured env)", async () => {
+  it("returns 401 when not signed in", async () => {
     requireUserMock.mockRejectedValue(new Error("Not signed in"))
     const res = await GET()
     expect(res.status).toBe(401)
@@ -93,7 +81,6 @@ describe("POST /api/saved-spots", () => {
     expect(res.status).toBe(200)
     expect(await res.json()).toEqual({ ok: true })
     expect(saveSpotForUserMock).toHaveBeenCalledWith(user.id, "spot-1")
-    expect(revalidatePathMock).toHaveBeenCalledWith("/saved")
   })
 
   it("returns 401 when not signed in", async () => {

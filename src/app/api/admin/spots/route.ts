@@ -1,29 +1,20 @@
 import { NextResponse, type NextRequest } from "next/server"
 import { requireAdmin } from "@/lib/auth/server"
-import { getServerUserFromCookies } from "@/lib/auth"
-import { isSupabaseConfigured } from "@/lib/env"
 import { NewSpotSchema } from "@/lib/schemas/spot"
 import { createSpot } from "@/lib/services/spots"
 import { uploadSpotImage } from "@/lib/supabase/storage"
 import { log } from "@/lib/log"
 
-async function currentUserOrThrow() {
-  if (!isSupabaseConfigured()) {
-    return getServerUserFromCookies()
-  }
-  return requireAdmin()
-}
-
 export async function POST(request: NextRequest) {
   let user
   try {
-    user = await currentUserOrThrow()
+    user = await requireAdmin()
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Unauthorized"
     if (msg === "Admin only") {
       return NextResponse.json({ error: msg }, { status: 403 })
     }
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    return NextResponse.json({ error: msg }, { status: 401 })
   }
 
   let form: FormData

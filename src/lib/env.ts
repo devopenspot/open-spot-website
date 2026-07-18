@@ -101,9 +101,7 @@ export function getDatabaseUrl(): string | null {
   return env.SUPABASE_DATABASE_URL ?? env.SUPABASE_DIRECT_URL ?? null
 }
 
-export function isSupabaseConfigured(): boolean {
-  return Boolean(getSupabaseUrl() && getSupabaseServiceRoleKey())
-}
+
 
 export function getSupabaseUrl(): string | null {
   return env.NEXT_PUBLIC_SUPABASE_URL ?? null

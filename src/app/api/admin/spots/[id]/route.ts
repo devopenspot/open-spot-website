@@ -1,17 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server"
 import { requireAdmin } from "@/lib/auth/server"
-import { getServerUserFromCookies } from "@/lib/auth"
-import { isSupabaseConfigured } from "@/lib/env"
 import { SpotPatchSchema } from "@/lib/schemas/spot"
 import { deleteSpot, updateSpot } from "@/lib/services/spots"
 import { log } from "@/lib/log"
-
-async function currentUserOrThrow() {
-  if (!isSupabaseConfigured()) {
-    return getServerUserFromCookies()
-  }
-  return requireAdmin()
-}
 
 export async function PATCH(
   request: NextRequest,
@@ -19,13 +10,13 @@ export async function PATCH(
 ) {
   let user
   try {
-    user = await currentUserOrThrow()
+    user = await requireAdmin()
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Unauthorized"
     if (msg === "Admin only") {
       return NextResponse.json({ error: msg }, { status: 403 })
     }
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    return NextResponse.json({ error: msg }, { status: 401 })
   }
 
   const { id } = await context.params
@@ -68,13 +59,13 @@ export async function DELETE(
   context: { params: Promise<{ id: string }> },
 ) {
   try {
-    await currentUserOrThrow()
+    await requireAdmin()
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Unauthorized"
     if (msg === "Admin only") {
       return NextResponse.json({ error: msg }, { status: 403 })
     }
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    return NextResponse.json({ error: msg }, { status: 401 })
   }
 
   const { id } = await context.params

@@ -1,12 +1,11 @@
 import "server-only"
 import { NextResponse } from "next/server"
 import { redirect } from "next/navigation"
-import { isSupabaseConfigured, getSupabaseUrl, getSupabasePublishableKey } from "@/lib/env"
+import { getSupabaseUrl, getSupabasePublishableKey } from "@/lib/env"
 import { createSupabaseServerClient } from "@/lib/supabase/server"
 import type { User } from "@/lib/user"
 import { getServerUserFromCookies } from "@/lib/auth"
 import { isAdminUser } from "@/lib/admin"
-import { DEV_USER_ID } from "@/lib/user"
 
 const DEFAULT_NEXT = "/"
 
@@ -57,29 +56,15 @@ export function originFromRequest(request: Request): string {
 }
 
 export async function getSessionUser(): Promise<User | null> {
-  if (!isSupabaseConfigured()) return null
-  const u = await getServerUserFromCookies()
-  if (u.id === DEV_USER_ID) return null
-  return u
+  return getServerUserFromCookies()
 }
 
 /**
- * Server-side guard for protected pages.
- *
- * - If Supabase is not configured (local dev without env), returns the dev
- *   placeholder user so the page renders normally.
- * - If Supabase is configured and the visitor has a real session, returns
- *   that user.
- * - If Supabase is configured and the visitor has no real session, throws
- *   a `NEXT_REDIRECT` to `/login?next=<path>` before any HTML is rendered.
- *
- * Must be called from a Server Component. Do not wrap in try/catch — the
- * `redirect()` throw is handled by the Next.js framework.
+ * Server-side guard for protected pages. Throws a `NEXT_REDIRECT` to
+ * `/login?next=<path>` if there is no real Supabase session. Must be
+ * called from a Server Component — do not wrap in try/catch.
  */
 export async function requireUserOrRedirect(nextPath: string): Promise<User> {
-  if (!isSupabaseConfigured()) {
-    return getServerUserFromCookies()
-  }
   const user = await getSessionUser()
   if (!user) {
     redirect(`/login?next=${encodeURIComponent(nextPath)}`)
@@ -88,19 +73,11 @@ export async function requireUserOrRedirect(nextPath: string): Promise<User> {
 }
 
 /**
- * Server-side guard for server actions and route handlers. Unlike
- * {@link requireUserOrRedirect}, this throws a plain `Error` instead of
- * triggering a navigation — callers handle it in a try/catch.
- *
- * - Supabase not configured (local dev without env): returns the dev
- *   placeholder so actions still work.
- * - Configured and signed in: returns the real user.
- * - Configured and not signed in: throws.
+ * Server-side guard for server actions and route handlers. Throws a
+ * plain `Error` instead of triggering a navigation — callers handle it
+ * in a try/catch.
  */
 export async function requireUser(): Promise<User> {
-  if (!isSupabaseConfigured()) {
-    return getServerUserFromCookies()
-  }
   const user = await getSessionUser()
   if (!user) {
     throw new Error("Not signed in")
@@ -109,24 +86,11 @@ export async function requireUser(): Promise<User> {
 }
 
 /**
- * Server-side guard for admin-only Server Components.
- *
- * - If Supabase is not configured (local dev without env), the dev
- *   placeholder user is admin by definition (see `isAdminUser`).
- * - If Supabase is configured and the visitor is signed in and admin,
- *   returns the admin user.
- * - If Supabase is configured and the visitor has no session, throws a
- *   `NEXT_REDIRECT` to `/login?next=<path>`.
- * - If Supabase is configured and the visitor is signed in but not
- *   admin, throws a `NEXT_REDIRECT` to `/`.
- *
- * Must be called from a Server Component. Do not wrap in try/catch — the
- * `redirect()` throw is handled by the Next.js framework.
+ * Server-side guard for admin-only Server Components. Throws a
+ * `NEXT_REDIRECT` to `/login` if there is no session, or to `/` if
+ * the signed-in user is not an admin.
  */
 export async function requireAdminOrRedirect(nextPath: string): Promise<User> {
-  if (!isSupabaseConfigured()) {
-    return getServerUserFromCookies()
-  }
   const user = await getSessionUser()
   if (!user) {
     redirect(`/login?next=${encodeURIComponent(nextPath)}`)
@@ -139,16 +103,13 @@ export async function requireAdminOrRedirect(nextPath: string): Promise<User> {
 
 /**
  * Server-side guard for admin-only server actions and route handlers.
- * Throws a plain `Error("Admin only")` instead of triggering a
- * navigation — callers handle it in a try/catch.
- *
- * - Supabase not configured (local dev without env): the dev placeholder
- *   is admin by definition.
- * - Configured and admin: returns the admin user.
- * - Configured and not admin: throws.
+ * Throws a plain `Error("Admin only")` instead of triggering a navigation.
  */
 export async function requireAdmin(): Promise<User> {
   const user = await getServerUserFromCookies()
+  if (!user) {
+    throw new Error("Not signed in")
+  }
   if (!isAdminUser(user)) {
     throw new Error("Admin only")
   }

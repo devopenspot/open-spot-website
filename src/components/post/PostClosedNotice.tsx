@@ -8,7 +8,7 @@ import { cn } from "@/lib/cn";
 
 export function PostClosedNotice() {
   const user = useUser();
-  const adminHref = user.isAdmin ? "/admin/spots/new" : "/admin";
+  const adminHref = user?.isAdmin === true ? "/admin/spots/new" : "/admin";
 
   return (
     <section

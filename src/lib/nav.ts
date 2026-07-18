@@ -3,7 +3,6 @@ import {
   Compass,
   Heart,
   PlusCircle,
-  //   Shield,
   Trophy,
   type LucideIcon,
 } from "lucide-react";
@@ -25,14 +24,6 @@ export const NAV_ITEMS: readonly {
     drawerLabel: "Explore Archive",
     Icon: Compass,
   },
-  //   {
-  //     id: "map",
-  //     path: "/map",
-  //     label: "Spot Map",
-  //     shortLabel: "Map",
-  //     drawerLabel: "Spot Map",
-  //     Icon: Map,
-  //   },
   {
     id: "events",
     path: "/sport-events",
@@ -58,15 +49,6 @@ export const NAV_ITEMS: readonly {
     drawerLabel: "Saved Locations",
     Icon: Heart,
   },
-  //   {
-  //     id: "admin",
-  //     path: "/admin",
-  //     label: "Admin",
-  //     shortLabel: "Admin",
-  //     drawerLabel: "Admin",
-  //     Icon: Shield,
-  //     adminOnly: true,
-  //   },
 ] as const;
 
 export type NavItem = (typeof NAV_ITEMS)[number];

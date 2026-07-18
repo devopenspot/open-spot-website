@@ -2,21 +2,11 @@ import { describe, it, expect, vi, beforeEach } from "vitest"
 import { NextRequest } from "next/server"
 
 const requireAdminMock = vi.fn()
-const getServerUserFromCookiesMock = vi.fn()
-const isSupabaseConfiguredMock = vi.fn()
 const updateSpotMock = vi.fn()
 const deleteSpotMock = vi.fn()
 
 vi.mock("@/lib/auth/server", () => ({
   requireAdmin: () => requireAdminMock(),
-}))
-
-vi.mock("@/lib/auth", () => ({
-  getServerUserFromCookies: () => getServerUserFromCookiesMock(),
-}))
-
-vi.mock("@/lib/env", () => ({
-  isSupabaseConfigured: () => isSupabaseConfiguredMock(),
 }))
 
 vi.mock("@/lib/services/spots", () => ({
@@ -66,7 +56,6 @@ function makeJsonRequest(method: string, body: unknown): NextRequest {
 
 beforeEach(() => {
   vi.resetAllMocks()
-  isSupabaseConfiguredMock.mockReturnValue(true)
   requireAdminMock.mockResolvedValue({ id: "user-1" })
   updateSpotMock.mockResolvedValue(sampleSpot)
   deleteSpotMock.mockResolvedValue(undefined)

@@ -8,7 +8,6 @@ import { listSpots } from '@/lib/services/spots';
 import { listSavedSpotsForUser } from '@/lib/services/saved-spots';
 import { listRegions } from '@/lib/services/regions';
 import { listSpotTypes } from '@/lib/services/spot-types';
-import { listPresetImages } from '@/lib/services/preset-images';
 import { getWeatherForAllSpots } from '@/lib/weather/weather-bundle';
 import { getServerUserFromCookies } from '@/lib/auth';
 import { SpotsProvider } from '@/components/layout/SpotsProvider';
@@ -97,36 +96,25 @@ async function RootDataProviders({ children }: { children: React.ReactNode }) {
   // derivation — the BFF pattern. `getWeatherForAllSpots(spots)`
   // derives the per-spot weather from the already-fetched spots,
   // so we no longer pay for a second `spots.list()` round trip.
-  const [spotsList, initialUser, initialRegions, initialSpotTypes, presetImages] =
+  const [spotsList, initialUser, initialRegions, initialSpotTypes] =
     await Promise.all([
       listSpots(),
       getServerUserFromCookies(),
       listRegions(),
       listSpotTypes(),
-      listPresetImages(),
     ]);
   const initialSpots = spotsList.items;
   const [initialWeather, savedSpotsResult] = await Promise.all([
     getWeatherForAllSpots(initialSpots),
-    listSavedSpotsForUser(initialUser.id, { limit: 200 }),
+    initialUser
+      ? listSavedSpotsForUser(initialUser.id, { limit: 200 })
+      : Promise.resolve({ items: [], nextCursor: null }),
   ]);
-  const initialPresetImages = presetImages.map((p) => ({
-    id: p.id,
-    slug: p.slug,
-    name: p.name,
-    url: p.url,
-  }));
-  // The dev placeholder user (`id === "dev"`) is a first-class citizen of
-  // `saved_spots` — the column is `text` (not `uuid`) so "dev" is
-  // representable. The dev user has a seeded bucket of all 23 base spots
-  // in `src/db/seed-data/saved-spots.ts`. Real Supabase users with a
-  // session fetch their own bucket the same way.
   const initialSavedSpots = savedSpotsResult.items;
   return (
     <SpotsProvider
       initialSpots={initialSpots}
       initialRegions={initialRegions}
-      initialPresetImages={initialPresetImages}
       initialSpotTypes={initialSpotTypes}
       initialWeather={initialWeather}
       initialUser={initialUser}

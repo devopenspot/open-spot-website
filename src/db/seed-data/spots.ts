@@ -1,7 +1,8 @@
-// Regenerated from spots.backup.json (live DB dump). All 23 spots
-// share `createdBy: "dev"` so dev and prod environments are seeded
-// from the same source. The `id` field is the slug for re-seed
-// stability; the DB primary key is always `gen_random_uuid()`.
+// Regenerated from spots.backup.json (live DB dump). The `id` field
+// is the slug for re-seed stability; the DB primary key is always
+// `gen_random_uuid()`. Every row is seeded with `createdBy: null` —
+// ownership is only assigned when a real Supabase admin creates or
+// edits the spot through the dashboard.
 
 import type { NewSpot } from "@/lib/repositories/types";
 import type { SportDiscipline } from "@/types/sport-events";
@@ -22,7 +23,7 @@ export const SOURCE_SPOTS: readonly NewSpot[] = [
     crowdLevel: 74,
     country: "Colombia",
     location: { lat: 6.1693094, lon: -75.5960834 },
-    createdBy: "dev",
+    createdBy: null,
   },
   {
     id: "dogshit-spot",
@@ -37,7 +38,7 @@ export const SOURCE_SPOTS: readonly NewSpot[] = [
     crowdLevel: 74,
     country: "Germany",
     location: { lat: 52.5076013, lon: 13.4488483 },
-    createdBy: "dev",
+    createdBy: null,
   },
   {
     id: "place-louis-pradel",
@@ -52,7 +53,7 @@ export const SOURCE_SPOTS: readonly NewSpot[] = [
     crowdLevel: 28,
     country: "France",
     location: { lat: 45.768613, lon: 4.8369251 },
-    createdBy: "dev",
+    createdBy: null,
   },
   {
     id: "bercy-skatepark",
@@ -67,7 +68,7 @@ export const SOURCE_SPOTS: readonly NewSpot[] = [
     crowdLevel: 90,
     country: "France",
     location: { lat: 48.8373219, lon: 2.3789662 },
-    createdBy: "dev",
+    createdBy: null,
   },
   {
     id: "skatepark-de-la-4-sur",
@@ -83,7 +84,7 @@ export const SOURCE_SPOTS: readonly NewSpot[] = [
     crowdLevel: 26,
     country: "Colombia",
     location: { lat: 6.2047065, lon: -75.5798671 },
-    createdBy: "dev",
+    createdBy: null,
   },
   {
     id: "skatepark-carrera-52-unidad-deportiva-alberto-galindo-plaza-de-toros",
@@ -99,7 +100,7 @@ export const SOURCE_SPOTS: readonly NewSpot[] = [
     crowdLevel: 10,
     country: "Colombia",
     location: { lat: 3.4147268, lon: -76.5523151 },
-    createdBy: "dev",
+    createdBy: null,
   },
   {
     id: "skatepark-zipaquira",
@@ -114,7 +115,7 @@ export const SOURCE_SPOTS: readonly NewSpot[] = [
     crowdLevel: 94,
     country: "Colombia",
     location: { lat: 5.020761, lon: -73.9999073 },
-    createdBy: "dev",
+    createdBy: null,
   },
   {
     id: "skatepark-ponte-della-musica",
@@ -129,7 +130,7 @@ export const SOURCE_SPOTS: readonly NewSpot[] = [
     crowdLevel: 82,
     country: "Italy",
     location: { lat: 41.9266668, lon: 12.4604421 },
-    createdBy: "dev",
+    createdBy: null,
   },
   {
     id: "skatepark-tep-emile-lepeu-rue-emile-lepeu",
@@ -145,7 +146,7 @@ export const SOURCE_SPOTS: readonly NewSpot[] = [
     crowdLevel: 28,
     country: "France",
     location: { lat: 48.8563378, lon: 2.3884269 },
-    createdBy: "dev",
+    createdBy: null,
   },
   {
     id: "tokio-1783647692990",
@@ -160,7 +161,7 @@ export const SOURCE_SPOTS: readonly NewSpot[] = [
     crowdLevel: 35,
     country: "Japan",
     location: { lat: 35.7132208, lon: 139.2898981 },
-    createdBy: "dev",
+    createdBy: null,
   },
   {
     id: "amparo-1783651438900",
@@ -175,7 +176,7 @@ export const SOURCE_SPOTS: readonly NewSpot[] = [
     crowdLevel: 35,
     country: "Brazil",
     location: { lat: -22.7031789, lon: -46.7721865 },
-    createdBy: "dev",
+    createdBy: null,
   },
   {
     id: "amparo-1783651224198",
@@ -190,7 +191,7 @@ export const SOURCE_SPOTS: readonly NewSpot[] = [
     crowdLevel: 35,
     country: "Brazil",
     location: { lat: -22.7366186, lon: -46.7636622 },
-    createdBy: "dev",
+    createdBy: null,
   },
   {
     id: "bogot-1783698730232",
@@ -205,7 +206,7 @@ export const SOURCE_SPOTS: readonly NewSpot[] = [
     crowdLevel: 60,
     country: "Colombia",
     location: { lat: 4.6204317, lon: -74.15473 },
-    createdBy: "dev",
+    createdBy: null,
   },
   {
     id: "pineda-de-mar-1783651067022",
@@ -220,7 +221,7 @@ export const SOURCE_SPOTS: readonly NewSpot[] = [
     crowdLevel: 31,
     country: "Spain",
     location: { lat: 41.6227554, lon: 2.6835812 },
-    createdBy: "dev",
+    createdBy: null,
   },
   {
     id: "bogot-1783698595636",
@@ -235,7 +236,7 @@ export const SOURCE_SPOTS: readonly NewSpot[] = [
     crowdLevel: 52,
     country: "Colombia",
     location: { lat: 4.6457122, lon: -74.1111908 },
-    createdBy: "dev",
+    createdBy: null,
   },
   {
     id: "skatepark-parque-de-las-ruedas-san-antonio-de-prado",
@@ -250,7 +251,7 @@ export const SOURCE_SPOTS: readonly NewSpot[] = [
     crowdLevel: 63,
     country: "Colombia",
     location: { lat: 6.1768804, lon: -75.6550942 },
-    createdBy: "dev",
+    createdBy: null,
   },
   {
     id: "barcelona-1783650621395",
@@ -265,7 +266,7 @@ export const SOURCE_SPOTS: readonly NewSpot[] = [
     crowdLevel: 53,
     country: "Spain",
     location: { lat: 41.4014705, lon: 2.2106526 },
-    createdBy: "dev",
+    createdBy: null,
   },
   {
     id: "barcelona-1783650881587",
@@ -280,7 +281,7 @@ export const SOURCE_SPOTS: readonly NewSpot[] = [
     crowdLevel: 35,
     country: "Spain",
     location: { lat: 41.3611693, lon: 2.1383742 },
-    createdBy: "dev",
+    createdBy: null,
   },
   {
     id: "yokohama-1783649567195",
@@ -295,7 +296,7 @@ export const SOURCE_SPOTS: readonly NewSpot[] = [
     crowdLevel: 51,
     country: "Japan",
     location: { lat: 35.53123537787763, lon: 139.59813765034306 },
-    createdBy: "dev",
+    createdBy: null,
   },
   {
     id: "seoul-1783649672401",
@@ -310,7 +311,7 @@ export const SOURCE_SPOTS: readonly NewSpot[] = [
     crowdLevel: 35,
     country: "South Korea",
     location: { lat: 37.5241302, lon: 126.9662873 },
-    createdBy: "dev",
+    createdBy: null,
   },
   {
     id: "barcelona-1784052632111",
@@ -325,7 +326,7 @@ export const SOURCE_SPOTS: readonly NewSpot[] = [
     crowdLevel: 35,
     country: "Spain",
     location: { lat: 41.3948025, lon: 2.2039027 },
-    createdBy: "dev",
+    createdBy: null,
   },
   {
     id: "skatepark-sopo",
@@ -340,7 +341,7 @@ export const SOURCE_SPOTS: readonly NewSpot[] = [
     crowdLevel: 48,
     country: "Colombia",
     location: { lat: 4.9068944, lon: -73.944922 },
-    createdBy: "dev",
+    createdBy: null,
   },
   {
     id: "helsinki-1783876353196",
@@ -355,6 +356,6 @@ export const SOURCE_SPOTS: readonly NewSpot[] = [
     crowdLevel: 35,
     country: "Finland",
     location: { lat: 60.1914641, lon: 24.9762351 },
-    createdBy: "dev",
+    createdBy: null,
   },
 ];

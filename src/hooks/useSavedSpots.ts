@@ -13,25 +13,28 @@ interface UserStore {
 
 const userStores = new Map<string, UserStore>();
 const EMPTY_SET: Set<string> = new Set();
+const UNSIGNED_KEY = "__unsigned__";
 
 function channelName(userId: string): string {
   return `openspot:saved-spots:${userId}`;
 }
 
 function ensureUserStore(userId: string, initialIds: readonly string[]): UserStore {
-  let store = userStores.get(userId);
+  const key = userId || UNSIGNED_KEY;
+  let store = userStores.get(key);
   if (store) return store;
   store = {
     ids: new Set(initialIds),
     channel: null,
-    listeners: new Set(),
+    listeners: new Set<Listener>(),
   };
-  userStores.set(userId, store);
+  userStores.set(key, store);
   return store;
 }
 
 function notify(userId: string): void {
-  const store = userStores.get(userId);
+  const key = userId || UNSIGNED_KEY;
+  const store = userStores.get(key);
   if (!store) return;
   for (const l of store.listeners) l();
 }
@@ -40,7 +43,7 @@ function subscribe(userId: string, listener: Listener): () => void {
   if (typeof window === "undefined") return () => {};
   const store = ensureUserStore(userId, []);
   store.listeners.add(listener);
-  if (!store.channel && typeof BroadcastChannel !== "undefined") {
+  if (userId && !store.channel && typeof BroadcastChannel !== "undefined") {
     try {
       const channel = new BroadcastChannel(channelName(userId));
       channel.addEventListener("message", (event) => {
@@ -68,7 +71,8 @@ function subscribe(userId: string, listener: Listener): () => void {
     }
   }
   return () => {
-    const s = userStores.get(userId);
+    const key = userId || UNSIGNED_KEY;
+    const s = userStores.get(key);
     if (!s) return;
     s.listeners.delete(listener);
     if (s.listeners.size === 0 && s.channel) {
@@ -83,7 +87,8 @@ function subscribe(userId: string, listener: Listener): () => void {
 }
 
 function getSnapshot(userId: string): Set<string> {
-  return userStores.get(userId)?.ids ?? EMPTY_SET;
+  const key = userId || UNSIGNED_KEY;
+  return userStores.get(key)?.ids ?? EMPTY_SET;
 }
 
 function getServerSnapshot(): Set<string> {
@@ -108,45 +113,38 @@ function clearLegacyStorage(): void {
   }
 }
 
-export function __resetUserStoresForTests(): void {
-  for (const store of userStores.values()) {
-    try {
-      store.channel?.close();
-    } catch {
-      // ignore
-    }
-  }
-  userStores.clear();
-  legacyCleared = false;
-}
-
 export function useSavedSpots(
-  userId: string,
+  userId: string | null,
   initialServerSavedSpotsArg?: readonly SavedSpot[],
 ) {
   const contextInitial = useInitialSavedSpots();
   const initialIds = useMemo(() => {
+    if (!userId) return [] as readonly string[];
     const source =
       initialServerSavedSpotsArg ??
       (contextInitial.length > 0 ? contextInitial : undefined);
     return (source ?? []).map((s) => s.spotId);
-  }, [initialServerSavedSpotsArg, contextInitial]);
+  }, [userId, initialServerSavedSpotsArg, contextInitial]);
 
   useEffect(() => {
-    ensureUserStore(userId, initialIds);
+    ensureUserStore(userId ?? "", initialIds);
     clearLegacyStorage();
-    notify(userId);
+    notify(userId ?? "");
   }, [userId, initialIds]);
 
   const savedIds = useSyncExternalStore(
-    (listener) => subscribe(userId, listener),
-    () => getSnapshot(userId),
+    (listener) => subscribe(userId ?? "", listener),
+    () => getSnapshot(userId ?? ""),
     getServerSnapshot,
   );
 
   const isSaved = useCallback((id: string) => savedIds.has(id), [savedIds]);
 
   const doToggle = async (id: string, meta?: { name?: string }) => {
+    if (!userId) {
+      showToast("Sign in to save spots", "error");
+      return;
+    }
     const store = ensureUserStore(userId, []);
     const prevIds = store.ids;
     const next = new Set(prevIds);

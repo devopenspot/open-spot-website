@@ -1,7 +1,6 @@
 import Image from "next/image";
 import { MapPin, Calendar, ExternalLink, Trophy } from "lucide-react";
 import type { SportEventEnriched } from "@/types/sport-events";
-import { TIER_DISPLAY, STATUS_LABELS } from "@/lib/sport-events";
 import { cn } from "@/lib/cn";
 
 interface EventFeaturedHeroProps {
@@ -51,7 +50,7 @@ export function EventFeaturedHero({ event }: EventFeaturedHeroProps) {
                 <span>Featured Event</span>
               </div>
               <span className="self-start border border-surface/70 bg-transparent px-2.5 py-1 font-mono text-[10px] font-bold tracking-widest text-surface uppercase backdrop-blur-sm">
-                {TIER_DISPLAY[event.tier]}
+                {event.tierName}
               </span>
             </div>
 
@@ -61,7 +60,7 @@ export function EventFeaturedHero({ event }: EventFeaturedHeroProps) {
                   aria-hidden="true"
                   className="h-1.5 w-1.5 rounded-full bg-error animate-pulse-dot"
                 />
-                <span>Live · {STATUS_LABELS.live}</span>
+                <span>Live</span>
               </div>
             )}
           </div>
