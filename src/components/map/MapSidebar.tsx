@@ -177,7 +177,7 @@ export function MapSidebar({
       <div
         id="sidebar-spots-list"
         aria-label="Filtered spots"
-        className="flex-1 flex flex-row lg:flex-col overflow-x-auto lg:overflow-y-auto p-3 space-x-2 lg:space-x-0 lg:space-y-2 no-scrollbar snap-x lg:snap-none snap-mandatory"
+        className="ml-1 md:ml-0 flex-1 flex flex-row lg:flex-col overflow-x-auto lg:overflow-y-auto p-1 space-x-1 lg:space-x-0 lg:space-y-2 no-scrollbar snap-x lg:snap-none snap-mandatory"
       >
         {spots.map((spot) => {
           const isHovered = activeId === spot.id;

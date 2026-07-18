@@ -207,7 +207,7 @@ export default function MapTab({ searchParams, nearbyRequested }: MapTabProps) {
       id="map-tab"
       role="tabpanel"
       aria-labelledby="nav-btn-map"
-      className="flex flex-col lg:flex-row gap-4 pb-8 md:pb-12 animate-fade-in min-h-[500px]"
+      className="flex flex-col lg:flex-row gap-0 pb-1 animate-fade-in min-h-[500px]"
       style={{ height: `calc(100vh - ${MAP_VIEWPORT_OFFSET_PX.DESKTOP}px)` }}
     >
       <h1 className="visually-hidden">Spot Map</h1>
