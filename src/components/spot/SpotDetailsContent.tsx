@@ -138,15 +138,17 @@ export function SpotDetailsContent({
           >
             {spot.name}
           </h2>
-          <p className="mt-1 flex items-center text-xs text-slate-300">
-            <MapPin size={12} className="mr-1 shrink-0" aria-hidden="true" />
-            {spot.city}
-          </p>
+          <div className="flex">
+            <p className="mt-1 flex items-center text-xs text-slate-300">
+              <MapPin size={12} className="mr-1 shrink-0" aria-hidden="true" />
+              {`${spot.city} / ${spot.country}`}
+            </p>
+          </div>
         </div>
       </div>
       <div className="flex-1 overflow-y-auto pt-6 md:pt-0 md:px-8 no-scrollbar flex flex-col justify-between bg-surface">
         <div>
-          <div className="flex items-center justify-between border-b border-outline-variant pb-4 mb-5 gap-2">
+          <div className="flex items-center justify-between border-b border-outline-variant pb-4 mb-5 gap-2 px-2 md:px-0">
             {distanceInfo.kind === "distance" ? (
               <span className="inline-flex h-9 items-center font-mono text-xs font-semibold tracking-wider text-secondary uppercase">
                 {distanceInfo.label}
@@ -207,14 +209,25 @@ export function SpotDetailsContent({
               <button
                 type="button"
                 onClick={handleShare}
-                aria-label="Copy link to this spot"
-                className="flex h-9 w-9 items-center justify-center rounded-full border border-outline text-on-surface hover:bg-surface-container transition-all"
+                aria-pressed={isSaved}
+                aria-label={
+                  isSaved ? `Unsave ${spot.name}` : `Save ${spot.name}`
+                }
+                className={cn(
+                  "flex h-9 items-center space-x-1.5 rounded-full px-4 text-xs font-semibold tracking-wider uppercase transition-all border",
+                  "border-outline text-on-surface hover:bg-surface-container",
+                )}
               >
-                <Share2 size={14} aria-hidden="true" />
+                <Share2
+                  size={14}
+                  aria-hidden="true"
+                  className={isSaved ? "fill-surface" : ""}
+                />
+                <span className="text-[10px]">Share</span>
               </button>
             </div>
           </div>
-          <div className="mb-6 rounded-xl bg-surface-container-low border border-outline-variant p-4 md:p-6">
+          <div className="-mx-1 md:mx-0 mb-4 rounded-xl bg-surface-container-low border border-outline-variant p-4 md:p-6">
             <div className="mb-2 flex items-center justify-between gap-3">
               <span className="block font-mono text-[10px] tracking-wider text-secondary uppercase">
                 Weather status
@@ -328,16 +341,16 @@ export function SpotDetailsContent({
           </div>
         </div>
 
-        <div className="mb-2 rounded-xl bg-surface-container-low border border-outline-variant p-4 md:p-6">
+        {/* <div className="mb-2 rounded-xl bg-surface-container-low border border-outline-variant p-4 md:p-6">
           <span className="block font-mono text-[10px] tracking-wider text-secondary uppercase mb-2">
             Location address
           </span>
           <p className="text-xs text-on-surface-variant font-medium leading-relaxed">
             {spot.address}
           </p>
-        </div>
+        </div> */}
 
-        <div className="py-4 flex flex-col sm:flex-row gap-2 sm:gap-x-3">
+        <div className="p-4 md:p-0 flex flex-col sm:flex-row gap-2 sm:gap-x-3">
           <a
             href={directionsUrl}
             target="_blank"
