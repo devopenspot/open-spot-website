@@ -6,12 +6,8 @@ import { UserProvider } from "@/lib/user-context";
 import { DEV_USER_ID, type User } from "@/lib/user";
 import type { SavedSpot } from "@/types/saved-spot";
 
-const toggleSavedActionMock = vi.fn();
+const fetchMock = vi.fn();
 const showToastMock = vi.fn();
-
-vi.mock("@/app/actions/saved-spots", () => ({
-  toggleSavedAction: (...args: unknown[]) => toggleSavedActionMock(...args),
-}));
 
 vi.mock("./useToast", () => ({
   showToast: (...args: unknown[]) => showToastMock(...args),
@@ -69,16 +65,34 @@ function trackLocalStorage() {
   return { reads, writes, removals, getItem, setItem, removeItem };
 }
 
+function okJson(body: unknown = {}): Response {
+  return new Response(JSON.stringify(body), {
+    status: 200,
+    headers: { "Content-Type": "application/json" },
+  });
+}
+
+function noContent(): Response {
+  return new Response(null, { status: 204 });
+}
+
 beforeEach(() => {
   __resetUserStoresForTests();
   window.localStorage.clear();
-  toggleSavedActionMock.mockReset();
+  fetchMock.mockReset();
   showToastMock.mockReset();
-  toggleSavedActionMock.mockResolvedValue(true);
+  // Default: every fetch succeeds (save → 200, unsave → 204)
+  fetchMock.mockImplementation(async (input: RequestInfo | URL) => {
+    const url = typeof input === "string" ? input : input.toString();
+    if (url.endsWith("/api/saved-spots")) return okJson({ ok: true });
+    return noContent();
+  });
+  vi.stubGlobal("fetch", fetchMock);
 });
 
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
 });
 
 describe("useSavedSpots — server-only persistence", () => {
@@ -104,8 +118,6 @@ describe("useSavedSpots — server-only persistence", () => {
       await result.current.toggle("spot-c");
     });
 
-    // The hook may legitimately *delete* legacy keys on first mount, but it
-    // must never read from or write to localStorage for current state.
     expect(tracker.writes).toEqual([]);
     expect(tracker.reads.filter((k) => k.startsWith("openspot_saved_ids_"))).toEqual([]);
 
@@ -114,7 +126,7 @@ describe("useSavedSpots — server-only persistence", () => {
     tracker.removeItem.mockRestore();
   });
 
-  it("toggle optimistically adds a spot and calls toggleSavedAction once", async () => {
+  it("toggle optimistically adds a spot and POSTs to /api/saved-spots", async () => {
     const { result } = renderWithProviders([]);
 
     await act(async () => {
@@ -123,11 +135,14 @@ describe("useSavedSpots — server-only persistence", () => {
 
     expect(result.current.isSaved("spot-x")).toBe(true);
     expect(result.current.count).toBe(1);
-    expect(toggleSavedActionMock).toHaveBeenCalledTimes(1);
-    expect(toggleSavedActionMock).toHaveBeenCalledWith("spot-x");
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe("/api/saved-spots");
+    expect(init.method).toBe("POST");
+    expect(JSON.parse(init.body as string)).toEqual({ spotId: "spot-x" });
   });
 
-  it("toggle optimistically removes a spot and calls toggleSavedAction once", async () => {
+  it("toggle optimistically removes a spot and DELETEs /api/saved-spots/<id>", async () => {
     const { result } = renderWithProviders(sample);
 
     await act(async () => {
@@ -136,12 +151,17 @@ describe("useSavedSpots — server-only persistence", () => {
 
     expect(result.current.isSaved("spot-a")).toBe(false);
     expect(result.current.count).toBe(1);
-    expect(toggleSavedActionMock).toHaveBeenCalledTimes(1);
-    expect(toggleSavedActionMock).toHaveBeenCalledWith("spot-a");
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe("/api/saved-spots/spot-a");
+    expect(init.method).toBe("DELETE");
   });
 
   it("reverts the optimistic change and shows a toast when the server throws", async () => {
-    toggleSavedActionMock.mockRejectedValueOnce(new Error("Network down"));
+    fetchMock.mockImplementationOnce(
+      async () =>
+        new Response(JSON.stringify({ error: "Network down" }), { status: 500 }),
+    );
     const { result } = renderWithProviders(sample);
 
     await act(async () => {
@@ -266,7 +286,10 @@ describe("useSavedSpots — save/unsave toasts", () => {
     });
 
     expect(result.current.isSaved("spot-a")).toBe(true);
-    expect(toggleSavedActionMock).toHaveBeenCalledTimes(2);
-    expect(toggleSavedActionMock).toHaveBeenNthCalledWith(2, "spot-a");
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    const secondCall = fetchMock.mock.calls[1] as [string, RequestInit];
+    expect(secondCall[0]).toBe("/api/saved-spots");
+    expect(secondCall[1].method).toBe("POST");
+    expect(JSON.parse(secondCall[1].body as string)).toEqual({ spotId: "spot-a" });
   });
 });

@@ -4,11 +4,9 @@ import { connection } from 'next/server';
 import { Inter, Archivo_Narrow } from 'next/font/google';
 import { cn } from '@/lib/cn';
 import { env } from '@/lib/env';
-import {
-  getSavedSpotsRepositoryAsync,
-  getPresetImagesRepositoryAsync,
-} from '@/lib/repositories';
+import { getPresetImagesRepositoryAsync } from '@/lib/repositories';
 import { listSpots } from '@/lib/services/spots';
+import { listSavedSpotsForUser } from '@/lib/services/saved-spots';
 import { getWeatherForAllSpots } from '@/lib/weather/weather-bundle';
 import { getServerUserFromCookies } from '@/lib/auth';
 import { getRegionsForClient } from '@/lib/data/regions';
@@ -110,7 +108,7 @@ async function RootDataProviders({ children }: { children: React.ReactNode }) {
   const initialSpots = spotsList.items;
   const [initialWeather, savedSpotsResult, presetImages] = await Promise.all([
     getWeatherForAllSpots(initialSpots),
-    (await getSavedSpotsRepositoryAsync()).list(initialUser.id, { limit: 200 }),
+    listSavedSpotsForUser(initialUser.id, { limit: 200 }),
     presetImagesRepo.list(),
   ]);
   const initialPresetImages = presetImages.map((p) => ({

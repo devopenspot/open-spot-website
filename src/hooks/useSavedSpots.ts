@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useSyncExternalStore } from "react";
 import { showToast } from "./useToast";
-import { toggleSavedAction } from "@/app/actions/saved-spots";
 import type { SavedSpot } from "@/types/saved-spot";
 import { useInitialSavedSpots } from "@/lib/saved-spots-context";
 
@@ -158,7 +157,21 @@ export function useSavedSpots(
     notify(userId);
 
     try {
-      await toggleSavedAction(id);
+      const res = nowSaved
+        ? await fetch("/api/saved-spots", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ spotId: id }),
+          })
+        : await fetch(`/api/saved-spots/${encodeURIComponent(id)}`, {
+            method: "DELETE",
+          });
+      if (!res.ok && res.status !== 204) {
+        const body = (await res.json().catch(() => null)) as
+          | { error?: string }
+          | null;
+        throw new Error(body?.error ?? `HTTP ${res.status}`);
+      }
       try {
         store.channel?.postMessage({ type: "toggle", spotId: id, isSaved: nowSaved });
       } catch {
