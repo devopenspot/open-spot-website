@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { BrandLogo } from "./BrandLogo";
+// import { BrandLogo } from "./BrandLogo";
 import { NavList } from "./NavList";
 import { MobileDrawerTrigger } from "./MobileDrawerTrigger";
 import { SearchTrigger } from "./SearchTrigger";
@@ -29,7 +29,8 @@ export function Header() {
       className="sticky top-0 z-40 w-full border-b border-outline-variant bg-surface p-4"
     >
       <div className="mx-auto flex max-w-7xl items-center justify-between">
-        <BrandLogo />
+        {/* <BrandLogo /> */}
+        <span aria-hidden="true">{"OS"}</span>
 
         <NavList
           variant="desktop"

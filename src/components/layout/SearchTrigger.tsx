@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { Search } from 'lucide-react';
-import { cn } from '@/lib/cn';
+import { Search } from "lucide-react";
+import { cn } from "@/lib/cn";
 
 interface SearchTriggerProps {
   onClick: () => void;
@@ -17,12 +17,12 @@ export function SearchTrigger({ onClick, className }: SearchTriggerProps) {
       aria-label="Open search"
       aria-keyshortcuts="Control+K Meta+K"
       className={cn(
-        'flex items-center space-x-2 rounded-full border border-outline-variant bg-surface px-4 py-1.5 text-xs text-secondary transition-all hover:border-outline hover:text-on-surface md:text-sm',
+        "flex items-center space-x-2 rounded-full border border-outline-variant bg-surface px-4 py-1.5 text-xs text-secondary transition-all hover:border-outline hover:text-on-surface md:text-sm",
         className,
       )}
     >
       <Search size={14} aria-hidden="true" />
-      <span className="hidden sm:inline">Search Spots...</span>
+      <span className="inline truncate">Search Spots</span>
       <kbd
         aria-hidden="true"
         className="hidden rounded bg-surface-container px-1.5 py-0.5 text-[10px] font-mono md:inline"
