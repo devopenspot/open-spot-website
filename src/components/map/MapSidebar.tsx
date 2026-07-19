@@ -3,7 +3,6 @@
 import Image from "next/image";
 import { memo, useCallback, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
-import { X } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { useSpotsStore } from "@/stores/spots-store";
 import { useMapStore } from "@/stores/map-store";
