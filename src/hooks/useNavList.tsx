@@ -4,7 +4,7 @@ import { useCallback, useMemo, useRef, type KeyboardEvent } from "react";
 import { usePathname } from "next/navigation";
 import { NAV_ITEMS } from "@/lib/nav";
 import { useUser } from "@/hooks/useUser";
-import type { NavVariant } from "@/components/layout/NavLink";
+import type { NavVariant } from "@/components/shell/NavLink";
 
 interface UseNavListOptions {
   variant: NavVariant;

@@ -1,14 +1,14 @@
-import { UserAvatar } from "@/components/ui"
-import { requireUserOrRedirect } from "@/lib/auth/server"
-import { SignOutButton } from "@/components/layout/SignOutButton"
+import { UserAvatar } from "@/components/ui";
+import { requireUserOrRedirect } from "@/lib/auth/server";
+import { SignOutButton } from "@/components/shell/SignOutButton";
 
 export const metadata = {
   title: "Account",
   description: "Your Open Spot profile and sign-out controls.",
-}
+};
 
 export default async function AccountPage() {
-  const user = await requireUserOrRedirect("/account")
+  const user = await requireUserOrRedirect("/account");
   return (
     <section
       id="account-tab"
@@ -56,5 +56,5 @@ export default async function AccountPage() {
         <SignOutButton className="w-full rounded-lg border border-outline px-5 py-3 text-xs font-bold tracking-widest uppercase hover:bg-surface-container transition-all" />
       </div>
     </section>
-  )
+  );
 }
