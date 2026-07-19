@@ -19,12 +19,14 @@ import { useMapActions } from "./use-map-actions";
 import type { Spot } from "@/lib/types";
 import { getSpotDistanceInfo, haversineMiles } from "@/lib/spots/geo";
 import { TypeBadges } from "@/components/spot/TypeBadges";
+import { useUIStore } from "@/stores/ui-store";
 
 interface MapSidebarProps {
   spots: readonly Spot[];
 }
 
 function MapSidebarBase({ spots }: MapSidebarProps) {
+  const openSearch = useUIStore((s) => s.openSearch);
   const fullSpots = useSpotsStore((s) => s.spots);
   const activeId = useMapStore((s) => s.activePinId);
   const mapMode = useMapStore((s) => s.mapMode);
@@ -69,6 +71,11 @@ function MapSidebarBase({ spots }: MapSidebarProps) {
     [selectMode],
   );
 
+  const handleFilteredClick = useCallback(() => {
+    selectMode("filtered");
+    openSearch();
+  }, [selectMode, openSearch]);
+
   const distanceOrigin = showChips ? userLocation : null;
 
   const sortedSpots = useMemo(() => {
@@ -98,7 +105,7 @@ function MapSidebarBase({ spots }: MapSidebarProps) {
             type="button"
             role="radio"
             aria-checked={mapMode === "filtered"}
-            onClick={() => handleModeChange("filtered")}
+            onClick={handleFilteredClick}
             className={cn(
               "flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 text-[9px] font-mono font-bold tracking-wider uppercase transition-all",
               mapMode === "filtered"
