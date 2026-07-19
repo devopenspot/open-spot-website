@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { memo, useCallback } from "react";
+import { memo, useCallback, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { MapPin, SlidersHorizontal, X } from "lucide-react";
 import { cn } from "@/lib/cn";
@@ -17,7 +17,7 @@ import {
 } from "@/stores/user-location-store";
 import { useMapActions } from "./use-map-actions";
 import type { Spot } from "@/lib/types";
-import { getSpotDistanceInfo } from "@/lib/spots/geo";
+import { getSpotDistanceInfo, haversineMiles } from "@/lib/spots/geo";
 import { TypeBadges } from "@/components/spot/TypeBadges";
 
 interface MapSidebarProps {
@@ -70,6 +70,16 @@ function MapSidebarBase({ spots }: MapSidebarProps) {
   );
 
   const distanceOrigin = showChips ? userLocation : null;
+
+  const sortedSpots = useMemo(() => {
+    if (distanceOrigin === null) return spots;
+    const origin = distanceOrigin;
+    return [...spots].sort(
+      (a, b) =>
+        haversineMiles(origin.lat, origin.lon, a.location.lat, a.location.lon) -
+        haversineMiles(origin.lat, origin.lon, b.location.lat, b.location.lon),
+    );
+  }, [spots, distanceOrigin]);
 
   return (
     <aside
@@ -189,7 +199,7 @@ function MapSidebarBase({ spots }: MapSidebarProps) {
         className="ml-1 md:ml-0 flex-1 flex flex-row lg:flex-col overflow-x-auto lg:overflow-y-auto space-x-1 lg:space-x-0 lg:space-y-2 no-scrollbar snap-x lg:snap-none snap-mandatory"
       >
         <div className="hidden md:flex flex-col">
-          {spots.map((spot) => (
+          {sortedSpots.map((spot) => (
             <SidebarSpotItem
               key={spot.id}
               spot={spot}
