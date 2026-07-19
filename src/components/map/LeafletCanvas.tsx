@@ -418,7 +418,7 @@ export function LeafletCanvas({
 }: LeafletCanvasProps) {
   const activeId = useMapStore((s) => s.activePinId);
   const toggleActivePin = useMapStore((s) => s.toggleActivePin);
-  const flyToSpot = useMapStore((s) => s.flyToSpot);
+  //   const flyToSpot = useMapStore((s) => s.flyToSpot);
   const { location: userLocation, radiusMiles } = useUserLocation();
   const user = useUser();
   const { savedIds } = useSavedSpots(user?.id ?? null);
@@ -465,7 +465,7 @@ export function LeafletCanvas({
     if (activeId === spot.id) {
       toggleActivePin(spot.id);
     } else {
-      flyToSpot(spot);
+      //   flyToSpot(spot);
       toggleActivePin(spot.id);
     }
   };

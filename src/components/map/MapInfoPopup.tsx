@@ -75,7 +75,7 @@ function MapInfoPopupBase() {
       role="dialog"
       aria-labelledby="map-info-popup-title"
       tabIndex={-1}
-      className="fixed top-16 md:top-4 md:absolute left-2 right-2 z-[1000] md:left-auto md:right-4 w-auto md:w-96 bg-surface/95 backdrop-blur-md border border-outline-variant shadow-lg p-4 animate-slide-up outline-none space-y-3"
+      className="fixed bottom-2 md:top-4 md:absolute left-2 right-2 z-[1000] md:left-auto md:right-4 w-auto md:w-96 bg-surface/95 backdrop-blur-md border border-outline-variant shadow-lg p-4 animate-slide-up outline-none space-y-3"
     >
       <div className="flex items-start gap-3">
         <div className="relative h-16 w-16 bg-black overflow-hidden shrink-0">

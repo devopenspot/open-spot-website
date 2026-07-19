@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+// import Image from "next/image";
 import { memo, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { MapPin, SlidersHorizontal, X } from "lucide-react";
@@ -8,8 +8,8 @@ import { cn } from "@/lib/cn";
 import { useSpotsStore } from "@/stores/spots-store";
 import { useMapStore } from "@/stores/map-store";
 import { useUserLocation } from "@/hooks/useUserLocation";
-import { useSavedSpots } from "@/hooks/useSavedSpots";
-import { useUser } from "@/hooks/useUser";
+// import { useSavedSpots } from "@/hooks/useSavedSpots";
+// import { useUser } from "@/hooks/useUser";
 import { useMapFilter } from "@/hooks/useMapFilter";
 import {
   NEARBY_RADIUS_OPTIONS,
@@ -17,8 +17,8 @@ import {
 } from "@/stores/user-location-store";
 import { useMapActions } from "./use-map-actions";
 import type { Spot } from "@/lib/types";
-import { getSpotDistanceInfo } from "@/lib/spots/geo";
-import { TypeBadges } from "@/components/spot/TypeBadges";
+// import { getSpotDistanceInfo } from "@/lib/spots/geo";
+// import { TypeBadges } from "@/components/spot/TypeBadges";
 
 interface MapSidebarProps {
   spots: readonly Spot[];
@@ -26,12 +26,12 @@ interface MapSidebarProps {
 
 function MapSidebarBase({ spots }: MapSidebarProps) {
   const fullSpots = useSpotsStore((s) => s.spots);
-  const activeId = useMapStore((s) => s.activePinId);
+  //   const activeId = useMapStore((s) => s.activePinId);
   const mapMode = useMapStore((s) => s.mapMode);
-  const setActivePin = useMapStore((s) => s.setActivePin);
-  const flyToSpot = useMapStore((s) => s.flyToSpot);
-  const user = useUser();
-  const { savedIds } = useSavedSpots(user?.id ?? null);
+  //   const setActivePin = useMapStore((s) => s.setActivePin);
+  //   const flyToSpot = useMapStore((s) => s.flyToSpot);
+  //   const user = useUser();
+  //   const { savedIds } = useSavedSpots(user?.id ?? null);
   const {
     location: userLocation,
     radiusMiles,
@@ -54,13 +54,13 @@ function MapSidebarBase({ spots }: MapSidebarProps) {
     [setRadiusMiles],
   );
 
-  const handleSelect = useCallback(
-    (spot: Spot) => {
-      setActivePin(spot.id);
-      flyToSpot(spot);
-    },
-    [setActivePin, flyToSpot],
-  );
+  //   const handleSelect = useCallback(
+  //     (spot: Spot) => {
+  //       setActivePin(spot.id);
+  //       flyToSpot(spot);
+  //     },
+  //     [setActivePin, flyToSpot],
+  //   );
 
   const handleModeChange = useCallback(
     (next: "nearby" | "filtered") => {
@@ -69,7 +69,7 @@ function MapSidebarBase({ spots }: MapSidebarProps) {
     [selectMode],
   );
 
-  const distanceOrigin = showChips ? userLocation : null;
+  //   const distanceOrigin = showChips ? userLocation : null;
 
   return (
     <aside
@@ -115,7 +115,7 @@ function MapSidebarBase({ spots }: MapSidebarProps) {
             <span>Nearby</span>
           </button>
         </div>
-        <div className="flex items-center justify-between mb-3">
+        {/* <div className="flex items-center justify-between mb-3">
           <span className="font-mono text-[10px] font-bold tracking-widest text-secondary uppercase">
             Results
           </span>
@@ -125,7 +125,7 @@ function MapSidebarBase({ spots }: MapSidebarProps) {
           >
             {spots.length} spots active
           </span>
-        </div>
+        </div> */}
         {hasFilter && filterLabel && !showRadiusChips && (
           <div id="map-active-filter" className="flex items-center gap-2">
             <span className="font-mono text-[9px] font-bold tracking-widest uppercase text-secondary">
@@ -186,9 +186,9 @@ function MapSidebarBase({ spots }: MapSidebarProps) {
       <div
         id="sidebar-spots-list"
         aria-label="Filtered spots"
-        className="ml-1 md:ml-0 flex-1 flex flex-row lg:flex-col overflow-x-auto lg:overflow-y-auto p-1 space-x-1 lg:space-x-0 lg:space-y-2 no-scrollbar snap-x lg:snap-none snap-mandatory"
+        className="ml-1 md:ml-0 flex-1 flex flex-row lg:flex-col overflow-x-auto lg:overflow-y-auto space-x-1 lg:space-x-0 lg:space-y-2 no-scrollbar snap-x lg:snap-none snap-mandatory"
       >
-        {spots.map((spot) => (
+        {/* {spots.map((spot) => (
           <SidebarSpotItem
             key={spot.id}
             spot={spot}
@@ -197,7 +197,7 @@ function MapSidebarBase({ spots }: MapSidebarProps) {
             distanceOrigin={distanceOrigin}
             onSelect={handleSelect}
           />
-        ))}
+        ))} */}
         {spots.length === 0 && (
           <div className="p-6 text-center text-xs text-secondary font-mono space-y-3">
             {hasFilter && filterLabel ? (
@@ -225,82 +225,82 @@ function MapSidebarBase({ spots }: MapSidebarProps) {
   );
 }
 
-interface SidebarSpotItemProps {
-  spot: Spot;
-  isActive: boolean;
-  isSaved: boolean;
-  distanceOrigin: { lat: number; lon: number } | null;
-  onSelect: (spot: Spot) => void;
-}
+// interface SidebarSpotItemProps {
+//   spot: Spot;
+//   isActive: boolean;
+//   isSaved: boolean;
+//   distanceOrigin: { lat: number; lon: number } | null;
+//   onSelect: (spot: Spot) => void;
+// }
 
-const SidebarSpotItem = memo(function SidebarSpotItem({
-  spot,
-  isActive,
-  isSaved,
-  distanceOrigin,
-  onSelect,
-}: SidebarSpotItemProps) {
-  const distanceInfo = getSpotDistanceInfo(spot, distanceOrigin);
-  const distanceLabel =
-    distanceInfo.kind === "distance" ? distanceInfo.label : "—";
+// const SidebarSpotItem = memo(function SidebarSpotItem({
+//   spot,
+//   isActive,
+//   isSaved,
+//   distanceOrigin,
+//   onSelect,
+// }: SidebarSpotItemProps) {
+//   const distanceInfo = getSpotDistanceInfo(spot, distanceOrigin);
+//   const distanceLabel =
+//     distanceInfo.kind === "distance" ? distanceInfo.label : "—";
 
-  const handleClick = useCallback(() => onSelect(spot), [onSelect, spot]);
+//   const handleClick = useCallback(() => onSelect(spot), [onSelect, spot]);
 
-  return (
-    <button
-      id={`sidebar-spot-item-${spot.id}`}
-      type="button"
-      onClick={handleClick}
-      className={`shrink-0 lg:shrink w-48 lg:w-full snap-start p-3 rounded-xl border text-left transition-all flex space-x-3 items-center ${
-        isActive
-          ? "border-primary bg-surface-container-high shadow-sm"
-          : "border-outline-variant/60 bg-surface-container-low hover:border-outline hover:bg-surface-container"
-      }`}
-    >
-      <span className="relative h-12 w-12 rounded-lg bg-black overflow-hidden shrink-0">
-        <Image
-          src={spot.image}
-          alt=""
-          fill
-          sizes="48px"
-          className="object-cover"
-          referrerPolicy="no-referrer"
-          unoptimized
-        />
-      </span>
+//   return (
+//     <button
+//       id={`sidebar-spot-item-${spot.id}`}
+//       type="button"
+//       onClick={handleClick}
+//       className={`shrink-0 lg:shrink w-48 lg:w-full snap-start p-3 rounded-xl border text-left transition-all flex space-x-3 items-center ${
+//         isActive
+//           ? "border-primary bg-surface-container-high shadow-sm"
+//           : "border-outline-variant/60 bg-surface-container-low hover:border-outline hover:bg-surface-container"
+//       }`}
+//     >
+//       <span className="relative h-12 w-12 rounded-lg bg-black overflow-hidden shrink-0">
+//         <Image
+//           src={spot.image}
+//           alt=""
+//           fill
+//           sizes="48px"
+//           className="object-cover"
+//           referrerPolicy="no-referrer"
+//           unoptimized
+//         />
+//       </span>
 
-      <span className="flex-1 min-w-0">
-        <span className="flex flex-col md:flex-row items-start justify-between">
-          {spot.types.length > 0 ? (
-            <TypeBadges
-              types={spot.types}
-              variant="surface"
-              className="text-[8px]"
-            />
-          ) : null}
-          <span className="text-[8px] font-mono font-medium text-secondary">
-            {distanceLabel}
-          </span>
-        </span>
-        <span className="block font-display text-xs font-bold uppercase tracking-wide truncate text-on-surface">
-          {spot.name}
-        </span>
-        <span className="flex items-center justify-between mt-1">
-          <span className="text-[9px] text-secondary">{spot.city}</span>
-          <span className="flex items-center space-x-1 truncate">
-            <span
-              aria-hidden="true"
-              className="h-1 w-1 rounded-full bg-primary"
-            />
-            <span className="text-[8px] font-mono text-secondary">
-              {spot.sports.join("|")}
-            </span>
-          </span>
-        </span>
-        {isSaved && <span className="visually-hidden">Saved spot</span>}
-      </span>
-    </button>
-  );
-});
+//       <span className="flex-1 min-w-0">
+//         <span className="flex flex-col md:flex-row items-start justify-between">
+//           {spot.types.length > 0 ? (
+//             <TypeBadges
+//               types={spot.types}
+//               variant="surface"
+//               className="text-[8px]"
+//             />
+//           ) : null}
+//           <span className="text-[8px] font-mono font-medium text-secondary">
+//             {distanceLabel}
+//           </span>
+//         </span>
+//         <span className="block font-display text-xs font-bold uppercase tracking-wide truncate text-on-surface">
+//           {spot.name}
+//         </span>
+//         <span className="flex items-center justify-between mt-1">
+//           <span className="text-[9px] text-secondary">{spot.city}</span>
+//           <span className="flex items-center space-x-1 truncate">
+//             <span
+//               aria-hidden="true"
+//               className="h-1 w-1 rounded-full bg-primary"
+//             />
+//             <span className="text-[8px] font-mono text-secondary">
+//               {spot.sports.join("|")}
+//             </span>
+//           </span>
+//         </span>
+//         {isSaved && <span className="visually-hidden">Saved spot</span>}
+//       </span>
+//     </button>
+//   );
+// });
 
 export const MapSidebar = memo(MapSidebarBase);
