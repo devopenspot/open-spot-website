@@ -155,6 +155,7 @@ export function SearchOverlay({
               id={inputId}
               type="search"
               role="searchbox"
+              disabled
               autoComplete="off"
               placeholder="Search spots by name, city, or style..."
               value={query}
