@@ -1,10 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   Loader2,
+  Map,
   MapPin,
   Radar,
   Heart,
@@ -19,6 +20,8 @@ import { showToast } from "@/hooks/useToast";
 import { useUserLocation } from "@/hooks/useUserLocation";
 import { cn } from "@/lib/cn";
 import { getSpotDistanceInfo } from "@/lib/spots/geo";
+import { buildBackToMapUrl } from "@/lib/spots/back-to-map";
+import { useSpotsStore } from "@/stores/spots-store";
 import type { ForecastSlot, Spot, SpotForecast } from "@/lib/types";
 import type { SpotWeather } from "@/lib/weather/weather-cached";
 
@@ -53,6 +56,8 @@ export function SpotDetailsContent({
 }: SpotDetailsContentProps) {
   const titleId = useId();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const regions = useSpotsStore((s) => s.regions);
   const { status: locationStatus, location, request } = useUserLocation();
   const [burstKey, setBurstKey] = useState(0);
   const wasSaved = useRef(isSaved);
@@ -71,6 +76,10 @@ export function SpotDetailsContent({
     spot.name + " " + spot.address,
   )}`;
   const wazeUrl = `https://waze.com/ul?ll=${spot.location.lat},${spot.location.lon}&navigate=yes`;
+  const viewOnMapUrl = useMemo(
+    () => buildBackToMapUrl(searchParams, spot, regions),
+    [searchParams, spot, regions],
+  );
 
   const handleRequestLocation = useCallback(async () => {
     if (isRequestingLocation) return;
@@ -378,10 +387,12 @@ export function SpotDetailsContent({
           </a>
           <button
             type="button"
-            onClick={() => router.back()}
-            className="flex-1 flex min-h-10 items-center justify-center rounded-lg border border-outline text-xs font-bold tracking-widest uppercase hover:bg-surface-container transition-all"
+            onClick={() => router.push(viewOnMapUrl)}
+            aria-label={`View ${spot.name} on the map`}
+            className="flex-1 flex min-h-10 items-center justify-center space-x-1.5 rounded-lg border border-outline text-xs font-bold tracking-widest uppercase hover:bg-surface-container transition-all"
           >
-            Back
+            <Map size={12} className="mr-1" aria-hidden="true" />
+            <span>View on map</span>
           </button>
         </div>
       </div>
