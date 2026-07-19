@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useId } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
@@ -54,6 +54,14 @@ export function SpotDetailsContent({
   const titleId = useId();
   const router = useRouter();
   const { status: locationStatus, location, request } = useUserLocation();
+  const [burstKey, setBurstKey] = useState(0);
+  const wasSaved = useRef(isSaved);
+  useEffect(() => {
+    if (!wasSaved.current && isSaved) {
+      setBurstKey((k) => k + 1);
+    }
+    wasSaved.current = isSaved;
+  }, [isSaved]);
   const distanceInfo = getSpotDistanceInfo(
     spot,
     location ? { lat: location.lat, lon: location.lon } : null,
@@ -172,7 +180,7 @@ export function SpotDetailsContent({
                   <Radar
                     size={12}
                     aria-hidden="true"
-                    className="transition-transform group-hover:scale-110"
+                    className="animate-radar-sweep transition-transform group-hover:scale-110"
                   />
                 )}
                 <span>
@@ -196,11 +204,16 @@ export function SpotDetailsContent({
                     : "border-outline text-on-surface hover:bg-surface-container",
                 )}
               >
-                <Heart
-                  size={14}
-                  aria-hidden="true"
-                  className={isSaved ? "fill-surface" : ""}
-                />
+                <span key={burstKey} aria-hidden="true" className="inline-flex">
+                  <Heart
+                    size={14}
+                    aria-hidden="true"
+                    className={cn(
+                      isSaved ? "fill-surface" : "",
+                      "animate-heart-burst",
+                    )}
+                  />
+                </span>
                 <span className="text-[10px]">
                   {isSaved ? "Saved" : "Save spot"}
                 </span>
@@ -209,20 +222,13 @@ export function SpotDetailsContent({
               <button
                 type="button"
                 onClick={handleShare}
-                aria-pressed={isSaved}
-                aria-label={
-                  isSaved ? `Unsave ${spot.name}` : `Save ${spot.name}`
-                }
+                aria-label={`Share ${spot.name}`}
                 className={cn(
                   "flex h-9 items-center space-x-1.5 rounded-full px-4 text-xs font-semibold tracking-wider uppercase transition-all border",
                   "border-outline text-on-surface hover:bg-surface-container",
                 )}
               >
-                <Share2
-                  size={14}
-                  aria-hidden="true"
-                  className={isSaved ? "fill-surface" : ""}
-                />
+                <Share2 size={14} aria-hidden="true" />
                 <span className="text-[10px]">Share</span>
               </button>
             </div>
@@ -239,8 +245,12 @@ export function SpotDetailsContent({
                 aria-label="View live precipitation on zoom.earth (opens in a new tab)"
                 className="inline-flex h-7 items-center gap-1.5 border border-outline px-2.5 font-mono text-[10px] font-bold tracking-widest uppercase text-on-surface hover:bg-surface-container transition-all"
               >
-                <span>Live</span>
-                <Radio size={11} aria-hidden="true" />
+                <span>Live Weather</span>
+                <Radio
+                  size={11}
+                  aria-hidden="true"
+                  className="animate-radar-pulse"
+                />
               </a>
             </div>
             <WeatherAccuracyNote variant="block" className="mb-3" />
@@ -341,14 +351,11 @@ export function SpotDetailsContent({
           </div>
         </div>
 
-        {/* <div className="mb-2 rounded-xl bg-surface-container-low border border-outline-variant p-4 md:p-6">
-          <span className="block font-mono text-[10px] tracking-wider text-secondary uppercase mb-2">
-            Location address
+        <div className="py-4">
+          <span className="block font-mono text-[10px] tracking-wider text-secondary uppercase">
+            Address {spot.address}
           </span>
-          <p className="text-xs text-on-surface-variant font-medium leading-relaxed">
-            {spot.address}
-          </p>
-        </div> */}
+        </div>
 
         <div className="p-4 md:p-0 flex flex-col sm:flex-row gap-2 sm:gap-x-3">
           <a
