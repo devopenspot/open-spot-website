@@ -12,7 +12,7 @@ import { MAP_VIEWPORT_OFFSET_PX } from "@/lib/constants";
 import { haversineMiles, milesToMeters } from "@/lib/spots/geo";
 import { MapSidebar } from "./MapSidebar";
 import { MapInfoPopup } from "./MapInfoPopup";
-import { MapHeaderBar } from "./MapHeaderBar";
+// import { MapHeaderBar } from "./MapHeaderBar";
 
 const LeafletCanvas = dynamic(
   () => import("./LeafletCanvas").then((m) => m.LeafletCanvas),
@@ -81,9 +81,7 @@ export default function MapTab({ searchParams, nearbyRequested }: MapTabProps) {
   }, [orderedSpots, userLatLon, radiusMiles, nearYou]);
 
   useEffect(() => {
-    useMapStore
-      .getState()
-      .setMapMode(nearbyRequested ? "nearby" : "filtered");
+    useMapStore.getState().setMapMode(nearbyRequested ? "nearby" : "filtered");
   }, [nearbyRequested]);
 
   useEffect(() => {
@@ -147,7 +145,7 @@ export default function MapTab({ searchParams, nearbyRequested }: MapTabProps) {
           id="map-canvas-container"
           className="flex-1 border border-outline-variant rounded-2xl bg-surface-container-low overflow-hidden relative flex flex-col"
         >
-          <MapHeaderBar />
+          {/* <MapHeaderBar /> */}
 
           <LeafletCanvas
             spots={sidebarSpots}

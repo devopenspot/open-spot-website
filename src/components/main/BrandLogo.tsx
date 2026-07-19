@@ -16,7 +16,7 @@ export function BrandLogo({ onClick, size = "md", className }: BrandLogoProps) {
           "font-display font-bold tracking-widest text-on-surface uppercase",
         )}
       >
-        OPEN SPOT
+        OS
       </span>
       <span
         aria-hidden="true"

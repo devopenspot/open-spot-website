@@ -8,7 +8,7 @@ import { memo, useCallback, useMemo, useRef } from "react";
 import { showToast } from "@/hooks/useToast";
 import { cn } from "@/lib/cn";
 import { useSpotsStore } from "@/stores/spots-store";
-import { useWeather } from "@/components/layout/WeatherContext";
+import { useWeather } from "@/components/shell/WeatherContext";
 import { useSavedSpots } from "@/hooks/useSavedSpots";
 import { useUser } from "@/hooks/useUser";
 import { useMapStore } from "@/stores/map-store";
@@ -28,16 +28,14 @@ function MapInfoPopupBase() {
   const { clearActivePin, openSpot } = useMapActions();
 
   const spot = useMemo(
-    () => (activePinId ? spots.find((s) => s.id === activePinId) ?? null : null),
+    () =>
+      activePinId ? (spots.find((s) => s.id === activePinId) ?? null) : null,
     [activePinId, spots],
   );
 
   useFocusTrap(panelRef, spot !== null);
   const shortcuts = useMemo(
-    () =>
-      spot !== null
-        ? [{ key: "Escape", handler: clearActivePin }]
-        : [],
+    () => (spot !== null ? [{ key: "Escape", handler: clearActivePin }] : []),
     [spot, clearActivePin],
   );
   useKeyboardShortcuts(shortcuts);

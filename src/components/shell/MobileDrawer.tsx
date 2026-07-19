@@ -1,20 +1,20 @@
-'use client';
+"use client";
 
-import { useRouter } from 'next/navigation';
-import { X, Shield, Info } from 'lucide-react';
-import { Overlay } from '@/components/feedback/Overlay';
-import { UserAvatar } from '@/components/ui';
-import { NavList } from './NavList';
-import { SignInLink } from './SignInLink';
-import { SignOutButton } from './SignOutButton';
-import { useUIStore } from '@/stores/ui-store';
-import { useSavedSpots } from '@/hooks/useSavedSpots';
-import { useUser } from '@/hooks/useUser';
-import { APP_VERSION, BUILD_TZ } from '@/lib/system-info';
-import { BrandLogo } from './BrandLogo';
+import { useRouter } from "next/navigation";
+import { X, Shield, Info } from "lucide-react";
+import { Overlay } from "@/components/feedback/Overlay";
+import { UserAvatar } from "@/components/ui";
+import { NavList } from "@/components/main/NavList";
+import { SignInLink } from "@/components/shell/SignInLink";
+import { SignOutButton } from "@/components/shell/SignOutButton";
+import { useUIStore } from "@/stores/ui-store";
+import { useSavedSpots } from "@/hooks/useSavedSpots";
+import { useUser } from "@/hooks/useUser";
+import { APP_VERSION, BUILD_TZ } from "@/lib/system-info";
+import { BrandLogo } from "@/components/main/BrandLogo";
 
-const DRAWER_ID = 'mobile-hamburger-portal';
-const DRAWER_TITLE_ID = 'mobile-drawer-title';
+const DRAWER_ID = "mobile-hamburger-portal";
+const DRAWER_TITLE_ID = "mobile-drawer-title";
 
 export function MobileDrawer() {
   const router = useRouter();
@@ -73,7 +73,9 @@ export function MobileDrawer() {
           <div className="space-y-2 rounded-xl border border-outline-variant/60 bg-surface-container-low p-3.5">
             <div className="flex items-center justify-between text-[10px] font-mono text-secondary">
               <span className="uppercase">Grid Version</span>
-              <span className="text-on-surface font-semibold">{APP_VERSION}</span>
+              <span className="text-on-surface font-semibold">
+                {APP_VERSION}
+              </span>
             </div>
             <div className="flex items-center justify-between text-[10px] font-mono text-secondary">
               <span className="uppercase">Radar Scope</span>
@@ -116,7 +118,9 @@ export function MobileDrawer() {
           <span className="hover:text-on-surface cursor-pointer uppercase flex items-center">
             <Info size={10} className="mr-1" aria-hidden="true" /> Intel
           </span>
-          <span className="text-on-surface font-semibold uppercase">{BUILD_TZ}</span>
+          <span className="text-on-surface font-semibold uppercase">
+            {BUILD_TZ}
+          </span>
         </div>
       </div>
     </Overlay>

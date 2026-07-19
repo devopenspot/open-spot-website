@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import { BrandLogo } from "@/components/layout/BrandLogo";
-import { ToastViewport } from "@/components/feedback/Toast";
+import { BrandLogo } from "@/components/main/BrandLogo";
+import { ToastViewport } from "@/components/shell/Toast";
 import { UserAvatar } from "@/components/ui";
 import { useUser } from "@/hooks/useUser";
 import { MAIN_CONTENT_ID } from "@/lib/constants";

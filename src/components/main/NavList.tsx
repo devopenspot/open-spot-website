@@ -1,7 +1,7 @@
 "use client";
 
 import { isActivePath } from "@/lib/nav";
-import { NavLink, type NavVariant } from "./NavLink";
+import { NavLink, type NavVariant } from "@/components/shell/NavLink";
 import { navLabelFor, renderNavBadge, useNavList } from "@/hooks/useNavList";
 import { cn } from "@/lib/cn";
 

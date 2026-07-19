@@ -3,9 +3,9 @@
 import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Header } from "./Header";
-import { MobileDrawer } from "./MobileDrawer";
-import { SearchOverlay } from "@/components/map-search/SearchOverlay";
-import { ToastViewport } from "@/components/feedback/Toast";
+import { MobileDrawer } from "@/components/shell/MobileDrawer";
+import { SearchOverlay } from "@/components/shell/SearchOverlay";
+import { ToastViewport } from "@/components/shell/Toast";
 import { useUIStore } from "@/stores/ui-store";
 import { useSpotsStore } from "@/stores/spots-store";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
@@ -22,9 +22,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   // The admin segment renders its own shell (`src/app/admin/layout.tsx`).
+  // The map segment renders its own shell (`src/app/map/layout.tsx`).
   // Bail out early so the public header, search overlay, and mobile
-  // drawer are not double-rendered alongside the admin chrome.
+  // drawer are not double-rendered alongside the admin or map chrome.
   const isAdminRoute = pathname?.startsWith("/admin") ?? false;
+  const isMapRoute = pathname === "/map";
 
   // Close the search overlay on route change
   useEffect(() => {
@@ -34,7 +36,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   // Only bind the global Cmd/Ctrl+K search shortcut on public routes.
   useKeyboardShortcuts(
-    isAdminRoute
+    isAdminRoute || isMapRoute
       ? []
       : [
           {
@@ -48,7 +50,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         ],
   );
 
-  if (isAdminRoute) {
+  if (isAdminRoute || isMapRoute) {
     return <>{children}</>;
   }
 

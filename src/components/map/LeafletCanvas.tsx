@@ -24,7 +24,7 @@ import { useMapStore, type MapController } from "@/stores/map-store";
 import { useUserLocation } from "@/hooks/useUserLocation";
 import { useSavedSpots } from "@/hooks/useSavedSpots";
 import { useUser } from "@/hooks/useUser";
-import { useWeather } from "@/components/layout/WeatherContext";
+import { useWeather } from "@/components/shell/WeatherContext";
 import { milesToMeters } from "@/lib/spots/geo";
 
 const FOCUS_ZOOM = 13;
@@ -73,26 +73,10 @@ function buildPinHTML(
         : "")
     : "";
 
-  const crowdCells = Math.max(
-    0,
-    Math.min(3, Math.round(options.crowdLevel / 34)),
-  );
-  const crowdHtml =
-    '<span class="leaflet-pin__crowd" aria-hidden="true">' +
-    Array.from(
-      { length: 3 },
-      (_, i) => `<i class="${i < crowdCells ? "on" : ""}"></i>`,
-    ).join("") +
-    "</span>";
-
   return (
     `<div class="${cls.join(" ")}">` +
     `<span class="leaflet-pin__square">` +
     weatherHtml +
-    (options.active
-      ? `<span class="leaflet-pin__info" aria-hidden="true">${crowdHtml}</span>`
-      : "") +
-    `</span>` +
     `<span class="leaflet-pin__label">${label}</span>` +
     `</div>`
   );
@@ -473,9 +457,7 @@ export function LeafletCanvas({
   }, [userNearby]);
 
   const showCircle =
-    userLocation !== null &&
-    typeof radiusMiles === "number" &&
-    radiusMiles > 0;
+    userLocation !== null && typeof radiusMiles === "number" && radiusMiles > 0;
   const radiusMeters =
     userLocation !== null ? milesToMeters(radiusMiles) : undefined;
 

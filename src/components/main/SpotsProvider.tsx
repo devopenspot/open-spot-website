@@ -1,16 +1,16 @@
-'use client';
+"use client";
 
-import { useEffect, type ReactNode } from 'react';
-import type { Spot, Region, SpotTypeEntity } from '@/lib/types';
-import type { SpotWeather } from '@/lib/weather/weather-cached';
-import type { User } from '@/lib/user';
-import { useSpotsStore } from '@/stores/spots-store';
-import { HydrationGate } from '@/stores/HydrationGate';
-import { WeatherProvider } from './WeatherContext';
-import { UserProvider } from '@/lib/user-context';
-import { SavedSpotsProvider } from '@/lib/saved-spots-context';
-import { AppShell } from './AppShell';
-import type { SavedSpot } from '@/types/saved-spot';
+import { useEffect, type ReactNode } from "react";
+import type { Spot, Region, SpotTypeEntity } from "@/lib/types";
+import type { SpotWeather } from "@/lib/weather/weather-cached";
+import type { User } from "@/lib/user";
+import { useSpotsStore } from "@/stores/spots-store";
+import { HydrationGate } from "@/stores/HydrationGate";
+import { WeatherProvider } from "../shell/WeatherContext";
+import { UserProvider } from "@/lib/user-context";
+import { SavedSpotsProvider } from "@/lib/saved-spots-context";
+import { AppShell } from "./AppShell";
+import type { SavedSpot } from "@/types/saved-spot";
 
 export function SpotsProvider({
   children,

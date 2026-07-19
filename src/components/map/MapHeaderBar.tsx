@@ -1,54 +1,36 @@
 "use client";
 
 import { memo } from "react";
-import { useSearchParams } from "next/navigation";
-import { useSpotsStore } from "@/stores/spots-store";
-import { useMapStore } from "@/stores/map-store";
-import { useUserLocation } from "@/hooks/useUserLocation";
-import { useMapFilter } from "@/hooks/useMapFilter";
-import { useMapActions } from "./use-map-actions";
+import { Search } from "lucide-react";
+import { useUIStore } from "@/stores/ui-store";
+import { BrandLogo } from "@/components/main/BrandLogo";
+import { MobileDrawerTrigger } from "@/components/layout/MobileDrawerTrigger";
 import { NearbyControl } from "./NearbyControl";
 
 function MapHeaderBarBase() {
-  const fullSpots = useSpotsStore((s) => s.spots);
-  const mapMode = useMapStore((s) => s.mapMode);
-  const { status, location } = useUserLocation();
-  const { resetView } = useMapActions();
-  const searchParams = useSearchParams();
-  const { region, country } = useMapFilter(fullSpots, searchParams);
-
-  const nearYou =
-    mapMode === "nearby" && status === "granted" && location !== null;
-
-  const gridTitle = region
-    ? country
-      ? `${country} (${region})`
-      : region
-    : "Global grid";
-
+  const openSearch = useUIStore((s) => s.openSearch);
   return (
-    <div className="absolute top-4 left-4 right-4 z-10 flex items-center justify-between pointer-events-none">
-      <div className="flex items-center space-x-2 bg-surface/90 backdrop-blur-md px-3 py-1.5 rounded-lg border border-outline-variant shadow-sm pointer-events-auto">
-        <span
-          aria-hidden="true"
-          className={`h-2 w-2 rounded-full ${nearYou ? "bg-primary" : "bg-emerald-500 animate-ping"}`}
-        />
-        <span className="font-mono text-[10px] font-bold tracking-wider text-on-surface uppercase">
-          {nearYou ? `Near you · ${gridTitle}` : `${gridTitle} Active`}
-        </span>
+    <div
+      id="map-header-bar"
+      className="pointer-events-none absolute inset-x-0 top-0 z-[1000] flex items-start justify-between gap-2 p-4"
+    >
+      <div className="pointer-events-auto flex items-center gap-2">
+        <BrandLogo size="sm" />
+        <MobileDrawerTrigger />
       </div>
 
-      <div className="flex items-center space-x-1 pointer-events-auto">
+      <div className="pointer-events-auto flex items-center gap-2">
+        <button
+          id="map-search-btn"
+          type="button"
+          onClick={openSearch}
+          aria-label="Search spots (⌘K)"
+          title="Search spots (⌘K)"
+          className="flex h-8 w-8 items-center justify-center border border-outline-variant bg-surface/90 text-on-surface backdrop-blur-md transition-colors hover:border-primary hover:text-primary focus-visible:border-primary focus-visible:text-primary"
+        >
+          <Search size={14} aria-hidden="true" />
+        </button>
         <NearbyControl />
-        <div className="flex items-center space-x-1 bg-surface/90 backdrop-blur-md p-1 rounded-lg border border-outline-variant shadow-sm">
-          <button
-            type="button"
-            onClick={resetView}
-            className="px-2 py-1 text-[9px] font-mono font-bold tracking-wider uppercase text-primary hover:bg-surface-container rounded transition-all"
-          >
-            Reset view
-          </button>
-        </div>
       </div>
     </div>
   );

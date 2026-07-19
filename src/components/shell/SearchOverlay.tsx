@@ -19,7 +19,7 @@ import { useSpotsStore } from "@/stores/spots-store";
 import { useUserLocation } from "@/hooks/useUserLocation";
 import { getSpotDistanceInfo } from "@/lib/spots/geo";
 import type { Spot } from "@/lib/types";
-import { RegionFilter } from "@/components/map-search/RegionFilter";
+import { RegionFilter } from "@/components/shell/RegionFilter";
 import { useMapFilter } from "@/hooks/useMapFilter";
 import { TypeBadges } from "@/components/spot/TypeBadges";
 

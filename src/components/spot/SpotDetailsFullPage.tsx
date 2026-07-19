@@ -2,7 +2,7 @@
 
 import { useId } from "react";
 import { SpotDetailsContent } from "./SpotDetailsContent";
-import { useWeather } from "@/components/layout/WeatherContext";
+import { useWeather } from "@/components/shell/WeatherContext";
 import { useSavedSpots } from "@/hooks/useSavedSpots";
 import { useUser } from "@/hooks/useUser";
 import type { Spot } from "@/lib/types";
