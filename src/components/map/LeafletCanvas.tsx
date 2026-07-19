@@ -494,6 +494,7 @@ export function LeafletCanvas({
         <MapController spots={spots} userLocation={userLocation} />
         <ZoomListener onZoomChange={setZoom} />
         {markers.map((m) => (
+          // TODO:
           <Marker
             key={m.key}
             position={m.position}
