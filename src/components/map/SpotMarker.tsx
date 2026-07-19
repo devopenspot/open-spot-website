@@ -76,18 +76,18 @@ function buildSpotPinHTML(options: BuildPinOptions): string {
   const temp = `<span class="leaflet-pin__temp">${options.temp !== null ? `${options.temp}°C` : "—"}</span>`;
 
   const widthCls = options.active
-    ? "w-[104px] sm:w-[116px] md:w-[120px]"
+    ? "w-[104px] sm:w-[116px] md:w-[120px] text-slate-800"
     : "w-[88px] sm:w-[100px] md:w-[108px]";
 
   return (
-    `<div class="${cls.join(" ")}">` +
+    `<div class="${cls.join(" ")} ">` +
     `<span class="leaflet-pin__label bg-slate-700 text-white">${name}</span>` +
     `<div class="leaflet-pin__square ${widthCls} bg-pink-50">` +
     weatherGlyph +
     temp +
     `</div>` +
-    `<span class="leaflet-pin__label truncate bg-blue-100">${description}</span>` +
-    `<span class="leaflet-pin__label truncate bg-pink-100">${distance}</span>` +
+    `<span class="leaflet-pin__label truncate bg-blue-100 text-slate-800">${description}</span>` +
+    `<span class="leaflet-pin__label truncate bg-pink-100 text-slate-800">${distance}</span>` +
     `</div>`
   );
 }

@@ -288,17 +288,33 @@
     letter-spacing: 0.02em;
   }
 
-  /* User-location pin — monochrome concentric dot (no shadows, hard corners) */
+  /* User-location pin — circle with crosshair (no shadows, monochrome).
+   * Crosshair is a 1px "+" drawn as two linear-gradient backgrounds on the wrapper. */
   .leaflet-user-pin {
-    background: transparent;
     border: 0;
     position: relative;
+    background:
+      linear-gradient(
+        to right,
+        transparent calc(50% - 0.5px),
+        var(--color-primary) calc(50% - 0.5px),
+        var(--color-primary) calc(50% + 0.5px),
+        transparent calc(50% + 0.5px)
+      ),
+      linear-gradient(
+        to bottom,
+        transparent calc(50% - 0.5px),
+        var(--color-primary) calc(50% - 0.5px),
+        var(--color-primary) calc(50% + 0.5px),
+        transparent calc(50% + 0.5px)
+      );
   }
   .leaflet-user-pin__ring,
   .leaflet-user-pin__dot {
     position: absolute;
     inset: 0;
     box-shadow: none;
+    border-radius: 50%;
   }
   .leaflet-user-pin__ring {
     border: 1px solid var(--color-primary);
@@ -320,14 +336,6 @@
     border-style: dotted;
     transform: scale(1.6);
     opacity: 0.6;
-  }
-  .leaflet-user-pin--nearby::after {
-    content: "";
-    position: absolute;
-    inset: -6px;
-    border: 1px dotted var(--color-primary);
-    opacity: 0.6;
-    pointer-events: none;
   }
 }
 
