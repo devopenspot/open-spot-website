@@ -17,15 +17,14 @@ import {
   useMapEvent,
 } from "react-leaflet";
 import L from "leaflet";
-import type { Spot, WeatherIconName } from "@/lib/types";
-import type { SpotWeather } from "@/lib/weather/weather-cached";
-import { weatherIconGlyph } from "@/components/spot/WeatherIcon";
+import type { Spot } from "@/lib/types";
 import { useMapStore, type MapController } from "@/stores/map-store";
 import { useUserLocation } from "@/hooks/useUserLocation";
 import { useSavedSpots } from "@/hooks/useSavedSpots";
 import { useUser } from "@/hooks/useUser";
 import { useWeather } from "@/components/shell/WeatherContext";
 import { milesToMeters } from "@/lib/spots/geo";
+import { SpotMarker } from "./SpotMarker";
 
 const FOCUS_ZOOM = 13;
 const FLY_DURATION_SEC = 0.6;
@@ -34,7 +33,6 @@ const USER_FOCUS_ZOOM = 12;
 const RADIUS_FIT_MAX_ZOOM = 16;
 
 const CLUSTER_ZOOM_MAX = 6;
-const LABEL_MAX_CHARS = 14;
 
 function escapeHtml(s: string): string {
   return s
@@ -43,43 +41,6 @@ function escapeHtml(s: string): string {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
-}
-
-function truncateLabel(name: string): string {
-  if (name.length <= LABEL_MAX_CHARS) return name;
-  return `${name.slice(0, LABEL_MAX_CHARS - 1).trimEnd()}…`;
-}
-
-function buildPinHTML(
-  spot: Spot,
-  options: {
-    active: boolean;
-    saved: boolean;
-    weather: WeatherIconName | null;
-    crowdLevel: number;
-    temp: number | null;
-  },
-): string {
-  const cls = ["leaflet-pin"];
-  if (options.active) cls.push("leaflet-pin--active");
-  else if (options.saved) cls.push("leaflet-pin--saved");
-
-  const label = escapeHtml(truncateLabel(spot.name));
-
-  const weatherHtml = options.weather
-    ? `<span class="leaflet-pin__weather">${weatherIconGlyph(options.weather, 28)}</span>` +
-      (options.temp !== null
-        ? `<span class="leaflet-pin__temp">${options.temp}°C</span>`
-        : "")
-    : "";
-
-  return (
-    `<div class="${cls.join(" ")}">` +
-    `<span class="leaflet-pin__square">` +
-    weatherHtml +
-    `<span class="leaflet-pin__label">${label}</span>` +
-    `</div>`
-  );
 }
 
 function buildClusterHTML(count: number, typeLabel: string): string {
@@ -103,35 +64,6 @@ function makeIcon(
     iconAnchor: anchor,
     html,
   });
-}
-
-function pinSize(active: boolean): {
-  size: [number, number];
-  anchor: [number, number];
-} {
-  if (active) return { size: [100, 56], anchor: [50, 20] };
-  return { size: [84, 48], anchor: [42, 16] };
-}
-
-function pickWeatherName(
-  spot: Spot,
-  weather: Record<string, SpotWeather> | undefined,
-): WeatherIconName | null {
-  if (!weather) return null;
-  const w = weather[spot.id];
-  if (!w) return null;
-  const first = w.forecast[0];
-  return first?.icon ?? null;
-}
-
-function pickTemperature(
-  spot: Spot,
-  weather: Record<string, SpotWeather> | undefined,
-): number | null {
-  if (!weather) return null;
-  const w = weather[spot.id];
-  if (!w) return null;
-  return w.current;
 }
 
 interface LeafletCanvasProps {
@@ -309,77 +241,51 @@ function ZoomListener({ onZoomChange }: { onZoomChange: (z: number) => void }) {
   return null;
 }
 
-interface RenderedMarker {
-  key: string;
-  position: [number, number];
-  icon: L.DivIcon;
-  spot: Spot;
-}
+type RenderedItem =
+  | { kind: "spot"; spot: Spot; key: string }
+  | {
+      kind: "cluster";
+      key: string;
+      position: [number, number];
+      label: string;
+      count: number;
+    };
 
-function buildRenderedMarkers(
+function buildRenderedItems(
   spots: readonly Spot[],
-  activeId: string | null,
-  savedIds: ReadonlySet<string>,
-  weather: Record<string, SpotWeather> | undefined,
   zoom: number,
-): RenderedMarker[] {
+): RenderedItem[] {
   if (zoom <= CLUSTER_ZOOM_MAX && spots.length > 1) {
     const groups = new Map<string, Spot[]>();
     for (const s of spots) {
-      const key = s.citySlug;
-      const arr = groups.get(key);
+      const arr = groups.get(s.citySlug);
       if (arr) arr.push(s);
-      else groups.set(key, [s]);
+      else groups.set(s.citySlug, [s]);
     }
-    const out: RenderedMarker[] = [];
+    const out: RenderedItem[] = [];
 
     for (const arr of groups.values()) {
       if (arr.length < 2) {
         for (const s of arr) {
-          out.push(makeMarker(s, activeId, savedIds, weather));
+          out.push({ kind: "spot", spot: s, key: `spot:${s.id}` });
         }
         continue;
       }
       const anchor = arr[0];
       if (!anchor) continue;
       const label = anchor.types[0]?.name ?? "spots";
-      const html = buildClusterHTML(arr.length, label);
-      const icon = makeIcon(html, [48, 48], [14, 14]);
       out.push({
+        kind: "cluster",
         key: `cluster:${anchor.citySlug}`,
         position: [anchor.location.lat, anchor.location.lon],
-        icon,
-        spot: anchor,
+        label,
+        count: arr.length,
       });
     }
     return out;
   }
 
-  return spots.map((s) => makeMarker(s, activeId, savedIds, weather));
-}
-
-function makeMarker(
-  spot: Spot,
-  activeId: string | null,
-  savedIds: ReadonlySet<string>,
-  weather: Record<string, SpotWeather> | undefined,
-): RenderedMarker {
-  const active = spot.id === activeId;
-  const saved = !active && savedIds.has(spot.id);
-  const html = buildPinHTML(spot, {
-    active,
-    saved,
-    weather: pickWeatherName(spot, weather),
-    crowdLevel: spot.crowdLevel,
-    temp: pickTemperature(spot, weather),
-  });
-  const { size, anchor } = pinSize(active);
-  return {
-    key: `spot:${spot.id}`,
-    position: [spot.location.lat, spot.location.lon],
-    icon: makeIcon(html, size, anchor),
-    spot,
-  };
+  return spots.map((s) => ({ kind: "spot", spot: s, key: `spot:${s.id}` }));
 }
 
 class LeafletErrorBoundary extends Component<
@@ -418,7 +324,6 @@ export function LeafletCanvas({
 }: LeafletCanvasProps) {
   const activeId = useMapStore((s) => s.activePinId);
   const toggleActivePin = useMapStore((s) => s.toggleActivePin);
-  //   const flyToSpot = useMapStore((s) => s.flyToSpot);
   const { location: userLocation, radiusMiles } = useUserLocation();
   const user = useUser();
   const { savedIds } = useSavedSpots(user?.id ?? null);
@@ -430,10 +335,7 @@ export function LeafletCanvas({
     (userLocation ? [userLocation.lat, userLocation.lon] : [20, 0]);
   const [zoom, setZoom] = useState<number>(initialZoomState);
   const [resetKey, setResetKey] = useState(0);
-  const markers = useMemo(
-    () => buildRenderedMarkers(spots, activeId, savedIds, weather, zoom),
-    [spots, activeId, savedIds, weather, zoom],
-  );
+  const items = useMemo(() => buildRenderedItems(spots, zoom), [spots, zoom]);
 
   const userNearby = useMemo(() => {
     if (!userLocation) return false;
@@ -465,7 +367,6 @@ export function LeafletCanvas({
     if (activeId === spot.id) {
       toggleActivePin(spot.id);
     } else {
-      //   flyToSpot(spot);
       toggleActivePin(spot.id);
     }
   };
@@ -493,16 +394,43 @@ export function LeafletCanvas({
         />
         <MapController spots={spots} userLocation={userLocation} />
         <ZoomListener onZoomChange={setZoom} />
-        {markers.map((m) => (
-          // TODO:
-          <Marker
-            key={m.key}
-            position={m.position}
-            icon={m.icon}
-            eventHandlers={{ click: () => handleMarkerClick(m.spot) }}
-          />
-        ))}
+        {items.map((item) =>
+          item.kind === "spot" ? (
+            <SpotMarker
+              key={item.key}
+              spot={item.spot}
+              isActive={activeId === item.spot.id}
+              isSaved={savedIds.has(item.spot.id)}
+              weather={weather[item.spot.id]}
+              userLocation={
+                userLocation
+                  ? { lat: userLocation.lat, lon: userLocation.lon }
+                  : null
+              }
+              onClick={handleMarkerClick}
+            />
+          ) : (
+            <Marker
+              key={item.key}
+              position={item.position}
+              icon={makeIcon(
+                buildClusterHTML(item.count, item.label),
+                [48, 48],
+                [14, 14],
+              )}
+              eventHandlers={{
+                click: () => {
+                  const first = spots.find(
+                    (s) => s.citySlug === item.key.slice("cluster:".length),
+                  );
+                  if (first) handleMarkerClick(first);
+                },
+              }}
+            />
+          ),
+        )}
         {userLocation && (
+          // TODO: i need improve the icon for the user location, i like the current animation such as a radar, keep using something similar but change the square shape for an icon or most useful shape or icon
           <Marker
             position={[userLocation.lat, userLocation.lon]}
             icon={userIcon}

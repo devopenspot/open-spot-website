@@ -127,7 +127,9 @@
     font-family: var(--font-mono);
   }
 
-  /* Custom divIcon pins — match DESIGN.md (0px corners, monochrome, no shadows) */
+  /* Custom divIcon pins — match DESIGN.md (0px corners, monochrome, no shadows).
+   * Width/height come from Tailwind utility classes on the divIcon HTML so
+   * the pin scales with the viewport. Base layer holds color/border state. */
   .leaflet-pin {
     background: transparent;
     border: 0;
@@ -141,7 +143,6 @@
   }
   .leaflet-pin__square {
     position: relative;
-    width: 84px;
     height: 32px;
     border: 1px solid var(--color-outline);
     background: var(--color-surface);
@@ -191,13 +192,41 @@
     white-space: nowrap;
     line-height: 1.1;
   }
+  .leaflet-pin__description,
+  .leaflet-pin__distance {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 8px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    line-height: 1.1;
+    color: var(--color-secondary);
+    max-width: 96px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding: 0 1px;
+  }
+  .leaflet-pin__distance {
+    color: var(--color-outline);
+  }
+  .leaflet-pin--active .leaflet-pin__description,
+  .leaflet-pin--active .leaflet-pin__distance {
+    color: var(--color-on-primary);
+  }
+  .leaflet-pin--active .leaflet-pin__description {
+    max-width: 120px;
+  }
+  .leaflet-pin--active .leaflet-pin__distance {
+    max-width: 120px;
+  }
 
-  /* Active — invert, scale up, scout ring, info strip */
+  /* Active — invert, scale up, scout ring */
   .leaflet-pin--active {
     animation: leafletPinPulse 180ms ease-out 1;
   }
   .leaflet-pin--active .leaflet-pin__square {
-    width: 100px;
     height: 40px;
     background: var(--color-primary);
     border-color: var(--color-primary);
@@ -232,39 +261,6 @@
     color: var(--color-on-primary);
     background: var(--color-primary);
     border-color: var(--color-primary);
-  }
-
-  /* Active info strip — only on the active pin */
-  .leaflet-pin__info {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    height: 6px;
-    display: none;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 2px;
-    box-sizing: border-box;
-  }
-  .leaflet-pin--active .leaflet-pin__info {
-    display: flex;
-  }
-  .leaflet-pin__crowd {
-    display: inline-flex;
-    gap: 1px;
-    align-items: end;
-  }
-  .leaflet-pin__crowd i {
-    display: block;
-    width: 3px;
-    height: 3px;
-    background: transparent;
-    border: 1px solid var(--color-on-primary);
-    box-sizing: border-box;
-  }
-  .leaflet-pin__crowd i.on {
-    background: var(--color-on-primary);
   }
 
   /* Cluster chip — zoom-level summary */
