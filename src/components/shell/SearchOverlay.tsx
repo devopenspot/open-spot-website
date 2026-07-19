@@ -150,6 +150,7 @@ export function SearchOverlay({
               className="text-secondary shrink-0"
               aria-hidden="true"
             />
+
             <input
               ref={inputRef}
               id={inputId}

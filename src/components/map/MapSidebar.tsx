@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { memo, useCallback, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
-import { MapPin, SlidersHorizontal, X } from "lucide-react";
+import { X } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { useSpotsStore } from "@/stores/spots-store";
 import { useMapStore } from "@/stores/map-store";
@@ -15,18 +15,15 @@ import {
   NEARBY_RADIUS_OPTIONS,
   type NearbyRadiusMiles,
 } from "@/stores/user-location-store";
-import { useMapActions } from "./use-map-actions";
 import type { Spot } from "@/lib/types";
 import { getSpotDistanceInfo, haversineMiles } from "@/lib/spots/geo";
 import { TypeBadges } from "@/components/spot/TypeBadges";
-import { useUIStore } from "@/stores/ui-store";
 
 interface MapSidebarProps {
   spots: readonly Spot[];
 }
 
 function MapSidebarBase({ spots }: MapSidebarProps) {
-  const openSearch = useUIStore((s) => s.openSearch);
   const fullSpots = useSpotsStore((s) => s.spots);
   const activeId = useMapStore((s) => s.activePinId);
   const mapMode = useMapStore((s) => s.mapMode);
@@ -39,7 +36,7 @@ function MapSidebarBase({ spots }: MapSidebarProps) {
     radiusMiles,
     setRadiusMiles,
   } = useUserLocation();
-  const { selectMode } = useMapActions();
+
   const searchParams = useSearchParams();
   const { region, country, clearAll } = useMapFilter(fullSpots, searchParams);
 
@@ -64,17 +61,17 @@ function MapSidebarBase({ spots }: MapSidebarProps) {
     [setActivePin, flyToSpot],
   );
 
-  const handleModeChange = useCallback(
-    (next: "nearby" | "filtered") => {
-      selectMode(next);
-    },
-    [selectMode],
-  );
+  //   const handleModeChange = useCallback(
+  //     (next: "nearby" | "filtered") => {
+  //       selectMode(next);
+  //     },
+  //     [selectMode],
+  //   );
 
-  const handleFilteredClick = useCallback(() => {
-    selectMode("filtered");
-    openSearch();
-  }, [selectMode, openSearch]);
+  //   const handleFilteredClick = useCallback(() => {
+  //     selectMode("filtered");
+  //     openSearch();
+  //   }, [selectMode, openSearch]);
 
   const distanceOrigin = showChips ? userLocation : null;
 
@@ -94,72 +91,11 @@ function MapSidebarBase({ spots }: MapSidebarProps) {
       aria-label="Spot list"
       className="w-full lg:w-80 flex flex-col border border-outline-variant rounded-2xl bg-surface-bright overflow-hidden sm:h-[150px] lg:h-full"
     >
-      <div className="p-4 border-b border-outline-variant bg-surface-container-low">
-        <div
-          id="map-mode-switcher"
-          role="radiogroup"
-          aria-label="Map mode"
-          className="flex items-stretch border border-outline-variant mb-3"
-        >
-          <button
-            type="button"
-            role="radio"
-            aria-checked={mapMode === "filtered"}
-            onClick={handleFilteredClick}
-            className={cn(
-              "flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 text-[9px] font-mono font-bold tracking-wider uppercase transition-all",
-              mapMode === "filtered"
-                ? "bg-primary text-on-primary"
-                : "text-secondary hover:text-on-surface hover:bg-surface-container",
-            )}
-          >
-            <SlidersHorizontal size={11} aria-hidden="true" />
-            <span>Filtered</span>
-          </button>
-          <button
-            type="button"
-            role="radio"
-            aria-checked={mapMode === "nearby"}
-            onClick={() => handleModeChange("nearby")}
-            className={cn(
-              "flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 text-[9px] font-mono font-bold tracking-wider uppercase transition-all border-l border-outline-variant",
-              mapMode === "nearby"
-                ? "bg-primary text-on-primary"
-                : "text-secondary hover:text-on-surface hover:bg-surface-container",
-            )}
-          >
-            <MapPin size={11} aria-hidden="true" />
-            <span>Nearby</span>
-          </button>
-        </div>
-        {/* <div className="flex items-center justify-between mb-3">
-          <span className="font-mono text-[10px] font-bold tracking-widest text-secondary uppercase">
-            Results
-          </span>
-          <span
-            className="bg-primary/10 px-2 py-0.5 text-[9px] font-mono font-semibold text-primary"
-            aria-live="polite"
-          >
-            {spots.length} spots active
-          </span>
-        </div> */}
+      <div className="py-2 mx-auto border-b border-outline-variant bg-surface-container-low">
         {hasFilter && filterLabel && !showRadiusChips && (
           <div id="map-active-filter" className="flex items-center gap-2">
-            <span className="font-mono text-[9px] font-bold tracking-widest uppercase text-secondary">
-              Filter
-            </span>
-            <span className="flex items-center gap-1 border border-primary px-2 py-0.5 text-[9px] font-mono font-bold uppercase tracking-wider text-primary">
+            <span className="flex items-center gap-1 border border-secondary px-2 py-0.5 text-[9px] font-mono font-bold uppercase tracking-wider text-secondary">
               <span>{filterLabel}</span>
-              {clearAll && (
-                <button
-                  type="button"
-                  onClick={clearAll}
-                  aria-label="Clear region and country filter"
-                  className="ml-0.5 -mr-1 p-0.5 hover:bg-primary hover:text-on-primary focus-visible:bg-primary focus-visible:text-on-primary"
-                >
-                  <X size={10} aria-hidden="true" />
-                </button>
-              )}
             </span>
           </div>
         )}

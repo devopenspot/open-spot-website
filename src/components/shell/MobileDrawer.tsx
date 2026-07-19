@@ -35,7 +35,7 @@ export function MobileDrawer() {
       labelledBy={DRAWER_TITLE_ID}
       contentId={DRAWER_ID}
       flush
-      containerClassName="md:hidden"
+      containerClassName="md:max-w-96 max-w-full"
       panelClassName="w-72 h-full bg-surface text-on-surface border-l border-outline-variant flex flex-col p-6 shadow-2xl justify-between ml-auto"
     >
       <div>

@@ -22,7 +22,6 @@ export function SearchTrigger({ onClick, className }: SearchTriggerProps) {
       )}
     >
       <Search size={14} aria-hidden="true" />
-      <span className="inline truncate">Search Spots</span>
       <kbd
         aria-hidden="true"
         className="hidden rounded bg-surface-container px-1.5 py-0.5 text-[10px] font-mono md:inline"
