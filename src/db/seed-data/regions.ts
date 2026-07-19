@@ -1,62 +1,582 @@
-import type { Region } from "@/lib/types"
+export interface RegionSeedCountry {
+  name: string;
+  cities: readonly string[];
+}
 
-export const REGION_SEED: readonly (Region & { slug: string })[] = [
+export interface RegionSeed {
+  name: string;
+  slug: string;
+  desc: string;
+  image: string;
+  sortOrder: number;
+  countries: readonly RegionSeedCountry[];
+}
+
+export const REGION_SEED: readonly RegionSeed[] = [
   {
-    name: "Americas",
-    slug: "americas",
-    desc: "The birthplace of modern street skating. From LA plazas to NYC rough spots.",
-    count: "0 Spots",
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuCOGT4RjC_f8LEOXu8S-BRUxgbzarq84gQHvcGO1K3d6--lyAQLGuKp0AG8KalE9U0XUF66JNSyZEJ7POYJjTn7MvNO7ugKuJoPzBALxR6XRZL3aIXIh2SnlUixMIJNPC5wSzmc4Vcjo03cECPDHRZXP25f8AK-xPcVKzHsen9nyFbli-eRLlJTneta4ocXdLbbBTlsfQzF09Lj2OgidpgdqZQGhf993kRsH5AhAVFQgRyJZlUAfuvueff7tOSaU006jyAkpJX1QHQh",
-    link: "/map?region=americas",
+    name: "North America",
+    slug: "north-america",
+    desc: "The birthplace of modern street skating. From LA ledges to NYC gaps and Toronto DIYs.",
+    image: "",
+    sortOrder: 0,
     countries: [
-      "United States",
-      "Canada",
-      "Mexico",
-      "Brazil",
-      "Argentina",
-      "Colombia",
-      "Chile",
-      "Peru",
+      {
+        name: "United States",
+        cities: [
+          "Los Angeles",
+          "New York",
+          "San Francisco",
+          "Portland",
+          "Chicago",
+          "Miami",
+        ],
+      },
+      {
+        name: "Canada",
+        cities: ["Toronto", "Vancouver", "Montreal", "Calgary"],
+      },
+      {
+        name: "Mexico",
+        cities: ["Mexico City", "Monterrey", "Guadalajara", "Tijuana"],
+      },
     ],
   },
   {
-    name: "Europe",
-    slug: "europe",
-    desc: "Marble plazas and historic architecture meet modern DIY spirit in every capital.",
-    count: "0 Spots",
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuBMjTAsfqYsfIa-J3FbGvL438k-wnv9hmGvtFxql96WByww-EpeLFtCDM7JhJWgWICRd9F53Xhr4ozXqMFFoGRc_Wjle17Xdm4g-0cZ3xWI6HJSP0uQ9PXlFXwYFpcl-JdQmqJiXS9s2QQvtGd2KCqYp_HNf5GYXRoHbTai5x7U1Imf3k2RxiKjV6WHCU0NK6LyTNbCyboR-7ZMz2_48kq61xmjwHdhML2G2F3rTWv0CdOre0xsLga_xyZy2gf65mCXN53bDlWuxWb5",
-    link: "/map?region=europe",
+    name: "Latin America",
+    slug: "latin-america",
+    desc: "Tropical plazas, Andean DIYs, and the deepest vert scene outside California.",
+    image: "",
+    sortOrder: 1,
     countries: [
-      "France",
-      "Germany",
-      "United Kingdom",
-      "Italy",
-      "Spain",
-      "Netherlands",
-      "Portugal",
-      "Sweden",
-      "Finland",
+      {
+        name: "Brazil",
+        cities: ["São Paulo", "Rio de Janeiro", "Belo Horizonte", "Curitiba"],
+      },
+      {
+        name: "Argentina",
+        cities: ["Buenos Aires", "Córdoba", "Rosario", "Mendoza"],
+      },
+      {
+        name: "Colombia",
+        cities: ["Bogotá", "Medellín", "Cali", "Barranquilla"],
+      },
+      {
+        name: "Chile",
+        cities: ["Santiago", "Valparaíso", "Concepción"],
+      },
+      {
+        name: "Peru",
+        cities: ["Lima", "Arequipa", "Cusco"],
+      },
+      {
+        name: "Uruguay",
+        cities: ["Montevideo"],
+      },
+      {
+        name: "Ecuador",
+        cities: ["Quito", "Guayaquil"],
+      },
+      {
+        name: "Venezuela",
+        cities: ["Caracas"],
+      },
+      {
+        name: "Bolivia",
+        cities: ["La Paz"],
+      },
+      {
+        name: "Paraguay",
+        cities: ["Asunción"],
+      },
+      {
+        name: "Costa Rica",
+        cities: ["San José"],
+      },
+      {
+        name: "Panama",
+        cities: ["Panama City"],
+      },
+      {
+        name: "Dominican Republic",
+        cities: ["Santo Domingo"],
+      },
+      {
+        name: "Puerto Rico",
+        cities: ["San Juan"],
+      },
+      {
+        name: "Cuba",
+        cities: ["Havana"],
+      },
+      {
+        name: "Guatemala",
+        cities: ["Guatemala City"],
+      },
+      {
+        name: "Honduras",
+        cities: ["Tegucigalpa"],
+      },
+      {
+        name: "El Salvador",
+        cities: ["San Salvador"],
+      },
+      {
+        name: "Nicaragua",
+        cities: ["Managua"],
+      },
     ],
   },
   {
-    name: "Asia",
-    slug: "asia",
-    desc: "Infinite concrete possibilities. Pristine marble ledges and neon-lit night sessions.",
-    count: "0 Spots",
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuDYoMVU5vMSIEK35AW46DYG-fQ9WfAoKHQkb_4ukHQYUGRG_PRXomLKHdJjLGAAObuZwc2iRUulbRaAGLi1f9zcExfl3fvsAKslgpL0nmCqvUlaU733G9O2mEHkmoxY2hF0PVtKTvBNHvheJClaq80UJvkXRizlg0jOFO7Bmy5wEyYoDWq4Xd0Qzhar8zYpPh5VTOXYdRO6IhDFLjKPolxSiNF91vLqCIGeZqnZCv5A8Rsg9UPSvQfFGOlOUnkk40YAyHBq6PkfAbt5",
-    link: "/map?region=asia",
+    name: "Iberia",
+    slug: "iberia",
+    desc: "Mediterranean sun, mosaic plazas, and a generation raised on MACBA sessions.",
+    image: "",
+    sortOrder: 2,
     countries: [
-      "Japan",
-      "South Korea",
-      "China",
-      "Thailand",
-      "Singapore",
-      "Indonesia",
-      "Philippines",
-      "Malaysia",
+      {
+        name: "Spain",
+        cities: [
+          "Barcelona",
+          "Madrid",
+          "Seville",
+          "Valencia",
+          "Málaga",
+          "Bilbao",
+        ],
+      },
+      {
+        name: "Portugal",
+        cities: ["Lisbon", "Porto"],
+      },
     ],
   },
-]
+  {
+    name: "France & Benelux",
+    slug: "france-benelux",
+    desc: "Haussmannian plazas, brutalist squares, and FISE-grade park culture.",
+    image: "",
+    sortOrder: 3,
+    countries: [
+      {
+        name: "France",
+        cities: [
+          "Paris",
+          "Lyon",
+          "Marseille",
+          "Bordeaux",
+          "Montpellier",
+          "Toulouse",
+        ],
+      },
+      {
+        name: "Belgium",
+        cities: ["Brussels", "Antwerp"],
+      },
+      {
+        name: "Netherlands",
+        cities: ["Amsterdam", "Rotterdam", "Utrecht", "The Hague"],
+      },
+      {
+        name: "Luxembourg",
+        cities: ["Luxembourg City"],
+      },
+    ],
+  },
+  {
+    name: "DACH",
+    slug: "dach",
+    desc: "German engineering meets Austrian DIYs and Swiss precision ledges.",
+    image: "",
+    sortOrder: 4,
+    countries: [
+      {
+        name: "Germany",
+        cities: [
+          "Berlin",
+          "Hamburg",
+          "Munich",
+          "Cologne",
+          "Frankfurt",
+          "Stuttgart",
+        ],
+      },
+      {
+        name: "Austria",
+        cities: ["Vienna", "Linz", "Graz"],
+      },
+      {
+        name: "Switzerland",
+        cities: ["Zurich", "Bern", "Basel", "Lausanne"],
+      },
+    ],
+  },
+  {
+    name: "British Isles",
+    slug: "british-isles",
+    desc: "Rain-slick granite, brutalist council estates, and the South Bank lineage.",
+    image: "",
+    sortOrder: 5,
+    countries: [
+      {
+        name: "United Kingdom",
+        cities: ["London", "Manchester", "Bristol", "Liverpool", "Glasgow"],
+      },
+      {
+        name: "Ireland",
+        cities: ["Dublin", "Cork"],
+      },
+    ],
+  },
+  {
+    name: "Nordics",
+    slug: "nordics",
+    desc: "Year-round dedication. Indoor parks, frosty ledges, and the Helsinki school.",
+    image: "",
+    sortOrder: 6,
+    countries: [
+      {
+        name: "Sweden",
+        cities: ["Stockholm", "Malmö", "Gothenburg"],
+      },
+      {
+        name: "Finland",
+        cities: ["Helsinki", "Tampere", "Turku"],
+      },
+      {
+        name: "Norway",
+        cities: ["Oslo", "Bergen", "Trondheim"],
+      },
+      {
+        name: "Denmark",
+        cities: ["Copenhagen", "Aarhus"],
+      },
+      {
+        name: "Iceland",
+        cities: ["Reykjavík"],
+      },
+    ],
+  },
+  {
+    name: "Italy & Balkans",
+    slug: "italy-balkans",
+    desc: "Renaissance piazzas, Roman travertine, and the Adriatic roller scene.",
+    image: "",
+    sortOrder: 7,
+    countries: [
+      {
+        name: "Italy",
+        cities: ["Rome", "Milan", "Florence", "Naples", "Bologna"],
+      },
+      {
+        name: "Greece",
+        cities: ["Athens", "Thessaloniki"],
+      },
+      {
+        name: "Croatia",
+        cities: ["Zagreb", "Split"],
+      },
+      {
+        name: "Slovenia",
+        cities: ["Ljubljana"],
+      },
+      {
+        name: "Serbia",
+        cities: ["Belgrade"],
+      },
+      {
+        name: "Bosnia and Herzegovina",
+        cities: ["Sarajevo"],
+      },
+      {
+        name: "Albania",
+        cities: ["Tirana"],
+      },
+      {
+        name: "North Macedonia",
+        cities: ["Skopje"],
+      },
+      {
+        name: "Montenegro",
+        cities: ["Podgorica"],
+      },
+      {
+        name: "Malta",
+        cities: ["Valletta"],
+      },
+    ],
+  },
+  {
+    name: "Eastern Europe",
+    slug: "eastern-europe",
+    desc: "Post-Soviet blocks, brutalist megastructures, and a fierce new generation.",
+    image: "",
+    sortOrder: 8,
+    countries: [
+      {
+        name: "Poland",
+        cities: ["Warsaw", "Kraków", "Łódź", "Wrocław", "Gdańsk"],
+      },
+      {
+        name: "Czech Republic",
+        cities: ["Prague", "Brno"],
+      },
+      {
+        name: "Slovakia",
+        cities: ["Bratislava", "Košice"],
+      },
+      {
+        name: "Hungary",
+        cities: ["Budapest", "Debrecen"],
+      },
+      {
+        name: "Romania",
+        cities: ["Bucharest", "Cluj-Napoca"],
+      },
+      {
+        name: "Bulgaria",
+        cities: ["Sofia", "Plovdiv"],
+      },
+      {
+        name: "Ukraine",
+        cities: ["Kyiv", "Lviv", "Kharkiv"],
+      },
+      {
+        name: "Russia",
+        cities: ["Moscow", "Saint Petersburg", "Yekaterinburg"],
+      },
+      {
+        name: "Lithuania",
+        cities: ["Vilnius", "Kaunas"],
+      },
+      {
+        name: "Latvia",
+        cities: ["Riga"],
+      },
+      {
+        name: "Estonia",
+        cities: ["Tallinn"],
+      },
+      {
+        name: "Moldova",
+        cities: ["Chișinău"],
+      },
+      {
+        name: "Belarus",
+        cities: ["Minsk"],
+      },
+      {
+        name: "Turkey",
+        cities: ["Istanbul", "Ankara", "İzmir"],
+      },
+      {
+        name: "Cyprus",
+        cities: ["Nicosia"],
+      },
+    ],
+  },
+  {
+    name: "Japan",
+    slug: "japan",
+    desc: "Pristine marble ledges, neon-lit night sessions, and Tokyo's ever-shifting map.",
+    image: "",
+    sortOrder: 9,
+    countries: [
+      {
+        name: "Japan",
+        cities: [
+          "Tokyo",
+          "Osaka",
+          "Yokohama",
+          "Nagoya",
+          "Fukuoka",
+          "Sapporo",
+          "Kobe",
+          "Kyoto",
+        ],
+      },
+    ],
+  },
+  {
+    name: "Asia Pacific",
+    slug: "asia-pacific",
+    desc: "Megacity plazas, tropical parks, and the fastest-growing scene on the planet.",
+    image: "",
+    sortOrder: 10,
+    countries: [
+      {
+        name: "South Korea",
+        cities: ["Seoul", "Busan", "Incheon"],
+      },
+      {
+        name: "China",
+        cities: ["Beijing", "Shanghai", "Guangzhou", "Shenzhen", "Chengdu"],
+      },
+      {
+        name: "Thailand",
+        cities: ["Bangkok", "Chiang Mai"],
+      },
+      {
+        name: "Singapore",
+        cities: ["Singapore"],
+      },
+      {
+        name: "Indonesia",
+        cities: ["Jakarta", "Bandung", "Surabaya"],
+      },
+      {
+        name: "Philippines",
+        cities: ["Manila", "Cebu"],
+      },
+      {
+        name: "Malaysia",
+        cities: ["Kuala Lumpur", "Penang"],
+      },
+      {
+        name: "Vietnam",
+        cities: ["Ho Chi Minh City", "Hanoi"],
+      },
+      {
+        name: "Taiwan",
+        cities: ["Taipei", "Kaohsiung"],
+      },
+      {
+        name: "Hong Kong",
+        cities: ["Hong Kong"],
+      },
+      {
+        name: "India",
+        cities: ["Mumbai", "Bangalore", "Delhi", "Chennai"],
+      },
+      {
+        name: "Cambodia",
+        cities: ["Phnom Penh"],
+      },
+      {
+        name: "Laos",
+        cities: ["Vientiane"],
+      },
+      {
+        name: "Myanmar",
+        cities: ["Yangon"],
+      },
+      {
+        name: "Mongolia",
+        cities: ["Ulaanbaatar"],
+      },
+    ],
+  },
+  {
+    name: "Oceania",
+    slug: "oceania",
+    desc: "Beachside bowls, volcanic coastlines, and the Indo-Pacific crossover.",
+    image: "",
+    sortOrder: 11,
+    countries: [
+      {
+        name: "Australia",
+        cities: ["Sydney", "Melbourne", "Brisbane", "Perth", "Adelaide"],
+      },
+      {
+        name: "New Zealand",
+        cities: ["Auckland", "Wellington", "Christchurch"],
+      },
+      {
+        name: "Fiji",
+        cities: ["Suva"],
+      },
+      {
+        name: "Papua New Guinea",
+        cities: ["Port Moresby"],
+      },
+    ],
+  },
+  {
+    name: "Middle East & Africa",
+    slug: "middle-east-africa",
+    desc: "Desert marble, Red Sea ledges, and a rising scene from Tel Aviv to Cape Town.",
+    image: "",
+    sortOrder: 12,
+    countries: [
+      {
+        name: "UAE",
+        cities: ["Dubai", "Abu Dhabi"],
+      },
+      {
+        name: "Saudi Arabia",
+        cities: ["Riyadh", "Jeddah"],
+      },
+      {
+        name: "Israel",
+        cities: ["Tel Aviv", "Jerusalem", "Haifa"],
+      },
+      {
+        name: "Lebanon",
+        cities: ["Beirut"],
+      },
+      {
+        name: "Jordan",
+        cities: ["Amman"],
+      },
+      {
+        name: "Egypt",
+        cities: ["Cairo", "Alexandria"],
+      },
+      {
+        name: "Morocco",
+        cities: ["Casablanca", "Marrakech", "Rabat"],
+      },
+      {
+        name: "South Africa",
+        cities: ["Johannesburg", "Cape Town", "Durban"],
+      },
+      {
+        name: "Tunisia",
+        cities: ["Tunis"],
+      },
+      {
+        name: "Iran",
+        cities: ["Tehran"],
+      },
+      {
+        name: "Iraq",
+        cities: ["Baghdad"],
+      },
+      {
+        name: "Kuwait",
+        cities: ["Kuwait City"],
+      },
+      {
+        name: "Qatar",
+        cities: ["Doha"],
+      },
+      {
+        name: "Bahrain",
+        cities: ["Manama"],
+      },
+      {
+        name: "Oman",
+        cities: ["Muscat"],
+      },
+      {
+        name: "Algeria",
+        cities: ["Algiers"],
+      },
+      {
+        name: "Nigeria",
+        cities: ["Lagos", "Abuja"],
+      },
+      {
+        name: "Kenya",
+        cities: ["Nairobi"],
+      },
+      {
+        name: "Ethiopia",
+        cities: ["Addis Ababa"],
+      },
+      {
+        name: "Ghana",
+        cities: ["Accra"],
+      },
+    ],
+  },
+];

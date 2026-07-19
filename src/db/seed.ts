@@ -25,7 +25,7 @@ async function seedRegions(sql: ReturnType<typeof postgres>): Promise<void> {
   for (const r of REGION_SEED) {
     await sql`
       insert into regions (slug, name, description, image_url, sort_order)
-      values (${r.slug}, ${r.name}, ${r.desc}, ${r.image}, ${0})
+      values (${r.slug}, ${r.name}, ${r.desc}, ${r.image}, ${r.sortOrder})
       on conflict (slug) do update set
         name = excluded.name,
         description = excluded.description,

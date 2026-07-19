@@ -138,11 +138,11 @@ function RegionList({ regions, region, onPick }: RegionListProps) {
                     : "border-outline hover:bg-primary hover:text-surface",
                 )}
               >
-                <span
-                  aria-hidden="true"
-                  className="relative h-20 w-20 shrink-0 border-r border-outline bg-black overflow-hidden"
-                >
-                  {r.image ? (
+                {r.image ? (
+                  <span
+                    aria-hidden="true"
+                    className="relative h-20 w-20 shrink-0 border-r border-outline bg-black overflow-hidden"
+                  >
                     <Image
                       src={r.image}
                       alt=""
@@ -157,8 +157,8 @@ function RegionList({ regions, region, onPick }: RegionListProps) {
                       referrerPolicy="no-referrer"
                       unoptimized
                     />
-                  ) : null}
-                </span>
+                  </span>
+                ) : null}
 
                 <span className="flex flex-1 flex-col justify-center gap-1 p-3 min-w-0">
                   <span className="flex items-center justify-between gap-3">

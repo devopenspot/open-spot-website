@@ -13,23 +13,7 @@ export function HeroSection() {
   const regions = useSpotsStore((s) => s.regions);
   const openSearch = useUIStore((s) => s.openSearch);
   return (
-    <section className="relative overflow-hidden bg-primary px-4 md:pl-0 md:px-8 h-screen flex items-center justify-around w-full">
-      <div
-        className="pointer-events-none absolute inset-0 opacity-[0.04]"
-        aria-hidden="true"
-      >
-        <div
-          className="h-full w-full"
-          style={{
-            backgroundImage: `
-            linear-gradient(to right, #ffffff 1px, transparent 1px),
-            linear-gradient(to bottom, #ffffff 1px, transparent 1px)
-          `,
-            backgroundSize: "64px 64px",
-          }}
-        />
-      </div>
-
+    <section className="relative bg-primary p-4 md:px-8 w-full">
       <div className="relative flex flex-col md:flex-row items-stretch justify-between gap-8">
         <div className="max-w-3xl">
           <div className="mb-4 flex items-center gap-3">
@@ -67,7 +51,12 @@ export function HeroSection() {
             cta={<NearbyCtaButton />}
           />
 
-          <div id="regions-grid" className="gap-3 sm:grid-cols-3 sm:gap-4">
+          <div
+            id="regions-grid"
+            role="list"
+            aria-label="Available regions"
+            className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4"
+          >
             {regions.map((region) => (
               <div
                 key={region.name}
@@ -84,10 +73,10 @@ export function HeroSection() {
                     });
                     openSearch();
                   }}
-                  className="flex w-full flex-col gap-3 p-5 text-left text-surface transition-colors hover:bg-surface hover:text-primary focus-visible:bg-surface focus-visible:text-primary focus-visible:outline-none sm:gap-4 sm:p-6"
+                  className="flex w-full flex-col gap-1.5 p-3 text-left text-surface transition-colors hover:bg-surface hover:text-primary focus-visible:bg-surface focus-visible:text-primary focus-visible:outline-none sm:gap-2 sm:p-4"
                 >
                   <div className="mt-2 flex justify-between gap-1.5 text-[10px] font-bold tracking-widest uppercase group-hover:border-primary/30">
-                    <h3 className="font-display text-2xl font-bold leading-[0.95] tracking-tight uppercase sm:text-3xl">
+                    <h3 className="font-display text-lg font-bold leading-[0.95] tracking-tight uppercase sm:text-xl">
                       {region.name}
                     </h3>
 

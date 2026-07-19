@@ -2,9 +2,10 @@
 
 import { useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronRight, Loader2, MapPin } from "lucide-react";
+import { MapPin } from "lucide-react";
 import { useUserLocation } from "@/hooks/useUserLocation";
 import { showToast } from "@/hooks/useToast";
+import { cn } from "@/lib/cn";
 import { ROUTES } from "@/lib/nav";
 
 const NEARBY_BUTTON_ID = "view-nearby-link";
@@ -42,8 +43,6 @@ export function NearbyCtaButton() {
     router.push(`${ROUTES.map}?nearby=1`);
   }, [isRequesting, request, router]);
 
-  const Icon = isRequesting ? Loader2 : MapPin;
-
   return (
     <button
       id={NEARBY_BUTTON_ID}
@@ -52,19 +51,14 @@ export function NearbyCtaButton() {
       disabled={isRequesting}
       aria-busy={isRequesting}
       aria-describedby={`${NEARBY_BUTTON_ID}-status`}
-      className="group flex space-x-1.5 text-xs font-semibold text-surface/80 uppercase hover:underline disabled:opacity-60 disabled:cursor-wait border p-4"
+      className="group flex items-center space-x-1.5 text-xs font-bold tracking-wider text-surface/80 uppercase hover:text-surface focus-visible:text-surface transition-colors disabled:opacity-60 disabled:cursor-wait"
     >
-      <Icon
+      <MapPin
         size={14}
         aria-hidden="true"
-        className={isRequesting ? "animate-spin" : ""}
+        className={cn(isRequesting && "animate-pulse-dot")}
       />
-      <span>{isRequesting ? "Locating…" : "View Nearby"}</span>
-      <ChevronRight
-        size={14}
-        aria-hidden="true"
-        className="transition-transform group-hover:translate-x-0.5"
-      />
+      <span>{isRequesting ? "Locating…" : "Nearby"}</span>
       <span
         id={`${NEARBY_BUTTON_ID}-status`}
         role="status"

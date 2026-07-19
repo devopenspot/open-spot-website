@@ -1,66 +1,67 @@
-'use client';
+"use client";
 
-import { useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
-import { useTransition } from 'react'
-import { showToast } from '@/hooks/useToast'
+import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useTransition } from "react";
+import { showToast } from "@/hooks/useToast";
 
 function isSafeNext(value: string | null): string {
-  if (!value) return '/'
-  if (!value.startsWith('/') || value.startsWith('//')) return '/'
-  return value
+  if (!value) return "/";
+  if (!value.startsWith("/") || value.startsWith("//")) return "/";
+  return value;
 }
 
 export default function LoginPage() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const [pending, startTransition] = useTransition()
-  const [loading, setLoading] = useState(false)
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [pending, startTransition] = useTransition();
+  const [loading, setLoading] = useState(false);
 
-  const errorParam = searchParams.get('error')
+  const errorParam = searchParams.get("error");
   const errorMessage =
-    errorParam === 'oauth'
-      ? 'Google sign-in was cancelled or failed. Try again.'
-      : null
+    errorParam === "oauth"
+      ? "Google sign-in was cancelled or failed. Try again."
+      : null;
 
-  const next = isSafeNext(searchParams.get('next'))
+  const next = isSafeNext(searchParams.get("next"));
 
   const handleGoogleSignIn = () => {
-    setLoading(true)
+    setLoading(true);
     startTransition(async () => {
       try {
-        const res = await fetch('/api/auth/signin/google', {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
+        const res = await fetch("/api/auth/signin/google", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
           body: JSON.stringify({ next }),
-        })
-        const data = (await res.json().catch(() => null)) as
-          | { url?: string; error?: string }
-          | null
+        });
+        const data = (await res.json().catch(() => null)) as {
+          url?: string;
+          error?: string;
+        } | null;
         if (!res.ok || !data?.url) {
-          const message = data?.error ?? 'Sign-in is not available right now.'
-          showToast(message, 'error')
-          setLoading(false)
-          return
+          const message = data?.error ?? "Sign-in is not available right now.";
+          showToast(message, "error");
+          setLoading(false);
+          return;
         }
-        window.location.href = data.url
+        window.location.href = data.url;
       } catch (err) {
         const message =
-          err instanceof Error ? err.message : 'Sign-in failed. Try again.'
-        showToast(message, 'error')
-        setLoading(false)
+          err instanceof Error ? err.message : "Sign-in failed. Try again.";
+        showToast(message, "error");
+        setLoading(false);
       }
-    })
-  }
+    });
+  };
 
-  const busy = pending || loading
+  const busy = pending || loading;
 
   return (
     <section
       id="login-tab"
       role="tabpanel"
       aria-labelledby="nav-btn-login"
-      className="max-w-md mx-auto py-16 animate-fade-in"
+      className="max-w-md mx-auto py-16 animate-fade-in px-4"
     >
       <h1 className="font-display text-2xl font-bold tracking-tight uppercase text-on-surface sm:text-3xl">
         Sign in
@@ -87,7 +88,7 @@ export default function LoginPage() {
         className="mt-8 w-full inline-flex items-center justify-center gap-3 rounded-lg border border-outline bg-on-surface text-surface px-5 py-3 text-xs font-bold tracking-widest uppercase shadow-sm transition-all hover:bg-on-surface/90 disabled:opacity-60 disabled:cursor-not-allowed"
       >
         <GoogleMark />
-        <span>{busy ? 'Opening Google…' : 'Continue with Google'}</span>
+        <span>{busy ? "Opening Google…" : "Continue with Google"}</span>
       </button>
 
       <p className="mt-4 text-[10px] font-mono uppercase tracking-widest text-secondary text-center">
@@ -96,13 +97,13 @@ export default function LoginPage() {
 
       <button
         type="button"
-        onClick={() => router.push('/')}
+        onClick={() => router.push("/")}
         className="mt-10 text-[10px] font-mono uppercase tracking-widest text-secondary hover:text-on-surface"
       >
         Back to directory
       </button>
     </section>
-  )
+  );
 }
 
 function GoogleMark() {
@@ -134,5 +135,5 @@ function GoogleMark() {
         d="M12 5.977c1.468 0 2.786.505 3.823 1.495l2.868-2.867C16.96 2.987 14.695 2 12 2 8.118 2 4.764 4.222 3.064 7.51l3.341 2.59C7.19 7.736 9.395 5.977 12 5.977z"
       />
     </svg>
-  )
+  );
 }
