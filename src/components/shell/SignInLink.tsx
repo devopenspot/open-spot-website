@@ -34,12 +34,7 @@ export function SignInLink({ variant, className }: SignInLinkProps) {
     <Link
       id="nav-btn-login"
       href={{ pathname: "/login", search }}
-      className={cn(
-        "text-nowrap",
-        BASE_CLASSES,
-        VARIANT_CLASSES[variant],
-        className,
-      )}
+      className={cn(BASE_CLASSES, VARIANT_CLASSES[variant], className)}
     >
       Sign in
     </Link>
