@@ -149,7 +149,7 @@ export function SpotDetailsContent({
           <div className="flex">
             <p className="mt-1 flex items-center text-xs text-slate-300">
               <MapPin size={12} className="mr-1 shrink-0" aria-hidden="true" />
-              {`${spot.city} / ${spot.country}`}
+              {`${spot.city} · ${spot.country}`}
             </p>
           </div>
         </div>
@@ -351,7 +351,7 @@ export function SpotDetailsContent({
           </div>
         </div>
 
-        <div className="py-4">
+        <div className="py-4 mx-auto">
           <span className="block font-mono text-[10px] tracking-wider text-secondary uppercase">
             Address {spot.address}
           </span>
