@@ -10,11 +10,13 @@ import { SearchTrigger } from "@/components/shell/SearchTrigger";
 import { useSavedSpots } from "@/hooks/useSavedSpots";
 import { useUser } from "@/hooks/useUser";
 import { MAIN_CONTENT_ID } from "@/lib/constants";
+import { useUIStore } from "@/stores/ui-store";
 
 export function Header() {
   const router = useRouter();
   const user = useUser();
   const { count: savedCount } = useSavedSpots(user?.id ?? null);
+  const openSearch = useUIStore((s) => s.openSearch);
 
   const handleSelect = (path: string) => {
     router.push(path);
@@ -36,7 +38,7 @@ export function Header() {
         />
 
         <div id="header-actions" className="flex items-center space-x-3">
-          <SearchTrigger onClick={() => console.log("map...")} />
+          <SearchTrigger onClick={openSearch} />
           <SignInLink variant="header" />
           <MobileDrawerTrigger />
         </div>
