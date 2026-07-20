@@ -93,7 +93,7 @@ function MapSidebarBase({ spots }: MapSidebarProps) {
       <div className="py-2 mx-auto border-b border-outline-variant bg-surface-container-low">
         {hasFilter && filterLabel && !showRadiusChips && (
           <div id="map-active-filter" className="flex items-center gap-2">
-            <span className="flex items-center gap-1 border border-secondary px-2 py-0.5 text-[9px] font-mono font-bold uppercase tracking-wider text-secondary">
+            <span className="flex items-center gap-1 border border-secondary px-2 py-0.5 text-[10px] font-mono font-bold uppercase tracking-wider text-on-surface">
               <span>{filterLabel}</span>
             </span>
           </div>
@@ -107,7 +107,7 @@ function MapSidebarBase({ spots }: MapSidebarProps) {
           >
             <span
               aria-hidden="true"
-              className="font-mono text-[9px] font-bold tracking-widest text-secondary uppercase pr-1"
+              className="font-mono text-[10px] font-bold tracking-widest text-on-surface uppercase pr-1"
             >
               Radius
             </span>
@@ -121,10 +121,10 @@ function MapSidebarBase({ spots }: MapSidebarProps) {
                   aria-checked={active}
                   onClick={() => handleRadiusChip(miles)}
                   className={cn(
-                    "px-2 py-0.5 text-[9px] font-mono font-bold tracking-wider uppercase border transition-all",
+                    "px-2 py-0.5 text-[10px] font-mono font-bold tracking-wider uppercase border transition-all",
                     active
                       ? "bg-primary text-on-primary border-primary"
-                      : "border-outline-variant text-secondary hover:border-outline hover:text-on-surface",
+                      : "border-outline-variant text-on-surface hover:border-outline",
                   )}
                 >
                   {miles} mi
@@ -153,7 +153,7 @@ function MapSidebarBase({ spots }: MapSidebarProps) {
           ))}
         </div>
         {spots.length === 0 && (
-          <div className="p-6 text-center text-xs text-secondary font-mono space-y-3">
+          <div className="p-6 text-center text-xs text-on-surface font-mono space-y-3">
             {hasFilter && filterLabel ? (
               <>
                 <p>No spots in {filterLabel}.</p>
@@ -161,7 +161,7 @@ function MapSidebarBase({ spots }: MapSidebarProps) {
                   <button
                     type="button"
                     onClick={clearAll}
-                    className="font-mono text-[10px] font-bold tracking-widest uppercase text-primary hover:underline focus-visible:underline"
+                    className="font-mono text-xs font-bold tracking-widest uppercase text-primary hover:underline focus-visible:underline"
                   >
                     Clear filter
                   </button>
@@ -229,10 +229,10 @@ const SidebarSpotItem = memo(function SidebarSpotItem({
             <TypeBadges
               types={spot.types}
               variant="surface"
-              className="text-[8px]"
+              className="text-[10px]"
             />
           ) : null}
-          <span className="text-[8px] font-mono font-medium text-secondary">
+          <span className="text-[10px] font-mono font-medium text-on-surface">
             {distanceLabel}
           </span>
         </span>
@@ -240,13 +240,13 @@ const SidebarSpotItem = memo(function SidebarSpotItem({
           {spot.name}
         </span>
         <span className="flex items-center justify-between mt-1">
-          <span className="text-[9px] text-secondary">{spot.city}</span>
+          <span className="text-[10px] text-on-surface">{spot.city}</span>
           <span className="flex items-center space-x-1 truncate">
             <span
               aria-hidden="true"
               className="h-1 w-1 rounded-full bg-primary"
             />
-            <span className="text-[8px] font-mono text-secondary">
+            <span className="text-[10px] font-mono text-on-surface">
               {spot.sports.join("|")}
             </span>
           </span>

@@ -100,7 +100,7 @@ function MapInfoPopupBase() {
           >
             {spot.name}
           </h4>
-          <p className="flex items-center text-[11px] text-secondary truncate">
+          <p className="flex items-center text-xs text-on-surface truncate">
             <MapPin size={11} className="mr-1 shrink-0" aria-hidden="true" />
             <span className="truncate">
               {spot.city}
@@ -113,7 +113,7 @@ function MapInfoPopupBase() {
           type="button"
           onClick={clearActivePin}
           aria-label="Close details"
-          className="shrink-0 -mt-1 -mr-1 flex h-7 w-7 items-center justify-center text-secondary hover:text-on-surface hover:bg-surface-container transition-all"
+          className="shrink-0 -mt-1 -mr-1 flex h-7 w-7 items-center justify-center text-on-surface hover:bg-surface-container transition-all"
         >
           <X size={14} aria-hidden="true" />
         </button>
@@ -130,13 +130,13 @@ function MapInfoPopupBase() {
             <span className="font-display text-xl font-bold tracking-tight text-on-surface">
               {current !== undefined ? `${current}°C` : "—"}
             </span>
-            <span className="text-[11px] text-secondary truncate">
+            <span className="text-xs text-on-surface truncate">
               {description ?? (hasWeather ? "—" : "Weather unavailable")}
             </span>
           </div>
           <dl className="ml-auto flex divide-x divide-outline-variant/60 text-center">
             <div className="flex flex-col items-center justify-center px-3 first:pl-0">
-              <dt className="font-mono text-[9px] tracking-wider text-secondary uppercase">
+              <dt className="font-mono text-[10px] tracking-wider text-on-surface uppercase">
                 Min/Max
               </dt>
               <dd className="font-mono text-xs font-semibold text-on-surface whitespace-nowrap">
@@ -146,7 +146,7 @@ function MapInfoPopupBase() {
               </dd>
             </div>
             <div className="flex flex-col items-center justify-center px-3 last:pr-0">
-              <dt className="font-mono text-[9px] tracking-wider text-secondary uppercase">
+              <dt className="font-mono text-[10px] tracking-wider text-on-surface uppercase">
                 Wind
               </dt>
               <dd className="font-mono text-xs font-semibold text-on-surface whitespace-nowrap">
@@ -175,10 +175,10 @@ function MapInfoPopupBase() {
           aria-pressed={isSaved}
           aria-label={isSaved ? `Unsave ${spot.name}` : `Save ${spot.name}`}
           className={cn(
-            "h-9 px-3 text-[10px] font-bold tracking-widest uppercase transition-all border",
+            "h-9 px-3 text-xs font-bold tracking-widest uppercase transition-all border",
             isSaved
               ? "bg-primary text-on-primary border-primary hover:bg-primary/95"
-              : "border-outline text-secondary hover:bg-surface-container hover:text-on-surface",
+              : "border-outline text-on-surface hover:bg-surface-container",
           )}
         >
           {isSaved ? "Saved" : "Save"}
@@ -186,7 +186,7 @@ function MapInfoPopupBase() {
         <button
           type="button"
           onClick={() => openSpot(spot)}
-          className="flex-1 h-9 bg-on-surface text-surface text-[10px] font-bold tracking-widest uppercase hover:bg-on-surface/90 transition-all text-center"
+          className="flex-1 h-9 bg-on-surface text-surface text-xs font-bold tracking-widest uppercase hover:bg-on-surface/90 transition-all text-center"
         >
           Full info
         </button>
