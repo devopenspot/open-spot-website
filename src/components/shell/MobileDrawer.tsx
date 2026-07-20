@@ -36,10 +36,10 @@ export function MobileDrawer() {
       contentId={DRAWER_ID}
       flush
       containerClassName="md:max-w-96 max-w-full"
-      panelClassName="w-72 h-full bg-surface text-on-surface border-l border-outline-variant flex flex-col p-6 shadow-2xl justify-between ml-auto"
+      panelClassName="w-72 h-full bg-surface text-on-surface border-l border-outline-variant flex flex-col p-4 shadow-2xl justify-between ml-auto"
     >
       <div>
-        <div className="flex items-center justify-between border-b border-outline-variant pb-4 mb-6">
+        <div className="flex items-center justify-between border-b border-outline-variant pb-4 mb-4">
           <BrandLogo size="sm" />
           <button
             id="close-hamburger-btn"
