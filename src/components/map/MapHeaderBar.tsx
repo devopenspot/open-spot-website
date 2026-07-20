@@ -3,7 +3,7 @@
 import { memo } from "react";
 import { Search } from "lucide-react";
 import { useUIStore } from "@/stores/ui-store";
-import { BrandLogo } from "@/components/main/BrandLogo";
+import { BrandLogo } from "@/components/shell/BrandLogo";
 import { MobileDrawerTrigger } from "@/components/shell/MobileDrawerTrigger";
 import { NearbyControl } from "./NearbyControl";
 

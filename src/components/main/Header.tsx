@@ -3,11 +3,11 @@
 import { useRouter } from "next/navigation";
 import { NavList } from "./NavList";
 import { MobileDrawerTrigger } from "@/components/shell/MobileDrawerTrigger";
-import { SignInLink } from "@/components/shell/SignInLink";
+// import { SignInLink } from "@/components/shell/SignInLink";
 import { useSavedSpots } from "@/hooks/useSavedSpots";
 import { useUser } from "@/hooks/useUser";
 import { MAIN_CONTENT_ID } from "@/lib/constants";
-import { BrandLogo } from "./BrandLogo";
+import { BrandLogo } from "../shell/BrandLogo";
 
 export function Header() {
   const router = useRouter();
@@ -34,7 +34,7 @@ export function Header() {
         />
 
         <div id="header-actions" className="flex items-center space-x-3">
-          <SignInLink variant="header" />
+          {/* <SignInLink variant="header" /> */}
           <MobileDrawerTrigger />
         </div>
       </div>

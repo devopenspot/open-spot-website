@@ -14,24 +14,14 @@ export function HeroSection() {
   const openSearch = useUIStore((s) => s.openSearch);
   return (
     <section className="relative bg-primary p-4 md:px-8 w-full">
-      <div className="relative flex flex-col md:flex-row items-stretch justify-between gap-8">
-        <div className="max-w-3xl">
-          <div className="mb-4 flex items-center gap-3">
-            <div className="h-px w-8 bg-surface/50" aria-hidden="true" />
-            <span className="font-mono text-[10px] font-bold tracking-[0.2em] text-surface/60 uppercase">
-              Open Spot
-            </span>
-          </div>
-          <h1 className="font-display text-5xl font-bold leading-[0.92] tracking-tight text-surface uppercase sm:text-7xl md:text-8xl lg:text-9xl">
-            Discover
+      <div className="relative flex flex-col md:flex-row items-center justify-start gap-8 h-screen">
+        <div className="w-full">
+          <h1 className="font-display text-4xl font-bold leading-[0.92] tracking-tight text-surface uppercase sm:text-7xl md:text-8xl lg:text-9xl">
+            directory 4 Riders
             <br />
-            <span className="inline-block border-t-2 border-surface/30 pt-2 mt-1">
-              Spots.
-            </span>
           </h1>
-          <p className="mt-6 max-w-xl text-sm leading-relaxed text-surface/70 sm:text-base">
-            A directory for Riders & Athletes. Find plazas, DIYs, and
-            Skateparks.
+          <p className="mt-6 text-sm leading-relaxed text-surface/70 sm:text-base">
+            Discover Plazas, DIYs, Bowls and Skateparks.
           </p>
         </div>
         <section
@@ -43,7 +33,11 @@ export function HeroSection() {
             eyebrow="Weather & Forecast"
             className="-ml-4 md:ml-0"
             eyebrowIcon={
-              <Globe size={14} className="text-surface/80" aria-hidden="true" />
+              <Globe
+                size={14}
+                className="text-surface/80 animate-pulse-dot"
+                aria-hidden="true"
+              />
             }
             title="Browse Regions"
             titleId="regions-heading"

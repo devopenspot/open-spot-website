@@ -11,20 +11,12 @@ export function BrandLogo({ onClick, size = "md", className }: BrandLogoProps) {
   const isLink = !onClick;
   const content = (
     <>
-      <span
-        className={cn(
-          "font-display font-bold tracking-widest text-on-surface uppercase",
-        )}
-      >
-        OS
-      </span>
-      <span
-        aria-hidden="true"
-        className={cn(
-          "rounded-full bg-primary animate-pulse-dot",
-          size === "md" ? "h-2 w-2" : "h-1.5 w-1.5",
-        )}
-      />
+      <div className="flex items-center gap-3">
+        <div className="h-px w-8 bg-primary/50" aria-hidden="true" />
+        <span className="font-mono text-[10px] font-bold tracking-[0.2em] text-primary/40 uppercase text-nowrap">
+          Open Spot
+        </span>
+      </div>
     </>
   );
 

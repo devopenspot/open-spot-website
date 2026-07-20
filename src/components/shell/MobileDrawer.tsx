@@ -11,7 +11,7 @@ import { useUIStore } from "@/stores/ui-store";
 import { useSavedSpots } from "@/hooks/useSavedSpots";
 import { useUser } from "@/hooks/useUser";
 import { APP_VERSION, BUILD_TZ } from "@/lib/system-info";
-import { BrandLogo } from "@/components/main/BrandLogo";
+import { BrandLogo } from "@/components/shell/BrandLogo";
 
 const DRAWER_ID = "mobile-hamburger-portal";
 const DRAWER_TITLE_ID = "mobile-drawer-title";

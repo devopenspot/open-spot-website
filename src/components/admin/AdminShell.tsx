@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import { BrandLogo } from "@/components/main/BrandLogo";
+import { BrandLogo } from "@/components/shell/BrandLogo";
 import { ToastViewport } from "@/components/shell/Toast";
 import { UserAvatar } from "@/components/ui";
 import { useUser } from "@/hooks/useUser";
