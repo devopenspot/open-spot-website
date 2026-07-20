@@ -28,7 +28,7 @@ export function SwitchFilteredNearby() {
       id="map-mode-switcher"
       role="radiogroup"
       aria-label="Map mode"
-      className="flex items-stretch border border-outline-variant w-full mx-16"
+      className="flex items-stretch border border-outline-variant w-1/2 mx-2"
     >
       <button
         type="button"
