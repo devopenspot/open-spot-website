@@ -11,7 +11,7 @@ interface SectionHeaderProps {
   className?: string;
   eyebrowClassName?: string;
 }
-// TODO: make a litle enhance of this Component, approach in its margins and paddings
+
 export function SectionHeader({
   eyebrow,
   eyebrowIcon,

@@ -25,7 +25,7 @@ export interface SpotFormState {
   lat: number;
   lon: number;
 }
-
+// TODO: the correct behavior of this form is: when the user open for first time this page, or then of save a spot, must set the fields in the default values, as the first time it is open
 interface SpotFormFieldsProps {
   state: SpotFormState;
   onChange: (next: SpotFormState) => void;

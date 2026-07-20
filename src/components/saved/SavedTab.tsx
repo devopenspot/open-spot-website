@@ -16,7 +16,6 @@ export default function SavedTab() {
   const savedSpots = spots.filter((s) => savedIds.has(s.id));
 
   const openSpot = (spot: { id: string }) => router.push(ROUTES.spot(spot.id));
-  // TODO: must save in server only, not in local storage. remove local storage persistence.
   return (
     <section
       id="saved-tab"

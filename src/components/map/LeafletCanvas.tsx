@@ -430,7 +430,6 @@ export function LeafletCanvas({
           ),
         )}
         {userLocation && (
-          // TODO: i need improve the icon for the user location, i like the current animation such as a radar, keep using something similar but change the square shape for an icon or most useful shape or icon
           <Marker
             position={[userLocation.lat, userLocation.lon]}
             icon={userIcon}
