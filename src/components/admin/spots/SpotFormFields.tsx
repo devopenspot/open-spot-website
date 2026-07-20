@@ -7,6 +7,7 @@ import {
   type ImageSourceFieldValue,
 } from "./ImageSourceField";
 import { LatLonEditor, type LatLonEditorMode } from "./LatLonEditor";
+import { CountryAutocomplete } from "./CountryAutocomplete";
 import type { ProjectedAddress } from "@/lib/geocode/project";
 import type { SpotTypeEntity } from "@/lib/types";
 
@@ -17,14 +18,6 @@ export interface SpotFormState {
   address: string;
   country: string;
   countryCode: string;
-  /**
-   * Slugs of every type this spot carries (zero or more). The
-   * server action validates each against the `spot_types` dimension
-   * and persists them via the `spot_spot_types` join table. A spot
-   * with no types is allowed at the form level; the submit button
-   * on `AdminNewSpotForm` enforces "at least one" on the new-spot
-   * page (creation requires a classification).
-   */
   types: string[];
   sports: SportDiscipline[];
   crowdLevel: number;
@@ -83,6 +76,10 @@ export function SpotFormFields({
     key: K,
     value: SpotFormState[K],
   ) => onChange({ ...state, [key]: value });
+
+  const handleCountryChange = (next: { name: string; code: string }) => {
+    onChange({ ...state, country: next.name, countryCode: next.code });
+  };
 
   const toggleSport = (sport: SportDiscipline) => {
     if (state.sports.includes(sport)) {
@@ -161,7 +158,10 @@ export function SpotFormFields({
         className="rounded-xl border border-outline-variant bg-surface-container-low p-5"
       >
         <legend className="flex items-center px-1 font-mono text-[10px] font-bold uppercase tracking-wider text-secondary">
-          Spot types <span aria-hidden="true" className="ml-1 text-primary">*</span>
+          Spot types{" "}
+          <span aria-hidden="true" className="ml-1 text-primary">
+            *
+          </span>
         </legend>
         <p className="mb-3 text-[10px] text-secondary">
           Pick every type this spot supports — plaza, bowl, rails, DIY, etc.
@@ -192,11 +192,7 @@ export function SpotFormFields({
           })}
         </ul>
         {errors?.types ? (
-          <p
-            id={errorId}
-            role="alert"
-            className="mt-3 text-[10px] text-error"
-          >
+          <p id={errorId} role="alert" className="mt-3 text-[10px] text-error">
             {errors.types}
           </p>
         ) : null}
@@ -210,13 +206,12 @@ export function SpotFormFields({
           >
             Country
           </label>
-          <input
+          <CountryAutocomplete
             id={countryId}
-            type="text"
-            value={state.country}
-            onChange={(e) => update("country", e.target.value)}
-            placeholder="e.g. United States"
-            className="w-full rounded-lg border border-outline-variant bg-surface-bright p-3 text-xs font-medium text-on-surface shadow-sm focus:border-outline focus:outline-none"
+            value={{ name: state.country, code: state.countryCode }}
+            onChange={handleCountryChange}
+            onError={onError}
+            invalid={Boolean(errors?.country)}
           />
         </div>
         <div>

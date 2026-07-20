@@ -148,7 +148,7 @@ export function LatLonEditor({
   const loading = state.status === "loading";
   const canLookup =
     !readOnly && !loading && Number.isFinite(lat) && Number.isFinite(lon);
-
+  // TODO the current behavior is that when the user focus this component, it keep a value of "0, 0" which is correct but it remains  when the inpout take the focus, the correct behavior is, when the input is focus, the string value must be an empty string, then the user paste the value
   return (
     <fieldset className="rounded-xl border border-outline-variant bg-surface-container-low p-5">
       <legend className="flex items-center px-1 font-mono text-[10px] font-bold uppercase tracking-wider text-secondary">

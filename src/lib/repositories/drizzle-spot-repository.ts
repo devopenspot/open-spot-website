@@ -222,6 +222,21 @@ export class DrizzleSpotRepository implements SpotRepository {
     return rows
   }
 
+  async listAllCountries(): Promise<
+    readonly { iso2: string; name: string; region: string }[]
+  > {
+    const rows = await this.db
+      .select({
+        iso2: countries.iso2,
+        name: countries.name,
+        region: regions.name,
+      })
+      .from(countries)
+      .innerJoin(regions, eq(regions.id, countries.regionId))
+      .orderBy(asc(countries.name))
+    return rows
+  }
+
   async listRegions(): Promise<
     readonly { name: string; countryCount: number; spotCount: number }[]
   > {

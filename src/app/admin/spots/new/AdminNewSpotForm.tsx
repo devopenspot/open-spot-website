@@ -110,7 +110,7 @@ export function AdminNewSpotForm({
   }
 
   const submitDisabled =
-    !state.name || !state.city || state.types.length === 0
+    !state.name || !state.city || state.types.length === 0 || !state.countryCode
 
   return (
     <section
