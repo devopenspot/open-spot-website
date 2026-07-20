@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { MapPin } from "lucide-react";
 import { memo, useCallback, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { cn } from "@/lib/cn";
@@ -205,50 +206,59 @@ const SidebarSpotItem = memo(function SidebarSpotItem({
       id={`sidebar-spot-item-${spot.id}`}
       type="button"
       onClick={handleClick}
-      className={`shrink-0 lg:shrink w-48 lg:w-full snap-start p-3 rounded-xl border text-left transition-all flex space-x-3 items-center ${
+      aria-current={isActive ? "true" : undefined}
+      className={cn(
+        "shrink-0 lg:shrink w-48 lg:w-full snap-start text-left transition-colors flex items-stretch border",
         isActive
-          ? "border-primary bg-surface-container-high shadow-sm"
-          : "border-outline-variant/60 bg-surface-container-low hover:border-outline hover:bg-surface-container"
-      }`}
+          ? "border-primary bg-surface-container-high"
+          : "border-outline-variant/60 bg-surface-container-low hover:border-outline hover:bg-surface-container",
+      )}
     >
-      <span className="relative h-12 w-12 rounded-lg bg-black overflow-hidden shrink-0">
+      <span className="relative h-14 w-14 bg-black overflow-hidden shrink-0">
         <Image
           src={spot.image}
           alt=""
           fill
-          sizes="48px"
+          sizes="56px"
           className="object-cover"
           referrerPolicy="no-referrer"
           unoptimized
         />
+        {isSaved && (
+          <span
+            aria-hidden="true"
+            className="absolute top-0 right-0 h-2 w-2 bg-surface border-l border-b border-outline"
+          />
+        )}
       </span>
 
-      <span className="flex-1 min-w-0">
-        <span className="flex flex-col md:flex-row items-start justify-between">
+      <span className="flex-1 min-w-0 px-3 py-2 flex flex-col gap-1.5">
+        <span className="flex items-center justify-between gap-2 min-w-0">
           {spot.types.length > 0 ? (
             <TypeBadges
               types={spot.types}
               variant="surface"
-              className="text-[10px]"
+              className="text-[9px]"
             />
-          ) : null}
-          <span className="text-[10px] font-mono font-medium text-on-surface">
+          ) : (
+            <span className="font-mono text-[9px] font-bold text-secondary uppercase tracking-widest">
+              Spot
+            </span>
+          )}
+          <span className="font-mono text-[9px] font-bold text-secondary uppercase tracking-widest shrink-0">
             {distanceLabel}
           </span>
         </span>
-        <span className="block font-display text-xs font-bold uppercase tracking-wide truncate text-on-surface">
+        <span className="block font-display text-xs font-bold tracking-wide uppercase text-on-surface truncate">
           {spot.name}
         </span>
-        <span className="flex items-center justify-between mt-1">
-          <span className="text-[10px] text-on-surface">{spot.city}</span>
-          <span className="flex items-center space-x-1 truncate">
-            <span
-              aria-hidden="true"
-              className="h-1 w-1 rounded-full bg-primary"
-            />
-            <span className="text-[10px] font-mono text-on-surface">
-              {spot.sports.join("|")}
-            </span>
+        <span className="flex items-center justify-between gap-2 min-w-0">
+          <span className="flex items-center text-[10px] text-secondary min-w-0">
+            <MapPin size={10} aria-hidden="true" className="mr-1 shrink-0" />
+            <span className="truncate">{spot.city}</span>
+          </span>
+          <span className="font-mono text-[9px] text-secondary uppercase tracking-widest truncate">
+            {spot.sports.join("|")}
           </span>
         </span>
         {isSaved && <span className="visually-hidden">Saved spot</span>}

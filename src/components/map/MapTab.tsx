@@ -31,7 +31,6 @@ interface MapTabProps {
   nearbyRequested: boolean;
 }
 
-// TODO: i need refine the styles of this component and which are related with, approaching only on text sizing, and text colors, the goal is the user experience, keep structure, data, layout intact
 export default function MapTab({ searchParams, nearbyRequested }: MapTabProps) {
   const spots = useSpotsStore((s) => s.spots);
   const {
