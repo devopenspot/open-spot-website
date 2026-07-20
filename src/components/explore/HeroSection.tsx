@@ -14,10 +14,10 @@ export function HeroSection() {
   const openSearch = useUIStore((s) => s.openSearch);
   return (
     <section className="relative bg-primary p-4 md:px-8 w-full">
-      <div className="relative flex flex-col md:flex-row items-center justify-start gap-8 h-screen">
+      <div className="relative flex flex-col md:flex-row items-center justify-start gap-8">
         <div className="w-full">
           <h1 className="font-display text-4xl font-bold leading-[0.92] tracking-tight text-surface uppercase sm:text-7xl md:text-8xl lg:text-9xl">
-            directory 4 Riders
+            directory for Riders
             <br />
           </h1>
           <p className="mt-6 text-sm leading-relaxed text-surface/70 sm:text-base">

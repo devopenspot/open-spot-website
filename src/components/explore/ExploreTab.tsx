@@ -59,7 +59,7 @@ export default function ExploreTab({ events, featured }: ExploreTabProps) {
           eyebrow="Fresh"
           title="Highlight Spots"
           titleId="spotlight-heading"
-          className="pl-4 md:pl-0"
+          className="md:mx-4"
         />
         <div
           id="spotlight-grid"
@@ -91,7 +91,7 @@ export default function ExploreTab({ events, featured }: ExploreTabProps) {
           title="Events"
           titleId="legendary-heading"
           description="The official circuits, world tours, championships, and festivals."
-          className="pl-4 md:pl-0"
+          className="md:mx-4"
           cta={
             <button
               id="view-all-events-link"

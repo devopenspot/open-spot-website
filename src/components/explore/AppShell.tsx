@@ -72,7 +72,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <main
         id={MAIN_CONTENT_ID}
         aria-label="Open Spot content"
-        className="flex-1 mx-auto w-full max-w-7xl"
+        className="flex-1 w-full "
       >
         {children}
       </main>

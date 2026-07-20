@@ -12,7 +12,7 @@ import { getWeatherForAllSpots } from "@/lib/weather/weather-bundle";
 import { getServerUserFromCookies } from "@/lib/auth";
 import { getDbPoolMax } from "@/lib/db/client";
 import { withDbConcurrency } from "@/lib/db/concurrency";
-import { SpotsProvider } from "@/components/main/SpotsProvider";
+import { SpotsProvider } from "@/components/explore/SpotsProvider";
 import "./globals.css";
 
 const inter = Inter({

@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { X, Shield, Info } from "lucide-react";
 import { Overlay } from "@/components/feedback/Overlay";
 import { UserAvatar } from "@/components/ui";
-import { NavList } from "@/components/main/NavList";
+import { NavList } from "@/components/explore/NavList";
 import { SignInLink } from "@/components/shell/SignInLink";
 import { SignOutButton } from "@/components/shell/SignOutButton";
 import { useUIStore } from "@/stores/ui-store";
