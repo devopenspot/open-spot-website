@@ -69,6 +69,12 @@ export function LatLonEditor({
   // the `lat` / `lon` props; this just lets the user type freely without
   // losing their input on every keystroke.
   const [pasteValue, setPasteValue] = useState<string>(formatPaste(lat, lon));
+  // Focus state. When focused and the underlying lat/lon are the (0, 0)
+  // placeholder, the input is rendered empty so the native placeholder
+  // shows and a fresh paste replaces nothing. Once the user has pasted
+  // real coordinates, lat/lon become non-zero and the formatted value
+  // stays visible across focus.
+  const [isFocused, setIsFocused] = useState(false);
 
   // Resync the paste field when the two separate inputs change it externally.
   // This is the standard "derived state from props" pattern for a hybrid
@@ -145,10 +151,22 @@ export function LatLonEditor({
     }
   };
 
+  const handleFocus = () => {
+    setIsFocused(true);
+  };
+
+  const handleBlur = () => {
+    setIsFocused(false);
+    if (!PASTE_REGEX.test(pasteValue)) {
+      setPasteValue(formatPaste(lat, lon));
+    }
+  };
+
   const loading = state.status === "loading";
   const canLookup =
     !readOnly && !loading && Number.isFinite(lat) && Number.isFinite(lon);
-  // TODO the current behavior is that when the user focus this component, it keep a value of "0, 0" which is correct but it remains  when the inpout take the focus, the correct behavior is, when the input is focus, the string value must be an empty string, then the user paste the value
+  const showEmptyWhileFocused = isFocused && lat === 0 && lon === 0;
+  const displayedValue = showEmptyWhileFocused ? "" : pasteValue;
   return (
     <fieldset className="rounded-xl border border-outline-variant bg-surface-container-low p-5">
       <legend className="flex items-center px-1 font-mono text-[10px] font-bold uppercase tracking-wider text-secondary">
@@ -178,8 +196,10 @@ export function LatLonEditor({
           inputMode="decimal"
           autoComplete="off"
           spellCheck={false}
-          value={pasteValue}
+          value={displayedValue}
           onChange={(e) => handlePasteChange(e.target.value)}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
           placeholder="3.4148330629420376, -76.55256421903898"
           disabled={readOnly}
           aria-describedby={`${pasteId}-hint`}
