@@ -2,7 +2,6 @@ import type { TabType } from "@/lib/types";
 import {
   Compass,
   Heart,
-  PlusCircle,
   Trophy,
   type LucideIcon,
 } from "lucide-react";
@@ -32,15 +31,15 @@ export const NAV_ITEMS: readonly {
     drawerLabel: "Sport Events",
     Icon: Trophy,
   },
-  {
-    id: "post",
-    path: "/post",
-    label: "Post Spot",
-    shortLabel: "Post",
-    drawerLabel: "Register Spot",
-    Icon: PlusCircle,
-    adminOnly: true,
-  },
+  //   {
+  //     id: "post",
+  //     path: "/post",
+  //     label: "Post Spot",
+  //     shortLabel: "Post",
+  //     drawerLabel: "Register Spot",
+  //     Icon: PlusCircle,
+  //     adminOnly: true,
+  //   },
   {
     id: "saved",
     path: "/saved",

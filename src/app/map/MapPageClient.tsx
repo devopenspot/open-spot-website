@@ -21,5 +21,12 @@ export function MapPageClient() {
 function MapPageInner() {
   const searchParams = useSearchParams();
   const nearbyRequested = searchParams.get('nearby') === '1';
-  return <MapTab searchParams={searchParams} nearbyRequested={nearbyRequested} />;
+  const savedRequested = searchParams.get('saved') === '1';
+  return (
+    <MapTab
+      searchParams={searchParams}
+      nearbyRequested={nearbyRequested}
+      savedRequested={savedRequested}
+    />
+  );
 }

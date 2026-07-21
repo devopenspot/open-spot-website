@@ -1,9 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import { MapPin } from "lucide-react";
+import { Compass, Heart, MapPin } from "lucide-react";
 import { memo, useCallback, useMemo } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/cn";
 import { useSpotsStore } from "@/stores/spots-store";
 import { useMapStore } from "@/stores/map-store";
@@ -36,12 +36,14 @@ function MapSidebarBase({ spots }: MapSidebarProps) {
     radiusMiles,
     setRadiusMiles,
   } = useUserLocation();
+  const router = useRouter();
 
   const searchParams = useSearchParams();
   const { region, country, clearAll } = useMapFilter(fullSpots, searchParams);
 
   const showRadiusChips = mapMode === "nearby";
   const showChips = showRadiusChips && userLocation !== null;
+  const showSavedLabel = mapMode === "saved";
 
   const hasFilter = region !== null || country !== null;
   const filterLabel = country ? `${country} (${region})` : region;
@@ -99,6 +101,18 @@ function MapSidebarBase({ spots }: MapSidebarProps) {
             </span>
           </div>
         )}
+        {showSavedLabel && (
+          <div
+            id="map-saved-label"
+            className="flex items-center gap-2"
+            aria-label={`Saved spots (${savedIds.size})`}
+          >
+            <span className="flex items-center gap-1 border border-secondary px-2 py-0.5 text-[10px] font-mono font-bold uppercase tracking-wider text-on-surface">
+              <Heart size={10} aria-hidden="true" />
+              <span>Saved spots ({savedIds.size})</span>
+            </span>
+          </div>
+        )}
         {showChips && (
           <div
             id="map-radius-chips"
@@ -138,7 +152,7 @@ function MapSidebarBase({ spots }: MapSidebarProps) {
 
       <div
         id="sidebar-spots-list"
-        aria-label="Filtered spots"
+        aria-label={mapMode === "saved" ? "Saved spots" : "Filtered spots"}
         className="ml-1 md:ml-0 flex-1 flex flex-row lg:flex-col overflow-x-auto lg:overflow-y-auto space-x-1 lg:space-x-0 lg:space-y-2 no-scrollbar snap-x lg:snap-none snap-mandatory"
       >
         <div className="hidden md:flex flex-col">
@@ -154,26 +168,52 @@ function MapSidebarBase({ spots }: MapSidebarProps) {
           ))}
         </div>
         {spots.length === 0 && (
-          <div className="p-6 text-center text-xs text-on-surface font-mono space-y-3">
-            {hasFilter && filterLabel ? (
-              <>
-                <p>No spots in {filterLabel}.</p>
-                {clearAll && (
-                  <button
-                    type="button"
-                    onClick={clearAll}
-                    className="font-mono text-xs font-bold tracking-widest uppercase text-primary hover:underline focus-visible:underline"
-                  >
-                    Clear filter
-                  </button>
-                )}
-              </>
-            ) : showChips ? (
-              `No spots within ${radiusMiles} mi — expand the grid.`
-            ) : (
-              "No locations match filter"
-            )}
-          </div>
+          mapMode === "saved" ? (
+            <div
+              id="map-saved-empty-state"
+              className="m-4 flex flex-col items-center justify-center py-10 px-4 text-center rounded-2xl border border-dashed border-outline-variant bg-surface-container-low"
+            >
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-surface-container-high border border-outline-variant text-secondary mb-4">
+                <Heart size={20} className="text-secondary" aria-hidden="true" />
+              </div>
+              <h3 className="font-display text-base font-bold uppercase tracking-wider text-on-surface">
+                No registered spots
+              </h3>
+              <p className="mt-2 text-xs text-secondary leading-relaxed">
+                Sift through our curated directory, tap the heart emblem, and
+                compile your local blueprint for rapid reference.
+              </p>
+              <button
+                type="button"
+                onClick={() => router.push("/")}
+                className="mt-6 inline-flex items-center space-x-2 rounded-lg bg-on-surface text-surface px-5 py-2 text-xs font-bold tracking-widest uppercase hover:bg-on-surface/90 transition-all"
+              >
+                <Compass size={14} aria-hidden="true" />
+                <span>Explore archive</span>
+              </button>
+            </div>
+          ) : (
+            <div className="p-6 text-center text-xs text-on-surface font-mono space-y-3">
+              {hasFilter && filterLabel ? (
+                <>
+                  <p>No spots in {filterLabel}.</p>
+                  {clearAll && (
+                    <button
+                      type="button"
+                      onClick={clearAll}
+                      className="font-mono text-xs font-bold tracking-widest uppercase text-primary hover:underline focus-visible:underline"
+                    >
+                      Clear filter
+                    </button>
+                  )}
+                </>
+              ) : showChips ? (
+                `No spots within ${radiusMiles} mi — expand the grid.`
+              ) : (
+                "No locations match filter"
+              )}
+            </div>
+          )
         )}
       </div>
     </aside>

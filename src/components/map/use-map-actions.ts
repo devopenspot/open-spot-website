@@ -3,6 +3,7 @@
 import { useCallback, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useUserLocation } from "@/hooks/useUserLocation";
+import { useUser } from "@/hooks/useUser";
 import { ROUTES } from "@/lib/nav";
 import {
   useMapStore,
@@ -19,6 +20,7 @@ export interface MapActions {
   resetView: () => void;
   reCenter: () => void;
   dismissNearby: () => void;
+  dismissSaved: () => void;
   clearLocationAndNearby: () => void;
   openSpot: (spot: Spot) => void;
 }
@@ -39,16 +41,30 @@ export function useMapActions(): MapActions {
   const fitBoundsToSpots = useMapStore((s) => s.fitBoundsToSpots);
   const fitRadius = useMapStore((s) => s.fitRadius);
   const bindController = useMapStore((s) => s.bindController);
+  const user = useUser();
   const [, startTransition] = useTransition();
 
   const selectMode = useCallback(
     (next: MapMode) => {
+      if (next === "saved" && user === null) {
+        startTransition(() => {
+          router.push(
+            `/login?next=${encodeURIComponent(`${ROUTES.map}?saved=1`)}`,
+          );
+        });
+        return;
+      }
       setMapMode(next);
       const params = new URLSearchParams(searchParams.toString());
       if (next === "nearby") {
         params.set("nearby", "1");
+        params.delete("saved");
+      } else if (next === "saved") {
+        params.set("saved", "1");
+        params.delete("nearby");
       } else {
         params.delete("nearby");
+        params.delete("saved");
       }
       const url = buildNearbyUrl(params);
       startTransition(() => {
@@ -58,12 +74,21 @@ export function useMapActions(): MapActions {
         void requestLocation();
       }
     },
-    [router, searchParams, requestLocation, setMapMode],
+    [router, searchParams, requestLocation, setMapMode, user],
   );
 
   const dismissNearby = useCallback(() => {
     const params = new URLSearchParams(searchParams.toString());
     params.delete("nearby");
+    const url = buildNearbyUrl(params);
+    startTransition(() => {
+      router.replace(url, { scroll: false });
+    });
+  }, [router, searchParams]);
+
+  const dismissSaved = useCallback(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("saved");
     const url = buildNearbyUrl(params);
     startTransition(() => {
       router.replace(url, { scroll: false });
@@ -101,6 +126,7 @@ export function useMapActions(): MapActions {
     resetView,
     reCenter,
     dismissNearby,
+    dismissSaved,
     clearLocationAndNearby,
     openSpot,
   };

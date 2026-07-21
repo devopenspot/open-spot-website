@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 import type { Spot } from "@/lib/types";
 
-export type MapMode = "nearby" | "filtered";
+export type MapMode = "nearby" | "filtered" | "saved";
 
 export interface MapController {
   flyTo: (spot: Spot) => void;

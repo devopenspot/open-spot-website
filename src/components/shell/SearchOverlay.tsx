@@ -158,7 +158,7 @@ export function SearchOverlay({
               role="searchbox"
               disabled
               autoComplete="off"
-              placeholder="Search spots by name, city, or style..."
+              placeholder="Search spots by regions & countries"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               className="w-full bg-transparent text-lg font-medium text-on-surface focus:outline-none placeholder:text-secondary"

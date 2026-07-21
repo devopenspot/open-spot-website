@@ -7,6 +7,8 @@ import { useMapStore } from "@/stores/map-store";
 import { useUserLocation } from "@/hooks/useUserLocation";
 import { useMapFilter } from "@/hooks/useMapFilter";
 import { useMapActions } from "./use-map-actions";
+import { useSavedSpots } from "@/hooks/useSavedSpots";
+import { useUser } from "@/hooks/useUser";
 import { DEFAULT_NEARBY_RADIUS_MI } from "@/stores/user-location-store";
 import { MAP_VIEWPORT_OFFSET_PX } from "@/lib/constants";
 import { haversineMiles, milesToMeters } from "@/lib/spots/geo";
@@ -29,9 +31,14 @@ const NEAR_YOU_INITIAL_ZOOM = 10;
 interface MapTabProps {
   searchParams: ReadonlyURLSearchParams;
   nearbyRequested: boolean;
+  savedRequested: boolean;
 }
 
-export default function MapTab({ searchParams, nearbyRequested }: MapTabProps) {
+export default function MapTab({
+  searchParams,
+  nearbyRequested,
+  savedRequested,
+}: MapTabProps) {
   const spots = useSpotsStore((s) => s.spots);
   const {
     location,
@@ -41,7 +48,9 @@ export default function MapTab({ searchParams, nearbyRequested }: MapTabProps) {
     request: requestLocation,
   } = useUserLocation();
   const { region, country, filteredSpots } = useMapFilter(spots, searchParams);
-  const { dismissNearby } = useMapActions();
+  const { dismissNearby, dismissSaved } = useMapActions();
+  const user = useUser();
+  const { savedIds } = useSavedSpots(user?.id ?? null);
   const fitRadius = useMapStore((s) => s.fitRadius);
   const fitBoundsToSpots = useMapStore((s) => s.fitBoundsToSpots);
 
@@ -53,8 +62,16 @@ export default function MapTab({ searchParams, nearbyRequested }: MapTabProps) {
   const hasRegionFilter = region !== null || country !== null;
   const nearYou =
     nearbyRequested && status === "granted" && userLatLon !== null;
+  const savedModeActive = savedRequested && user !== null;
+  const savedModeBlocked = savedRequested && user === null;
 
-  const sourceSpots = nearYou ? spots : filteredSpots;
+  const sourceSpots = useMemo(() => {
+    if (savedModeActive) {
+      return spots.filter((s) => savedIds.has(s.id));
+    }
+    if (nearYou) return spots;
+    return filteredSpots;
+  }, [savedModeActive, nearYou, spots, savedIds, filteredSpots]);
 
   const orderedSpots = useMemo(() => {
     if (!userLatLon) return sourceSpots;
@@ -81,8 +98,17 @@ export default function MapTab({ searchParams, nearbyRequested }: MapTabProps) {
   }, [orderedSpots, userLatLon, radiusMiles, nearYou]);
 
   useEffect(() => {
-    useMapStore.getState().setMapMode(nearbyRequested ? "nearby" : "filtered");
-  }, [nearbyRequested]);
+    if (savedModeBlocked) {
+      dismissSaved();
+      return;
+    }
+    const next: "nearby" | "filtered" | "saved" = savedModeActive
+      ? "saved"
+      : nearbyRequested
+        ? "nearby"
+        : "filtered";
+    useMapStore.getState().setMapMode(next);
+  }, [nearbyRequested, savedRequested, savedModeActive, savedModeBlocked, dismissSaved]);
 
   useEffect(() => {
     if (!nearbyRequested) return;
@@ -115,10 +141,14 @@ export default function MapTab({ searchParams, nearbyRequested }: MapTabProps) {
 
   useEffect(() => {
     if (nearYou) return;
+    if (savedModeActive) {
+      fitBoundsToSpots();
+      return;
+    }
     if (hasRegionFilter) {
       fitBoundsToSpots();
     }
-  }, [nearYou, hasRegionFilter, region, country, fitBoundsToSpots]);
+  }, [nearYou, savedModeActive, hasRegionFilter, region, country, fitBoundsToSpots]);
 
   const initialCenter: [number, number] =
     nearYou && userLatLon

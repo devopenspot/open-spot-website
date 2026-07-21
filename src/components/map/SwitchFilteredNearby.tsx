@@ -2,7 +2,7 @@
 
 import { useCallback } from "react";
 
-import { MapPin, SlidersHorizontal } from "lucide-react";
+import { Heart, MapPin, SlidersHorizontal } from "lucide-react";
 import { useMapStore } from "@/stores/map-store";
 import { useMapActions } from "@/components/map/use-map-actions";
 import { useUIStore } from "@/stores/ui-store";
@@ -18,7 +18,7 @@ export function SwitchFilteredNearby() {
   }, [selectMode, openSearch]);
 
   const handleModeChange = useCallback(
-    (next: "nearby" | "filtered") => {
+    (next: "nearby" | "saved") => {
       selectMode(next);
     },
     [selectMode],
@@ -59,6 +59,21 @@ export function SwitchFilteredNearby() {
       >
         <MapPin size={11} aria-hidden="true" />
         <span>Nearby</span>
+      </button>
+      <button
+        type="button"
+        role="radio"
+        aria-checked={mapMode === "saved"}
+        onClick={() => handleModeChange("saved")}
+        className={cn(
+          "flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 text-[9px] font-mono font-bold tracking-wider uppercase transition-all border-l border-outline-variant",
+          mapMode === "saved"
+            ? "bg-primary text-on-primary"
+            : "text-secondary hover:text-on-surface hover:bg-surface-container",
+        )}
+      >
+        <Heart size={11} aria-hidden="true" />
+        <span>Saved</span>
       </button>
     </div>
   );
