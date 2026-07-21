@@ -21,7 +21,7 @@ export function HeroSection() {
             <br />
           </h1>
           <p className="mt-6 text-sm leading-relaxed text-surface/70 sm:text-base">
-            Discover Plazas, DIYs, Bowls and Skateparks.
+            Discover Plazas, DIYs, Bowls, Skateparks and Events.
           </p>
         </div>
         <section
