@@ -95,6 +95,11 @@ function MapSidebarBase({ spots }: MapSidebarProps) {
     );
   }, [spots, distanceOrigin]);
 
+  const groupedSpots = useMemo(
+    () => groupSpotsByCity(sortedSpots, distanceOrigin, haversineMiles),
+    [sortedSpots, distanceOrigin],
+  );
+
   return (
     <aside
       id="map-sidebar"
@@ -165,26 +170,30 @@ function MapSidebarBase({ spots }: MapSidebarProps) {
         className="ml-1 md:ml-0 flex-1 flex flex-row lg:flex-col overflow-x-auto lg:overflow-y-auto space-x-1 lg:space-x-0 lg:space-y-2 no-scrollbar snap-x lg:snap-none snap-mandatory"
       >
         <div className="hidden md:flex flex-col">
-          {sortedSpots.map((spot) => (
-            <SidebarSpotItem
-              key={spot.id}
-              spot={spot}
-              isActive={activeId === spot.id}
-              isSaved={savedIds.has(spot.id)}
+          {groupedSpots.map((group) => (
+            <SpotGroupSection
+              key={group.key}
+              group={group}
+              activeId={activeId}
+              savedIds={savedIds}
               distanceOrigin={distanceOrigin}
               distanceUnit={distanceUnit}
               onSelect={handleSelect}
             />
           ))}
         </div>
-        {spots.length === 0 && (
-          mapMode === "saved" ? (
+        {spots.length === 0 &&
+          (mapMode === "saved" ? (
             <div
               id="map-saved-empty-state"
               className="m-4 flex flex-col items-center justify-center py-10 px-4 text-center rounded-2xl border border-dashed border-outline-variant bg-surface-container-low"
             >
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-surface-container-high border border-outline-variant text-secondary mb-4">
-                <Heart size={20} className="text-secondary" aria-hidden="true" />
+                <Heart
+                  size={20}
+                  className="text-secondary"
+                  aria-hidden="true"
+                />
               </div>
               <h3 className="font-display text-base font-bold uppercase tracking-wider text-on-surface">
                 No registered spots
@@ -223,8 +232,7 @@ function MapSidebarBase({ spots }: MapSidebarProps) {
                 "No locations match filter"
               )}
             </div>
-          )
-        )}
+          ))}
       </div>
     </aside>
   );
@@ -319,9 +327,124 @@ const SidebarSpotItem = memo(function SidebarSpotItem({
   );
 });
 
+interface SpotGroupSectionProps {
+  group: SpotGroup;
+  activeId: string | null;
+  savedIds: ReadonlySet<string>;
+  distanceOrigin: { lat: number; lon: number } | null;
+  distanceUnit: DistanceUnit;
+  onSelect: (spot: Spot) => void;
+}
+
+const SpotGroupSection = memo(function SpotGroupSection({
+  group,
+  activeId,
+  savedIds,
+  distanceOrigin,
+  distanceUnit,
+  onSelect,
+}: SpotGroupSectionProps) {
+  return (
+    <section
+      id={`sidebar-city-${group.key}`}
+      role="group"
+      aria-labelledby={`sidebar-city-${group.key}-label`}
+      className="flex flex-col"
+    >
+      <h3
+        id={`sidebar-city-${group.key}-label`}
+        className="sticky top-0 z-10 flex items-center gap-1.5 border-b border-outline-variant bg-surface-bright px-2 py-1 font-mono text-[10px] font-bold tracking-widest uppercase text-on-surface"
+      >
+        <MapPin size={10} aria-hidden="true" className="text-secondary" />
+        <span className="truncate">
+          {group.city}
+          {group.countryCode ? ` · ${group.countryCode}` : ""}
+        </span>
+        <span className="ml-auto text-secondary shrink-0">
+          {group.spots.length} spots
+        </span>
+      </h3>
+      {group.spots.map((spot) => (
+        <SidebarSpotItem
+          key={spot.id}
+          spot={spot}
+          isActive={activeId === spot.id}
+          isSaved={savedIds.has(spot.id)}
+          distanceOrigin={distanceOrigin}
+          distanceUnit={distanceUnit}
+          onSelect={onSelect}
+        />
+      ))}
+    </section>
+  );
+});
+
 export const MapSidebar = memo(MapSidebarBase);
 
-function formatRadiusLabel(miles: NearbyRadiusMiles, unit: DistanceUnit): string {
+interface SpotGroup {
+  key: string;
+  city: string;
+  countryCode: string;
+  spots: readonly Spot[];
+  closestMiles: number | null;
+}
+
+function groupSpotsByCity(
+  spots: readonly Spot[],
+  origin: { lat: number; lon: number } | null,
+  distance: (lat1: number, lon1: number, lat2: number, lon2: number) => number,
+): readonly SpotGroup[] {
+  const buckets = new Map<string, SpotGroup>();
+  for (const spot of spots) {
+    const countryCode = spot.countryCode || "—";
+    const key = `${spot.city}|${countryCode}`;
+    const existing = buckets.get(key);
+    if (existing) {
+      buckets.set(key, { ...existing, spots: [...existing.spots, spot] });
+    } else {
+      buckets.set(key, {
+        key,
+        city: spot.city,
+        countryCode,
+        spots: [spot],
+        closestMiles: null,
+      });
+    }
+  }
+
+  const groups = [...buckets.values()].map((group) => {
+    if (origin === null) {
+      const sorted = [...group.spots].sort((a, b) => a.name.localeCompare(b.name));
+      return { ...group, spots: sorted };
+    }
+    const sorted = [...group.spots].sort(
+      (a, b) =>
+        distance(origin.lat, origin.lon, a.location.lat, a.location.lon) -
+        distance(origin.lat, origin.lon, b.location.lat, b.location.lon),
+    );
+    const first = sorted[0];
+    const closestMiles = first
+      ? distance(origin.lat, origin.lon, first.location.lat, first.location.lon)
+      : null;
+    return { ...group, spots: sorted, closestMiles };
+  });
+
+  if (origin === null) {
+    return groups.sort(
+      (a, b) => b.spots.length - a.spots.length || a.city.localeCompare(b.city),
+    );
+  }
+  return groups.sort((a, b) => {
+    const av = a.closestMiles ?? Number.POSITIVE_INFINITY;
+    const bv = b.closestMiles ?? Number.POSITIVE_INFINITY;
+    return av - bv;
+  });
+}
+
+function formatRadiusLabel(
+  miles: NearbyRadiusMiles,
+  unit: DistanceUnit,
+): string {
   if (unit === "km") {
     const km = Math.round(metersToUnit(milesToMeters(miles), "km"));
     return `${km} km`;
