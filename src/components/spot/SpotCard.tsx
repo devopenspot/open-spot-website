@@ -5,6 +5,7 @@ import { Heart, Trash2, MapPin } from "lucide-react";
 import { memo, useCallback, type MouseEvent } from "react";
 import { cn } from "@/lib/cn";
 import { useUserLocation } from "@/hooks/useUserLocation";
+import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import { getSpotDistanceInfo } from "@/lib/spots/geo";
 import { TypeBadges } from "@/components/spot/TypeBadges";
 import type { Spot } from "@/lib/types";
@@ -76,9 +77,11 @@ function BaseSpotCardImpl({
   );
 
   const { location } = useUserLocation();
+  const distanceUnit = useDistanceUnit();
   const distanceInfo = getSpotDistanceInfo(
     spot,
     location ? { lat: location.lat, lon: location.lon } : null,
+    distanceUnit,
   );
 
   const showRemoveIcon = toggleIconVariant === "trash";

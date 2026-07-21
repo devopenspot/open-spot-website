@@ -7,9 +7,11 @@ import { ROUTES } from "@/lib/nav";
 import { useSpotsStore } from "@/stores/spots-store";
 import { useSavedSpots } from "@/hooks/useSavedSpots";
 import { useUser } from "@/hooks/useUser";
+import { useUIStore } from "@/stores/ui-store";
 
 export default function SavedTab() {
   const router = useRouter();
+  const tryRun = useUIStore((s) => s.tryRun);
 
   const spots = useSpotsStore((s) => s.spots);
   const user = useUser();
@@ -17,8 +19,8 @@ export default function SavedTab() {
   const savedSpots = spots.filter((s) => savedIds.has(s.id));
 
   const handleViewOnMap = useCallback(
-    () => router.push(`${ROUTES.map}?saved=1`),
-    [router],
+    () => tryRun(() => router.push(`${ROUTES.map}?saved=1`)),
+    [router, tryRun],
   );
   return (
     <header className="sticky flex top-0 z-40 w-full border-b border-outline-variant bg-surface p-4">

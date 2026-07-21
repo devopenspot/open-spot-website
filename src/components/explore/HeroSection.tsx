@@ -11,7 +11,7 @@ export function HeroSection() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const regions = useSpotsStore((s) => s.regions);
-  const openSearch = useUIStore((s) => s.openSearch);
+  const openSearch = useUIStore((s) => s.tryOpenSearch);
   return (
     <section className="relative bg-primary p-4 md:px-8 w-full">
       <div className="relative flex flex-col md:flex-row items-center justify-start gap-8">

@@ -1,10 +1,11 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { X, Shield, Info } from "lucide-react";
+import { X, Shield, Info, Settings } from "lucide-react";
 import { Overlay } from "@/components/feedback/Overlay";
 import { UserAvatar } from "@/components/ui";
 import { NavList } from "@/components/explore/NavList";
+import { OnboardingDialog } from "@/components/shell/OnboardingDialog";
 import { SignInLink } from "@/components/shell/SignInLink";
 import { SignOutButton } from "@/components/shell/SignOutButton";
 import { useUIStore } from "@/stores/ui-store";
@@ -20,12 +21,18 @@ export function MobileDrawer() {
   const router = useRouter();
   const isDrawerOpen = useUIStore((s) => s.isDrawerOpen);
   const closeDrawer = useUIStore((s) => s.closeDrawer);
+  const openOnboarding = useUIStore((s) => s.openOnboarding);
   const user = useUser();
   const { count: savedCount } = useSavedSpots(user?.id ?? null);
 
   const handleSelect = (path: string) => {
     router.push(path);
     closeDrawer();
+  };
+
+  const handleOpenPreferences = () => {
+    closeDrawer();
+    openOnboarding();
   };
 
   return (
@@ -89,6 +96,19 @@ export function MobileDrawer() {
             </div>
           </div>
         </div>
+
+        <button
+          id="preferences-btn"
+          type="button"
+          onClick={handleOpenPreferences}
+          className="mt-4 flex w-full items-center justify-between border border-outline-variant bg-surface px-3 py-2.5 text-left text-[10px] font-mono font-bold tracking-widest uppercase text-on-surface hover:border-primary hover:text-primary transition-colors"
+        >
+          <span className="flex items-center gap-2">
+            <Settings size={12} aria-hidden="true" />
+            Preferences
+          </span>
+          <span className="text-secondary">Edit defaults</span>
+        </button>
       </div>
 
       <div className="border-t border-outline-variant pt-4 space-y-4">
@@ -123,6 +143,7 @@ export function MobileDrawer() {
           </span>
         </div>
       </div>
+      <OnboardingDialog mode="edit" />
     </Overlay>
   );
 }

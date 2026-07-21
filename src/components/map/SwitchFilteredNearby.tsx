@@ -11,7 +11,7 @@ import { cn } from "@/lib/cn";
 export function SwitchFilteredNearby() {
   const mapMode = useMapStore((s) => s.mapMode);
   const { selectMode } = useMapActions();
-  const openSearch = useUIStore((s) => s.openSearch);
+  const openSearch = useUIStore((s) => s.tryOpenSearch);
   const handleFilteredClick = useCallback(() => {
     selectMode("filtered");
     openSearch();

@@ -3,6 +3,7 @@
 import { isActivePath } from "@/lib/nav";
 import { NavLink, type NavVariant } from "@/components/shell/NavLink";
 import { navLabelFor, renderNavBadge, useNavList } from "@/hooks/useNavList";
+import { useUIStore } from "@/stores/ui-store";
 import { cn } from "@/lib/cn";
 
 interface NavListProps {
@@ -30,6 +31,7 @@ export function NavList({
       variant,
       onSelect,
     });
+  const tryRun = useUIStore((s) => s.tryRun);
 
   const containerRole = variant === "mobile-drawer" ? undefined : "tablist";
   const containerLabel =
@@ -57,6 +59,10 @@ export function NavList({
         const isActive = isActivePath(pathname, item.path);
         const showBadge = item.id === "saved" && savedCount > 0;
         const Icon = item.Icon;
+        const requiresOnboarding = item.id === "saved";
+        const handleClick = requiresOnboarding
+          ? () => tryRun(() => onSelect(item.path))
+          : handleSelect(item.path);
         return (
           <NavLink
             key={item.id}
@@ -66,7 +72,7 @@ export function NavList({
             active={isActive}
             variant={variant}
             controlsId={controlsId}
-            onClick={handleSelect(item.path)}
+            onClick={handleClick}
             badge={
               showBadge
                 ? renderNavBadge({ variant, id: item.id, savedCount })

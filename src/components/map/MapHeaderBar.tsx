@@ -8,7 +8,7 @@ import { MobileDrawerTrigger } from "@/components/shell/MobileDrawerTrigger";
 import { NearbyControl } from "./NearbyControl";
 
 function MapHeaderBarBase() {
-  const openSearch = useUIStore((s) => s.openSearch);
+  const openSearch = useUIStore((s) => s.tryOpenSearch);
   return (
     <div
       id="map-header-bar"

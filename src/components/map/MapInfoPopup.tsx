@@ -11,8 +11,10 @@ import { useSpotsStore } from "@/stores/spots-store";
 import { useWeather } from "@/components/shell/WeatherContext";
 import { useSavedSpots } from "@/hooks/useSavedSpots";
 import { useUser } from "@/hooks/useUser";
+import { useTemperatureUnit } from "@/hooks/useTemperatureUnit";
 import { useMapStore } from "@/stores/map-store";
 import { useMapActions } from "./use-map-actions";
+import { formatTemp, formatTempPair } from "@/lib/weather/format";
 import type { SpotWeather } from "@/lib/weather/weather-cached";
 import { WeatherIcon } from "@/components/spot/WeatherIcon";
 import { WeatherAccuracyNote } from "@/components/spot/WeatherAccuracyNote";
@@ -25,6 +27,7 @@ function MapInfoPopupBase() {
   const user = useUser();
   const { savedIds, toggle: toggleSaved } = useSavedSpots(user?.id ?? null);
   const { weather } = useWeather();
+  const temperatureUnit = useTemperatureUnit();
   const { clearActivePin, openSpot } = useMapActions();
 
   const spot = useMemo(
@@ -128,7 +131,7 @@ function MapInfoPopupBase() {
           )}
           <div className="flex flex-col leading-tight">
             <span className="font-display text-xl font-bold tracking-tight text-on-surface">
-              {current !== undefined ? `${current}°C` : "—"}
+              {formatTemp(current, temperatureUnit)}
             </span>
             <span className="text-xs text-on-surface truncate">
               {description ?? (hasWeather ? "—" : "Weather unavailable")}
@@ -139,11 +142,9 @@ function MapInfoPopupBase() {
               <dt className="font-mono text-[10px] tracking-wider text-on-surface uppercase">
                 Min/Max
               </dt>
-              <dd className="font-mono text-xs font-semibold text-on-surface whitespace-nowrap">
-                {w?.tempMin != null && w?.tempMax != null
-                  ? `${w.tempMin}°/${w.tempMax}°`
-                  : "—"}
-              </dd>
+            <dd className="font-mono text-xs font-semibold text-on-surface whitespace-nowrap">
+              {formatTempPair(w?.tempMin ?? null, w?.tempMax ?? null, temperatureUnit, "/")}
+            </dd>
             </div>
             <div className="flex flex-col items-center justify-center px-3 last:pr-0">
               <dt className="font-mono text-[10px] tracking-wider text-on-surface uppercase">

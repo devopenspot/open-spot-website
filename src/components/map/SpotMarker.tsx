@@ -5,8 +5,10 @@ import L from "leaflet";
 import { Marker } from "react-leaflet";
 import type { Spot, WeatherIconName } from "@/lib/types";
 import type { SpotWeather } from "@/lib/weather/weather-cached";
+import type { DistanceUnit, TemperatureUnit } from "@/stores/preferences-store";
 import { weatherIconGlyph } from "@/components/spot/WeatherIcon";
 import { getSpotDistanceInfo } from "@/lib/spots/geo";
+import { formatTemp } from "@/lib/weather/format";
 
 const LABEL_MAX_CHARS = 14;
 
@@ -30,6 +32,8 @@ interface SpotMarkerProps {
   isSaved: boolean;
   weather: SpotWeather | undefined;
   userLocation: { lat: number; lon: number } | null;
+  distanceUnit: DistanceUnit;
+  temperatureUnit: TemperatureUnit;
   onClick: (spot: Spot) => void;
 }
 
@@ -38,7 +42,7 @@ interface BuildPinOptions {
   saved: boolean;
   weather: WeatherIconName | null;
   description: string | null;
-  temp: number | null;
+  tempLabel: string;
   distanceLabel: string;
   name: string;
 }
@@ -73,7 +77,7 @@ function buildSpotPinHTML(options: BuildPinOptions): string {
     ? `<span class="leaflet-pin__weather">${weatherIconGlyph(options.weather, 28)}</span>`
     : `<span class="leaflet-pin__weather" aria-hidden="true"></span>`;
 
-  const temp = `<span class="leaflet-pin__temp">${options.temp !== null ? `${options.temp}°C` : "—"}</span>`;
+  const temp = `<span class="leaflet-pin__temp">${escapeHtml(options.tempLabel)}</span>`;
 
   const widthCls = options.active
     ? "w-[104px] sm:w-[116px] md:w-[120px] text-slate-800"
@@ -98,11 +102,14 @@ export function SpotMarker({
   isSaved,
   weather,
   userLocation,
+  distanceUnit,
+  temperatureUnit,
   onClick,
 }: SpotMarkerProps) {
   const distanceInfo = getSpotDistanceInfo(
     spot,
     userLocation ? { lat: userLocation.lat, lon: userLocation.lon } : null,
+    distanceUnit,
   );
   const distanceLabel =
     distanceInfo.kind === "distance" ? distanceInfo.label : "—";
@@ -113,7 +120,7 @@ export function SpotMarker({
       saved: isSaved,
       weather: pickWeatherName(weather),
       description: pickDescription(weather),
-      temp: pickTemperature(weather),
+      tempLabel: formatTemp(pickTemperature(weather), temperatureUnit),
       distanceLabel,
       name: spot.name,
     });
@@ -123,7 +130,7 @@ export function SpotMarker({
       iconAnchor: isActive ? [60, 24] : [54, 20],
       html,
     });
-  }, [isActive, isSaved, weather, distanceLabel, spot.name]);
+  }, [isActive, isSaved, weather, distanceLabel, spot.name, temperatureUnit]);
 
   return (
     <Marker

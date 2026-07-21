@@ -4,6 +4,7 @@ import { useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { MapPin } from "lucide-react";
 import { useUserLocation } from "@/hooks/useUserLocation";
+import { useUIStore } from "@/stores/ui-store";
 import { showToast } from "@/hooks/useToast";
 import { cn } from "@/lib/cn";
 import { ROUTES } from "@/lib/nav";
@@ -28,6 +29,7 @@ function statusMessage(status: string): string {
 export function NearbyCtaButton() {
   const router = useRouter();
   const { status, request } = useUserLocation();
+  const tryRun = useUIStore((s) => s.tryRun);
   const isRequesting = status === "requesting";
 
   const handleClick = useCallback(async () => {
@@ -40,8 +42,8 @@ export function NearbyCtaButton() {
     } else if (next === "granted") {
       showToast("Location ready — opening map.", "success");
     }
-    router.push(`${ROUTES.map}?nearby=1`);
-  }, [isRequesting, request, router]);
+    tryRun(() => router.push(`${ROUTES.map}?nearby=1`));
+  }, [isRequesting, request, router, tryRun]);
 
   return (
     <button

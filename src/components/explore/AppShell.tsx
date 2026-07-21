@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { Header } from "./Header";
 import { MobileDrawer } from "@/components/shell/MobileDrawer";
 import { SearchOverlay } from "@/components/shell/SearchOverlay";
+import { OnboardingDialog } from "@/components/shell/OnboardingDialog";
 import { ToastViewport } from "@/components/shell/Toast";
 import { useUIStore } from "@/stores/ui-store";
 import { useSpotsStore } from "@/stores/spots-store";
@@ -15,7 +16,7 @@ import type { Spot } from "@/lib/types";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const toggleSearch = useUIStore((s) => s.toggleSearch);
+  const tryOpenSearch = useUIStore((s) => s.tryOpenSearch);
   const closeSearch = useUIStore((s) => s.closeSearch);
   const isSearchOpen = useUIStore((s) => s.isSearchOpen);
   const spots = useSpotsStore((s) => s.spots);
@@ -44,7 +45,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             cmdOrCtrl: true,
             handler: (e) => {
               e.preventDefault();
-              toggleSearch();
+              tryOpenSearch();
             },
           },
         ],
@@ -84,6 +85,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         spots={spots}
         onSelectSpot={handleSelectSpot}
       />
+      <OnboardingDialog mode="onboarding" />
       <ToastViewport />
     </div>
   );

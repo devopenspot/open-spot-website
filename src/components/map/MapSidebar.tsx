@@ -11,12 +11,19 @@ import { useUserLocation } from "@/hooks/useUserLocation";
 import { useSavedSpots } from "@/hooks/useSavedSpots";
 import { useUser } from "@/hooks/useUser";
 import { useMapFilter } from "@/hooks/useMapFilter";
+import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import {
   NEARBY_RADIUS_OPTIONS,
   type NearbyRadiusMiles,
 } from "@/stores/user-location-store";
 import type { Spot } from "@/lib/types";
-import { getSpotDistanceInfo, haversineMiles } from "@/lib/spots/geo";
+import {
+  getSpotDistanceInfo,
+  haversineMiles,
+  metersToUnit,
+  milesToMeters,
+} from "@/lib/spots/geo";
+import type { DistanceUnit } from "@/stores/preferences-store";
 import { TypeBadges } from "@/components/spot/TypeBadges";
 
 interface MapSidebarProps {
@@ -36,6 +43,7 @@ function MapSidebarBase({ spots }: MapSidebarProps) {
     radiusMiles,
     setRadiusMiles,
   } = useUserLocation();
+  const distanceUnit = useDistanceUnit();
   const router = useRouter();
 
   const searchParams = useSearchParams();
@@ -117,7 +125,7 @@ function MapSidebarBase({ spots }: MapSidebarProps) {
           <div
             id="map-radius-chips"
             role="radiogroup"
-            aria-label="Nearby radius in miles"
+            aria-label={`Nearby radius in ${distanceUnit === "km" ? "kilometers" : "miles"}`}
             className="flex items-center space-x-1"
           >
             <span
@@ -128,6 +136,7 @@ function MapSidebarBase({ spots }: MapSidebarProps) {
             </span>
             {NEARBY_RADIUS_OPTIONS.map((miles) => {
               const active = miles === radiusMiles;
+              const label = formatRadiusLabel(miles, distanceUnit);
               return (
                 <button
                   key={miles}
@@ -142,7 +151,7 @@ function MapSidebarBase({ spots }: MapSidebarProps) {
                       : "border-outline-variant text-on-surface hover:border-outline",
                   )}
                 >
-                  {miles} mi
+                  {label}
                 </button>
               );
             })}
@@ -163,6 +172,7 @@ function MapSidebarBase({ spots }: MapSidebarProps) {
               isActive={activeId === spot.id}
               isSaved={savedIds.has(spot.id)}
               distanceOrigin={distanceOrigin}
+              distanceUnit={distanceUnit}
               onSelect={handleSelect}
             />
           ))}
@@ -208,7 +218,7 @@ function MapSidebarBase({ spots }: MapSidebarProps) {
                   )}
                 </>
               ) : showChips ? (
-                `No spots within ${radiusMiles} mi — expand the grid.`
+                `No spots within ${formatRadiusLabel(radiusMiles, distanceUnit)} — expand the grid.`
               ) : (
                 "No locations match filter"
               )}
@@ -225,6 +235,7 @@ interface SidebarSpotItemProps {
   isActive: boolean;
   isSaved: boolean;
   distanceOrigin: { lat: number; lon: number } | null;
+  distanceUnit: DistanceUnit;
   onSelect: (spot: Spot) => void;
 }
 
@@ -233,9 +244,10 @@ const SidebarSpotItem = memo(function SidebarSpotItem({
   isActive,
   isSaved,
   distanceOrigin,
+  distanceUnit,
   onSelect,
 }: SidebarSpotItemProps) {
-  const distanceInfo = getSpotDistanceInfo(spot, distanceOrigin);
+  const distanceInfo = getSpotDistanceInfo(spot, distanceOrigin, distanceUnit);
   const distanceLabel =
     distanceInfo.kind === "distance" ? distanceInfo.label : "—";
 
@@ -308,3 +320,11 @@ const SidebarSpotItem = memo(function SidebarSpotItem({
 });
 
 export const MapSidebar = memo(MapSidebarBase);
+
+function formatRadiusLabel(miles: NearbyRadiusMiles, unit: DistanceUnit): string {
+  if (unit === "km") {
+    const km = Math.round(metersToUnit(milesToMeters(miles), "km"));
+    return `${km} km`;
+  }
+  return `${miles} mi`;
+}

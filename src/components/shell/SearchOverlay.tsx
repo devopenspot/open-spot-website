@@ -17,6 +17,7 @@ import { ROUTES } from "@/lib/nav";
 import { useUIStore } from "@/stores/ui-store";
 import { useSpotsStore } from "@/stores/spots-store";
 import { useUserLocation } from "@/hooks/useUserLocation";
+import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import { getSpotDistanceInfo } from "@/lib/spots/geo";
 import type { Spot } from "@/lib/types";
 import { RegionFilter } from "@/components/shell/RegionFilter";
@@ -47,16 +48,18 @@ export function SearchOverlay({
   const pathname = usePathname();
   const regions = useSpotsStore((s) => s.regions);
   const { location: userLocation } = useUserLocation();
+  const distanceUnit = useDistanceUnit();
 
   const getDistanceLabel = useCallback(
     (spot: Spot) => {
       const info = getSpotDistanceInfo(
         spot,
         userLocation ? { lat: userLocation.lat, lon: userLocation.lon } : null,
+        distanceUnit,
       );
       return info.kind === "distance" ? info.label : "—";
     },
-    [userLocation],
+    [userLocation, distanceUnit],
   );
 
   const {

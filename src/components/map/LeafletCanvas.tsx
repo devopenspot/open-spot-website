@@ -22,6 +22,8 @@ import { useMapStore, type MapController } from "@/stores/map-store";
 import { useUserLocation } from "@/hooks/useUserLocation";
 import { useSavedSpots } from "@/hooks/useSavedSpots";
 import { useUser } from "@/hooks/useUser";
+import { useDistanceUnit } from "@/hooks/useDistanceUnit";
+import { useTemperatureUnit } from "@/hooks/useTemperatureUnit";
 import { useWeather } from "@/components/shell/WeatherContext";
 import { milesToMeters } from "@/lib/spots/geo";
 import { SpotMarker } from "./SpotMarker";
@@ -328,6 +330,8 @@ export function LeafletCanvas({
   const user = useUser();
   const { savedIds } = useSavedSpots(user?.id ?? null);
   const { weather } = useWeather();
+  const distanceUnit = useDistanceUnit();
+  const temperatureUnit = useTemperatureUnit();
 
   const initialZoomState = initialZoom ?? (userLocation ? USER_FOCUS_ZOOM : 2);
   const initialCenterState: [number, number] =
@@ -407,6 +411,8 @@ export function LeafletCanvas({
                   ? { lat: userLocation.lat, lon: userLocation.lon }
                   : null
               }
+              distanceUnit={distanceUnit}
+              temperatureUnit={temperatureUnit}
               onClick={handleMarkerClick}
             />
           ) : (

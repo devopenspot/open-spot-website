@@ -18,10 +18,13 @@ import { WeatherAccuracyNote } from "./WeatherAccuracyNote";
 import { TypeBadges } from "./TypeBadges";
 import { showToast } from "@/hooks/useToast";
 import { useUserLocation } from "@/hooks/useUserLocation";
+import { useDistanceUnit } from "@/hooks/useDistanceUnit";
+import { useTemperatureUnit } from "@/hooks/useTemperatureUnit";
 import { cn } from "@/lib/cn";
 import { getSpotDistanceInfo } from "@/lib/spots/geo";
 import { buildBackToMapUrl } from "@/lib/spots/back-to-map";
 import { useSpotsStore } from "@/stores/spots-store";
+import { formatTemp, formatTempPair } from "@/lib/weather/format";
 import type { ForecastSlot, Spot, SpotForecast } from "@/lib/types";
 import type { SpotWeather } from "@/lib/weather/weather-cached";
 
@@ -59,6 +62,8 @@ export function SpotDetailsContent({
   const searchParams = useSearchParams();
   const regions = useSpotsStore((s) => s.regions);
   const { status: locationStatus, location, request } = useUserLocation();
+  const distanceUnit = useDistanceUnit();
+  const temperatureUnit = useTemperatureUnit();
   const [burstKey, setBurstKey] = useState(0);
   const wasSaved = useRef(isSaved);
   useEffect(() => {
@@ -70,6 +75,7 @@ export function SpotDetailsContent({
   const distanceInfo = getSpotDistanceInfo(
     spot,
     location ? { lat: location.lat, lon: location.lon } : null,
+    distanceUnit,
   );
   const isRequestingLocation = locationStatus === "requesting";
   const directionsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
@@ -267,7 +273,7 @@ export function SpotDetailsContent({
               <WeatherIcon name={currentIcon} size={40} className="shrink-0" />
               <div className="flex min-w-0 shrink flex-col items-center justify-center text-center">
                 <span className="block whitespace-nowrap text-2xl font-display font-bold tracking-tight leading-none">
-                  {weather?.current ?? "—"}°C
+                  {formatTemp(weather?.current ?? null, temperatureUnit)}
                 </span>
                 <span className="mt-1 block w-full truncate text-[10px] text-secondary font-mono">
                   {weather?.description ?? "—"}
@@ -320,9 +326,7 @@ export function SpotDetailsContent({
                         {dayEntries[0]?.day ?? "—"}
                       </span>
                       <span className="font-display text-sm font-bold text-on-surface font-mono">
-                        {dayMin !== null && dayMax !== null
-                          ? `${dayMin}° / ${dayMax}°`
-                          : "—"}
+                        {formatTempPair(dayMin, dayMax, temperatureUnit)}
                       </span>
                       <div className="ml-auto flex items-center gap-3">
                         {forecastSlots.map((slot) => {
@@ -344,10 +348,10 @@ export function SpotDetailsContent({
                               className="flex items-center gap-1 text-[10px] font-mono"
                               title={entry.description}
                             >
-                              <WeatherIcon name={entry.icon} size={12} />
-                              <span className="font-semibold text-on-surface">
-                                {entry.temp}°
-                              </span>
+                                <WeatherIcon name={entry.icon} size={12} />
+                                <span className="font-semibold text-on-surface">
+                                  {formatTemp(entry.temp, temperatureUnit)}
+                                </span>
                             </span>
                           );
                         })}
