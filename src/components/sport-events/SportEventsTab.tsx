@@ -34,7 +34,7 @@ export function SportEventsTab({ featured, events }: SportEventsTabProps) {
     >
       <h1 className="visually-hidden">Sport Events</h1>
 
-      <header className="border-b border-outline-variant pb-6 px-4 md:px-0">
+      <header className="sticky top-0 z-40 w-full border-b border-outline-variant bg-surface p-4">
         <div className="flex items-center gap-2 mb-2 font-mono text-[10px] font-bold tracking-widest text-secondary uppercase">
           <Trophy size={12} className="text-primary" aria-hidden="true" />
           <span>Action Sports Calendar</span>
@@ -78,7 +78,7 @@ export function SportEventsTab({ featured, events }: SportEventsTabProps) {
           aria-labelledby="featured-event-heading"
           className="space-y-4"
         >
-          <div className="flex items-end justify-between gap-4 px-4 md:px-0">
+          <div className="flex items-end justify-between gap-4 px-4">
             <div>
               <h3
                 id="featured-event-heading"
