@@ -42,7 +42,11 @@ export function SwitchFilteredNearby() {
             : "text-secondary hover:text-on-surface hover:bg-surface-container",
         )}
       >
-        <SlidersHorizontal size={11} aria-hidden="true" />
+        <SlidersHorizontal
+          size={11}
+          aria-hidden="true"
+          className="hidden sm:block"
+        />
         <span>Filtered</span>
       </button>
       <button
@@ -57,7 +61,7 @@ export function SwitchFilteredNearby() {
             : "text-secondary hover:text-on-surface hover:bg-surface-container",
         )}
       >
-        <MapPin size={11} aria-hidden="true" />
+        <MapPin size={11} aria-hidden="true" className="hidden sm:block" />
         <span>Nearby</span>
       </button>
       <button
@@ -72,7 +76,7 @@ export function SwitchFilteredNearby() {
             : "text-secondary hover:text-on-surface hover:bg-surface-container",
         )}
       >
-        <Heart size={11} aria-hidden="true" />
+        <Heart size={11} aria-hidden="true" className="hidden sm:block" />
         <span>Saved</span>
       </button>
     </div>
