@@ -80,6 +80,7 @@ export const SportEventQuerySchema = z
  */
 export const NewSportEventSchema = z
   .object({
+    slug: z.string().min(1).optional(),
     name: z.string().min(1),
     shortName: z.string().optional(),
     url: z.string().url(),

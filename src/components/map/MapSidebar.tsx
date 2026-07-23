@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { Compass, Heart, MapPin } from "lucide-react";
+import { Compass, Fullscreen, Heart, MapPin } from "lucide-react";
 import { memo, useCallback, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/cn";
@@ -31,6 +31,8 @@ interface MapSidebarProps {
 }
 
 function MapSidebarBase({ spots }: MapSidebarProps) {
+  // TODO: I need figure out why this fullSpots are retriving only 50 results, when actually the count rows is 112
+  // in addition qhen is retriving filtered by country, eg: colombia latino america, is retriving only 10 rows, i think is because when filter is apllied, the data only is 5o rows from the database, when actual are 112
   const fullSpots = useSpotsStore((s) => s.spots);
   const activeId = useMapStore((s) => s.activePinId);
   const mapMode = useMapStore((s) => s.mapMode);
@@ -45,7 +47,6 @@ function MapSidebarBase({ spots }: MapSidebarProps) {
   } = useUserLocation();
   const distanceUnit = useDistanceUnit();
   const router = useRouter();
-
   const searchParams = useSearchParams();
   const { region, country, clearAll } = useMapFilter(fullSpots, searchParams);
 
@@ -70,18 +71,6 @@ function MapSidebarBase({ spots }: MapSidebarProps) {
     },
     [setActivePin, flyToSpot],
   );
-
-  //   const handleModeChange = useCallback(
-  //     (next: "nearby" | "filtered") => {
-  //       selectMode(next);
-  //     },
-  //     [selectMode],
-  //   );
-
-  //   const handleFilteredClick = useCallback(() => {
-  //     selectMode("filtered");
-  //     openSearch();
-  //   }, [selectMode, openSearch]);
 
   const distanceOrigin = showChips ? userLocation : null;
 
@@ -414,7 +403,9 @@ function groupSpotsByCity(
 
   const groups = [...buckets.values()].map((group) => {
     if (origin === null) {
-      const sorted = [...group.spots].sort((a, b) => a.name.localeCompare(b.name));
+      const sorted = [...group.spots].sort((a, b) =>
+        a.name.localeCompare(b.name),
+      );
       return { ...group, spots: sorted };
     }
     const sorted = [...group.spots].sort(

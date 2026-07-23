@@ -33,7 +33,6 @@ export const SpotSchema = z.object({
   types: z.array(SpotTypeRefSchema).default([]),
   sports: z.array(SportDisciplineSchema),
   image: z.string(),
-  crowdLevel: z.number().int().min(0).max(100),
   country: z.string(),
   countryCode: z.string(),
   location: SpotLocationSchema,
@@ -45,6 +44,7 @@ export const SpotSchema = z.object({
 export const NewSpotSchema = z
   .object({
     id: z.string().min(1).optional(),
+    slug: z.string().min(1).optional(),
     name: z.string().min(1),
     city: z.string().min(1),
     citySlug: z.string().min(1).optional(),
@@ -53,7 +53,6 @@ export const NewSpotSchema = z
     sports: z.array(SportDisciplineSchema).default([]),
     image: z.string(),
     imagePath: z.string().nullable().optional(),
-    crowdLevel: z.number().int().min(0).max(100).default(0),
     country: z.string().default(""),
     countryCode: z
       .string()
@@ -73,7 +72,6 @@ export const SpotPatchSchema = z
     types: SpotTypeListSchema.optional(),
     sports: z.array(SportDisciplineSchema).optional(),
     image: z.string().optional(),
-    crowdLevel: z.number().int().min(0).max(100).optional(),
     country: z.string().optional(),
     countryCode: z
       .string()

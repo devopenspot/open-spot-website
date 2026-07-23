@@ -37,38 +37,37 @@
 //   9. `createdBy` → always `null` (ownership is only set when a
 //                    real Supabase admin edits a row in the UI)
 
-import { readFileSync, writeFileSync } from "node:fs"
-import path from "node:path"
-import { fileURLToPath } from "node:url"
-import { COUNTRY_TO_ISO2 } from "../src/db/seed-data/iso-codes"
-import type { NewSpot } from "../src/lib/repositories/types"
-import type { SportDiscipline } from "../src/types/sport-events"
+import { readFileSync, writeFileSync } from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { COUNTRY_TO_ISO2 } from "../src/db/seed-data/iso-codes";
+import type { NewSpot } from "../src/lib/repositories/types";
+import type { SportDiscipline } from "../src/types/sport-events";
 
 type RawSpot = {
-  id: string
-  slug: string
-  name: string
-  city: string
-  city_slug: string
-  address: string
-  image_url: string
-  image_path: string | null
-  crowd_level: number
-  country_code: string
-  location: string
-  created_by: string | null
-}
+  id: string;
+  slug: string;
+  name: string;
+  city: string;
+  city_slug: string;
+  address: string;
+  image_url: string;
+  image_path: string | null;
+  country_code: string;
+  location: string;
+  created_by: string | null;
+};
 
 type RawSpotType = {
-  spot_id: string
-  type_slug: string
-}
+  spot_id: string;
+  type_slug: string;
+};
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const REPO_ROOT = path.resolve(__dirname, "..")
-const SPOTS_JSON = path.join(REPO_ROOT, "spots.json")
-const SPOT_TYPES_JSON = path.join(REPO_ROOT, "spot_spot_types.json")
-const OUT_FILE = path.join(REPO_ROOT, "src", "db", "seed-data", "spots.ts")
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const REPO_ROOT = path.resolve(__dirname, "..");
+const SPOTS_JSON = path.join(REPO_ROOT, "spots.json");
+const SPOT_TYPES_JSON = path.join(REPO_ROOT, "spot_spot_types.json");
+const OUT_FILE = path.join(REPO_ROOT, "src", "db", "seed-data", "spots.ts");
 
 // ─── Slug + EWKB helpers ───────────────────────────────────────────
 
@@ -79,21 +78,21 @@ function slugify(value: string): string {
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
-    .replace(/-{2,}/g, "-")
+    .replace(/-{2,}/g, "-");
 }
 
 function decodeEwkb(hex: string): { lat: number; lon: number } {
   // Mirrors `geometryPoint.fromDriver` in `src/db/schema.ts`. EWKB
   // Point with SRID is 25 bytes (50 hex chars): endian|type(4)|SRID(4)
   // |X(lon, 8)|Y(lat, 8). Little-endian on x86.
-  const buf = Buffer.from(hex, "hex")
-  const view = new DataView(buf.buffer, buf.byteOffset, buf.byteLength)
-  const lon = view.getFloat64(9, true)
-  const lat = view.getFloat64(17, true)
+  const buf = Buffer.from(hex, "hex");
+  const view = new DataView(buf.buffer, buf.byteOffset, buf.byteLength);
+  const lon = view.getFloat64(9, true);
+  const lat = view.getFloat64(17, true);
   if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
-    throw new Error(`undecodable EWKB: ${hex}`)
+    throw new Error(`undecodable EWKB: ${hex}`);
   }
-  return { lat, lon }
+  return { lat, lon };
 }
 
 // ─── City normalization overrides ─────────────────────────────────
@@ -177,71 +176,71 @@ const CITY_OVERRIDE: Readonly<Record<string, string>> = {
   // Las Vegas is a separate incorporated city — keep it.
   "553815f2-44f3-42de-bcd7-b198ebcb4ecd": "Las Vegas", // "Desert Breeze" in Spring Valley
   "59d6adb9-141a-4c28-abe8-4b2bd1f21095": "Las Vegas", // "Hollywood Regional" in Sunrise Manor
-}
+};
 
 const SKATE: readonly SportDiscipline[] = [
   "Skateboard",
   "Rollerblade",
   "Scooter",
   "BMX",
-]
+];
 
 // ─── ISO → English name map ───────────────────────────────────────
 
 const ISO2_TO_NAME: ReadonlyMap<string, string> = new Map(
   Object.entries(COUNTRY_TO_ISO2).map(([name, iso2]) => [iso2, name]),
-)
+);
 
 // ─── Main ──────────────────────────────────────────────────────────
 
 function main(): void {
-  const rawSpots = JSON.parse(readFileSync(SPOTS_JSON, "utf8")) as RawSpot[]
+  const rawSpots = JSON.parse(readFileSync(SPOTS_JSON, "utf8")) as RawSpot[];
   const rawSpotTypes = JSON.parse(
     readFileSync(SPOT_TYPES_JSON, "utf8"),
-  ) as RawSpotType[]
+  ) as RawSpotType[];
 
-  const typesBySpot = new Map<string, string[]>()
+  const typesBySpot = new Map<string, string[]>();
   for (const row of rawSpotTypes) {
-    const list = typesBySpot.get(row.spot_id) ?? []
-    list.push(row.type_slug)
-    typesBySpot.set(row.spot_id, list)
+    const list = typesBySpot.get(row.spot_id) ?? [];
+    list.push(row.type_slug);
+    typesBySpot.set(row.spot_id, list);
   }
 
-  const slugCounts = new Map<string, number>()
-  const output: NewSpot[] = []
-  const issues: string[] = []
+  const slugCounts = new Map<string, number>();
+  const output: NewSpot[] = [];
+  const issues: string[] = [];
 
   for (const raw of rawSpots) {
-    const country = ISO2_TO_NAME.get(raw.country_code)
+    const country = ISO2_TO_NAME.get(raw.country_code);
     if (!country) {
-      issues.push(`unknown country_code ${raw.country_code} (id=${raw.id})`)
-      continue
+      issues.push(`unknown country_code ${raw.country_code} (id=${raw.id})`);
+      continue;
     }
 
     const city =
       CITY_OVERRIDE[raw.id] ??
       // Fall back to the source `city` slugified, then de-slugified
       // to title case so the display name is at least readable.
-      (raw.city.charAt(0).toUpperCase() + raw.city.slice(1))
-    const citySlug = slugify(city)
+      raw.city.charAt(0).toUpperCase() + raw.city.slice(1);
+    const citySlug = slugify(city);
     if (!citySlug) {
-      issues.push(`empty citySlug (id=${raw.id}, city=${raw.city})`)
-      continue
+      issues.push(`empty citySlug (id=${raw.id}, city=${raw.city})`);
+      continue;
     }
 
-    const baseNameSlug = slugify(raw.name)
-    let slug = baseNameSlug
+    const baseNameSlug = slugify(raw.name);
+    let slug = baseNameSlug;
     if (!slug) {
-      issues.push(`empty slug (id=${raw.id}, name=${raw.name})`)
-      continue
+      issues.push(`empty slug (id=${raw.id}, name=${raw.name})`);
+      continue;
     }
-    const seen = slugCounts.get(slug) ?? 0
+    const seen = slugCounts.get(slug) ?? 0;
     if (seen > 0) {
-      slug = `${citySlug}-${slug}`
+      slug = `${citySlug}-${slug}`;
     }
-    slugCounts.set(slug, seen + 1)
+    slugCounts.set(slug, seen + 1);
 
-    const address = raw.address.replace(/[,\s]+$/u, "").trim()
+    const address = raw.address.replace(/[,\s]+$/u, "").trim();
 
     const spot: NewSpot = {
       id: slug,
@@ -252,80 +251,68 @@ function main(): void {
       types: typesBySpot.get(raw.id) ?? [],
       sports: [...SKATE],
       image: raw.image_url,
-      crowdLevel: raw.crowd_level,
       country,
       countryCode: raw.country_code,
       location: decodeEwkb(raw.location),
       createdBy: null,
-    }
-    output.push(spot)
+    };
+    output.push(spot);
   }
 
   if (issues.length > 0) {
-    for (const i of issues) console.error(`! ${i}`)
-    throw new Error(`${issues.length} spot(s) failed to normalize`)
+    for (const i of issues) console.error(`! ${i}`);
+    throw new Error(`${issues.length} spot(s) failed to normalize`);
   }
 
-  writeFileSync(OUT_FILE, renderModule(output), "utf8")
+  writeFileSync(OUT_FILE, renderModule(output), "utf8");
   console.log(
     `wrote ${output.length} spots to ${path.relative(REPO_ROOT, OUT_FILE)}`,
-  )
+  );
 }
 
 function renderModule(spots: readonly NewSpot[]): string {
-  const lines: string[] = []
-  lines.push("// Regenerated from /spots.json + /spot_spot_types.json by")
-  lines.push("// `pnpm db:regen-spots` (scripts/regen-spots-seed.ts).")
-  lines.push("// Do not edit by hand — re-run the generator instead.")
-  lines.push("//")
-  lines.push(
-    "// The `id` field is the slug for re-seed stability; the DB",
-  )
-  lines.push(
-    "// primary key is always `gen_random_uuid()`. Every row is",
-  )
-  lines.push(
-    "// seeded with `createdBy: null` — ownership is only assigned",
-  )
-  lines.push(
-    "// when a real Supabase admin creates or edits the spot through",
-  )
-  lines.push("// the dashboard.")
-  lines.push("")
-  lines.push('import type { NewSpot } from "@/lib/repositories/types";')
-  lines.push('import type { SportDiscipline } from "@/types/sport-events";')
-  lines.push("")
-  lines.push("const SKATE: readonly SportDiscipline[] = [")
-  lines.push('  "Skateboard",')
-  lines.push('  "Rollerblade",')
-  lines.push('  "Scooter",')
-  lines.push('  "BMX",')
-  lines.push("];")
-  lines.push("")
-  lines.push("export const SOURCE_SPOTS: readonly NewSpot[] = [")
+  const lines: string[] = [];
+  lines.push("// Regenerated from /spots.json + /spot_spot_types.json by");
+  lines.push("// `pnpm db:regen-spots` (scripts/regen-spots-seed.ts).");
+  lines.push("// Do not edit by hand — re-run the generator instead.");
+  lines.push("//");
+  lines.push("// The `id` field is the slug for re-seed stability; the DB");
+  lines.push("// primary key is always `gen_random_uuid()`. Every row is");
+  lines.push("// seeded with `createdBy: null` — ownership is only assigned");
+  lines.push("// when a real Supabase admin creates or edits the spot through");
+  lines.push("// the dashboard.");
+  lines.push("");
+  lines.push('import type { NewSpot } from "@/lib/repositories/types";');
+  lines.push('import type { SportDiscipline } from "@/types/sport-events";');
+  lines.push("");
+  lines.push("const SKATE: readonly SportDiscipline[] = [");
+  lines.push('  "Skateboard",');
+  lines.push('  "Rollerblade",');
+  lines.push('  "Scooter",');
+  lines.push('  "BMX",');
+  lines.push("];");
+  lines.push("");
+  lines.push("export const SOURCE_SPOTS: readonly NewSpot[] = [");
   for (const s of spots) {
-    lines.push("  {")
-    lines.push(`    id: ${JSON.stringify(s.id)},`)
-    lines.push(`    name: ${JSON.stringify(s.name)},`)
-    lines.push(`    city: ${JSON.stringify(s.city)},`)
-    lines.push(`    citySlug: ${JSON.stringify(s.citySlug)},`)
-    lines.push(`    address: ${JSON.stringify(s.address)},`)
-    lines.push(
-      `    types: ${JSON.stringify(s.types)},`,
-    )
-    lines.push(`    sports: [...SKATE],`)
-    lines.push(`    image: ${JSON.stringify(s.image)},`)
-    lines.push(`    crowdLevel: ${s.crowdLevel},`)
-    lines.push(`    country: ${JSON.stringify(s.country)},`)
-    lines.push(`    countryCode: ${JSON.stringify(s.countryCode)},`)
-    const { lat, lon } = s.location
-    lines.push(`    location: { lat: ${lat}, lon: ${lon} },`)
-    lines.push(`    createdBy: null,`)
-    lines.push("  },")
+    lines.push("  {");
+    lines.push(`    id: ${JSON.stringify(s.id)},`);
+    lines.push(`    name: ${JSON.stringify(s.name)},`);
+    lines.push(`    city: ${JSON.stringify(s.city)},`);
+    lines.push(`    citySlug: ${JSON.stringify(s.citySlug)},`);
+    lines.push(`    address: ${JSON.stringify(s.address)},`);
+    lines.push(`    types: ${JSON.stringify(s.types)},`);
+    lines.push(`    sports: [...SKATE],`);
+    lines.push(`    image: ${JSON.stringify(s.image)},`);
+    lines.push(`    country: ${JSON.stringify(s.country)},`);
+    lines.push(`    countryCode: ${JSON.stringify(s.countryCode)},`);
+    const { lat, lon } = s.location;
+    lines.push(`    location: { lat: ${lat}, lon: ${lon} },`);
+    lines.push(`    createdBy: null,`);
+    lines.push("  },");
   }
-  lines.push("];")
-  lines.push("")
-  return lines.join("\n")
+  lines.push("];");
+  lines.push("");
+  return lines.join("\n");
 }
 
-main()
+main();

@@ -1,13 +1,16 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { showToast } from "@/hooks/useToast"
-import { SpotFormFields, type SpotFormState } from "@/components/admin/spots/SpotFormFields"
-import { SpotFormSubmit } from "@/components/admin/spots/SpotFormSubmit"
-import type { ProjectedAddress } from "@/lib/geocode/project"
-import type { SpotTypeEntity } from "@/lib/types"
-import type { SportDiscipline } from "@/types/sport-events"
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { showToast } from "@/hooks/useToast";
+import {
+  SpotFormFields,
+  type SpotFormState,
+} from "@/components/admin/spots/SpotFormFields";
+import { SpotFormSubmit } from "@/components/admin/spots/SpotFormSubmit";
+import type { ProjectedAddress } from "@/lib/geocode/project";
+import type { SpotTypeEntity } from "@/lib/types";
+import type { SportDiscipline } from "@/types/sport-events";
 
 function buildInitialState(initialTypeSlug: string): SpotFormState {
   return {
@@ -19,11 +22,10 @@ function buildInitialState(initialTypeSlug: string): SpotFormState {
     countryCode: "",
     types: initialTypeSlug ? [initialTypeSlug] : [],
     sports: [],
-    crowdLevel: 35,
     image: { imageUrl: "", file: null },
     lat: 0,
     lon: 0,
-  }
+  };
 }
 
 function applyAddress(
@@ -46,71 +48,73 @@ function applyAddress(
       [address.houseNumber, address.road].filter(Boolean).join(" "),
     lat: address.lat,
     lon: address.lon,
-  }
+  };
 }
 
 function buildFormData(state: SpotFormState): FormData {
-  const fd = new FormData()
-  fd.set("name", state.name)
-  fd.set("city", state.city)
-  fd.set("citySlug", state.citySlug)
-  fd.set("address", state.address)
-  fd.set("country", state.country)
-  fd.set("countryCode", state.countryCode)
+  const fd = new FormData();
+  fd.set("name", state.name);
+  fd.set("city", state.city);
+  fd.set("citySlug", state.citySlug);
+  fd.set("address", state.address);
+  fd.set("country", state.country);
+  fd.set("countryCode", state.countryCode);
   for (const t of state.types) {
-    fd.append("type", t)
+    fd.append("type", t);
   }
   for (const sport of state.sports as readonly SportDiscipline[]) {
-    fd.append("sports", sport)
+    fd.append("sports", sport);
   }
-  fd.set("crowdLevel", String(state.crowdLevel))
-  fd.set("imageUrl", state.image.imageUrl)
-  fd.set("lat", String(state.lat))
-  fd.set("lon", String(state.lon))
+  fd.set("imageUrl", state.image.imageUrl);
+  fd.set("lat", String(state.lat));
+  fd.set("lon", String(state.lon));
   if (state.image.file) {
-    fd.set("image", state.image.file)
+    fd.set("image", state.image.file);
   }
-  return fd
+  return fd;
 }
 
 interface AdminNewSpotFormProps {
-  spotTypes: readonly SpotTypeEntity[]
-  initialTypeSlug: string | null
+  spotTypes: readonly SpotTypeEntity[];
+  initialTypeSlug: string | null;
 }
 
 export function AdminNewSpotForm({
   spotTypes,
   initialTypeSlug,
 }: AdminNewSpotFormProps) {
-  const router = useRouter()
+  const router = useRouter();
   const [state, setState] = useState<SpotFormState>(
     buildInitialState(initialTypeSlug ?? ""),
-  )
+  );
 
   const handleError = (message: string) => {
-    showToast(message, "error")
-  }
+    showToast(message, "error");
+  };
 
   const handleAction = async (formData: FormData) => {
     const res = await fetch("/api/admin/spots", {
       method: "POST",
       body: formData,
-    })
+    });
     if (res.status === 401) {
-      router.push("/login")
-      throw new Error("Unauthorized")
+      router.push("/login");
+      throw new Error("Unauthorized");
     }
     if (!res.ok) {
-      const body = (await res.json().catch(() => null)) as
-        | { error?: string }
-        | null
-      throw new Error(body?.error ?? `HTTP ${res.status}`)
+      const body = (await res.json().catch(() => null)) as {
+        error?: string;
+      } | null;
+      throw new Error(body?.error ?? `HTTP ${res.status}`);
     }
-    return (await res.json()) as { id: string }
-  }
+    return (await res.json()) as { id: string };
+  };
 
   const submitDisabled =
-    !state.name || !state.city || state.types.length === 0 || !state.countryCode
+    !state.name ||
+    !state.city ||
+    state.types.length === 0 ||
+    !state.countryCode;
 
   return (
     <section
@@ -136,7 +140,7 @@ export function AdminNewSpotForm({
 
       <form
         onSubmit={(e) => {
-          e.preventDefault()
+          e.preventDefault();
         }}
         noValidate
         className="space-y-8"
@@ -145,7 +149,9 @@ export function AdminNewSpotForm({
           state={state}
           onChange={setState}
           latLonMode="auto-fill"
-          onAutoFillResult={(address) => setState((s) => applyAddress(s, address))}
+          onAutoFillResult={(address) =>
+            setState((s) => applyAddress(s, address))
+          }
           onError={handleError}
           spotTypes={spotTypes}
         />
@@ -168,5 +174,5 @@ export function AdminNewSpotForm({
         Back to spots
       </button>
     </section>
-  )
+  );
 }

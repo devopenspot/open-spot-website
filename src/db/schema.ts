@@ -65,7 +65,6 @@ export const spots = pgTable(
     address: text("address").notNull(),
     imageUrl: text("image_url").notNull(),
     imagePath: text("image_path"),
-    crowdLevel: integer("crowd_level").notNull().default(0),
     countryCode: text("country_code")
       .notNull()
       .references(() => countries.iso2, { onDelete: "restrict" }),
@@ -327,7 +326,10 @@ export const spotSportsRelations = relations(spotSports, ({ one }) => ({
 }));
 
 export const eventSportsRelations = relations(eventSports, ({ one }) => ({
-  event: one(sportEvents, { fields: [eventSports.eventId], references: [sportEvents.id] }),
+  event: one(sportEvents, {
+    fields: [eventSports.eventId],
+    references: [sportEvents.id],
+  }),
   discipline: one(sportDisciplines, {
     fields: [eventSports.disciplineSlug],
     references: [sportDisciplines.slug],

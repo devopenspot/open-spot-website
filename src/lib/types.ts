@@ -55,7 +55,6 @@ export interface Spot {
   types: readonly SpotTypeRef[];
   sports: readonly SportDiscipline[];
   image: string;
-  crowdLevel: number;
   country: string;
   countryCode: string;
   location: SpotLocation;

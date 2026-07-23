@@ -136,6 +136,10 @@ function dedupeSports<T>(sports: readonly T[]): T[] {
 
 export const SOURCE_SPORT_EVENTS: readonly NewSportEvent[] = ROWS.map(
   (row): NewSportEvent => ({
+    // `id` is the stable seed slug — the repository's `create`
+    // upserts on it so re-running the seed updates the same row
+    // instead of erroring on the unique slug index.
+    slug: row.id,
     name: row.name,
     shortName: row.shortName,
     url: row.url,

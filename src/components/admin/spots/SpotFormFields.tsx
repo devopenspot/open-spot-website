@@ -20,7 +20,6 @@ export interface SpotFormState {
   countryCode: string;
   types: string[];
   sports: SportDiscipline[];
-  crowdLevel: number;
   image: ImageSourceFieldValue;
   lat: number;
   lon: number;

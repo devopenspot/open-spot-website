@@ -1,70 +1,68 @@
-import { NextResponse, type NextRequest } from "next/server"
-import { requireAdmin } from "@/lib/auth/server"
-import { NewSpotSchema } from "@/lib/schemas/spot"
-import { createSpot } from "@/lib/services/spots"
-import { uploadSpotImage } from "@/lib/supabase/storage"
-import { log } from "@/lib/log"
+import { NextResponse, type NextRequest } from "next/server";
+import { requireAdmin } from "@/lib/auth/server";
+import { NewSpotSchema } from "@/lib/schemas/spot";
+import { createSpot } from "@/lib/services/spots";
+import { uploadSpotImage } from "@/lib/supabase/storage";
+import { log } from "@/lib/log";
 
 export async function POST(request: NextRequest) {
-  let user
+  let user;
   try {
-    user = await requireAdmin()
+    user = await requireAdmin();
   } catch (err) {
-    const msg = err instanceof Error ? err.message : "Unauthorized"
+    const msg = err instanceof Error ? err.message : "Unauthorized";
     if (msg === "Admin only") {
-      return NextResponse.json({ error: msg }, { status: 403 })
+      return NextResponse.json({ error: msg }, { status: 403 });
     }
-    return NextResponse.json({ error: msg }, { status: 401 })
+    return NextResponse.json({ error: msg }, { status: 401 });
   }
 
-  let form: FormData
+  let form: FormData;
   try {
-    form = await request.formData()
+    form = await request.formData();
   } catch {
     return NextResponse.json(
       { error: "Expected multipart/form-data" },
       { status: 400 },
-    )
+    );
   }
 
-  const fileEntry = form.get("image")
+  const fileEntry = form.get("image");
   const file =
-    fileEntry instanceof File && fileEntry.size > 0 ? fileEntry : null
+    fileEntry instanceof File && fileEntry.size > 0 ? fileEntry : null;
 
-  let providedId: string | undefined
-  let imagePath: string | null = null
+  let providedId: string | undefined;
+  let imagePath: string | null = null;
   if (file) {
     try {
-      providedId = crypto.randomUUID()
-      const uploaded = await uploadSpotImage(file, providedId)
-      imagePath = uploaded.path
+      providedId = crypto.randomUUID();
+      const uploaded = await uploadSpotImage(file, providedId);
+      imagePath = uploaded.path;
     } catch (err) {
       log.error(
         "api.admin.spots.upload_failed",
         err instanceof Error ? err.message : err,
-      )
+      );
       return NextResponse.json(
         { error: "Image upload failed" },
         { status: 502 },
-      )
+      );
     }
   }
 
   const strField = (k: string) => {
-    const v = form.get(k)
-    return typeof v === "string" ? v : ""
-  }
+    const v = form.get(k);
+    return typeof v === "string" ? v : "";
+  };
   const numField = (k: string) => {
-    const n = Number(strField(k))
-    return Number.isFinite(n) ? n : 0
-  }
+    const n = Number(strField(k));
+    return Number.isFinite(n) ? n : 0;
+  };
   const strListField = (k: string) =>
-    form
-      .getAll(k)
-      .filter((v): v is string => typeof v === "string")
+    form.getAll(k).filter((v): v is string => typeof v === "string");
 
-  const country = strField("country")
-  const countryCode = strField("countryCode").toUpperCase()
+  const country = strField("country");
+  const countryCode = strField("countryCode").toUpperCase();
 
   const raw = {
     id: providedId,
@@ -76,7 +74,6 @@ export async function POST(request: NextRequest) {
     sports: strListField("sports"),
     image: strField("imageUrl"),
     imagePath: imagePath ?? undefined,
-    crowdLevel: numField("crowdLevel"),
     country,
     countryCode: countryCode || undefined,
     location: {
@@ -84,24 +81,24 @@ export async function POST(request: NextRequest) {
       lon: numField("lon"),
     },
     createdBy: user.id,
-  }
+  };
 
-  const parsed = NewSpotSchema.safeParse(raw)
+  const parsed = NewSpotSchema.safeParse(raw);
   if (!parsed.success) {
     return NextResponse.json(
       { error: "Invalid spot", details: parsed.error.flatten() },
       { status: 400 },
-    )
+    );
   }
 
   try {
-    const spot = await createSpot(parsed.data)
-    return NextResponse.json(spot, { status: 201 })
+    const spot = await createSpot(parsed.data);
+    return NextResponse.json(spot, { status: 201 });
   } catch (err) {
     log.error(
       "api.admin.spots.create_failed",
       err instanceof Error ? err.message : err,
-    )
-    return NextResponse.json({ error: "Internal error" }, { status: 500 })
+    );
+    return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }

@@ -1,15 +1,9 @@
-export const MAIN_CONTENT_ID = 'main-content';
+export const MAIN_CONTENT_ID = "main-content";
 
 export const CROWD_LEVEL = {
   LOW_MAX: 40,
   HIGH_MIN: 70,
 } as const;
-
-export function crowdLevelToLabel(level: number): string {
-  if (level > CROWD_LEVEL.HIGH_MIN) return "High (Busy)";
-  if (level > CROWD_LEVEL.LOW_MAX) return "Moderate Activity";
-  return "Low Crowd (Ideal)";
-}
 
 export const MAP_VIEWPORT_OFFSET_PX = {
   DESKTOP: 60,

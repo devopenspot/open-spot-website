@@ -1,32 +1,32 @@
-import { describe, it, expect, vi, beforeEach } from "vitest"
-import { NextRequest } from "next/server"
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { NextRequest } from "next/server";
 
-const requireAdminMock = vi.fn()
-const createSpotMock = vi.fn()
-const uploadSpotImageMock = vi.fn()
+const requireAdminMock = vi.fn();
+const createSpotMock = vi.fn();
+const uploadSpotImageMock = vi.fn();
 
 vi.mock("@/lib/auth/server", () => ({
   requireAdmin: () => requireAdminMock(),
-}))
+}));
 
 vi.mock("@/lib/services/spots", () => ({
   createSpot: (...args: unknown[]) => createSpotMock(...args),
-}))
+}));
 
 vi.mock("@/lib/supabase/storage", () => ({
   uploadSpotImage: (...args: unknown[]) => uploadSpotImageMock(...args),
-}))
+}));
 
 vi.mock("next/cache", () => ({
   revalidatePath: vi.fn(),
   revalidateTag: vi.fn(),
-}))
+}));
 
 vi.mock("@/lib/log", () => ({
   log: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
-}))
+}));
 
-import { POST } from "./route"
+import { POST } from "./route";
 
 const sampleSpot = {
   id: "spot-1",
@@ -38,44 +38,43 @@ const sampleSpot = {
   types: [],
   sports: [],
   image: "x",
-  crowdLevel: 0,
   country: "",
   countryCode: "",
   location: { lat: 0, lon: 0 },
   createdBy: null,
   createdAt: "2025-01-01T00:00:00Z",
   updatedAt: "2025-01-01T00:00:00Z",
-}
+};
 
 function makeFormRequest(fields: Record<string, string>): NextRequest {
-  const form = new FormData()
-  for (const [k, v] of Object.entries(fields)) form.append(k, v)
+  const form = new FormData();
+  for (const [k, v] of Object.entries(fields)) form.append(k, v);
   return new NextRequest("http://localhost/api/admin/spots", {
     method: "POST",
     body: form,
-  })
+  });
 }
 
 beforeEach(() => {
-  vi.resetAllMocks()
-  requireAdminMock.mockResolvedValue({ id: "user-1" })
-  createSpotMock.mockResolvedValue(sampleSpot)
-  uploadSpotImageMock.mockResolvedValue({ path: "spots/test.png" })
-})
+  vi.resetAllMocks();
+  requireAdminMock.mockResolvedValue({ id: "user-1" });
+  createSpotMock.mockResolvedValue(sampleSpot);
+  uploadSpotImageMock.mockResolvedValue({ path: "spots/test.png" });
+});
 
 describe("POST /api/admin/spots", () => {
   it("returns 401 when not signed in", async () => {
-    requireAdminMock.mockRejectedValue(new Error("Not signed in"))
-    const res = await POST(makeFormRequest({ name: "x", city: "y" }))
-    expect(res.status).toBe(401)
-    expect(createSpotMock).not.toHaveBeenCalled()
-  })
+    requireAdminMock.mockRejectedValue(new Error("Not signed in"));
+    const res = await POST(makeFormRequest({ name: "x", city: "y" }));
+    expect(res.status).toBe(401);
+    expect(createSpotMock).not.toHaveBeenCalled();
+  });
 
   it("returns 403 when signed in but not admin", async () => {
-    requireAdminMock.mockRejectedValue(new Error("Admin only"))
-    const res = await POST(makeFormRequest({ name: "x", city: "y" }))
-    expect(res.status).toBe(403)
-  })
+    requireAdminMock.mockRejectedValue(new Error("Admin only"));
+    const res = await POST(makeFormRequest({ name: "x", city: "y" }));
+    expect(res.status).toBe(403);
+  });
 
   it("returns 201 with the created spot", async () => {
     const res = await POST(
@@ -86,21 +85,20 @@ describe("POST /api/admin/spots", () => {
         type: "plaza",
         lat: "45.7",
         lon: "4.8",
-        crowdLevel: "50",
       }),
-    )
-    expect(res.status).toBe(201)
-    expect(await res.json()).toEqual(sampleSpot)
-    expect(createSpotMock).toHaveBeenCalled()
-  })
+    );
+    expect(res.status).toBe(201);
+    expect(await res.json()).toEqual(sampleSpot);
+    expect(createSpotMock).toHaveBeenCalled();
+  });
 
   it("returns 400 for invalid body (missing name)", async () => {
     const res = await POST(
       makeFormRequest({ city: "Test City", lat: "45.7", lon: "4.8" }),
-    )
-    expect(res.status).toBe(400)
-    expect(createSpotMock).not.toHaveBeenCalled()
-  })
+    );
+    expect(res.status).toBe(400);
+    expect(createSpotMock).not.toHaveBeenCalled();
+  });
 
   it("returns 400 when body is not multipart/form-data", async () => {
     const res = await POST(
@@ -108,12 +106,12 @@ describe("POST /api/admin/spots", () => {
         method: "POST",
         body: "plain text",
       }),
-    )
-    expect(res.status).toBe(400)
-  })
+    );
+    expect(res.status).toBe(400);
+  });
 
   it("returns 500 when the service throws", async () => {
-    createSpotMock.mockRejectedValue(new Error("db down"))
+    createSpotMock.mockRejectedValue(new Error("db down"));
     const res = await POST(
       makeFormRequest({
         name: "Test Spot",
@@ -121,7 +119,7 @@ describe("POST /api/admin/spots", () => {
         lat: "45.7",
         lon: "4.8",
       }),
-    )
-    expect(res.status).toBe(500)
-  })
-})
+    );
+    expect(res.status).toBe(500);
+  });
+});

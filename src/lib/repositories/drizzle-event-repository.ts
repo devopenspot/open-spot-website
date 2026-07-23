@@ -266,9 +266,16 @@ export class DrizzleEventRepository implements EventRepository {
       )
   }
 
-  async create(input: NewSportEvent): Promise<SportEvent> {
+  /**
+   * Builds the `insertValues` for a sport event from a `NewSportEvent`
+   * input. The slug defaults to `<slugify(name)>-<timestamp>` (each
+   * call gets a unique slug, used by the user-facing create flow);
+   * pass `input.slug` to pin it (used by the seed, which needs a
+   * stable upsert key across re-seeds).
+   */
+  private buildInsertValues(input: NewSportEvent): NewSportEventRow {
     const id = crypto.randomUUID()
-    const slug = `${slugify(input.name)}-${Date.now()}`
+    const slug = input.slug ?? `${slugify(input.name)}-${Date.now()}`
     const startAtTsql = `${input.startDate} 00:00:00+00`
     const endAtTsql = input.endDate ? `${input.endDate} 00:00:00+00` : null
     const location =
@@ -276,7 +283,7 @@ export class DrizzleEventRepository implements EventRepository {
         ? ({ lat: input.latitude, lon: input.longitude } as unknown as NewSportEventRow["location"])
         : null
 
-    const insertValues: NewSportEventRow = {
+    return {
       id,
       slug,
       name: input.name,
@@ -298,15 +305,67 @@ export class DrizzleEventRepository implements EventRepository {
       featured: input.featured,
       createdBy: null,
     }
+  }
+
+  /**
+   * Inserts (or updates on slug conflict) the event row, then syncs
+   * the sport-join table. Returns the row's real `id`. Shared by
+   * `create` (which then reloads) and `upsertBySlug` (which returns
+   * the id without reloading).
+   */
+  private async upsertAndSync(
+    input: NewSportEvent,
+    insertValues: NewSportEventRow,
+  ): Promise<string> {
     const [row] = await this.db
       .insert(sportEvents)
       .values(insertValues)
-      .returning()
-    if (!row) throw new Error("Insert returned no row")
-    await this.syncEventSports(id, input.sports)
-    const reloaded = await this.findById(id)
+      .onConflictDoUpdate({
+        target: sportEvents.slug,
+        set: {
+          name: insertValues.name,
+          shortName: insertValues.shortName,
+          url: insertValues.url,
+          image: insertValues.image,
+          description: insertValues.description,
+          startAt: insertValues.startAt,
+          endAt: insertValues.endAt,
+          city: insertValues.city,
+          countryCode: insertValues.countryCode as unknown as NewSportEventRow["countryCode"],
+          venue: insertValues.venue,
+          location: insertValues.location,
+          tierSlug: insertValues.tierSlug,
+          featured: insertValues.featured,
+          createdBy: insertValues.createdBy,
+          updatedAt: new Date(),
+        },
+      })
+      .returning({ id: sportEvents.id })
+    const rowId = row?.id
+    if (!rowId) throw new Error("Insert returned no row")
+    await this.syncEventSports(rowId, input.sports)
+    return rowId
+  }
+
+  async create(input: NewSportEvent): Promise<SportEvent> {
+    const insertValues = this.buildInsertValues(input)
+    const rowId = await this.upsertAndSync(input, insertValues)
+    const reloaded = await this.findById(rowId)
     if (!reloaded) throw new Error("Event not found after insert")
     return reloaded
+  }
+
+  /**
+   * Upsert a sport event by slug and sync its sport-join table.
+   * Returns the row id without reloading. Used by the seed.
+   */
+  async upsertBySlug(input: NewSportEvent): Promise<{ id: string }> {
+    if (!input.slug) {
+      throw new Error("upsertBySlug requires input.slug")
+    }
+    const insertValues = this.buildInsertValues(input)
+    const id = await this.upsertAndSync(input, insertValues)
+    return { id }
   }
 
   async update(id: string, patch: SportEventPatch): Promise<SportEvent> {

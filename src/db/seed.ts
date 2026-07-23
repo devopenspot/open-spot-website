@@ -1,7 +1,20 @@
+// Seeds the static dimension tables (regions, countries, spot types,
+// sport disciplines, event tiers) and the content tables (spots,
+// sport events).
+//
+// Spot and sport-event writes go through `DrizzleSpotRepository` and
+// `DrizzleEventRepository` so there is exactly one code path that
+// writes those tables. Both repos upsert on the unique slug index, so
+// the seed is idempotent — re-running it updates the same rows in
+// place instead of erroring on the unique constraint or duplicating
+// join rows.
+
 import "./load-env"
-import postgres from "postgres"
-import { getDatabaseUrl } from "../lib/env"
-import { log } from "../lib/log"
+import { sql } from "drizzle-orm"
+import { closeDb, getDbClient } from "@/lib/db/client"
+import { DrizzleEventRepository } from "@/lib/repositories/drizzle-event-repository"
+import { DrizzleSpotRepository } from "@/lib/repositories/drizzle-spot-repository"
+import { log } from "@/lib/log"
 import {
   EVENT_TIER_SEED,
   SPORT_DISCIPLINE_SEED,
@@ -12,18 +25,14 @@ import { buildCountrySeed, type CountrySeed } from "./seed-data/countries"
 import { SOURCE_SPOTS } from "./seed-data/spots"
 import { SOURCE_SPORT_EVENTS } from "./seed-data/sport-events"
 
-// ─── Helpers ────────────────────────────────────────────────────────
-
-function pointWkt(lat: number, lon: number): string {
-  return `SRID=4326;POINT(${lon} ${lat})`
-}
+type Db = ReturnType<typeof getDbClient>["db"]
 
 // ─── Dimension seeds ────────────────────────────────────────────────
 
-async function seedRegions(sql: ReturnType<typeof postgres>): Promise<void> {
+async function seedRegions(db: Db): Promise<void> {
   log.info("seed.regions.start")
   for (const r of REGION_SEED) {
-    await sql`
+    await db.execute(sql`
       insert into regions (slug, name, description, image_url, sort_order)
       values (${r.slug}, ${r.name}, ${r.desc}, ${r.image}, ${r.sortOrder})
       on conflict (slug) do update set
@@ -32,19 +41,17 @@ async function seedRegions(sql: ReturnType<typeof postgres>): Promise<void> {
         image_url = excluded.image_url,
         sort_order = excluded.sort_order,
         updated_at = now()
-    `
+    `)
   }
   log.info("seed.regions.done", { count: REGION_SEED.length })
 }
 
-async function seedCountries(
-  sql: ReturnType<typeof postgres>,
-): Promise<void> {
+async function seedCountries(db: Db): Promise<void> {
   log.info("seed.countries.start")
   const countries: readonly CountrySeed[] = buildCountrySeed()
-  const regionRows = await sql<{ id: string; name: string }[]>`
+  const regionRows = await db.execute<{ id: string; name: string }>(sql`
     select id, name from regions
-  `
+  `)
   const regionIdByName = new Map(regionRows.map((r) => [r.name, r.id]))
   let count = 0
   for (const c of countries) {
@@ -53,7 +60,7 @@ async function seedCountries(
       log.warn("seed.countries.skip_no_region", { country: c.name })
       continue
     }
-    await sql`
+    await db.execute(sql`
       insert into countries (iso2, name, iso3, region_id)
       values (${c.iso2}, ${c.name}, ${c.iso3 || null}, ${regionId})
       on conflict (iso2) do update set
@@ -61,199 +68,115 @@ async function seedCountries(
         iso3 = excluded.iso3,
         region_id = excluded.region_id,
         updated_at = now()
-    `
+    `)
     count++
   }
   log.info("seed.countries.done", { count })
 }
 
-async function seedSpotTypes(sql: ReturnType<typeof postgres>): Promise<void> {
+async function seedSpotTypes(db: Db): Promise<void> {
   log.info("seed.spot_types.start")
   for (const t of SPOT_TYPE_SEED) {
-    await sql`
+    await db.execute(sql`
       insert into spot_types (slug, name, sort_order)
       values (${t.slug}, ${t.name}, ${t.sortOrder})
       on conflict (slug) do update set
         name = excluded.name,
         sort_order = excluded.sort_order
-    `
+    `)
   }
   log.info("seed.spot_types.done", { count: SPOT_TYPE_SEED.length })
 }
 
-async function seedSportDisciplines(
-  sql: ReturnType<typeof postgres>,
-): Promise<void> {
+async function seedSportDisciplines(db: Db): Promise<void> {
   log.info("seed.sport_disciplines.start")
   for (const d of SPORT_DISCIPLINE_SEED) {
-    await sql`
+    await db.execute(sql`
       insert into sport_disciplines (slug, name, sort_order)
       values (${d.slug}, ${d.name}, ${d.sortOrder})
       on conflict (slug) do update set
         name = excluded.name,
         sort_order = excluded.sort_order
-    `
+    `)
   }
-  log.info("seed.sport_disciplines.done", { count: SPORT_DISCIPLINE_SEED.length })
+  log.info("seed.sport_disciplines.done", {
+    count: SPORT_DISCIPLINE_SEED.length,
+  })
 }
 
-async function seedEventTiers(sql: ReturnType<typeof postgres>): Promise<void> {
+async function seedEventTiers(db: Db): Promise<void> {
   log.info("seed.event_tiers.start")
   for (const t of EVENT_TIER_SEED) {
-    await sql`
+    await db.execute(sql`
       insert into event_tiers (slug, name, sort_order)
       values (${t.slug}, ${t.name}, ${t.sortOrder})
       on conflict (slug) do update set
         name = excluded.name,
         sort_order = excluded.sort_order
-    `
+    `)
   }
   log.info("seed.event_tiers.done", { count: EVENT_TIER_SEED.length })
 }
 
 // ─── Content seeds ────────────────────────────────────────────────
 
-async function seedSpots(sql: ReturnType<typeof postgres>): Promise<void> {
+async function seedSpots(repo: DrizzleSpotRepository): Promise<void> {
   log.info("seed.spots.start")
   let count = 0
   for (const spot of SOURCE_SPOTS) {
-    if (!spot.id || !spot.citySlug) {
+    // The source data's `id` is the stable seed slug (per the
+    // `seed-data/spots.ts` header). It's NOT a UUID, so we must not
+    // pass it as the DB `id` — the repo would reject the
+    // non-UUID `uuid` column. Destructure it out and use it as the
+    // `slug` upsert key instead.
+    const { id: slug, ...rest } = spot
+    if (!slug || !rest.citySlug) {
       log.warn("seed.spots.skip_no_id", { name: spot.name })
       continue
     }
-    const slug = spot.id
-    const citySlug = spot.citySlug
-    const [row] = await sql<{ id: string }[]>`
-      insert into spots (
-        id, slug, name, city, city_slug, address,
-        image_url, crowd_level, country_code, location, created_by
-      ) values (
-        gen_random_uuid(), ${slug}, ${spot.name}, ${spot.city},
-        ${citySlug}, ${spot.address},
-        ${spot.image}, ${spot.crowdLevel},
-        (select iso2 from countries where name = ${spot.country} limit 1),
-        ${pointWkt(spot.location.lat, spot.location.lon)}::geometry,
-        ${spot.createdBy ?? null}
-      )
-      on conflict (slug) do update set
-        name = excluded.name,
-        city = excluded.city,
-        city_slug = excluded.city_slug,
-        address = excluded.address,
-        image_url = excluded.image_url,
-        crowd_level = excluded.crowd_level,
-        country_code = excluded.country_code,
-        location = excluded.location,
-        created_by = excluded.created_by
-      returning id
-    `
-    const spotId = row?.id
-    if (spotId) {
-      for (const sport of spot.sports) {
-        const slug = sport.toLowerCase()
-        await sql`
-          insert into spot_sports (spot_id, discipline_slug)
-          values (${spotId}, ${slug})
-          on conflict do nothing
-        `
-      }
-      // Delete-then-insert the join rows (mirrors `syncSpotTypes` in
-      // the repository). This makes the seed self-healing across
-      // taxonomy renames — without it, renaming a type in
-      // `SPOT_TYPE_SEED` leaves the old join rows in place and a spot
-      // ends up carrying both the old and the new type.
-      await sql`delete from spot_spot_types where spot_id = ${spotId}`
-      for (const typeSlug of spot.types) {
-        const slug = typeSlug.toLowerCase()
-        await sql`
-          insert into spot_spot_types (spot_id, type_slug)
-          values (${spotId}, ${slug})
-          on conflict do nothing
-        `
-      }
-    }
+    // `upsertBySlug` skips the read-path reload (no
+    // `withImageUrls` round-trip), so this CLI does not pull in
+    // `server-only` from `@/lib/supabase/storage`.
+    await repo.upsertBySlug({ ...rest, slug })
     count++
   }
   log.info("seed.spots.done", { count })
 }
 
 async function seedSportEvents(
-  sql: ReturnType<typeof postgres>,
+  repo: DrizzleEventRepository,
 ): Promise<void> {
   log.info("seed.sport_events.start")
   let count = 0
   for (const event of SOURCE_SPORT_EVENTS) {
-    const location =
-      typeof event.latitude === "number" && typeof event.longitude === "number"
-        ? pointWkt(event.latitude, event.longitude)
-        : null
-    const startAt = `${event.startDate} 00:00:00+00`
-    const endAt = event.endDate ? `${event.endDate} 00:00:00+00` : null
-    const [row] = await sql<{ id: string }[]>`
-      insert into sport_events (
-        id, slug, name, short_name, url, image, description,
-        start_at, end_at, city, country_code, venue,
-        location, tier_slug, featured, created_by
-      ) values (
-        gen_random_uuid(), ${event.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")},
-        ${event.name}, ${event.shortName ?? null},
-        ${event.url}, ${event.image}, ${event.description},
-        ${startAt}::timestamptz, ${endAt}::timestamptz,
-        ${event.city}, ${event.countryCode ?? null}, ${event.venue ?? null},
-        ${location}::geometry, ${event.tier}, ${event.featured ?? false},
-        ${event.createdBy ?? null}
-      )
-      on conflict (slug) do update set
-        name = excluded.name,
-        short_name = excluded.short_name,
-        url = excluded.url,
-        image = excluded.image,
-        description = excluded.description,
-        start_at = excluded.start_at,
-        end_at = excluded.end_at,
-        city = excluded.city,
-        country_code = excluded.country_code,
-        venue = excluded.venue,
-        location = excluded.location,
-        tier_slug = excluded.tier_slug,
-        featured = excluded.featured,
-        created_by = excluded.created_by
-      returning id
-    `
-    const eventId = row?.id
-    if (eventId) {
-      for (const sport of event.sports) {
-        const slug = sport.toLowerCase()
-        await sql`
-          insert into event_sports (event_id, discipline_slug)
-          values (${eventId}, ${slug})
-          on conflict do nothing
-        `
-      }
-    }
+    // `event.slug` is the stable seed key (mapped from the source
+    // `id` in `seed-data/sport-events.ts`). The repo's
+    // `upsertBySlug` upserts on it and returns the row id without
+    // reloading, so re-running the seed is idempotent and the CLI
+    // does not pull in any read-path modules.
+    await repo.upsertBySlug(event)
     count++
   }
   log.info("seed.sport_events.done", { count })
 }
 
-
 // ─── Orchestrator ───────────────────────────────────────────────────
 
 async function main() {
-  const url = getDatabaseUrl()
-  if (!url) throw new Error("SUPABASE_DATABASE_URL is not configured")
-  const sql = postgres(url, { ssl: "require", max: 1, connect_timeout: 10 })
+  const { db } = getDbClient()
+  const spotRepo = new DrizzleSpotRepository(db)
+  const eventRepo = new DrizzleEventRepository(db)
   try {
-    await seedRegions(sql)
-    await seedCountries(sql)
-    await seedSpotTypes(sql)
-    await seedSportDisciplines(sql)
-    await seedEventTiers(sql)
-    await seedSpots(sql)
-    await seedSportEvents(sql)
+    await seedRegions(db)
+    await seedCountries(db)
+    await seedSpotTypes(db)
+    await seedSportDisciplines(db)
+    await seedEventTiers(db)
+    await seedSpots(spotRepo)
+    await seedSportEvents(eventRepo)
     log.info("seed.complete")
   } finally {
-    await sql.end({ timeout: 5 })
+    await closeDb()
   }
 }
 

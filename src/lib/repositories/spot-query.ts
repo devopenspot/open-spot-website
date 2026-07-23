@@ -1,5 +1,5 @@
-import { eq, sql } from "drizzle-orm"
-import type { drizzle } from "drizzle-orm/postgres-js"
+import { eq, sql } from "drizzle-orm";
+import type { drizzle } from "drizzle-orm/postgres-js";
 import {
   countries,
   spotSpotTypes,
@@ -7,10 +7,10 @@ import {
   sportDisciplines,
   spots,
   spotTypes,
-} from "@/db/schema"
-import type { SportDiscipline } from "@/types/sport-events"
-import type { Spot, SpotLocation, SpotTypeRef } from "@/lib/types"
-import type { SpotWithImagePath } from "@/lib/supabase/storage"
+} from "@/db/schema";
+import type { SportDiscipline } from "@/types/sport-events";
+import type { Spot, SpotLocation, SpotTypeRef } from "@/lib/types";
+import type { SpotWithImagePath } from "@/lib/supabase/storage";
 
 export const sportsAgg = sql<string[]>`
   coalesce(
@@ -22,7 +22,7 @@ export const sportsAgg = sql<string[]>`
     ),
     '{}'::text[]
   )
-`.as("sports")
+`.as("sports");
 
 /**
  * Aggregates the spot's type tags into a denormalized `{slug, name}[]
@@ -43,31 +43,28 @@ export const typesAgg = sql<SpotTypeRef[]>`
     ),
     '{}'::json[]
   )
-`.as("types")
+`.as("types");
 
 export interface JoinedSpotRow {
-  id: string
-  slug: string
-  name: string
-  city: string
-  citySlug: string
-  address: string
-  types: SpotTypeRef[]
-  sports: string[]
-  imageUrl: string
-  imagePath: string | null
-  crowdLevel: number
-  country: string
-  countryCode: string | null
-  location: SpotLocation
-  createdBy: string | null
-  createdAt: Date
-  updatedAt: Date
+  id: string;
+  slug: string;
+  name: string;
+  city: string;
+  citySlug: string;
+  address: string;
+  types: SpotTypeRef[];
+  sports: string[];
+  imageUrl: string;
+  imagePath: string | null;
+  country: string;
+  countryCode: string | null;
+  location: SpotLocation;
+  createdBy: string | null;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
-export function joinedSpotSelect(
-  db: ReturnType<typeof drizzle>,
-) {
+export function joinedSpotSelect(db: ReturnType<typeof drizzle>) {
   return db
     .select({
       id: spots.id,
@@ -80,7 +77,6 @@ export function joinedSpotSelect(
       sports: sportsAgg,
       imageUrl: spots.imageUrl,
       imagePath: spots.imagePath,
-      crowdLevel: spots.crowdLevel,
       country: countries.name,
       countryCode: spots.countryCode,
       location: spots.location,
@@ -90,7 +86,7 @@ export function joinedSpotSelect(
     })
     .from(spots)
     .leftJoin(countries, eq(countries.iso2, spots.countryCode))
-    .$dynamic()
+    .$dynamic();
 }
 
 export function rowToSpot(row: JoinedSpotRow): Spot {
@@ -104,16 +100,15 @@ export function rowToSpot(row: JoinedSpotRow): Spot {
     types: row.types ?? [],
     sports: row.sports as readonly SportDiscipline[],
     image: row.imagePath ?? row.imageUrl,
-    crowdLevel: row.crowdLevel,
     country: row.country,
     countryCode: row.countryCode ?? "",
     location: row.location,
     createdBy: row.createdBy,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
-  }
+  };
 }
 
 export function rowToSpotWithImagePath(row: JoinedSpotRow): SpotWithImagePath {
-  return { spot: rowToSpot(row), imagePath: row.imagePath }
+  return { spot: rowToSpot(row), imagePath: row.imagePath };
 }
