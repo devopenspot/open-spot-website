@@ -1,0 +1,982 @@
+[
+  {
+    "spot_id": "4f981f72-ffed-4110-b4c0-6efc5b30f1ec",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "08cf84c8-090f-45f6-b916-c40d1e252c5d",
+    "type_slug": "ledges"
+  },
+  {
+    "spot_id": "c13b1f52-85a0-4e78-b343-31bf0ecc261c",
+    "type_slug": "plaza"
+  },
+  {
+    "spot_id": "5fde855e-88f1-477d-bcc8-2de2a96b8a1b",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "156b25cf-ee09-4035-897a-d0bd051631f6",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "6ff37c33-26f6-4cb3-9975-0defa8742194",
+    "type_slug": "bowl"
+  },
+  {
+    "spot_id": "6ff37c33-26f6-4cb3-9975-0defa8742194",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "9b04fbd4-a804-4b9a-8c99-3cf3d9ff1b04",
+    "type_slug": "diy"
+  },
+  {
+    "spot_id": "046f49d0-008f-470e-a418-8050eea16f76",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "34d905f2-0124-4996-bec1-3f0d5b87eff6",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "fed08317-cd70-4dd6-9de9-fe04018e7bf5",
+    "type_slug": "plaza"
+  },
+  {
+    "spot_id": "5bcc7c0f-e661-4da4-a23b-6dfccd627fa7",
+    "type_slug": "plaza"
+  },
+  {
+    "spot_id": "5bcc7c0f-e661-4da4-a23b-6dfccd627fa7",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "95e4f52f-36fb-4918-9d82-eaf504c5ba51",
+    "type_slug": "diy"
+  },
+  {
+    "spot_id": "84cd2c42-7de5-44f2-a9bf-dff69a9d204a",
+    "type_slug": "plaza"
+  },
+  {
+    "spot_id": "e8e9057b-873b-4aa7-b2fb-ddc48b5206a4",
+    "type_slug": "diy"
+  },
+  {
+    "spot_id": "e8e9057b-873b-4aa7-b2fb-ddc48b5206a4",
+    "type_slug": "plaza"
+  },
+  {
+    "spot_id": "659b82f9-741a-4f04-a37c-74544c50d995",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "a5b7f98c-a208-44e0-a45d-21a568d6531c",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "338891bc-b1fb-4c1b-9f35-61e8fecbdb8d",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "872006a5-57dd-4d78-9da2-ba0f74ba854a",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "aaf7da24-b38b-43ec-837b-a3ab63b1f9e5",
+    "type_slug": "plaza"
+  },
+  {
+    "spot_id": "4b4389c0-3592-4bbf-97fc-c3dd17a6b3c0",
+    "type_slug": "diy"
+  },
+  {
+    "spot_id": "4b4389c0-3592-4bbf-97fc-c3dd17a6b3c0",
+    "type_slug": "plaza"
+  },
+  {
+    "spot_id": "73207eff-9978-4cf2-831d-9072f8e70d43",
+    "type_slug": "bowl"
+  },
+  {
+    "spot_id": "c49ccba9-552a-4f38-a612-141384c04d99",
+    "type_slug": "diy"
+  },
+  {
+    "spot_id": "5a0f39f0-6eee-491f-b788-730a516497ff",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "5a0f39f0-6eee-491f-b788-730a516497ff",
+    "type_slug": "bowl"
+  },
+  {
+    "spot_id": "8e6b07f9-670c-40b9-a61d-aa89ba3cb3da",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "8e6b07f9-670c-40b9-a61d-aa89ba3cb3da",
+    "type_slug": "ledges"
+  },
+  {
+    "spot_id": "b12aea13-97bc-4f60-a10c-2b688b5746f3",
+    "type_slug": "bowl"
+  },
+  {
+    "spot_id": "b12aea13-97bc-4f60-a10c-2b688b5746f3",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "c317d056-f05c-49a7-97a9-2d5ca12c05ea",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "afa8b71c-9bcb-4d08-8d6a-061e7d5d32a2",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "afa8b71c-9bcb-4d08-8d6a-061e7d5d32a2",
+    "type_slug": "bowl"
+  },
+  {
+    "spot_id": "507d2af4-5655-4e10-83f5-ab5f77053564",
+    "type_slug": "plaza"
+  },
+  {
+    "spot_id": "507d2af4-5655-4e10-83f5-ab5f77053564",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "507d2af4-5655-4e10-83f5-ab5f77053564",
+    "type_slug": "bowl"
+  },
+  {
+    "spot_id": "76790546-32d4-4a88-b106-551b009fb1b6",
+    "type_slug": "ledges"
+  },
+  {
+    "spot_id": "76790546-32d4-4a88-b106-551b009fb1b6",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "76790546-32d4-4a88-b106-551b009fb1b6",
+    "type_slug": "bowl"
+  },
+  {
+    "spot_id": "d2e90e22-3a3e-4eb2-8d87-28dfc5d63e4a",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "b527da36-babc-43e7-a073-1e67641bc14b",
+    "type_slug": "diy"
+  },
+  {
+    "spot_id": "46f9f792-15b2-460d-ae94-0459c5bbdde4",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "46f9f792-15b2-460d-ae94-0459c5bbdde4",
+    "type_slug": "bowl"
+  },
+  {
+    "spot_id": "46f9f792-15b2-460d-ae94-0459c5bbdde4",
+    "type_slug": "ledges"
+  },
+  {
+    "spot_id": "2abf47cd-368a-4a08-9fbd-d6efdb7c5ac9",
+    "type_slug": "bowl"
+  },
+  {
+    "spot_id": "2abf47cd-368a-4a08-9fbd-d6efdb7c5ac9",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "2abf47cd-368a-4a08-9fbd-d6efdb7c5ac9",
+    "type_slug": "ledges"
+  },
+  {
+    "spot_id": "68faf054-7637-4e44-b536-0c30ec544c24",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "68faf054-7637-4e44-b536-0c30ec544c24",
+    "type_slug": "bowl"
+  },
+  {
+    "spot_id": "68faf054-7637-4e44-b536-0c30ec544c24",
+    "type_slug": "ledges"
+  },
+  {
+    "spot_id": "6a608fe4-0fce-4ef6-b9b5-55e9a54d74f1",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "6a608fe4-0fce-4ef6-b9b5-55e9a54d74f1",
+    "type_slug": "bowl"
+  },
+  {
+    "spot_id": "6a608fe4-0fce-4ef6-b9b5-55e9a54d74f1",
+    "type_slug": "ledges"
+  },
+  {
+    "spot_id": "03271899-2519-4915-b7ea-fdfc1023d9df",
+    "type_slug": "bowl"
+  },
+  {
+    "spot_id": "3f1e691b-0e1e-403a-821c-4134ab2e19cd",
+    "type_slug": "bowl"
+  },
+  {
+    "spot_id": "3f1e691b-0e1e-403a-821c-4134ab2e19cd",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "ed7898e6-eef5-4a58-bae5-fdba6e776b39",
+    "type_slug": "ledges"
+  },
+  {
+    "spot_id": "ed7898e6-eef5-4a58-bae5-fdba6e776b39",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "a4969095-2cea-4fda-bd11-7c7232ab140b",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "a4969095-2cea-4fda-bd11-7c7232ab140b",
+    "type_slug": "ledges"
+  },
+  {
+    "spot_id": "a4969095-2cea-4fda-bd11-7c7232ab140b",
+    "type_slug": "bowl"
+  },
+  {
+    "spot_id": "d1b47337-f994-4af1-95aa-8a3ba74250dc",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "d1b47337-f994-4af1-95aa-8a3ba74250dc",
+    "type_slug": "ledges"
+  },
+  {
+    "spot_id": "5f4644ec-b48a-4910-9b1a-7b650f728bc0",
+    "type_slug": "bowl"
+  },
+  {
+    "spot_id": "5f4644ec-b48a-4910-9b1a-7b650f728bc0",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "5f4644ec-b48a-4910-9b1a-7b650f728bc0",
+    "type_slug": "ledges"
+  },
+  {
+    "spot_id": "c5d8b7b8-2f82-42bd-b9e2-3c4b5861f093",
+    "type_slug": "bowl"
+  },
+  {
+    "spot_id": "c5d8b7b8-2f82-42bd-b9e2-3c4b5861f093",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "c5d8b7b8-2f82-42bd-b9e2-3c4b5861f093",
+    "type_slug": "ledges"
+  },
+  {
+    "spot_id": "b4afa82f-98ae-4a01-b202-7b4231c659f6",
+    "type_slug": "bowl"
+  },
+  {
+    "spot_id": "b4afa82f-98ae-4a01-b202-7b4231c659f6",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "0efe8384-a632-4811-bbee-71058100c004",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "e2d76328-1005-4c41-a0d6-6d68e036f366",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "e2d76328-1005-4c41-a0d6-6d68e036f366",
+    "type_slug": "ledges"
+  },
+  {
+    "spot_id": "5226b445-77ae-4836-953c-294a469a2693",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "5226b445-77ae-4836-953c-294a469a2693",
+    "type_slug": "ledges"
+  },
+  {
+    "spot_id": "b7f7e608-e4ff-4ad6-a411-3853d1b05ef7",
+    "type_slug": "plaza"
+  },
+  {
+    "spot_id": "a2866290-8830-4c3d-997b-720933f42538",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "a2866290-8830-4c3d-997b-720933f42538",
+    "type_slug": "bowl"
+  },
+  {
+    "spot_id": "a2866290-8830-4c3d-997b-720933f42538",
+    "type_slug": "ledges"
+  },
+  {
+    "spot_id": "3126f8d0-3eaa-48f0-a316-408543e9b342",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "3126f8d0-3eaa-48f0-a316-408543e9b342",
+    "type_slug": "bowl"
+  },
+  {
+    "spot_id": "e1512108-5342-4b16-8f3f-8c7266f987c4",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "e1512108-5342-4b16-8f3f-8c7266f987c4",
+    "type_slug": "plaza"
+  },
+  {
+    "spot_id": "e1512108-5342-4b16-8f3f-8c7266f987c4",
+    "type_slug": "ledges"
+  },
+  {
+    "spot_id": "b1958921-7d7b-4e8e-b05b-2dab7a44c400",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "b1958921-7d7b-4e8e-b05b-2dab7a44c400",
+    "type_slug": "bowl"
+  },
+  {
+    "spot_id": "b1958921-7d7b-4e8e-b05b-2dab7a44c400",
+    "type_slug": "ledges"
+  },
+  {
+    "spot_id": "02db7429-d1a9-4157-994b-d1ec16c67b22",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "02db7429-d1a9-4157-994b-d1ec16c67b22",
+    "type_slug": "bowl"
+  },
+  {
+    "spot_id": "bf8f86d3-f24c-4045-a456-8e16996cb131",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "bf8f86d3-f24c-4045-a456-8e16996cb131",
+    "type_slug": "ledges"
+  },
+  {
+    "spot_id": "21316747-1ec4-4a86-97c3-5d258a731201",
+    "type_slug": "bowl"
+  },
+  {
+    "spot_id": "21316747-1ec4-4a86-97c3-5d258a731201",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "778f2cab-631c-4061-9928-12db5afeb6e1",
+    "type_slug": "diy"
+  },
+  {
+    "spot_id": "778f2cab-631c-4061-9928-12db5afeb6e1",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "778f2cab-631c-4061-9928-12db5afeb6e1",
+    "type_slug": "ledges"
+  },
+  {
+    "spot_id": "6fb002e3-bb92-48ae-aadd-43095abf4e7f",
+    "type_slug": "bowl"
+  },
+  {
+    "spot_id": "6fb002e3-bb92-48ae-aadd-43095abf4e7f",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "6fb002e3-bb92-48ae-aadd-43095abf4e7f",
+    "type_slug": "ledges"
+  },
+  {
+    "spot_id": "48857222-003f-4fa6-9b8e-1a2c145170a1",
+    "type_slug": "bowl"
+  },
+  {
+    "spot_id": "48857222-003f-4fa6-9b8e-1a2c145170a1",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "48857222-003f-4fa6-9b8e-1a2c145170a1",
+    "type_slug": "ledges"
+  },
+  {
+    "spot_id": "953b3fda-b2ff-4e14-940a-a2176cfb8d01",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "953b3fda-b2ff-4e14-940a-a2176cfb8d01",
+    "type_slug": "stair"
+  },
+  {
+    "spot_id": "953b3fda-b2ff-4e14-940a-a2176cfb8d01",
+    "type_slug": "ledges"
+  },
+  {
+    "spot_id": "28218d40-c2f3-4375-ab15-6db81509c043",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "28218d40-c2f3-4375-ab15-6db81509c043",
+    "type_slug": "stair"
+  },
+  {
+    "spot_id": "99b2bf32-255a-461f-a4bc-1f5bf9de6a01",
+    "type_slug": "bowl"
+  },
+  {
+    "spot_id": "99b2bf32-255a-461f-a4bc-1f5bf9de6a01",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "99b2bf32-255a-461f-a4bc-1f5bf9de6a01",
+    "type_slug": "stair"
+  },
+  {
+    "spot_id": "99b2bf32-255a-461f-a4bc-1f5bf9de6a01",
+    "type_slug": "ledges"
+  },
+  {
+    "spot_id": "a9cb39c2-0c9b-4b1e-9285-8437befe478f",
+    "type_slug": "plaza"
+  },
+  {
+    "spot_id": "a9cb39c2-0c9b-4b1e-9285-8437befe478f",
+    "type_slug": "ledges"
+  },
+  {
+    "spot_id": "ec048a92-7c97-49f0-b51c-4ecda6967728",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "ec048a92-7c97-49f0-b51c-4ecda6967728",
+    "type_slug": "ledges"
+  },
+  {
+    "spot_id": "3fc22526-3fb5-4e96-967e-e17d6c95ef2d",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "3fc22526-3fb5-4e96-967e-e17d6c95ef2d",
+    "type_slug": "ledges"
+  },
+  {
+    "spot_id": "01dfdb52-92a9-476f-a718-6ac085128b74",
+    "type_slug": "bowl"
+  },
+  {
+    "spot_id": "4a2fb55e-0344-4bbc-8ad0-534e947a98e8",
+    "type_slug": "bowl"
+  },
+  {
+    "spot_id": "4a2fb55e-0344-4bbc-8ad0-534e947a98e8",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "4a2fb55e-0344-4bbc-8ad0-534e947a98e8",
+    "type_slug": "ledges"
+  },
+  {
+    "spot_id": "caade3ce-b967-4f7e-8d7d-03ae9fb7effd",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "caade3ce-b967-4f7e-8d7d-03ae9fb7effd",
+    "type_slug": "ledges"
+  },
+  {
+    "spot_id": "44a6d7d4-2f7b-451f-ba95-31922a537b07",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "44a6d7d4-2f7b-451f-ba95-31922a537b07",
+    "type_slug": "bowl"
+  },
+  {
+    "spot_id": "44a6d7d4-2f7b-451f-ba95-31922a537b07",
+    "type_slug": "ledges"
+  },
+  {
+    "spot_id": "9861d77c-1b6c-462c-a3ca-d1a3c22b3898",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "9861d77c-1b6c-462c-a3ca-d1a3c22b3898",
+    "type_slug": "ledges"
+  },
+  {
+    "spot_id": "9861d77c-1b6c-462c-a3ca-d1a3c22b3898",
+    "type_slug": "bowl"
+  },
+  {
+    "spot_id": "eb1154fc-26b4-4b95-beee-8eb1c08d8270",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "eb1154fc-26b4-4b95-beee-8eb1c08d8270",
+    "type_slug": "ledges"
+  },
+  {
+    "spot_id": "3c332f2b-ac6a-4d6a-9dc6-3dc3e8879f56",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "3c332f2b-ac6a-4d6a-9dc6-3dc3e8879f56",
+    "type_slug": "bowl"
+  },
+  {
+    "spot_id": "3c332f2b-ac6a-4d6a-9dc6-3dc3e8879f56",
+    "type_slug": "ledges"
+  },
+  {
+    "spot_id": "53b1a1c6-cb58-4520-a55c-f11649b41b0b",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "53b1a1c6-cb58-4520-a55c-f11649b41b0b",
+    "type_slug": "ledges"
+  },
+  {
+    "spot_id": "4db1c490-9ec5-49fe-ac07-e4bbc7474d4c",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "4db1c490-9ec5-49fe-ac07-e4bbc7474d4c",
+    "type_slug": "bowl"
+  },
+  {
+    "spot_id": "4db1c490-9ec5-49fe-ac07-e4bbc7474d4c",
+    "type_slug": "ledges"
+  },
+  {
+    "spot_id": "bf760bf5-0f59-4dd3-b17d-86bf157be157",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "bf760bf5-0f59-4dd3-b17d-86bf157be157",
+    "type_slug": "bowl"
+  },
+  {
+    "spot_id": "bf760bf5-0f59-4dd3-b17d-86bf157be157",
+    "type_slug": "ledges"
+  },
+  {
+    "spot_id": "c6f8c737-d31e-432a-b08a-a813deac4853",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "c6f8c737-d31e-432a-b08a-a813deac4853",
+    "type_slug": "ledges"
+  },
+  {
+    "spot_id": "588d48f3-f9ed-4f67-a6fc-bd15dd310b8e",
+    "type_slug": "bowl"
+  },
+  {
+    "spot_id": "0588a587-b2e7-405e-a594-5d34dc86b63d",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "0588a587-b2e7-405e-a594-5d34dc86b63d",
+    "type_slug": "bowl"
+  },
+  {
+    "spot_id": "d7d3842d-c62c-464a-b6a6-51fc96cf2089",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "d7d3842d-c62c-464a-b6a6-51fc96cf2089",
+    "type_slug": "ledges"
+  },
+  {
+    "spot_id": "d7d3842d-c62c-464a-b6a6-51fc96cf2089",
+    "type_slug": "bowl"
+  },
+  {
+    "spot_id": "77d987a9-4e2c-4b0a-ae2f-4be9e21766dd",
+    "type_slug": "bowl"
+  },
+  {
+    "spot_id": "77d987a9-4e2c-4b0a-ae2f-4be9e21766dd",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "36a6f3ad-ef72-4ad9-8764-ce057f0f1baf",
+    "type_slug": "diy"
+  },
+  {
+    "spot_id": "ac6e9643-067d-4ba6-b6dd-5ac1ee62b73d",
+    "type_slug": "bowl"
+  },
+  {
+    "spot_id": "ac6e9643-067d-4ba6-b6dd-5ac1ee62b73d",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "ac6e9643-067d-4ba6-b6dd-5ac1ee62b73d",
+    "type_slug": "ledges"
+  },
+  {
+    "spot_id": "e38edb5e-b734-46cf-b74b-5480ac462992",
+    "type_slug": "bowl"
+  },
+  {
+    "spot_id": "e38edb5e-b734-46cf-b74b-5480ac462992",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "fd4af1d0-1fa2-4963-920d-6f0ce5175059",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "fd4af1d0-1fa2-4963-920d-6f0ce5175059",
+    "type_slug": "bowl"
+  },
+  {
+    "spot_id": "fd4af1d0-1fa2-4963-920d-6f0ce5175059",
+    "type_slug": "ledges"
+  },
+  {
+    "spot_id": "29fce54b-86d8-4d52-be0e-eef6369e7f29",
+    "type_slug": "bowl"
+  },
+  {
+    "spot_id": "29fce54b-86d8-4d52-be0e-eef6369e7f29",
+    "type_slug": "ledges"
+  },
+  {
+    "spot_id": "29fce54b-86d8-4d52-be0e-eef6369e7f29",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "8aaedc90-9e96-4624-82cb-fb41cb418e73",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "8aaedc90-9e96-4624-82cb-fb41cb418e73",
+    "type_slug": "bowl"
+  },
+  {
+    "spot_id": "8aaedc90-9e96-4624-82cb-fb41cb418e73",
+    "type_slug": "ledges"
+  },
+  {
+    "spot_id": "03f35390-959e-46f0-a9d6-56b8582fa8de",
+    "type_slug": "bowl"
+  },
+  {
+    "spot_id": "03f35390-959e-46f0-a9d6-56b8582fa8de",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "03f35390-959e-46f0-a9d6-56b8582fa8de",
+    "type_slug": "ledges"
+  },
+  {
+    "spot_id": "1ebdd417-3b0a-4b4d-9624-5019f13ef261",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "1ebdd417-3b0a-4b4d-9624-5019f13ef261",
+    "type_slug": "ledges"
+  },
+  {
+    "spot_id": "c60dea92-76f6-4562-ac66-b7a3b43d5cf6",
+    "type_slug": "bowl"
+  },
+  {
+    "spot_id": "c60dea92-76f6-4562-ac66-b7a3b43d5cf6",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "c60dea92-76f6-4562-ac66-b7a3b43d5cf6",
+    "type_slug": "ledges"
+  },
+  {
+    "spot_id": "dc50145d-cb18-4cfc-9269-f4a3145a0113",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "dc50145d-cb18-4cfc-9269-f4a3145a0113",
+    "type_slug": "ledges"
+  },
+  {
+    "spot_id": "dc50145d-cb18-4cfc-9269-f4a3145a0113",
+    "type_slug": "bowl"
+  },
+  {
+    "spot_id": "caf0529c-80ea-4db7-9927-b067bb4985d4",
+    "type_slug": "bowl"
+  },
+  {
+    "spot_id": "caf0529c-80ea-4db7-9927-b067bb4985d4",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "caf0529c-80ea-4db7-9927-b067bb4985d4",
+    "type_slug": "ledges"
+  },
+  {
+    "spot_id": "548fb065-3459-47b9-a24e-596e156d8aea",
+    "type_slug": "plaza"
+  },
+  {
+    "spot_id": "deb073e7-c88d-4d3f-a22f-465187a15cb5",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "deb073e7-c88d-4d3f-a22f-465187a15cb5",
+    "type_slug": "bowl"
+  },
+  {
+    "spot_id": "deb073e7-c88d-4d3f-a22f-465187a15cb5",
+    "type_slug": "ledges"
+  },
+  {
+    "spot_id": "151a3168-61c5-43c9-9d47-900794e125a4",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "151a3168-61c5-43c9-9d47-900794e125a4",
+    "type_slug": "ledges"
+  },
+  {
+    "spot_id": "3f5db698-9e00-47d7-92f1-097228480d10",
+    "type_slug": "ledges"
+  },
+  {
+    "spot_id": "3f5db698-9e00-47d7-92f1-097228480d10",
+    "type_slug": "plaza"
+  },
+  {
+    "spot_id": "b0480dc2-f8ad-45c1-a142-58e160846282",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "b0480dc2-f8ad-45c1-a142-58e160846282",
+    "type_slug": "bowl"
+  },
+  {
+    "spot_id": "b0480dc2-f8ad-45c1-a142-58e160846282",
+    "type_slug": "ledges"
+  },
+  {
+    "spot_id": "1a66f331-10f3-4892-9f6c-0fb07c6e7489",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "1a66f331-10f3-4892-9f6c-0fb07c6e7489",
+    "type_slug": "ledges"
+  },
+  {
+    "spot_id": "3e632bee-817c-4f84-be49-6144b4f12e5e",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "3e632bee-817c-4f84-be49-6144b4f12e5e",
+    "type_slug": "bowl"
+  },
+  {
+    "spot_id": "3e632bee-817c-4f84-be49-6144b4f12e5e",
+    "type_slug": "ledges"
+  },
+  {
+    "spot_id": "67d41987-0cb1-47dd-bb36-16109b39d7c1",
+    "type_slug": "bowl"
+  },
+  {
+    "spot_id": "67d41987-0cb1-47dd-bb36-16109b39d7c1",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "67d41987-0cb1-47dd-bb36-16109b39d7c1",
+    "type_slug": "ledges"
+  },
+  {
+    "spot_id": "5bdc5ca1-e225-4436-a1a8-0232a1062c4c",
+    "type_slug": "bowl"
+  },
+  {
+    "spot_id": "5bdc5ca1-e225-4436-a1a8-0232a1062c4c",
+    "type_slug": "ledges"
+  },
+  {
+    "spot_id": "5bdc5ca1-e225-4436-a1a8-0232a1062c4c",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "1b70e998-8e1e-4355-bd9c-d87184ac6d6b",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "1b70e998-8e1e-4355-bd9c-d87184ac6d6b",
+    "type_slug": "bowl"
+  },
+  {
+    "spot_id": "1b70e998-8e1e-4355-bd9c-d87184ac6d6b",
+    "type_slug": "ledges"
+  },
+  {
+    "spot_id": "5d9d9605-c926-46d5-9f7b-1f33133f51c0",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "5d9d9605-c926-46d5-9f7b-1f33133f51c0",
+    "type_slug": "bowl"
+  },
+  {
+    "spot_id": "5d9d9605-c926-46d5-9f7b-1f33133f51c0",
+    "type_slug": "ledges"
+  },
+  {
+    "spot_id": "54a14b8f-bde2-4ab5-a694-968a17ba6104",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "54a14b8f-bde2-4ab5-a694-968a17ba6104",
+    "type_slug": "bowl"
+  },
+  {
+    "spot_id": "54a14b8f-bde2-4ab5-a694-968a17ba6104",
+    "type_slug": "ledges"
+  },
+  {
+    "spot_id": "8291e476-14db-4cb4-b464-48a957c90cca",
+    "type_slug": "plaza"
+  },
+  {
+    "spot_id": "8291e476-14db-4cb4-b464-48a957c90cca",
+    "type_slug": "ledges"
+  },
+  {
+    "spot_id": "8291e476-14db-4cb4-b464-48a957c90cca",
+    "type_slug": "stair"
+  },
+  {
+    "spot_id": "8291e476-14db-4cb4-b464-48a957c90cca",
+    "type_slug": "diy"
+  },
+  {
+    "spot_id": "ff6027c7-f100-4124-8d27-103b250ad43e",
+    "type_slug": "plaza"
+  },
+  {
+    "spot_id": "ff6027c7-f100-4124-8d27-103b250ad43e",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "ff6027c7-f100-4124-8d27-103b250ad43e",
+    "type_slug": "ledges"
+  },
+  {
+    "spot_id": "553815f2-44f3-42de-bcd7-b198ebcb4ecd",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "553815f2-44f3-42de-bcd7-b198ebcb4ecd",
+    "type_slug": "ledges"
+  },
+  {
+    "spot_id": "553815f2-44f3-42de-bcd7-b198ebcb4ecd",
+    "type_slug": "bowl"
+  },
+  {
+    "spot_id": "a1af3afb-9877-44f3-8c8b-eacbd2afbfa4",
+    "type_slug": "plaza"
+  },
+  {
+    "spot_id": "e4dece15-dd5b-4dfe-ae5b-0c700fa63403",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "e4dece15-dd5b-4dfe-ae5b-0c700fa63403",
+    "type_slug": "bowl"
+  },
+  {
+    "spot_id": "e4dece15-dd5b-4dfe-ae5b-0c700fa63403",
+    "type_slug": "ledges"
+  },
+  {
+    "spot_id": "a1c9477e-b861-46b3-adcb-852d5fff4392",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "a1c9477e-b861-46b3-adcb-852d5fff4392",
+    "type_slug": "ledges"
+  },
+  {
+    "spot_id": "59d6adb9-141a-4c28-abe8-4b2bd1f21095",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "59d6adb9-141a-4c28-abe8-4b2bd1f21095",
+    "type_slug": "bowl"
+  },
+  {
+    "spot_id": "59d6adb9-141a-4c28-abe8-4b2bd1f21095",
+    "type_slug": "ledges"
+  },
+  {
+    "spot_id": "3b4fa013-4764-4369-8d60-fe45afed1698",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "3b4fa013-4764-4369-8d60-fe45afed1698",
+    "type_slug": "bowl"
+  },
+  {
+    "spot_id": "3b4fa013-4764-4369-8d60-fe45afed1698",
+    "type_slug": "ledges"
+  },
+  {
+    "spot_id": "c7d60098-8f8e-4fc4-9bbc-be2a962be48d",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "c7d60098-8f8e-4fc4-9bbc-be2a962be48d",
+    "type_slug": "bowl"
+  },
+  {
+    "spot_id": "c7d60098-8f8e-4fc4-9bbc-be2a962be48d",
+    "type_slug": "ledges"
+  },
+  {
+    "spot_id": "c2014db7-e737-4677-ad9c-cf459906d7ca",
+    "type_slug": "skatepark"
+  },
+  {
+    "spot_id": "c2014db7-e737-4677-ad9c-cf459906d7ca",
+    "type_slug": "bowl"
+  },
+  {
+    "spot_id": "c2014db7-e737-4677-ad9c-cf459906d7ca",
+    "type_slug": "ledges"
+  },
+  {
+    "spot_id": "3f6e2fa9-e555-4714-a92e-0ef087d42258",
+    "type_slug": "ledges"
+  },
+  {
+    "spot_id": "3f6e2fa9-e555-4714-a92e-0ef087d42258",
+    "type_slug": "skatepark"
+  }
+]

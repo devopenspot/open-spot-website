@@ -19,7 +19,8 @@
     "db:health": "tsx src/db/health-cli.ts",
     "db:check-pool": "tsx src/db/pool-check-cli.ts",
     "db:apply": "tsx src/db/apply-sql.ts",
-    "db:deploy": "tsx src/db/apply-sql.ts"
+    "db:deploy": "tsx src/db/apply-sql.ts",
+    "db:regen-spots": "tsx scripts/regen-spots-seed.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.0",

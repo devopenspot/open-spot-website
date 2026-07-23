@@ -11,13 +11,17 @@ export const SPOT_TYPE_SEED: readonly TaxonomyEntry[] = [
   { slug: "bowl", name: "Bowl", sortOrder: 3 },
   { slug: "skatepark", name: "skatepark", sortOrder: 4 },
   { slug: "ledges", name: "Ledges", sortOrder: 5 },
+  { slug: "vert", name: "Vert", sortOrder: 6 },
+  { slug: "rails", name: "Rails", sortOrder: 7 },
 ];
 
 export const SPORT_DISCIPLINE_SEED: readonly TaxonomyEntry[] = [
   { slug: "skateboard", name: "Skateboard", sortOrder: 0 },
   { slug: "bmx", name: "BMX", sortOrder: 1 },
-  { slug: "scooter", name: "Scooter", sortOrder: 2 },
-  { slug: "rollerblade", name: "Rollerblade", sortOrder: 3 },
+  { slug: "bmx-racing", name: "BMX-Racing", sortOrder: 2 },
+  { slug: "scooter", name: "Scooter", sortOrder: 3 },
+  { slug: "rollerblade", name: "Rollerblade", sortOrder: 4 },
+  { slug: "inline-speed", name: "inline-speed", sortOrder: 5 },
 ];
 
 export const EVENT_TIER_SEED: readonly TaxonomyEntry[] = [
@@ -25,4 +29,5 @@ export const EVENT_TIER_SEED: readonly TaxonomyEntry[] = [
   { slug: "championship", name: "Championship", sortOrder: 1 },
   { slug: "festival", name: "Festival", sortOrder: 2 },
   { slug: "federation", name: "Federation", sortOrder: 3 },
+  { slug: "local", name: "Local", sortOrder: 3 },
 ];

@@ -29,11 +29,21 @@ export const REGION_SEED: readonly RegionSeed[] = [
           "Portland",
           "Chicago",
           "Miami",
+          "Las Vegas",
+          "Westminster",
+          "North Las Vegas",
         ],
       },
       {
         name: "Canada",
-        cities: ["Toronto", "Vancouver", "Montreal", "Calgary"],
+        cities: [
+          "Toronto",
+          "Vancouver",
+          "Montreal",
+          "Calgary",
+          "Mississauga",
+          "Banff",
+        ],
       },
       {
         name: "Mexico",
@@ -50,7 +60,13 @@ export const REGION_SEED: readonly RegionSeed[] = [
     countries: [
       {
         name: "Brazil",
-        cities: ["São Paulo", "Rio de Janeiro", "Belo Horizonte", "Curitiba"],
+        cities: [
+          "São Paulo",
+          "Rio de Janeiro",
+          "Belo Horizonte",
+          "Curitiba",
+          "Amparo",
+        ],
       },
       {
         name: "Argentina",
@@ -58,7 +74,19 @@ export const REGION_SEED: readonly RegionSeed[] = [
       },
       {
         name: "Colombia",
-        cities: ["Bogotá", "Medellín", "Cali", "Barranquilla"],
+        cities: [
+          "Bogota",
+          "Medellin",
+          "Cali",
+          "Barranquilla",
+          "Envigado",
+          "Zipaquira",
+          "Sopo",
+          "Rionegro",
+          "Bello",
+          "Pereira",
+          "Mosquera",
+        ],
       },
       {
         name: "Chile",
@@ -142,6 +170,8 @@ export const REGION_SEED: readonly RegionSeed[] = [
           "Valencia",
           "Málaga",
           "Bilbao",
+          "Zaragoza",
+          "Pineda de Mar",
         ],
       },
       {
@@ -170,7 +200,7 @@ export const REGION_SEED: readonly RegionSeed[] = [
       },
       {
         name: "Belgium",
-        cities: ["Brussels", "Antwerp"],
+        cities: ["Brussels", "Antwerp", "Brugge"],
       },
       {
         name: "Netherlands",
@@ -236,7 +266,14 @@ export const REGION_SEED: readonly RegionSeed[] = [
     countries: [
       {
         name: "Sweden",
-        cities: ["Stockholm", "Malmö", "Gothenburg"],
+        cities: [
+          "Stockholm",
+          "Malmö",
+          "Gothenburg",
+          "Vallentuna",
+          "Bjuv",
+          "Halmstad",
+        ],
       },
       {
         name: "Finland",
@@ -244,7 +281,7 @@ export const REGION_SEED: readonly RegionSeed[] = [
       },
       {
         name: "Norway",
-        cities: ["Oslo", "Bergen", "Trondheim"],
+        cities: ["Oslo", "Bergen", "Trondheim", "Stavanger", "Flekkefjord"],
       },
       {
         name: "Denmark",
@@ -252,7 +289,7 @@ export const REGION_SEED: readonly RegionSeed[] = [
       },
       {
         name: "Iceland",
-        cities: ["Reykjavík"],
+        cities: ["Reykjavik", "Akureyri"],
       },
     ],
   },
@@ -269,39 +306,19 @@ export const REGION_SEED: readonly RegionSeed[] = [
       },
       {
         name: "Greece",
-        cities: ["Athens", "Thessaloniki"],
+        cities: ["Athens", "Thessaloniki", "Andros"],
       },
       {
         name: "Croatia",
         cities: ["Zagreb", "Split"],
       },
       {
-        name: "Slovenia",
-        cities: ["Ljubljana"],
-      },
-      {
-        name: "Serbia",
-        cities: ["Belgrade"],
-      },
-      {
-        name: "Bosnia and Herzegovina",
-        cities: ["Sarajevo"],
-      },
-      {
         name: "Albania",
         cities: ["Tirana"],
       },
       {
-        name: "North Macedonia",
-        cities: ["Skopje"],
-      },
-      {
-        name: "Montenegro",
-        cities: ["Podgorica"],
-      },
-      {
         name: "Malta",
-        cities: ["Valletta"],
+        cities: ["Valletta", "Msida"],
       },
     ],
   },
@@ -345,10 +362,6 @@ export const REGION_SEED: readonly RegionSeed[] = [
         cities: ["Moscow", "Saint Petersburg", "Yekaterinburg"],
       },
       {
-        name: "Lithuania",
-        cities: ["Vilnius", "Kaunas"],
-      },
-      {
         name: "Latvia",
         cities: ["Riga"],
       },
@@ -357,20 +370,8 @@ export const REGION_SEED: readonly RegionSeed[] = [
         cities: ["Tallinn"],
       },
       {
-        name: "Moldova",
-        cities: ["Chișinău"],
-      },
-      {
-        name: "Belarus",
-        cities: ["Minsk"],
-      },
-      {
         name: "Turkey",
         cities: ["Istanbul", "Ankara", "İzmir"],
-      },
-      {
-        name: "Cyprus",
-        cities: ["Nicosia"],
       },
     ],
   },
@@ -392,6 +393,7 @@ export const REGION_SEED: readonly RegionSeed[] = [
           "Sapporo",
           "Kobe",
           "Kyoto",
+          "Hachioji",
         ],
       },
     ],
@@ -447,22 +449,6 @@ export const REGION_SEED: readonly RegionSeed[] = [
         name: "India",
         cities: ["Mumbai", "Bangalore", "Delhi", "Chennai"],
       },
-      {
-        name: "Cambodia",
-        cities: ["Phnom Penh"],
-      },
-      {
-        name: "Laos",
-        cities: ["Vientiane"],
-      },
-      {
-        name: "Myanmar",
-        cities: ["Yangon"],
-      },
-      {
-        name: "Mongolia",
-        cities: ["Ulaanbaatar"],
-      },
     ],
   },
   {
@@ -478,15 +464,7 @@ export const REGION_SEED: readonly RegionSeed[] = [
       },
       {
         name: "New Zealand",
-        cities: ["Auckland", "Wellington", "Christchurch"],
-      },
-      {
-        name: "Fiji",
-        cities: ["Suva"],
-      },
-      {
-        name: "Papua New Guinea",
-        cities: ["Port Moresby"],
+        cities: ["Auckland", "Wellington", "Christchurch", "Hibiscus Coast"],
       },
     ],
   },
@@ -498,84 +476,51 @@ export const REGION_SEED: readonly RegionSeed[] = [
     sortOrder: 12,
     countries: [
       {
-        name: "UAE",
-        cities: ["Dubai", "Abu Dhabi"],
-      },
-      {
-        name: "Saudi Arabia",
-        cities: ["Riyadh", "Jeddah"],
-      },
-      {
         name: "Israel",
-        cities: ["Tel Aviv", "Jerusalem", "Haifa"],
-      },
-      {
-        name: "Lebanon",
-        cities: ["Beirut"],
-      },
-      {
-        name: "Jordan",
-        cities: ["Amman"],
+        cities: [
+          "Tel Aviv",
+          "Jerusalem",
+          "Haifa",
+          "Ashdod",
+          "Modi'in",
+          "Nahariya",
+          "Rishon LeZion",
+        ],
       },
       {
         name: "Egypt",
-        cities: ["Cairo", "Alexandria"],
+        cities: ["Cairo", "Alexandria", "Giza"],
       },
       {
         name: "Morocco",
-        cities: ["Casablanca", "Marrakech", "Rabat"],
+        cities: ["Casablanca", "Marrakech", "Rabat", "Tangier", "Ida Ou Guelloul"],
       },
       {
         name: "South Africa",
-        cities: ["Johannesburg", "Cape Town", "Durban"],
-      },
-      {
-        name: "Tunisia",
-        cities: ["Tunis"],
-      },
-      {
-        name: "Iran",
-        cities: ["Tehran"],
-      },
-      {
-        name: "Iraq",
-        cities: ["Baghdad"],
-      },
-      {
-        name: "Kuwait",
-        cities: ["Kuwait City"],
-      },
-      {
-        name: "Qatar",
-        cities: ["Doha"],
-      },
-      {
-        name: "Bahrain",
-        cities: ["Manama"],
-      },
-      {
-        name: "Oman",
-        cities: ["Muscat"],
+        cities: [
+          "Johannesburg",
+          "Cape Town",
+          "Durban",
+          "Somerset West",
+          "Milnerton",
+          "Pretoria",
+        ],
       },
       {
         name: "Algeria",
         cities: ["Algiers"],
       },
       {
-        name: "Nigeria",
-        cities: ["Lagos", "Abuja"],
+        name: "Iraq",
+        cities: ["Sulaymaniyah"],
       },
       {
-        name: "Kenya",
-        cities: ["Nairobi"],
+        name: "Qatar",
+        cities: ["Ar Rayyan"],
       },
       {
-        name: "Ethiopia",
-        cities: ["Addis Ababa"],
-      },
-      {
-        name: "Ghana",
-        cities: ["Accra"],
+        name: "Tunisia",
+        cities: ["Hammam Sousse", "La Marsa"],
       },
     ],
   },
