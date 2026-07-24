@@ -122,28 +122,20 @@ export function AdminNewSpotForm({
       aria-labelledby="admin-new-spot-heading"
       className="space-y-6 animate-fade-in"
     >
-      <header className="border-b border-outline-variant pb-5 flex items-stretch w-full">
-        <div className="w-full">
-          <span className="mb-1 block font-mono text-[10px] font-bold uppercase tracking-widest text-secondary">
-            Contribute to cartography
-          </span>
-          <h1
-            id="admin-new-spot-heading"
-            className="font-display text-2xl font-bold uppercase tracking-tight text-on-surface sm:text-3xl"
-          >
-            Register new obstacle
-          </h1>
-          <p className="mt-1.5 max-w-2xl text-xs text-secondary leading-relaxed">
-            Map your local ledges, stairs, DIYs, or pools. Provide accurate
-            metadata to help fellow skaters coordinate sessions safely.
-          </p>
-        </div>
-        <a
-          href="../spots/new"
-          className="inline-flex w-full h-12 items-center justify-center gap-2 text-nowrap rounded-none-none bg-on-surface px-4 py-3 text-xs font-bold uppercase tracking-widest text-surface transition-all hover:bg-on-surface/90 disabled:opacity-50 sm:w-auto"
+      <header className="border-b border-outline-variant pb-5">
+        <span className="mb-1 block font-mono text-[10px] font-bold uppercase tracking-widest text-secondary">
+          Contribute to cartography
+        </span>
+        <h1
+          id="admin-new-spot-heading"
+          className="font-display text-2xl font-bold uppercase tracking-tight text-on-surface sm:text-3xl"
         >
-          New Spot
-        </a>
+          Register new obstacle
+        </h1>
+        <p className="mt-1.5 max-w-2xl text-xs text-secondary leading-relaxed">
+          Map your local ledges, stairs, DIYs, or pools. Provide accurate
+          metadata to help fellow skaters coordinate sessions safely.
+        </p>
       </header>
 
       <form

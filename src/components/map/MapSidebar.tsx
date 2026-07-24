@@ -1,7 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { Compass, Heart, MapPin } from "lucide-react";
+import { Compass, Heart, MapPin, Loader2, Radar } from "lucide-react";
+import { showToast } from "@/hooks/useToast";
 import { memo, useCallback, useMemo, useState, type ReactNode } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/cn";
@@ -57,9 +58,11 @@ function MapSidebarContent({
   const user = useUser();
   const { savedIds } = useSavedSpots(user?.id ?? null);
   const {
+    status: locationStatus,
     location: userLocation,
     radiusMiles,
     setRadiusMiles,
+    request,
   } = useUserLocation();
   const distanceUnit = useDistanceUnit();
   const router = useRouter();
@@ -72,6 +75,23 @@ function MapSidebarContent({
 
   const hasFilter = region !== null || country !== null;
   const filterLabel = country ? `${country} (${region})` : region;
+
+  const isRequestingLocation = locationStatus === "requesting";
+
+  const handleRequestLocation = useCallback(async () => {
+    if (isRequestingLocation) return;
+    const next = await request();
+    if (next === "denied") {
+      showToast("Location access denied — distance unavailable.", "error");
+    } else if (next === "unavailable") {
+      showToast(
+        "Geolocation unavailable in this browser — distance unavailable.",
+        "error",
+      );
+    } else if (next === "granted") {
+      showToast("Distance ready.", "success");
+    }
+  }, [isRequestingLocation, request]);
 
   const handleRadiusChip = useCallback(
     (miles: NearbyRadiusMiles) => {
@@ -89,7 +109,7 @@ function MapSidebarContent({
     [setActivePin, flyToSpot, onSelect],
   );
 
-  const distanceOrigin = showChips ? userLocation : null;
+  const distanceOrigin = userLocation;
 
   const sortedSpots = useMemo(() => {
     if (distanceOrigin === null) return spots;
@@ -122,6 +142,7 @@ function MapSidebarContent({
     }
     return groupedSpots[0]?.key ?? null;
   }, [activeId, groupedSpots, userCity]);
+
   return (
     <div className="flex-1 flex flex-col min-h-0">
       <div className="flex items-center border-b border-outline-variant bg-surface-container-low">
@@ -183,6 +204,27 @@ function MapSidebarContent({
           )}
         </div>
         {headerExtras && <div className="pr-2">{headerExtras}</div>}
+        {!showChips && (
+          <button
+            type="button"
+            onClick={handleRequestLocation}
+            disabled={isRequestingLocation}
+            aria-busy={isRequestingLocation}
+            aria-label="Share your location to see distance from this spot"
+            className="group inline-flex h-9 items-center gap-1.5 font-mono text-xs font-semibold tracking-wider text-primary uppercase hover:underline disabled:opacity-60 disabled:cursor-wait disabled:no-underline"
+          >
+            {isRequestingLocation ? (
+              <Loader2 size={12} aria-hidden="true" className="animate-spin" />
+            ) : (
+              <Radar
+                size={12}
+                aria-hidden="true"
+                className="animate-radar-sweep transition-transform group-hover:scale-110"
+              />
+            )}
+            <span>{isRequestingLocation ? "Locating…" : "Check Distance"}</span>
+          </button>
+        )}
       </div>
 
       <div

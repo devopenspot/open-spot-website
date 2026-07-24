@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import { Plus } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -119,20 +121,29 @@ export function AdminEditSpotForm({ spot, spotTypes }: AdminEditSpotFormProps) {
       aria-labelledby="admin-edit-spot-heading"
       className="space-y-6 animate-fade-in"
     >
-      <header className="border-b border-outline-variant pb-5">
-        <span className="mb-1 block font-mono text-[10px] font-bold uppercase tracking-widest text-secondary">
-          Edit entry
-        </span>
-        <h1
-          id="admin-edit-spot-heading"
-          className="font-display text-2xl font-bold uppercase tracking-tight text-on-surface sm:text-3xl"
+      <header className="border-b border-outline-variant pb-5 flex items-stretch w-full">
+        <div className="w-full">
+          <span className="mb-1 block font-mono text-[10px] font-bold uppercase tracking-widest text-secondary">
+            Edit entry
+          </span>
+          <h1
+            id="admin-edit-spot-heading"
+            className="font-display text-2xl font-bold uppercase tracking-tight text-on-surface sm:text-3xl"
+          >
+            {spot.name}
+          </h1>
+          <p className="mt-1.5 max-w-2xl text-xs text-secondary leading-relaxed">
+            Last updated <time dateTime={spot.updatedAt}>{spot.updatedAt}</time>
+            . Changes are written to the spots cache immediately.
+          </p>
+        </div>
+        <Link
+          href="/admin/spots/new"
+          className="inline-flex text-nowrap h-12 items-center gap-2 rounded-none-none bg-on-surface px-4 py-2.5 text-xs font-bold uppercase tracking-widest text-surface transition-all hover:bg-on-surface/90"
         >
-          {spot.name}
-        </h1>
-        <p className="mt-1.5 max-w-2xl text-xs text-secondary leading-relaxed">
-          Last updated <time dateTime={spot.updatedAt}>{spot.updatedAt}</time>.
-          Changes are written to the spots cache immediately.
-        </p>
+          <Plus size={12} aria-hidden="true" />
+          New spot
+        </Link>
       </header>
 
       <dl className="grid grid-cols-2 gap-3 rounded-none-none border border-outline-variant bg-surface-container-low p-4 text-xs sm:grid-cols-4">
