@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { Compass, Heart, MapPin } from "lucide-react";
-import { memo, useCallback, useMemo, useState } from "react";
+import { memo, useCallback, useMemo, useState, type ReactNode } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/cn";
 import { useSpotsStore } from "@/stores/spots-store";
@@ -34,9 +34,21 @@ import {
 
 interface MapSidebarProps {
   spots: readonly Spot[];
+  onSelect: (spot: Spot) => void;
+  className?: string;
 }
 
-function MapSidebarBase({ spots }: MapSidebarProps) {
+interface MapSidebarContentProps {
+  spots: readonly Spot[];
+  onSelect: (spot: Spot) => void;
+  headerExtras?: ReactNode;
+}
+
+function MapSidebarContent({
+  spots,
+  onSelect,
+  headerExtras,
+}: MapSidebarContentProps) {
   const fullSpots = useSpotsStore((s) => s.spots);
   const activeId = useMapStore((s) => s.activePinId);
   const mapMode = useMapStore((s) => s.mapMode);
@@ -72,8 +84,9 @@ function MapSidebarBase({ spots }: MapSidebarProps) {
     (spot: Spot) => {
       setActivePin(spot.id);
       flyToSpot(spot);
+      onSelect(spot);
     },
-    [setActivePin, flyToSpot],
+    [setActivePin, flyToSpot, onSelect],
   );
 
   const distanceOrigin = showChips ? userLocation : null;
@@ -110,113 +123,110 @@ function MapSidebarBase({ spots }: MapSidebarProps) {
     return groupedSpots[0]?.key ?? null;
   }, [activeId, groupedSpots, userCity]);
   return (
-    <aside
-      id="map-sidebar"
-      aria-label="Spot list"
-      className="w-full lg:w-80 flex flex-col border border-outline-variant bg-surface-bright overflow-hidden sm:h-[150px] lg:h-full"
-    >
-      <div className="py-2 mx-auto border-b border-outline-variant bg-surface-container-low">
-        {hasFilter && filterLabel && !showRadiusChips && (
-          <div id="map-active-filter" className="flex items-center gap-2">
-            <span className="flex items-center gap-1 border border-secondary px-2 py-0.5 text-[10px] font-mono font-bold uppercase tracking-wider text-on-surface">
-              <span>{filterLabel}</span>
-            </span>
-          </div>
-        )}
-        {showSavedLabel && (
-          <div
-            id="map-saved-label"
-            className="flex items-center gap-2"
-            aria-label={`Saved spots (${savedIds.size})`}
-          >
-            <span className="flex items-center gap-1 border border-secondary px-2 py-0.5 text-[10px] font-mono font-bold uppercase tracking-wider text-on-surface">
-              <Heart size={10} aria-hidden="true" />
-              <span>Saved spots ({savedIds.size})</span>
-            </span>
-          </div>
-        )}
-        {showChips && (
-          <div
-            id="map-radius-chips"
-            role="radiogroup"
-            aria-label={`Nearby radius in ${distanceUnit === "km" ? "kilometers" : "miles"}`}
-            className="flex items-center space-x-1"
-          >
-            <span
-              aria-hidden="true"
-              className="font-mono text-[10px] font-bold tracking-widest text-on-surface uppercase pr-1"
+    <div className="flex-1 flex flex-col min-h-0">
+      <div className="flex items-center border-b border-outline-variant bg-surface-container-low">
+        <div className="flex-1 flex flex-wrap items-center justify-center gap-2 py-2">
+          {hasFilter && filterLabel && !showRadiusChips && (
+            <div id="map-active-filter" className="flex items-center gap-2">
+              <span className="flex items-center gap-1 border border-secondary px-2 py-0.5 text-[10px] font-mono font-bold uppercase tracking-wider text-on-surface">
+                <span>{filterLabel}</span>
+              </span>
+            </div>
+          )}
+          {showSavedLabel && (
+            <div
+              id="map-saved-label"
+              className="flex items-center gap-2"
+              aria-label={`Saved spots (${savedIds.size})`}
             >
-              Radius
-            </span>
-            {NEARBY_RADIUS_OPTIONS.map((miles) => {
-              const active = miles === radiusMiles;
-              const label = formatRadiusLabel(miles, distanceUnit);
-              return (
-                <button
-                  key={miles}
-                  type="button"
-                  role="radio"
-                  aria-checked={active}
-                  onClick={() => handleRadiusChip(miles)}
-                  className={cn(
-                    "px-2 py-0.5 text-[10px] font-mono font-bold tracking-wider uppercase border transition-all",
-                    active
-                      ? "bg-primary text-on-primary border-primary"
-                      : "border-outline-variant text-on-surface hover:border-outline",
-                  )}
-                >
-                  {label}
-                </button>
-              );
-            })}
-          </div>
-        )}
+              <span className="flex items-center gap-1 border border-secondary px-2 py-0.5 text-[10px] font-mono font-bold uppercase tracking-wider text-on-surface">
+                <Heart size={10} aria-hidden="true" />
+                <span>Saved spots ({savedIds.size})</span>
+              </span>
+            </div>
+          )}
+          {showChips && (
+            <div
+              id="map-radius-chips"
+              role="radiogroup"
+              aria-label={`Nearby radius in ${distanceUnit === "km" ? "kilometers" : "miles"}`}
+              className="flex items-center space-x-1"
+            >
+              <span
+                aria-hidden="true"
+                className="font-mono text-[10px] font-bold tracking-widest text-on-surface uppercase pr-1"
+              >
+                Radius
+              </span>
+              {NEARBY_RADIUS_OPTIONS.map((miles) => {
+                const active = miles === radiusMiles;
+                const label = formatRadiusLabel(miles, distanceUnit);
+                return (
+                  <button
+                    key={miles}
+                    type="button"
+                    role="radio"
+                    aria-checked={active}
+                    onClick={() => handleRadiusChip(miles)}
+                    className={cn(
+                      "px-2 py-0.5 text-[10px] font-mono font-bold tracking-wider uppercase border transition-all",
+                      active
+                        ? "bg-primary text-on-primary border-primary"
+                        : "border-outline-variant text-on-surface hover:border-outline",
+                    )}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+        {headerExtras && <div className="pr-2">{headerExtras}</div>}
       </div>
 
       <div
         id="sidebar-spots-list"
         aria-label={mapMode === "saved" ? "Saved spots" : "Filtered spots"}
-        className="ml-1 md:ml-0 flex-1 flex flex-row lg:flex-col overflow-x-auto lg:overflow-y-auto space-x-1 lg:space-x-0 lg:space-y-2 no-scrollbar snap-x lg:snap-none snap-mandatory"
+        className="flex-1 flex flex-col overflow-y-auto no-scrollbar min-h-0"
       >
-        <div className="hidden md:flex flex-col">
-          <Accordion
-            multiple={false}
-            value={openCity === null ? [] : [openCity]}
-            onValueChange={(v: string[]) => setUserCity(v[0] ?? null)}
-          >
-            {groupedSpots.map((group) => (
-              <AccordionItem key={group.key} value={group.key}>
-                <AccordionTrigger className="sticky top-0 z-10">
-                  <MapPin
-                    size={10}
-                    aria-hidden="true"
-                    className="text-secondary shrink-0"
+        <Accordion
+          multiple={false}
+          value={openCity === null ? [] : [openCity]}
+          onValueChange={(v: string[]) => setUserCity(v[0] ?? null)}
+        >
+          {groupedSpots.map((group) => (
+            <AccordionItem key={group.key} value={group.key}>
+              <AccordionTrigger className="sticky top-0 z-10">
+                <MapPin
+                  size={10}
+                  aria-hidden="true"
+                  className="text-secondary shrink-0"
+                />
+                <span className="truncate">
+                  {group.city}
+                  {group.countryCode ? ` · ${group.countryCode}` : ""}
+                </span>
+                <span className="ml-auto text-secondary shrink-0">
+                  {group.spots.length} spots
+                </span>
+              </AccordionTrigger>
+              <AccordionContent>
+                {group.spots.map((spot) => (
+                  <SidebarSpotItem
+                    key={spot.id}
+                    spot={spot}
+                    isActive={activeId === spot.id}
+                    isSaved={savedIds.has(spot.id)}
+                    distanceOrigin={distanceOrigin}
+                    distanceUnit={distanceUnit}
+                    onSelect={handleSelect}
                   />
-                  <span className="truncate">
-                    {group.city}
-                    {group.countryCode ? ` · ${group.countryCode}` : ""}
-                  </span>
-                  <span className="ml-auto text-secondary shrink-0">
-                    {group.spots.length} spots
-                  </span>
-                </AccordionTrigger>
-                <AccordionContent>
-                  {group.spots.map((spot) => (
-                    <SidebarSpotItem
-                      key={spot.id}
-                      spot={spot}
-                      isActive={activeId === spot.id}
-                      isSaved={savedIds.has(spot.id)}
-                      distanceOrigin={distanceOrigin}
-                      distanceUnit={distanceUnit}
-                      onSelect={handleSelect}
-                    />
-                  ))}
-                </AccordionContent>
-              </AccordionItem>
-            ))}
-          </Accordion>
-        </div>
+                ))}
+              </AccordionContent>
+            </AccordionItem>
+          ))}
+        </Accordion>
         {spots.length === 0 &&
           (mapMode === "saved" ? (
             <div
@@ -269,9 +279,27 @@ function MapSidebarBase({ spots }: MapSidebarProps) {
             </div>
           ))}
       </div>
+    </div>
+  );
+}
+
+function MapSidebarBase({ spots, onSelect, className }: MapSidebarProps) {
+  return (
+    <aside
+      id="map-sidebar"
+      aria-label="Spot list"
+      className={cn(
+        "hidden lg:flex w-80 flex-col border border-outline-variant bg-surface-bright overflow-hidden h-full",
+        className,
+      )}
+    >
+      <MapSidebarContent spots={spots} onSelect={onSelect} />
     </aside>
   );
 }
+
+export const MapSidebar = memo(MapSidebarBase);
+export { MapSidebarContent };
 
 interface SidebarSpotItemProps {
   spot: Spot;
@@ -303,7 +331,7 @@ const SidebarSpotItem = memo(function SidebarSpotItem({
       onClick={handleClick}
       aria-current={isActive ? "true" : undefined}
       className={cn(
-        "shrink-0 lg:shrink w-48 lg:w-full snap-start text-left transition-colors flex items-stretch border",
+        "shrink-0 lg:shrink w-48 w-full snap-start text-left transition-colors flex items-stretch border",
         isActive
           ? "border-primary bg-surface-container-high"
           : "border-outline-variant/60 bg-surface-container-low hover:border-outline hover:bg-surface-container",
@@ -361,8 +389,6 @@ const SidebarSpotItem = memo(function SidebarSpotItem({
     </button>
   );
 });
-
-export const MapSidebar = memo(MapSidebarBase);
 
 interface SpotGroup {
   key: string;

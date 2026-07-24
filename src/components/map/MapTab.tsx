@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import type { ReadonlyURLSearchParams } from "next/navigation";
 import { useSpotsStore } from "@/stores/spots-store";
@@ -12,7 +12,10 @@ import { useUser } from "@/hooks/useUser";
 import { DEFAULT_NEARBY_RADIUS_MI } from "@/stores/user-location-store";
 import { MAP_VIEWPORT_OFFSET_PX } from "@/lib/constants";
 import { haversineMiles, milesToMeters } from "@/lib/spots/geo";
+import type { Spot } from "@/lib/types";
 import { MapSidebar } from "./MapSidebar";
+import { MapSidebarDrawer } from "./MapSidebarDrawer";
+import { MapSidebarTrigger } from "./MapSidebarTrigger";
 import { MapInfoPopup } from "./MapInfoPopup";
 // import { MapHeaderBar } from "./MapHeaderBar";
 
@@ -53,6 +56,18 @@ export default function MapTab({
   const { savedIds } = useSavedSpots(user?.id ?? null);
   const fitRadius = useMapStore((s) => s.fitRadius);
   const fitBoundsToSpots = useMapStore((s) => s.fitBoundsToSpots);
+  const setActivePin = useMapStore((s) => s.setActivePin);
+  const flyToSpot = useMapStore((s) => s.flyToSpot);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  const handleSpotSelect = useCallback(
+    (spot: Spot) => {
+      setActivePin(spot.id);
+      flyToSpot(spot);
+      setIsSidebarOpen(false);
+    },
+    [setActivePin, flyToSpot],
+  );
 
   const userLatLon = useMemo(
     () => (location ? { lat: location.lat, lon: location.lon } : null),
@@ -181,7 +196,20 @@ export default function MapTab({
     >
       <h1 className="visually-hidden">Spot Map</h1>
 
-      <MapSidebar spots={sidebarSpots} />
+      <MapSidebar spots={sidebarSpots} onSelect={handleSpotSelect} />
+
+      <MapSidebarTrigger
+        isOpen={isSidebarOpen}
+        onOpenChange={setIsSidebarOpen}
+        className="lg:hidden"
+      />
+      <MapSidebarDrawer
+        isOpen={isSidebarOpen}
+        onOpenChange={setIsSidebarOpen}
+        spots={sidebarSpots}
+        onSelect={handleSpotSelect}
+        className="lg:hidden"
+      />
 
       <div className="flex-1 flex flex-col">
         <div
