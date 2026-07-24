@@ -66,7 +66,7 @@ export function mapIconName(icon: string | undefined): WeatherIconName {
 }
 
 export interface MappedCurrentWeather {
-  temp: number;
+  temp: number | null;
   description: string;
   humidity: number | null;
   precipitationMm: number | null;
@@ -77,7 +77,7 @@ export function mapCurrentWeather(
 ): MappedCurrentWeather {
   if (!item) {
     return {
-      temp: 0,
+      temp: null,
       description: "",
       humidity: null,
       precipitationMm: null,

@@ -2,6 +2,7 @@ import type { MetadataRoute } from 'next';
 import { connection } from 'next/server';
 import { env } from '@/lib/env';
 import { listSpots } from '@/lib/services/spots';
+import { EMPTY_SPOT_LIST, withSafeDefault } from '@/lib/safe-fetch';
 
 const BASE_URL = env.APP_URL;
 
@@ -21,7 +22,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // follow: false }`, and `src/app/robots.ts` disallows `/admin/` for all
   // user-agents. We keep the static list hand-curated to public pages.
 
-  const { items: spots } = await listSpots();
+  // Wrap the DB call so a DB outage doesn't 500 the sitemap — the
+  // 6 static entries above still serve crawlers during degradation.
+  const { items: spots } = await withSafeDefault(
+    () => listSpots(),
+    EMPTY_SPOT_LIST,
+    'listSpots',
+  );
   const spotEntries: MetadataRoute.Sitemap = spots.map(spot => ({
     url: `${BASE_URL}/spots/${spot.id}`,
     lastModified: now,

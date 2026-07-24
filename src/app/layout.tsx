@@ -13,6 +13,13 @@ import { getServerUserFromCookies } from "@/lib/auth";
 import { getDbPoolMax } from "@/lib/db/client";
 import { withDbConcurrency } from "@/lib/db/concurrency";
 import { SpotsProvider } from "@/components/explore/SpotsProvider";
+import {
+	EMPTY_SAVED_SPOTS,
+	EMPTY_SPOT_LIST,
+	withSafeDefault,
+} from "@/lib/safe-fetch";
+import type { Region, SpotTypeEntity } from "@/lib/types";
+import type { SpotWeather } from "@/lib/weather/weather-cached";
 import "./globals.css";
 
 const inter = Inter({
@@ -98,21 +105,50 @@ async function RootDataProviders({ children }: { children: React.ReactNode }) {
   // derivation — the BFF pattern. `getWeatherForAllSpots(spots)`
   // derives the per-spot weather from the already-fetched spots,
   // so we no longer pay for a second `spots.list()` round trip.
+  //
+  // Each fan-out thunk is wrapped in `withSafeDefault` so a single
+  // DB call failing (bad env, paused project, network partition)
+  // cannot crash the whole page — see AGENTS.md "anonymous browsing
+  // works even when Supabase env is missing."
   const poolMax = getDbPoolMax();
   const [spotsList, initialUser, initialRegions, initialSpotTypes] =
     await withDbConcurrency(poolMax, [
-      () => listSpots(),
-      () => getServerUserFromCookies(),
-      () => listRegions(),
-      () => listSpotTypes(),
+      () => withSafeDefault(() => listSpots(), EMPTY_SPOT_LIST, "listSpots"),
+      () =>
+        withSafeDefault(
+          () => getServerUserFromCookies(),
+          null,
+          "getServerUserFromCookies",
+        ),
+      () =>
+        withSafeDefault(
+          () => listRegions(),
+          [] as readonly Region[],
+          "listRegions",
+        ),
+      () =>
+        withSafeDefault(
+          () => listSpotTypes(),
+          [] as readonly SpotTypeEntity[],
+          "listSpotTypes",
+        ),
     ]);
   const initialSpots = spotsList.items;
   const [initialWeather, savedSpotsResult] = await withDbConcurrency(poolMax, [
-    () => getWeatherForAllSpots(initialSpots),
+    () =>
+      withSafeDefault(
+        () => getWeatherForAllSpots(initialSpots),
+        {} as Record<string, SpotWeather>,
+        "getWeatherForAllSpots",
+      ),
     () =>
       initialUser
-        ? listSavedSpotsForUser(initialUser.id, { limit: 200 })
-        : Promise.resolve({ items: [], nextCursor: null }),
+        ? withSafeDefault(
+            () => listSavedSpotsForUser(initialUser.id, { limit: 200 }),
+            EMPTY_SAVED_SPOTS,
+            "listSavedSpotsForUser",
+          )
+        : Promise.resolve(EMPTY_SAVED_SPOTS),
   ]);
   const initialSavedSpots = savedSpotsResult.items;
   return (

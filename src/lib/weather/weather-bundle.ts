@@ -1,34 +1,57 @@
-import { cache } from "react"
-import { connection } from "next/server"
 import { getSpotWeather } from "./weather-cached"
 import type { SpotWeather } from "./weather-cached"
 import type { Spot } from "@/lib/types"
 
-export async function getWeatherForSpots(
-  spots: readonly Spot[],
-): Promise<Record<string, SpotWeather>> {
-  await connection()
-  const entries = await Promise.all(
-    spots.map(async (s) => {
-      const weather = await getSpotWeather({
-        spotId: s.id,
-        latitude: s.location.lat,
-        longitude: s.location.lon,
-      })
-      return [s.id, weather] as const
-    }),
-  )
-  return Object.fromEntries(entries)
+// Concurrency cap for the per-spot fan-out. On a cold cache the loop
+// would otherwise fire 2 * N parallel requests (current + forecast per
+// spot), which on a 500-spot render can trip OpenWeather's 60/min limit
+// before the per-spot `"use cache"` can absorb subsequent calls. 8 in
+// flight is well under the per-minute ceiling and is short enough that
+// the cold-cache waterfall completes in a few seconds.
+const MAX_CONCURRENT_SPOTS = 8
+
+async function mapWithConcurrency<T, R>(
+	items: readonly T[],
+	limit: number,
+	fn: (item: T, index: number) => Promise<R>,
+): Promise<R[]> {
+	if (items.length === 0) return []
+	const results: R[] = new Array(items.length)
+	let cursor = 0
+	async function worker(): Promise<void> {
+		while (true) {
+			const i = cursor++
+			if (i >= items.length) return
+			results[i] = await fn(items[i]!, i)
+		}
+	}
+	const workers = Math.min(limit, items.length)
+	await Promise.all(Array.from({ length: workers }, () => worker()))
+	return results
 }
 
 /**
- * Derives a weather map from a pre-fetched spots collection. The BFF
- * pattern says: the page-level data dependency (the spots list) is
- * fetched once by the caller and passed in. This eliminates the
- * duplicate `spots.list` call that previously fired alongside the
- * weather fetch on every home page render.
+ * Per-spot weather is cached at the `getSpotWeather` boundary
+ * (`"use cache"`, 1h revalidate, `weather:spot:{spotId}` tag). This
+ * helper is a thin composition that fans the spot list out to the
+ * per-spot cache, with a small concurrency cap on the cold-cache
+ * path so a 500-spot first render cannot trip OpenWeather's
+ * 60 calls/min ceiling.
  */
-export const getWeatherForAllSpots = cache(
-  async (spots: readonly Spot[]): Promise<Record<string, SpotWeather>> =>
-    getWeatherForSpots(spots),
-)
+export async function getWeatherForAllSpots(
+	spots: readonly Spot[],
+): Promise<Record<string, SpotWeather>> {
+	const entries = await mapWithConcurrency(
+		spots,
+		MAX_CONCURRENT_SPOTS,
+		async (s) => {
+			const weather = await getSpotWeather({
+				spotId: s.id,
+				latitude: s.location.lat,
+				longitude: s.location.lon,
+			})
+			return [s.id, weather] as const
+		},
+	)
+	return Object.fromEntries(entries)
+}
