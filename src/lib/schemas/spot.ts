@@ -81,6 +81,21 @@ export const SpotPatchSchema = z
   })
   .strict();
 
+/**
+ * Safety cap on the SQL row count for `listSpots()`. Single source of
+ * truth for "how many rows one query can return." The repository
+ * falls back to this when `limit` is not provided. Callers that need
+ * more rows must paginate via `nextCursor` (the repository returns a
+ * non-null cursor whenever the page equals the cap).
+ *
+ * Trigger to revisit: when `select count(*) from spots` exceeds this,
+ * either raise the cap (one-line change) or add a `listAllSpots()`
+ * helper that iterates `nextCursor` internally. Do not raise it
+ * casually — the cap is also the safety net against an accidental
+ * "give me a million" request.
+ */
+export const SPOT_LIST_HARD_CAP = 500;
+
 export const SpotQuerySchema = z
   .object({
     q: z.string().optional(),
@@ -102,6 +117,11 @@ export const SpotQuerySchema = z
       .optional(),
     savedBy: z.string().optional(),
     cursor: z.string().optional(),
-    limit: z.number().int().positive().max(200).default(50),
+    /**
+     * Optional page size. When absent, the repository returns up to
+     * `SPOT_LIST_HARD_CAP` rows. Callers needing more must paginate
+     * via `cursor`.
+     */
+    limit: z.number().int().positive().max(SPOT_LIST_HARD_CAP).optional(),
   })
   .strict();

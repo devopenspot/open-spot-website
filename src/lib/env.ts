@@ -57,9 +57,9 @@ const EnvSchema = z
       .min(1)
       .default("spot-images"),
 
-    // Admin allow-list (CSV of emails, case-insensitive). When Supabase is
-    // unconfigured the dev placeholder user is automatically treated as
-    // admin (see `isAdminUser` in `@/lib/admin`).
+    // Admin allow-list (CSV of emails, case-insensitive). Set this to
+    // grant admin access to specific Google-auth users — there is no
+    // dev shortcut (see `isAdminUser` in `@/lib/admin`).
     ADMIN_EMAILS: z.string().default(""),
 
     NODE_ENV: z

@@ -24,6 +24,7 @@ import {
   rowToSpotWithImagePath,
   type JoinedSpotRow,
 } from "./spot-query";
+import { SPOT_LIST_HARD_CAP } from "@/lib/schemas/spot";
 
 const EARTH_RADIUS_METERS = 6_371_000;
 
@@ -50,7 +51,7 @@ export class DrizzleSpotRepository implements SpotRepository {
   constructor(private readonly db: ReturnType<typeof drizzle>) {}
 
   async list(query?: SpotQuery): Promise<SpotListResult> {
-    const limit = query?.limit ?? 50;
+    const limit = query?.limit ?? SPOT_LIST_HARD_CAP;
     const conditions: SQL[] = [];
     if (query?.types && query.types.length > 0) {
       // OR semantics: a spot matches if any of its types is in the

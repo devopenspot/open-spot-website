@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { Compass, Fullscreen, Heart, MapPin } from "lucide-react";
+import { Compass, Heart, MapPin } from "lucide-react";
 import { memo, useCallback, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/cn";
@@ -31,8 +31,6 @@ interface MapSidebarProps {
 }
 
 function MapSidebarBase({ spots }: MapSidebarProps) {
-  // TODO: I need figure out why this fullSpots are retriving only 50 results, when actually the count rows is 112
-  // in addition qhen is retriving filtered by country, eg: colombia latino america, is retriving only 10 rows, i think is because when filter is apllied, the data only is 5o rows from the database, when actual are 112
   const fullSpots = useSpotsStore((s) => s.spots);
   const activeId = useMapStore((s) => s.activePinId);
   const mapMode = useMapStore((s) => s.mapMode);
