@@ -56,7 +56,7 @@ function NearbyControlBase() {
   return (
     <div
       id={`${NEARBY_CONTROL_ID}-cluster`}
-      className="flex items-center space-x-1 bg-surface/90 backdrop-blur-md p-1 rounded-lg border border-outline-variant shadow-sm pointer-events-auto"
+      className="flex items-center space-x-1 bg-surface/90 backdrop-blur-md p-1 rounded-none-none border border-outline-variant shadow-none-none pointer-events-auto"
     >
       <button
         id={NEARBY_CONTROL_ID}
@@ -68,7 +68,7 @@ function NearbyControlBase() {
         aria-label={tooltipFor(status, isGranted)}
         data-nearby-status={status}
         data-nearby-active={mapMode === "nearby" ? "true" : "false"}
-        className="flex items-center space-x-1 px-2 py-1 text-[9px] font-mono font-bold tracking-wider uppercase text-primary hover:bg-surface-container rounded transition-all disabled:opacity-60 disabled:cursor-wait"
+        className="flex items-center space-x-1 px-2 py-1 text-[9px] font-mono font-bold tracking-wider uppercase text-primary hover:bg-surface-container rounded-none transition-all disabled:opacity-60 disabled:cursor-wait"
       >
         <Icon
           size={11}
@@ -89,7 +89,7 @@ function NearbyControlBase() {
           onClick={handleClear}
           aria-label="Clear location"
           title="Clear location"
-          className="px-1 py-1 text-secondary hover:text-on-surface hover:bg-surface-container rounded transition-all"
+          className="px-1 py-1 text-secondary hover:text-on-surface hover:bg-surface-container rounded-none transition-all"
         >
           <X size={10} aria-hidden="true" />
         </button>

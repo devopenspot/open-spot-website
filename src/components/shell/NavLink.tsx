@@ -26,17 +26,17 @@ const VARIANT_STYLES: Record<
   { base: string; active: string; inactive: string }
 > = {
   desktop: {
-    base: 'flex items-center space-x-2 px-3 py-1.5 text-sm font-medium transition-all rounded-sm',
+    base: 'flex items-center space-x-2 px-3 py-1.5 text-sm font-medium transition-all rounded-none-none',
     active: 'border-b-2 border-primary text-primary',
     inactive: 'text-secondary hover:text-on-surface',
   },
   'mobile-tab': {
-    base: 'flex flex-col items-center space-y-1 text-[10px] font-medium transition-all rounded-sm',
+    base: 'flex flex-col items-center space-y-1 text-[10px] font-medium transition-all rounded-none-none',
     active: 'text-primary',
     inactive: 'text-secondary',
   },
   'mobile-drawer': {
-    base: 'w-full flex items-center justify-between p-3 rounded-lg border text-xs font-semibold uppercase tracking-wider transition-all',
+    base: 'w-full flex items-center justify-between p-3 rounded-none-none border text-xs font-semibold uppercase tracking-wider transition-all',
     active: 'bg-primary text-surface border-primary',
     inactive:
       'border-outline-variant/60 bg-surface-container-low hover:border-outline text-secondary hover:text-on-surface',

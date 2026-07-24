@@ -25,7 +25,7 @@ interface CountryAutocompleteProps {
 }
 
 const FIELD_CLASSES =
-  "w-full rounded-lg border border-outline-variant bg-surface-bright p-3 text-xs font-medium text-on-surface shadow-sm focus:border-outline focus:outline-none disabled:opacity-50"
+  "w-full rounded-none-none border border-outline-variant bg-surface-bright p-3 text-xs font-medium text-on-surface shadow-none-none focus:border-outline focus:outline-none disabled:opacity-50"
 
 function groupByRegion(
   items: readonly CountryOption[],
@@ -210,7 +210,7 @@ export function CountryAutocomplete({
               tabIndex={-1}
               onClick={handleClear}
               aria-label="Clear country"
-              className="pointer-events-auto inline-flex h-6 w-6 items-center justify-center rounded text-secondary transition-colors hover:text-on-surface"
+              className="pointer-events-auto inline-flex h-6 w-6 items-center justify-center rounded-none text-secondary transition-colors hover:text-on-surface"
             >
               <X size={12} aria-hidden="true" />
             </button>
@@ -232,7 +232,7 @@ export function CountryAutocomplete({
           id={listboxId}
           role="listbox"
           aria-label="Countries"
-          className="absolute z-30 mt-1 max-h-72 w-full overflow-y-auto rounded-lg border border-outline-variant bg-surface-bright shadow-lg"
+          className="absolute z-30 mt-1 max-h-72 w-full overflow-y-auto rounded-none-none border border-outline-variant bg-surface-bright shadow-none-none"
         >
           {isLoading ? (
             <p

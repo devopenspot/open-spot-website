@@ -48,7 +48,7 @@ export function EventTable({ events }: EventTableProps) {
     return (
       <div
         role="status"
-        className="rounded-xl border border-dashed border-outline-variant bg-surface-container-low p-10 text-center"
+        className="rounded-none-none border border-dashed border-outline-variant bg-surface-container-low p-10 text-center"
       >
         <p className="font-display text-base font-bold uppercase tracking-widest text-on-surface">
           No events match your filters
@@ -62,7 +62,7 @@ export function EventTable({ events }: EventTableProps) {
 
   return (
     <>
-      <div className="overflow-x-auto rounded-xl border border-outline-variant">
+      <div className="overflow-x-auto rounded-none-none border border-outline-variant">
         <table className="w-full text-left text-xs">
           <thead className="border-b border-outline-variant bg-surface-container-low font-mono text-[10px] font-bold uppercase tracking-widest text-secondary">
             <tr>
@@ -87,7 +87,7 @@ export function EventTable({ events }: EventTableProps) {
                     {event.name}
                     {event.featured ? (
                       <span
-                        className="ml-2 inline-block rounded-sm bg-on-surface px-1.5 py-0.5 text-[8px] font-mono uppercase tracking-widest text-surface"
+                        className="ml-2 inline-block rounded-none-none bg-on-surface px-1.5 py-0.5 text-[8px] font-mono uppercase tracking-widest text-surface"
                         title="Featured"
                       >
                         Featured
@@ -109,7 +109,7 @@ export function EventTable({ events }: EventTableProps) {
                   <div className="inline-flex items-center gap-1">
                     <a
                       href={`/admin/events/${event.id}`}
-                      className="inline-flex items-center gap-1 rounded border border-outline-variant px-2 py-1 font-mono text-[10px] font-bold uppercase tracking-widest text-secondary hover:text-on-surface"
+                      className="inline-flex items-center gap-1 rounded-none border border-outline-variant px-2 py-1 font-mono text-[10px] font-bold uppercase tracking-widest text-secondary hover:text-on-surface"
                     >
                       <Pencil size={10} aria-hidden="true" />
                       Edit
@@ -117,7 +117,7 @@ export function EventTable({ events }: EventTableProps) {
                     <button
                       type="button"
                       onClick={() => setPendingDelete(event)}
-                      className="inline-flex items-center gap-1 rounded border border-outline-variant px-2 py-1 font-mono text-[10px] font-bold uppercase tracking-widest text-secondary hover:text-error"
+                      className="inline-flex items-center gap-1 rounded-none border border-outline-variant px-2 py-1 font-mono text-[10px] font-bold uppercase tracking-widest text-secondary hover:text-error"
                     >
                       <Trash2 size={10} aria-hidden="true" />
                       Delete

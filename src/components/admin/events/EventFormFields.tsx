@@ -85,7 +85,7 @@ export function EventFormFields({ state, onChange }: EventFormFieldsProps) {
             value={state.name}
             onChange={(e) => update("name", e.target.value)}
             placeholder="e.g. World Skate Games 2026"
-            className="w-full rounded-lg border border-outline-variant bg-surface-bright p-3 text-xs font-medium text-on-surface shadow-sm focus:border-outline focus:outline-none"
+            className="w-full rounded-none-none border border-outline-variant bg-surface-bright p-3 text-xs font-medium text-on-surface shadow-none-none focus:border-outline focus:outline-none"
           />
         </div>
         <div>
@@ -101,7 +101,7 @@ export function EventFormFields({ state, onChange }: EventFormFieldsProps) {
             value={state.shortName}
             onChange={(e) => update("shortName", e.target.value)}
             placeholder="e.g. WSG26"
-            className="w-full rounded-lg border border-outline-variant bg-surface-bright p-3 text-xs font-medium text-on-surface shadow-sm focus:border-outline focus:outline-none"
+            className="w-full rounded-none-none border border-outline-variant bg-surface-bright p-3 text-xs font-medium text-on-surface shadow-none-none focus:border-outline focus:outline-none"
           />
         </div>
       </div>
@@ -121,7 +121,7 @@ export function EventFormFields({ state, onChange }: EventFormFieldsProps) {
             value={state.url}
             onChange={(e) => update("url", e.target.value)}
             placeholder="https://example.com/event"
-            className="w-full rounded-lg border border-outline-variant bg-surface-bright p-3 text-xs font-medium text-on-surface shadow-sm focus:border-outline focus:outline-none"
+            className="w-full rounded-none-none border border-outline-variant bg-surface-bright p-3 text-xs font-medium text-on-surface shadow-none-none focus:border-outline focus:outline-none"
           />
         </div>
         <div>
@@ -138,7 +138,7 @@ export function EventFormFields({ state, onChange }: EventFormFieldsProps) {
             value={state.image}
             onChange={(e) => update("image", e.target.value)}
             placeholder="https://example.com/banner.png"
-            className="w-full rounded-lg border border-outline-variant bg-surface-bright p-3 text-xs font-medium text-on-surface shadow-sm focus:border-outline focus:outline-none"
+            className="w-full rounded-none-none border border-outline-variant bg-surface-bright p-3 text-xs font-medium text-on-surface shadow-none-none focus:border-outline focus:outline-none"
           />
         </div>
       </div>
@@ -156,13 +156,13 @@ export function EventFormFields({ state, onChange }: EventFormFieldsProps) {
           value={state.description}
           onChange={(e) => update("description", e.target.value)}
           placeholder="A short blurb about the event…"
-          className="w-full rounded-lg border border-outline-variant bg-surface-bright p-3 text-xs font-medium text-on-surface shadow-sm focus:border-outline focus:outline-none"
+          className="w-full rounded-none-none border border-outline-variant bg-surface-bright p-3 text-xs font-medium text-on-surface shadow-none-none focus:border-outline focus:outline-none"
         />
       </div>
 
       <fieldset
         id={sportsId}
-        className="rounded-xl border border-outline-variant bg-surface-container-low p-5"
+        className="rounded-none-none border border-outline-variant bg-surface-container-low p-5"
       >
         <legend className="flex items-center px-1 font-mono text-[10px] font-bold uppercase tracking-wider text-secondary">
           Disciplines featured
@@ -176,7 +176,7 @@ export function EventFormFields({ state, onChange }: EventFormFieldsProps) {
             return (
               <li key={sport}>
                 <label
-                  className={`inline-flex cursor-pointer items-center rounded-full border px-3 py-1 text-[10px] font-semibold transition-all ${
+                  className={`inline-flex cursor-pointer items-center rounded-none-none border px-3 py-1 text-[10px] font-semibold transition-all ${
                     active
                       ? "border-primary bg-primary text-surface"
                       : "border-outline-variant bg-surface text-on-surface hover:border-outline"
@@ -211,7 +211,7 @@ export function EventFormFields({ state, onChange }: EventFormFieldsProps) {
             required
             value={state.startDate}
             onChange={(e) => update("startDate", e.target.value)}
-            className="w-full rounded-lg border border-outline-variant bg-surface-bright p-3 text-xs font-medium text-on-surface shadow-sm focus:border-outline focus:outline-none"
+            className="w-full rounded-none-none border border-outline-variant bg-surface-bright p-3 text-xs font-medium text-on-surface shadow-none-none focus:border-outline focus:outline-none"
           />
         </div>
         <div>
@@ -226,7 +226,7 @@ export function EventFormFields({ state, onChange }: EventFormFieldsProps) {
             type="date"
             value={state.endDate}
             onChange={(e) => update("endDate", e.target.value)}
-            className="w-full rounded-lg border border-outline-variant bg-surface-bright p-3 text-xs font-medium text-on-surface shadow-sm focus:border-outline focus:outline-none"
+            className="w-full rounded-none-none border border-outline-variant bg-surface-bright p-3 text-xs font-medium text-on-surface shadow-none-none focus:border-outline focus:outline-none"
           />
         </div>
       </div>
@@ -245,7 +245,7 @@ export function EventFormFields({ state, onChange }: EventFormFieldsProps) {
             required
             value={state.city}
             onChange={(e) => update("city", e.target.value)}
-            className="w-full rounded-lg border border-outline-variant bg-surface-bright p-3 text-xs font-medium text-on-surface shadow-sm focus:border-outline focus:outline-none"
+            className="w-full rounded-none-none border border-outline-variant bg-surface-bright p-3 text-xs font-medium text-on-surface shadow-none-none focus:border-outline focus:outline-none"
           />
         </div>
         <div>
@@ -261,7 +261,7 @@ export function EventFormFields({ state, onChange }: EventFormFieldsProps) {
             required
             value={state.country}
             onChange={(e) => update("country", e.target.value)}
-            className="w-full rounded-lg border border-outline-variant bg-surface-bright p-3 text-xs font-medium text-on-surface shadow-sm focus:border-outline focus:outline-none"
+            className="w-full rounded-none-none border border-outline-variant bg-surface-bright p-3 text-xs font-medium text-on-surface shadow-none-none focus:border-outline focus:outline-none"
           />
         </div>
       </div>
@@ -281,7 +281,7 @@ export function EventFormFields({ state, onChange }: EventFormFieldsProps) {
             value={state.countryCode}
             onChange={(e) => update("countryCode", e.target.value.toUpperCase())}
             placeholder="e.g. ES"
-            className="w-full rounded-lg border border-outline-variant bg-surface-bright p-3 text-xs font-medium text-on-surface shadow-sm focus:border-outline focus:outline-none"
+            className="w-full rounded-none-none border border-outline-variant bg-surface-bright p-3 text-xs font-medium text-on-surface shadow-none-none focus:border-outline focus:outline-none"
           />
         </div>
         <div>
@@ -297,7 +297,7 @@ export function EventFormFields({ state, onChange }: EventFormFieldsProps) {
             value={state.venue}
             onChange={(e) => update("venue", e.target.value)}
             placeholder="e.g. Olympic Stadium"
-            className="w-full rounded-lg border border-outline-variant bg-surface-bright p-3 text-xs font-medium text-on-surface shadow-sm focus:border-outline focus:outline-none"
+            className="w-full rounded-none-none border border-outline-variant bg-surface-bright p-3 text-xs font-medium text-on-surface shadow-none-none focus:border-outline focus:outline-none"
           />
         </div>
       </div>
@@ -319,7 +319,7 @@ export function EventFormFields({ state, onChange }: EventFormFieldsProps) {
             value={state.latitude}
             onChange={(e) => update("latitude", e.target.value)}
             placeholder="optional"
-            className="w-full rounded-lg border border-outline-variant bg-surface-bright p-3 text-xs font-medium text-on-surface shadow-sm focus:border-outline focus:outline-none"
+            className="w-full rounded-none-none border border-outline-variant bg-surface-bright p-3 text-xs font-medium text-on-surface shadow-none-none focus:border-outline focus:outline-none"
           />
         </div>
         <div>
@@ -338,7 +338,7 @@ export function EventFormFields({ state, onChange }: EventFormFieldsProps) {
             value={state.longitude}
             onChange={(e) => update("longitude", e.target.value)}
             placeholder="optional"
-            className="w-full rounded-lg border border-outline-variant bg-surface-bright p-3 text-xs font-medium text-on-surface shadow-sm focus:border-outline focus:outline-none"
+            className="w-full rounded-none-none border border-outline-variant bg-surface-bright p-3 text-xs font-medium text-on-surface shadow-none-none focus:border-outline focus:outline-none"
           />
         </div>
       </div>
@@ -360,7 +360,7 @@ export function EventFormFields({ state, onChange }: EventFormFieldsProps) {
                 e.target.value as EventFormState["tier"],
               )
             }
-            className="w-full rounded-lg border border-outline-variant bg-surface-bright p-3 text-xs font-medium text-on-surface shadow-sm focus:border-outline focus:outline-none"
+            className="w-full rounded-none-none border border-outline-variant bg-surface-bright p-3 text-xs font-medium text-on-surface shadow-none-none focus:border-outline focus:outline-none"
           >
             {TIERS.map((t) => (
               <option key={t.value} value={t.value}>

@@ -8,13 +8,13 @@ import { cn } from "@/lib/cn";
 type Variant = "header" | "drawer";
 
 const BASE_CLASSES =
-  "inline-flex items-center justify-center font-mono font-bold uppercase tracking-widest transition-all rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-on-surface focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-surface";
+  "inline-flex items-center justify-center font-mono font-bold uppercase tracking-widest transition-all rounded-none-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-on-surface focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-surface";
 
 const VARIANT_CLASSES: Record<Variant, string> = {
   header:
     "border border-outline text-on-surface hover:bg-surface-container text-[10px] px-3 py-1.5",
   drawer:
-    "w-full mt-1.5 rounded-lg border border-outline bg-on-surface text-surface hover:bg-on-surface/90 text-xs px-4 py-2.5",
+    "w-full mt-1.5 rounded-none-none border border-outline bg-on-surface text-surface hover:bg-on-surface/90 text-xs px-4 py-2.5",
 };
 
 interface SignInLinkProps {

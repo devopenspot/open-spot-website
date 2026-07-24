@@ -32,7 +32,7 @@ export default function AdminOverviewPage() {
       <section
         id="admin-quick-start"
         aria-labelledby="admin-quick-start-heading"
-        className="rounded-xl border border-outline-variant bg-surface-container-low p-5"
+        className="rounded-none-none border border-outline-variant bg-surface-container-low p-5"
       >
         <h2
           id="admin-quick-start-heading"

@@ -8,8 +8,8 @@ export function MapSkeleton() {
       role="status"
       aria-label="Loading map"
     >
-      <div className="w-full lg:w-80 h-[300px] lg:h-full rounded-2xl border border-outline-variant bg-surface-bright animate-pulse" />
-      <div className="flex-1 rounded-2xl border border-outline-variant bg-surface-container-low animate-pulse" />
+      <div className="w-full lg:w-80 h-[300px] lg:h-full rounded-none-none border border-outline-variant bg-surface-bright animate-pulse" />
+      <div className="flex-1 rounded-none-none border border-outline-variant bg-surface-container-low animate-pulse" />
     </div>
   );
 }

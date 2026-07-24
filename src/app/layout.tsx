@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
 import { connection } from "next/server";
-import { Inter, Archivo_Narrow, Geist } from "next/font/google";
+import { Inter, Archivo_Narrow } from "next/font/google";
 import { cn } from "@/lib/cn";
 import { env } from "@/lib/env";
 import { listSpots } from "@/lib/services/spots";
@@ -14,8 +14,6 @@ import { getDbPoolMax } from "@/lib/db/client";
 import { withDbConcurrency } from "@/lib/db/concurrency";
 import { SpotsProvider } from "@/components/explore/SpotsProvider";
 import "./globals.css";
-
-const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
 const inter = Inter({
   subsets: ["latin"],
@@ -82,7 +80,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={cn(inter.variable, archivo.variable, "font-sans", geist.variable)}
+      className={cn(inter.variable, archivo.variable)}
       suppressHydrationWarning
     >
       <body className="bg-background font-sans text-on-background antialiased">

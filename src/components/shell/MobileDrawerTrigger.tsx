@@ -12,7 +12,7 @@ export function MobileDrawerTrigger() {
       onClick={openDrawer}
       aria-label="Open menu"
       aria-controls="mobile-hamburger-portal"
-      className="flex h-8 w-8 items-center justify-center rounded-full border border-outline-variant text-secondary hover:text-on-surface hover:border-outline transition-all bg-surface-bright"
+      className="flex h-8 w-8 items-center justify-center rounded-none-none border border-outline-variant text-secondary hover:text-on-surface hover:border-outline transition-all bg-surface-bright"
     >
       <Menu size={18} aria-hidden="true" />
     </button>

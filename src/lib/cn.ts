@@ -5,7 +5,8 @@ type ClassValue =
   | null
   | undefined
   | ClassValue[]
-  | { [key: string]: unknown };
+  | { [key: string]: unknown }
+  | ((...args: never[]) => ClassValue);
 
 function toVal(v: ClassValue): string {
   if (v === null || v === undefined || v === false || v === true || v === '')
@@ -18,6 +19,7 @@ function toVal(v: ClassValue): string {
       .map(([key]) => key)
       .join(' ');
   }
+  if (typeof v === 'function') return toVal((v as () => ClassValue)());
   return '';
 }
 

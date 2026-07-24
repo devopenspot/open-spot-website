@@ -10,12 +10,12 @@ interface SignOutButtonProps {
 }
 
 const BASE_CLASSES =
-  'inline-flex items-center justify-center rounded-full border border-outline-variant text-secondary hover:text-on-surface hover:border-outline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface transition-all disabled:opacity-60 disabled:cursor-not-allowed';
+  'inline-flex items-center justify-center rounded-none-none border border-outline-variant text-secondary hover:text-on-surface hover:border-outline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface transition-all disabled:opacity-60 disabled:cursor-not-allowed';
 
 const VARIANT_CLASSES: Record<NonNullable<SignOutButtonProps['variant']>, string> = {
   icon: 'h-8 w-8 bg-surface-bright',
   drawer:
-    'w-full gap-2 rounded-lg border border-outline bg-surface-container-low px-4 py-2.5 text-[10px] font-mono font-bold uppercase tracking-widest text-on-surface hover:bg-surface-container',
+    'w-full gap-2 rounded-none-none border border-outline bg-surface-container-low px-4 py-2.5 text-[10px] font-mono font-bold uppercase tracking-widest text-on-surface hover:bg-surface-container',
 };
 
 export function SignOutButton({ variant = 'icon', className }: SignOutButtonProps) {

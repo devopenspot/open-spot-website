@@ -42,7 +42,7 @@ export default function SavedTab() {
           type="button"
           onClick={handleViewOnMap}
           aria-label="View saved spots on the map"
-          className="inline-flex shrink-0 items-center space-x-2 self-start rounded-lg bg-on-surface text-surface px-5 py-2 text-xs font-bold tracking-widest uppercase hover:bg-on-surface/90 transition-all md:self-end"
+          className="inline-flex shrink-0 items-center space-x-2 self-start rounded-none-none bg-on-surface text-surface px-5 py-2 text-xs font-bold tracking-widest uppercase hover:bg-on-surface/90 transition-all md:self-end"
         >
           <Map size={14} aria-hidden="true" />
           <span>View on map</span>

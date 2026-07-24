@@ -51,7 +51,7 @@ export function InfoPopover({
         aria-label={triggerLabel}
         aria-expanded={isOpen}
         aria-controls={panelId}
-        className="inline-flex h-5 w-5 items-center justify-center rounded-full text-secondary transition-colors hover:bg-surface-container hover:text-on-surface focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-on-surface"
+        className="inline-flex h-5 w-5 items-center justify-center rounded-none-none text-secondary transition-colors hover:bg-surface-container hover:text-on-surface focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-on-surface"
       >
         {trigger}
       </button>
@@ -68,7 +68,7 @@ export function InfoPopover({
             exit={reduced ? { opacity: 0 } : { opacity: 0, y: -4, scale: 0.97 }}
             transition={{ duration: 0.12, ease: 'easeOut' }}
             className={cn(
-              'absolute top-full z-50 mt-2 w-60 rounded-lg border border-outline-variant bg-surface p-3 shadow-lg',
+              'absolute top-full z-50 mt-2 w-60 rounded-none-none border border-outline-variant bg-surface p-3 shadow-none-none',
               align === 'end' ? 'right-0' : 'left-0',
               panelClassName,
             )}

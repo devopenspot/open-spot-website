@@ -133,7 +133,7 @@ export function AdminEditEventForm({ event }: AdminEditEventFormProps) {
         </p>
       </header>
 
-      <dl className="grid grid-cols-2 gap-3 rounded-xl border border-outline-variant bg-surface-container-low p-4 text-xs sm:grid-cols-4">
+      <dl className="grid grid-cols-2 gap-3 rounded-none-none border border-outline-variant bg-surface-container-low p-4 text-xs sm:grid-cols-4">
         <div>
           <dt className="font-mono text-[10px] font-bold uppercase tracking-widest text-secondary">
             ID
@@ -190,7 +190,7 @@ export function AdminEditEventForm({ event }: AdminEditEventFormProps) {
       <button
         type="button"
         onClick={() => router.push("/admin/events")}
-        className="rounded-lg border border-outline px-6 py-3 text-xs font-bold uppercase tracking-widest text-on-surface transition-all hover:bg-surface-container"
+        className="rounded-none-none border border-outline px-6 py-3 text-xs font-bold uppercase tracking-widest text-on-surface transition-all hover:bg-surface-container"
       >
         Back to events
       </button>

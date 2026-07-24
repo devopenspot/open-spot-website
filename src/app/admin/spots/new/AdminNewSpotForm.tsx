@@ -140,7 +140,7 @@ export function AdminNewSpotForm({
         </div>
         <a
           href="../spots/new"
-          className="inline-flex w-full h-12 items-center justify-center gap-2 text-nowrap rounded-lg bg-on-surface px-4 py-3 text-xs font-bold uppercase tracking-widest text-surface transition-all hover:bg-on-surface/90 disabled:opacity-50 sm:w-auto"
+          className="inline-flex w-full h-12 items-center justify-center gap-2 text-nowrap rounded-none-none bg-on-surface px-4 py-3 text-xs font-bold uppercase tracking-widest text-surface transition-all hover:bg-on-surface/90 disabled:opacity-50 sm:w-auto"
         >
           New Spot
         </a>
@@ -177,7 +177,7 @@ export function AdminNewSpotForm({
       <button
         type="button"
         onClick={() => router.push("/admin/spots")}
-        className="rounded-lg border border-outline px-6 py-3 text-xs font-bold uppercase tracking-widest text-on-surface transition-all hover:bg-surface-container"
+        className="rounded-none-none border border-outline px-6 py-3 text-xs font-bold uppercase tracking-widest text-on-surface transition-all hover:bg-surface-container"
       >
         Back to spots
       </button>

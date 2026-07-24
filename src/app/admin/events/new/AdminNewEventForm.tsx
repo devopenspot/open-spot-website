@@ -132,7 +132,7 @@ export function AdminNewEventForm() {
       <button
         type="button"
         onClick={() => router.push("/admin/events")}
-        className="rounded-lg border border-outline px-6 py-3 text-xs font-bold uppercase tracking-widest text-on-surface transition-all hover:bg-surface-container"
+        className="rounded-none-none border border-outline px-6 py-3 text-xs font-bold uppercase tracking-widest text-on-surface transition-all hover:bg-surface-container"
       >
         Back to events
       </button>

@@ -58,7 +58,7 @@ export function EventFeaturedHero({ event }: EventFeaturedHeroProps) {
               <div className="flex items-center gap-2 self-start border border-error bg-error/15 px-3 py-1 font-mono text-[10px] font-bold tracking-widest text-error uppercase backdrop-blur-sm">
                 <span
                   aria-hidden="true"
-                  className="h-1.5 w-1.5 rounded-full bg-error animate-pulse-dot"
+                  className="h-1.5 w-1.5 rounded-none-none bg-error animate-pulse-dot"
                 />
                 <span>Live</span>
               </div>

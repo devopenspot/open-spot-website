@@ -42,7 +42,7 @@ export function SpotTable({ spots }: SpotTableProps) {
     return (
       <div
         role="status"
-        className="rounded-xl border border-dashed border-outline-variant bg-surface-container-low p-10 text-center"
+        className="rounded-none-none border border-dashed border-outline-variant bg-surface-container-low p-10 text-center"
       >
         <p className="font-display text-base font-bold uppercase tracking-widest text-on-surface">
           No spots match your filters
@@ -56,7 +56,7 @@ export function SpotTable({ spots }: SpotTableProps) {
 
   return (
     <>
-      <div className="overflow-x-auto rounded-xl border border-outline-variant">
+      <div className="overflow-x-auto rounded-none-none border border-outline-variant">
         <table className="w-full text-left text-xs">
           <thead className="border-b border-outline-variant bg-surface-container-low font-mono text-[10px] font-bold uppercase tracking-widest text-secondary">
             <tr>
@@ -94,7 +94,7 @@ export function SpotTable({ spots }: SpotTableProps) {
                   <div className="inline-flex items-center gap-1">
                     <a
                       href={`/admin/spots/${spot.id}`}
-                      className="inline-flex items-center gap-1 rounded border border-outline-variant px-2 py-1 font-mono text-[10px] font-bold uppercase tracking-widest text-secondary hover:text-on-surface"
+                      className="inline-flex items-center gap-1 rounded-none border border-outline-variant px-2 py-1 font-mono text-[10px] font-bold uppercase tracking-widest text-secondary hover:text-on-surface"
                     >
                       <Pencil size={10} aria-hidden="true" />
                       Edit
@@ -102,7 +102,7 @@ export function SpotTable({ spots }: SpotTableProps) {
                     <button
                       type="button"
                       onClick={() => setPendingDelete(spot)}
-                      className="inline-flex items-center gap-1 rounded border border-outline-variant px-2 py-1 font-mono text-[10px] font-bold uppercase tracking-widest text-secondary hover:text-error"
+                      className="inline-flex items-center gap-1 rounded-none border border-outline-variant px-2 py-1 font-mono text-[10px] font-bold uppercase tracking-widest text-secondary hover:text-error"
                     >
                       <Trash2 size={10} aria-hidden="true" />
                       Delete

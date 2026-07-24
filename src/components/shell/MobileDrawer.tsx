@@ -43,7 +43,7 @@ export function MobileDrawer() {
       contentId={DRAWER_ID}
       flush
       containerClassName="md:max-w-96 max-w-full"
-      panelClassName="w-72 h-full bg-surface text-on-surface border-l border-outline-variant flex flex-col p-4 shadow-2xl justify-between ml-auto"
+      panelClassName="w-72 h-full bg-surface text-on-surface border-l border-outline-variant flex flex-col p-4 shadow-none-none justify-between ml-auto"
     >
       <div>
         <div className="flex items-center justify-between border-b border-outline-variant pb-4 mb-4">
@@ -53,7 +53,7 @@ export function MobileDrawer() {
             type="button"
             onClick={closeDrawer}
             aria-label="Close menu"
-            className="flex h-8 w-8 items-center justify-center rounded-full border border-outline-variant text-secondary hover:text-on-surface hover:border-outline transition-all"
+            className="flex h-8 w-8 items-center justify-center rounded-none-none border border-outline-variant text-secondary hover:text-on-surface hover:border-outline transition-all"
           >
             <X size={16} aria-hidden="true" />
           </button>
@@ -77,7 +77,7 @@ export function MobileDrawer() {
           <span className="block font-mono text-[9px] font-bold tracking-widest text-secondary uppercase mb-3">
             System Status
           </span>
-          <div className="space-y-2 rounded-xl border border-outline-variant/60 bg-surface-container-low p-3.5">
+          <div className="space-y-2 rounded-none-none border border-outline-variant/60 bg-surface-container-low p-3.5">
             <div className="flex items-center justify-between text-[10px] font-mono text-secondary">
               <span className="uppercase">Grid Version</span>
               <span className="text-on-surface font-semibold">
@@ -89,7 +89,7 @@ export function MobileDrawer() {
               <span className="text-emerald-600 font-semibold flex items-center">
                 <span
                   aria-hidden="true"
-                  className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-ping mr-1"
+                  className="h-1.5 w-1.5 rounded-none-none bg-emerald-500 animate-ping mr-1"
                 />
                 Online
               </span>
@@ -114,7 +114,7 @@ export function MobileDrawer() {
       <div className="border-t border-outline-variant pt-4 space-y-4">
         {user ? (
           <>
-            <div className="flex items-center space-x-3 p-1.5 rounded-lg">
+            <div className="flex items-center space-x-3 p-1.5 rounded-none-none">
               <UserAvatar user={user} size="md" />
               <div className="min-w-0 flex-1">
                 <span className="block text-[10px] font-mono font-bold uppercase text-secondary">

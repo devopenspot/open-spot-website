@@ -25,13 +25,13 @@ export default function SportEventsPage() {
           aria-label="Loading sport events"
           className="space-y-6 animate-fade-in"
         >
-          <div className="h-10 w-48 rounded-none bg-surface-container animate-pulse" />
-          <div className="h-[420px] rounded-none bg-surface-container animate-pulse" />
+          <div className="h-10 w-48 rounded-none-none bg-surface-container animate-pulse" />
+          <div className="h-[420px] rounded-none-none bg-surface-container animate-pulse" />
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {[0, 1, 2, 3, 4].map((i) => (
               <div
                 key={i}
-                className="h-80 rounded-none bg-surface-container animate-pulse"
+                className="h-80 rounded-none-none bg-surface-container animate-pulse"
               />
             ))}
           </div>

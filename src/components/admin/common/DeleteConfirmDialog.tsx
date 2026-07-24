@@ -51,7 +51,7 @@ export function DeleteConfirmDialog({
     >
       <div
         id="delete-confirm-panel"
-        className="rounded-xl border border-outline-variant bg-surface-bright p-6"
+        className="rounded-none-none border border-outline-variant bg-surface-bright p-6"
       >
         <div className="mb-4 flex items-center gap-2">
           <Trash2
@@ -70,7 +70,7 @@ export function DeleteConfirmDialog({
         {error ? (
           <p
             role="alert"
-            className="mt-3 rounded-md border border-error/30 bg-error-container/30 px-3 py-2 text-xs text-error"
+            className="mt-3 rounded-none-none border border-error/30 bg-error-container/30 px-3 py-2 text-xs text-error"
           >
             {error}
           </p>
@@ -80,7 +80,7 @@ export function DeleteConfirmDialog({
             type="button"
             onClick={onClose}
             disabled={pending}
-            className="rounded-lg border border-outline px-4 py-2 text-xs font-bold uppercase tracking-widest text-on-surface transition-all hover:bg-surface-container disabled:opacity-50"
+            className="rounded-none-none border border-outline px-4 py-2 text-xs font-bold uppercase tracking-widest text-on-surface transition-all hover:bg-surface-container disabled:opacity-50"
           >
             Cancel
           </button>
@@ -88,7 +88,7 @@ export function DeleteConfirmDialog({
             type="button"
             onClick={handleConfirm}
             disabled={pending}
-            className="rounded-lg bg-on-surface px-4 py-2 text-xs font-bold uppercase tracking-widest text-surface transition-all hover:bg-on-surface/90 disabled:opacity-50"
+            className="rounded-none-none bg-on-surface px-4 py-2 text-xs font-bold uppercase tracking-widest text-surface transition-all hover:bg-on-surface/90 disabled:opacity-50"
           >
             {pending ? "Deleting…" : confirmLabel}
           </button>

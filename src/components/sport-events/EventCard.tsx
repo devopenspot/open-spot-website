@@ -27,7 +27,7 @@ function TierBadge({ tierName }: { tierName: string }) {
   return (
     <span
       aria-hidden="true"
-      className="rounded-none border border-outline bg-surface/95 px-2 py-0.5 font-mono text-[9px] font-bold tracking-widest text-on-surface uppercase backdrop-blur-sm"
+      className="rounded-none-none border border-outline bg-surface/95 px-2 py-0.5 font-mono text-[9px] font-bold tracking-widest text-on-surface uppercase backdrop-blur-sm"
     >
       {tierName}
     </span>
@@ -91,7 +91,7 @@ export function EventCard({ event, priority = false }: EventCardProps) {
           <div className="absolute top-3 right-3 z-10 flex items-center gap-1.5 bg-surface/95 px-2 py-0.5 font-mono text-[9px] font-bold tracking-widest text-error uppercase backdrop-blur-sm">
             <span
               aria-hidden="true"
-              className="h-1.5 w-1.5 rounded-full bg-error animate-pulse-dot"
+              className="h-1.5 w-1.5 rounded-none-none bg-error animate-pulse-dot"
             />
             Live
           </div>
@@ -103,7 +103,7 @@ export function EventCard({ event, priority = false }: EventCardProps) {
           <span
             aria-hidden="true"
             className={cn(
-              "h-1.5 w-1.5 rounded-full",
+              "h-1.5 w-1.5 rounded-none-none",
               STATUS_DOT_STYLES[event.status],
             )}
           />

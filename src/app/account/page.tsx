@@ -35,7 +35,7 @@ export default async function AccountPage() {
         </div>
       </div>
 
-      <dl className="mt-8 space-y-3 rounded-lg border border-outline-variant bg-surface-container-low p-4 text-xs">
+      <dl className="mt-8 space-y-3 rounded-none-none border border-outline-variant bg-surface-container-low p-4 text-xs">
         <div className="flex items-center justify-between gap-4">
           <dt className="font-mono text-[10px] font-bold uppercase tracking-wider text-secondary">
             User ID
@@ -53,7 +53,7 @@ export default async function AccountPage() {
       </dl>
 
       <div className="mt-6">
-        <SignOutButton className="w-full rounded-lg border border-outline px-5 py-3 text-xs font-bold tracking-widest uppercase hover:bg-surface-container transition-all" />
+        <SignOutButton className="w-full rounded-none-none border border-outline px-5 py-3 text-xs font-bold tracking-widest uppercase hover:bg-surface-container transition-all" />
       </div>
     </section>
   );

@@ -64,7 +64,7 @@ export function EventTableFilters() {
               emit({ q: e.target.value, tier, country })
             }}
             placeholder="Name, description, city…"
-            className="w-full rounded-lg border border-outline-variant bg-surface-bright py-3 pl-8 pr-3 text-xs font-medium text-on-surface shadow-sm focus:border-outline focus:outline-none"
+            className="w-full rounded-none-none border border-outline-variant bg-surface-bright py-3 pl-8 pr-3 text-xs font-medium text-on-surface shadow-none-none focus:border-outline focus:outline-none"
           />
         </div>
       </div>
@@ -84,7 +84,7 @@ export function EventTableFilters() {
             emit({ q, tier: value, country })
           }}
           className={cn(
-            "w-full rounded-lg border border-outline-variant bg-surface-bright p-3 text-xs font-medium text-on-surface shadow-sm focus:border-outline focus:outline-none",
+            "w-full rounded-none-none border border-outline-variant bg-surface-bright p-3 text-xs font-medium text-on-surface shadow-none-none focus:border-outline focus:outline-none",
             !tier && "text-secondary",
           )}
         >
@@ -111,7 +111,7 @@ export function EventTableFilters() {
             emit({ q, tier, country: e.target.value })
           }}
           placeholder="e.g. Spain"
-          className="w-full rounded-lg border border-outline-variant bg-surface-bright p-3 text-xs font-medium text-on-surface shadow-sm focus:border-outline focus:outline-none"
+          className="w-full rounded-none-none border border-outline-variant bg-surface-bright p-3 text-xs font-medium text-on-surface shadow-none-none focus:border-outline focus:outline-none"
         />
       </div>
     </div>

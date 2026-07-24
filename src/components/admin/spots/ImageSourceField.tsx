@@ -88,7 +88,7 @@ export function ImageSourceField({
   };
 
   return (
-    <fieldset className="rounded-xl border border-outline-variant bg-surface-container-low p-5">
+    <fieldset className="rounded-none-none border border-outline-variant bg-surface-container-low p-5">
       <legend className="flex items-center px-1 font-mono text-[10px] font-bold uppercase tracking-wider text-secondary">
         <ImageIcon size={12} className="mr-1.5" aria-hidden="true" />
         Visual banner source
@@ -110,7 +110,7 @@ export function ImageSourceField({
           <label
             htmlFor={fileId}
             className={cn(
-              "inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-outline-variant bg-surface-bright px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-on-surface transition-all",
+              "inline-flex cursor-pointer items-center gap-1.5 rounded-none-none border border-outline-variant bg-surface-bright px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-on-surface transition-all",
               !disabled && "hover:bg-surface-container",
               disabled && "pointer-events-none opacity-50",
             )}
@@ -139,7 +139,7 @@ export function ImageSourceField({
           ) : null}
         </div>
         {filePreview ? (
-          <div className="mt-3 relative h-32 w-full max-w-sm overflow-hidden rounded-lg border border-outline-variant">
+          <div className="mt-3 relative h-32 w-full max-w-sm overflow-hidden rounded-none-none border border-outline-variant">
             <Image
               src={filePreview}
               alt="Selected upload preview"
@@ -165,14 +165,14 @@ export function ImageSourceField({
           placeholder="Paste custom hotlink image URL here..."
           value={value.imageUrl}
           onChange={(e) => handleCustomUrl(e.target.value)}
-          className="w-full rounded-lg border border-outline-variant bg-surface-bright p-3 text-xs font-medium text-on-surface shadow-sm focus:border-outline focus:outline-none"
+          className="w-full rounded-none-none border border-outline-variant bg-surface-bright p-3 text-xs font-medium text-on-surface shadow-none-none focus:border-outline focus:outline-none"
         />
       </div>
 
       {error ? (
         <p
           role="alert"
-          className="mt-3 rounded-md border border-error/30 bg-error-container/30 px-3 py-2 text-xs text-error"
+          className="mt-3 rounded-none-none border border-error/30 bg-error-container/30 px-3 py-2 text-xs text-error"
         >
           {error}
         </p>

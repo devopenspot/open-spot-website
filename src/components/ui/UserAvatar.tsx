@@ -22,7 +22,7 @@ export function UserAvatar({ user, size = "sm", className }: UserAvatarProps) {
       aria-label={label}
       title={label}
       className={cn(
-        "relative inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-on-surface font-mono font-bold text-surface shadow-sm",
+        "relative inline-flex shrink-0 items-center justify-center overflow-hidden rounded-none-none bg-on-surface font-mono font-bold text-surface shadow-none-none",
         SIZE_CLASSES[size],
         className,
       )}

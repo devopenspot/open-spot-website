@@ -1,6 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -213,7 +220,7 @@ export function SpotDetailsContent({
                   isSaved ? `Unsave ${spot.name}` : `Save ${spot.name}`
                 }
                 className={cn(
-                  "flex h-9 items-center space-x-1.5 rounded-full px-4 text-xs font-semibold tracking-wider uppercase transition-all border",
+                  "flex h-9 items-center space-x-1.5 rounded-none-none px-4 text-xs font-semibold tracking-wider uppercase transition-all border",
                   isSaved
                     ? "bg-primary text-surface border-primary hover:bg-primary/95"
                     : "border-outline text-on-surface hover:bg-surface-container",
@@ -239,7 +246,7 @@ export function SpotDetailsContent({
                 onClick={handleShare}
                 aria-label={`Share ${spot.name}`}
                 className={cn(
-                  "flex h-9 items-center space-x-1.5 rounded-full px-4 text-xs font-semibold tracking-wider uppercase transition-all border",
+                  "flex h-9 items-center space-x-1.5 rounded-none-none px-4 text-xs font-semibold tracking-wider uppercase transition-all border",
                   "border-outline text-on-surface hover:bg-surface-container",
                 )}
               >
@@ -248,7 +255,7 @@ export function SpotDetailsContent({
               </button>
             </div>
           </div>
-          <div className="-mx-1 md:mx-0 mb-4 rounded-xl bg-surface-container-low border border-outline-variant p-4 md:p-6">
+          <div className="-mx-1 md:mx-0 mb-4 rounded-none-none bg-surface-container-low border border-outline-variant p-4 md:p-6">
             <div className="mb-2 flex items-center justify-between gap-3">
               <span className="block font-mono text-[10px] tracking-wider text-secondary uppercase">
                 Weather status
@@ -348,10 +355,10 @@ export function SpotDetailsContent({
                               className="flex items-center gap-1 text-[10px] font-mono"
                               title={entry.description}
                             >
-                                <WeatherIcon name={entry.icon} size={12} />
-                                <span className="font-semibold text-on-surface">
-                                  {formatTemp(entry.temp, temperatureUnit)}
-                                </span>
+                              <WeatherIcon name={entry.icon} size={12} />
+                              <span className="font-semibold text-on-surface">
+                                {formatTemp(entry.temp, temperatureUnit)}
+                              </span>
                             </span>
                           );
                         })}
@@ -371,11 +378,20 @@ export function SpotDetailsContent({
         </div>
 
         <div className="p-4 md:p-0 flex flex-col sm:flex-row gap-2 sm:gap-x-3">
+          <button
+            type="button"
+            onClick={() => router.push(viewOnMapUrl)}
+            aria-label={`View ${spot.name} on the map`}
+            className="flex-1 flex min-h-10 items-center justify-center space-x-1.5 border border-outline text-xs font-bold tracking-widest uppercase hover:bg-surface-container transition-all"
+          >
+            <Map size={12} className="mr-1" aria-hidden="true" />
+            <span>View on map</span>
+          </button>
           <a
             href={directionsUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex-1 flex min-h-10 items-center justify-center space-x-1.5 rounded-lg bg-on-surface text-surface text-xs font-bold tracking-widest uppercase hover:bg-on-surface/90 transition-all shadow-sm"
+            className="flex-1 flex min-h-10 items-center justify-center space-x-1.5 bg-on-surface text-surface text-xs font-bold tracking-widest uppercase hover:bg-on-surface/90 transition-all shadow-none-none"
           >
             <span>G-Maps</span>
             <MapPin size={12} aria-hidden="true" />
@@ -384,20 +400,11 @@ export function SpotDetailsContent({
             href={wazeUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex-1 flex min-h-10 items-center justify-center space-x-1.5 rounded-lg bg-on-surface text-surface text-xs font-bold tracking-widest uppercase hover:bg-on-surface/90 transition-all shadow-sm"
+            className="flex-1 flex min-h-10 items-center justify-center space-x-1.5 bg-on-surface text-surface text-xs font-bold tracking-widest uppercase hover:bg-on-surface/90 transition-all shadow-none-none"
           >
             <span>Waze</span>
             <Navigation size={12} className="mr-1" aria-hidden="true" />
           </a>
-          <button
-            type="button"
-            onClick={() => router.push(viewOnMapUrl)}
-            aria-label={`View ${spot.name} on the map`}
-            className="flex-1 flex min-h-10 items-center justify-center space-x-1.5 rounded-lg border border-outline text-xs font-bold tracking-widest uppercase hover:bg-surface-container transition-all"
-          >
-            <Map size={12} className="mr-1" aria-hidden="true" />
-            <span>View on map</span>
-          </button>
         </div>
       </div>
     </div>

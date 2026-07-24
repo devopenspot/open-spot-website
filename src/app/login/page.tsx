@@ -75,7 +75,7 @@ export default function LoginPage() {
         <div
           role="status"
           aria-live="polite"
-          className="mt-6 rounded-lg border border-primary/30 bg-primary/5 px-4 py-3 text-xs"
+          className="mt-6 rounded-none-none border border-primary/30 bg-primary/5 px-4 py-3 text-xs"
         >
           {errorMessage}
         </div>
@@ -85,7 +85,7 @@ export default function LoginPage() {
         type="button"
         onClick={handleGoogleSignIn}
         disabled={busy}
-        className="mt-8 w-full inline-flex items-center justify-center gap-3 rounded-lg border border-outline bg-on-surface text-surface px-5 py-3 text-xs font-bold tracking-widest uppercase shadow-sm transition-all hover:bg-on-surface/90 disabled:opacity-60 disabled:cursor-not-allowed"
+        className="mt-8 w-full inline-flex items-center justify-center gap-3 rounded-none-none border border-outline bg-on-surface text-surface px-5 py-3 text-xs font-bold tracking-widest uppercase shadow-none-none transition-all hover:bg-on-surface/90 disabled:opacity-60 disabled:cursor-not-allowed"
       >
         <GoogleMark />
         <span>{busy ? "Opening Google…" : "Continue with Google"}</span>

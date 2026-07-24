@@ -60,7 +60,7 @@ export function SpotFormSubmit({
         type="button"
         onClick={() => router.push("/admin/spots")}
         disabled={pending}
-        className="rounded-lg border border-outline px-6 py-3 text-xs font-bold uppercase tracking-widest text-on-surface transition-all hover:bg-surface-container disabled:opacity-50"
+        className="rounded-none-none border border-outline px-6 py-3 text-xs font-bold uppercase tracking-widest text-on-surface transition-all hover:bg-surface-container disabled:opacity-50"
       >
         Cancel
       </button>
@@ -69,7 +69,7 @@ export function SpotFormSubmit({
         disabled={pending || disabled}
         onClick={handleSubmit}
         title={disabled ? "DB mode required" : undefined}
-        className="rounded-lg bg-on-surface px-8 py-3 text-xs font-bold uppercase tracking-widest text-surface shadow-md transition-all hover:bg-on-surface/90 disabled:opacity-60 disabled:cursor-not-allowed"
+        className="rounded-none-none bg-on-surface px-8 py-3 text-xs font-bold uppercase tracking-widest text-surface shadow-none-none transition-all hover:bg-on-surface/90 disabled:opacity-60 disabled:cursor-not-allowed"
       >
         {pending ? pendingLabel : label}
       </button>

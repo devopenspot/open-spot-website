@@ -129,7 +129,7 @@ export function SpotFormFields({
             onChange={(e) => update("name", e.target.value)}
             placeholder="e.g. The White Marble Nine"
             aria-invalid={Boolean(errors?.name)}
-            className="w-full rounded-lg border border-outline-variant bg-surface-bright p-3 text-xs font-medium text-on-surface shadow-sm focus:border-outline focus:outline-none"
+            className="w-full rounded-none-none border border-outline-variant bg-surface-bright p-3 text-xs font-medium text-on-surface shadow-none-none focus:border-outline focus:outline-none"
           />
         </div>
         <div>
@@ -147,14 +147,14 @@ export function SpotFormFields({
             onChange={(e) => update("city", e.target.value)}
             placeholder="e.g. Los Angeles, CA"
             aria-invalid={Boolean(errors?.city)}
-            className="w-full rounded-lg border border-outline-variant bg-surface-bright p-3 text-xs font-medium text-on-surface shadow-sm focus:border-outline focus:outline-none"
+            className="w-full rounded-none-none border border-outline-variant bg-surface-bright p-3 text-xs font-medium text-on-surface shadow-none-none focus:border-outline focus:outline-none"
           />
         </div>
       </div>
 
       <fieldset
         id={typesFieldsetId}
-        className="rounded-xl border border-outline-variant bg-surface-container-low p-5"
+        className="rounded-none-none border border-outline-variant bg-surface-container-low p-5"
       >
         <legend className="flex items-center px-1 font-mono text-[10px] font-bold uppercase tracking-wider text-secondary">
           Spot types{" "}
@@ -171,7 +171,7 @@ export function SpotFormFields({
             return (
               <li key={opt.slug}>
                 <label
-                  className={`inline-flex cursor-pointer items-center rounded-full border px-3 py-1 text-[10px] font-semibold transition-all ${
+                  className={`inline-flex cursor-pointer items-center rounded-none-none border px-3 py-1 text-[10px] font-semibold transition-all ${
                     active
                       ? "border-primary bg-primary text-surface"
                       : "border-outline-variant bg-surface text-on-surface hover:border-outline"
@@ -226,7 +226,7 @@ export function SpotFormFields({
             value={state.address}
             onChange={(e) => update("address", e.target.value)}
             placeholder="e.g. Hope Street, L.A."
-            className="w-full rounded-lg border border-outline-variant bg-surface-bright p-3 text-xs font-medium text-on-surface shadow-sm focus:border-outline focus:outline-none"
+            className="w-full rounded-none-none border border-outline-variant bg-surface-bright p-3 text-xs font-medium text-on-surface shadow-none-none focus:border-outline focus:outline-none"
           />
         </div>
       </div>
@@ -238,7 +238,7 @@ export function SpotFormFields({
 
       <fieldset
         id={sportsFieldsetId}
-        className="rounded-xl border border-outline-variant bg-surface-container-low p-5"
+        className="rounded-none-none border border-outline-variant bg-surface-container-low p-5"
       >
         <legend className="flex items-center px-1 font-mono text-[10px] font-bold uppercase tracking-wider text-secondary">
           Sport types
@@ -252,7 +252,7 @@ export function SpotFormFields({
             return (
               <li key={sport}>
                 <label
-                  className={`inline-flex cursor-pointer items-center rounded-full border px-3 py-1 text-[10px] font-semibold transition-all ${
+                  className={`inline-flex cursor-pointer items-center rounded-none-none border px-3 py-1 text-[10px] font-semibold transition-all ${
                     active
                       ? "border-primary bg-primary text-surface"
                       : "border-outline-variant bg-surface text-on-surface hover:border-outline"
@@ -277,7 +277,7 @@ export function SpotFormFields({
         <p
           id={errorId}
           role="alert"
-          className="rounded-lg border border-error/30 bg-error-container/30 px-4 py-2 text-xs text-error"
+          className="rounded-none-none border border-error/30 bg-error-container/30 px-4 py-2 text-xs text-error"
         >
           {Object.values(errors ?? {})
             .filter(Boolean)

@@ -7,7 +7,7 @@ export default function NotFound() {
       role="alert"
       className="min-h-[60vh] flex items-center justify-center p-6"
     >
-      <div className="mx-auto my-12 max-w-md rounded-2xl border border-outline-variant bg-surface-bright p-6 text-center">
+      <div className="mx-auto my-12 max-w-md rounded-none-none border border-outline-variant bg-surface-bright p-6 text-center">
         <span className="font-mono text-[10px] font-bold tracking-widest text-secondary uppercase block mb-3">
           404 · Off the map
         </span>
@@ -19,7 +19,7 @@ export default function NotFound() {
         </p>
         <Link
           href="/"
-          className="mt-6 inline-flex items-center space-x-2 rounded-lg bg-on-surface text-surface px-5 py-2 text-xs font-bold tracking-widest uppercase hover:bg-on-surface/90 transition-all"
+          className="mt-6 inline-flex items-center space-x-2 rounded-none-none bg-on-surface text-surface px-5 py-2 text-xs font-bold tracking-widest uppercase hover:bg-on-surface/90 transition-all"
         >
           <Compass size={14} aria-hidden="true" />
           <span>Back to directory</span>

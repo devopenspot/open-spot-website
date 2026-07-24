@@ -37,7 +37,7 @@ interface LookupState {
 }
 
 const FIELD_CLASSES =
-  "w-full rounded-lg border border-outline-variant bg-surface-bright p-3 text-xs font-medium text-on-surface shadow-sm focus:border-outline focus:outline-none disabled:opacity-50";
+  "w-full rounded-none-none border border-outline-variant bg-surface-bright p-3 text-xs font-medium text-on-surface shadow-none-none focus:border-outline focus:outline-none disabled:opacity-50";
 
 // Strict "lat, lon" parser. Optional surrounding whitespace, optional
 // leading minus. Does NOT accept parens, DMS, or "lat lon" with no comma —
@@ -168,7 +168,7 @@ export function LatLonEditor({
   const showEmptyWhileFocused = isFocused && lat === 0 && lon === 0;
   const displayedValue = showEmptyWhileFocused ? "" : pasteValue;
   return (
-    <fieldset className="rounded-xl border border-outline-variant bg-surface-container-low p-5">
+    <fieldset className="rounded-none-none border border-outline-variant bg-surface-container-low p-5">
       <legend className="flex items-center px-1 font-mono text-[10px] font-bold uppercase tracking-wider text-secondary">
         Location (lat / lon)
       </legend>
@@ -220,7 +220,7 @@ export function LatLonEditor({
           type="button"
           onClick={handleLookup}
           disabled={!canLookup}
-          className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-on-surface px-4 py-3 text-xs font-bold uppercase tracking-widest text-surface transition-all hover:bg-on-surface/90 disabled:opacity-50 sm:w-auto"
+          className="inline-flex w-full items-center justify-center gap-2 rounded-none-none bg-on-surface px-4 py-3 text-xs font-bold uppercase tracking-widest text-surface transition-all hover:bg-on-surface/90 disabled:opacity-50 sm:w-auto"
         >
           <Search size={12} aria-hidden="true" />
           {loading ? "Looking up…" : "Look up"}
@@ -230,13 +230,13 @@ export function LatLonEditor({
       {state.status === "error" ? (
         <div
           role="alert"
-          className="mt-4 flex items-start justify-between gap-2 rounded-lg border border-error/30 bg-error-container/30 p-3 text-xs text-error"
+          className="mt-4 flex items-start justify-between gap-2 rounded-none-none border border-error/30 bg-error-container/30 p-3 text-xs text-error"
         >
           <span>{state.error}</span>
           <button
             type="button"
             onClick={handleRetry}
-            className="rounded border border-error/40 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest"
+            className="rounded-none border border-error/40 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest"
           >
             Retry
           </button>

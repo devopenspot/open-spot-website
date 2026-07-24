@@ -28,7 +28,7 @@ export function PrimaryButton({
     <button
       type={type}
       className={cn(
-        "flex items-center justify-center rounded-lg font-bold tracking-widest uppercase transition-all shadow-sm disabled:opacity-60 disabled:cursor-not-allowed",
+        "flex items-center justify-center rounded-none-none font-bold tracking-widest uppercase transition-all shadow-none-none disabled:opacity-60 disabled:cursor-not-allowed",
         SIZE_CLASSES[size],
         fullWidth && "w-full",
         variant === "solid"

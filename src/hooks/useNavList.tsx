@@ -72,7 +72,7 @@ export function renderNavBadge({ variant, id, savedCount }: RenderBadgeArgs) {
     return (
       <span
         aria-label={`${savedCount} spots saved`}
-        className="px-2 py-0.5 text-[9px] font-mono font-bold rounded-full bg-primary text-surface"
+        className="px-2 py-0.5 text-[9px] font-mono font-bold rounded-none-none bg-primary text-surface"
       >
         {savedCount}
       </span>
@@ -82,7 +82,7 @@ export function renderNavBadge({ variant, id, savedCount }: RenderBadgeArgs) {
     return (
       <span
         aria-label={`${savedCount} spots saved`}
-        className="absolute -top-1.5 -right-2 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-primary text-[8px] font-bold text-surface animate-bounce"
+        className="absolute -top-1.5 -right-2 flex h-3.5 w-3.5 items-center justify-center rounded-none-none bg-primary text-[8px] font-bold text-surface animate-bounce"
       >
         {savedCount}
       </span>
@@ -91,7 +91,7 @@ export function renderNavBadge({ variant, id, savedCount }: RenderBadgeArgs) {
   return (
     <span
       aria-label={`${savedCount} spots saved`}
-      className="ml-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-surface"
+      className="ml-1 inline-flex h-4 min-w-4 items-center justify-center rounded-none-none bg-primary px-1 text-[10px] font-bold text-surface"
     >
       {savedCount}
     </span>

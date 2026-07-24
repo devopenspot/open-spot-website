@@ -18,7 +18,7 @@ export function NominatimAddressPreview({ address }: NominatimAddressPreviewProp
     <div
       role="status"
       aria-live="polite"
-      className="mt-4 rounded-xl border border-outline-variant bg-surface-bright p-4"
+      className="mt-4 rounded-none-none border border-outline-variant bg-surface-bright p-4"
     >
       <div className="mb-2 flex items-center gap-2 font-mono text-[10px] font-bold uppercase tracking-widest text-secondary">
         <Check size={12} aria-hidden="true" className="text-primary" />
@@ -26,12 +26,12 @@ export function NominatimAddressPreview({ address }: NominatimAddressPreviewProp
       </div>
       <p className="text-xs leading-relaxed text-on-surface">{composed}</p>
       <div className="mt-3 flex flex-wrap items-center gap-2 font-mono text-[10px] uppercase tracking-widest text-secondary">
-        <span className="inline-flex items-center gap-1 rounded border border-outline-variant bg-surface-container-low px-2 py-1">
+        <span className="inline-flex items-center gap-1 rounded-none border border-outline-variant bg-surface-container-low px-2 py-1">
           <MapPin size={10} aria-hidden="true" />
           {address.lat.toFixed(4)}, {address.lon.toFixed(4)}
         </span>
         {address.country ? (
-          <span className="rounded border border-outline-variant bg-surface-container-low px-2 py-1">
+          <span className="rounded-none border border-outline-variant bg-surface-container-low px-2 py-1">
             {address.country}
             {address.countryCode ? ` (${address.countryCode})` : ""}
           </span>

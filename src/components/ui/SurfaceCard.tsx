@@ -17,7 +17,7 @@ export function SurfaceCard({
   return (
     <Tag
       className={cn(
-        "rounded-xl bg-surface-bright",
+        "rounded-none-none bg-surface-bright",
         bordered && "border border-outline-variant",
         className,
       )}

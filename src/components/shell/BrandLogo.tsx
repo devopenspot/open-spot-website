@@ -26,7 +26,7 @@ export function BrandLogo({ onClick, size = "md", className }: BrandLogoProps) {
         id={size === "md" ? "brand-logo" : undefined}
         href="/"
         aria-label="Open Spot — home"
-        className={cn("flex items-center space-x-2 rounded-sm", className)}
+        className={cn("flex items-center space-x-2 rounded-none-none", className)}
       >
         {content}
       </Link>
@@ -40,7 +40,7 @@ export function BrandLogo({ onClick, size = "md", className }: BrandLogoProps) {
       onClick={onClick}
       aria-label="Open Spot home"
       className={cn(
-        "flex items-center space-x-2 rounded-sm cursor-pointer",
+        "flex items-center space-x-2 rounded-none-none cursor-pointer",
         className,
       )}
     >

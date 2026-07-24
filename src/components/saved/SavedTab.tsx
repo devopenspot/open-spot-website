@@ -30,9 +30,9 @@ export default function SavedTab() {
       {savedSpots.length === 0 ? (
         <div
           id="saved-empty-state"
-          className="flex flex-col items-center justify-center py-16 px-4 text-center rounded-2xl border border-dashed border-outline-variant bg-surface-container-low max-w-md mx-auto mt-6"
+          className="flex flex-col items-center justify-center py-16 px-4 text-center rounded-none-none border border-dashed border-outline-variant bg-surface-container-low max-w-md mx-auto mt-6"
         >
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-surface-container-high border border-outline-variant text-secondary mb-4">
+          <div className="flex h-12 w-12 items-center justify-center rounded-none-none bg-surface-container-high border border-outline-variant text-secondary mb-4">
             <Heart size={20} className="text-secondary" aria-hidden="true" />
           </div>
           <h3 className="font-display text-base font-bold uppercase tracking-wider text-on-surface">
@@ -45,7 +45,7 @@ export default function SavedTab() {
           <button
             type="button"
             onClick={() => router.push("/")}
-            className="mt-6 inline-flex items-center space-x-2 rounded-lg bg-on-surface text-surface px-5 py-2 text-xs font-bold tracking-widest uppercase hover:bg-on-surface/90 transition-all"
+            className="mt-6 inline-flex items-center space-x-2 rounded-none-none bg-on-surface text-surface px-5 py-2 text-xs font-bold tracking-widest uppercase hover:bg-on-surface/90 transition-all"
           >
             <Compass size={14} aria-hidden="true" />
             <span>Explore archive</span>

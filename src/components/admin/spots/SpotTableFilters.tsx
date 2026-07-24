@@ -82,13 +82,13 @@ export function SpotTableFilters() {
               emit({ q: e.target.value, types, country })
             }}
             placeholder="Name, city, address, feature…"
-            className="w-full rounded-lg border border-outline-variant bg-surface-bright py-3 pl-8 pr-3 text-xs font-medium text-on-surface shadow-sm focus:border-outline focus:outline-none"
+            className="w-full rounded-none-none border border-outline-variant bg-surface-bright py-3 pl-8 pr-3 text-xs font-medium text-on-surface shadow-none-none focus:border-outline focus:outline-none"
           />
         </div>
       </div>
       <fieldset
         id={typesFieldsetId}
-        className="rounded-lg border border-outline-variant bg-surface-bright p-2"
+        className="rounded-none-none border border-outline-variant bg-surface-bright p-2"
       >
         <legend className="px-1 font-mono text-[10px] font-bold uppercase tracking-wider text-secondary">
           Types
@@ -106,7 +106,7 @@ export function SpotTableFilters() {
                   onClick={() => toggleType(t.slug)}
                   aria-pressed={active}
                   className={cn(
-                    "inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] font-semibold transition-all",
+                    "inline-flex items-center rounded-none-none border px-2.5 py-1 text-[10px] font-semibold transition-all",
                     active
                       ? "border-primary bg-primary text-surface"
                       : "border-outline-variant bg-surface text-on-surface hover:border-outline",
@@ -143,7 +143,7 @@ export function SpotTableFilters() {
             emit({ q, types, country: e.target.value })
           }}
           placeholder="e.g. France"
-          className="w-full rounded-lg border border-outline-variant bg-surface-bright p-3 text-xs font-medium text-on-surface shadow-sm focus:border-outline focus:outline-none"
+          className="w-full rounded-none-none border border-outline-variant bg-surface-bright p-3 text-xs font-medium text-on-surface shadow-none-none focus:border-outline focus:outline-none"
         />
       </div>
     </div>

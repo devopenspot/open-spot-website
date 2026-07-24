@@ -72,7 +72,7 @@ export default async function AdminSpotsPage({ searchParams }: AdminSpotsPagePro
         </div>
         <Link
           href="/admin/spots/new"
-          className="inline-flex items-center gap-2 rounded-lg bg-on-surface px-4 py-2.5 text-xs font-bold uppercase tracking-widest text-surface transition-all hover:bg-on-surface/90"
+          className="inline-flex items-center gap-2 rounded-none-none bg-on-surface px-4 py-2.5 text-xs font-bold uppercase tracking-widest text-surface transition-all hover:bg-on-surface/90"
         >
           <Plus size={12} aria-hidden="true" />
           New spot

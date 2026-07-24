@@ -19,12 +19,12 @@ interface BaseSpotCardProps {
 }
 
 const ROOT_CLASSES =
-  "group relative flex w-full flex-col overflow-hidden rounded-xl border border-outline-variant bg-surface-bright text-left shadow-sm transition-all hover:shadow-md focus-within:shadow-md";
+  "group relative flex w-full flex-col overflow-hidden rounded-none-none border border-outline-variant bg-surface-bright text-left shadow-none-none transition-all hover:shadow-none-none focus-within:shadow-none-none";
 
 const IMAGE_WRAPPER_CLASSES = "relative h-48 w-full overflow-hidden bg-black/5";
 
 const TOGGLE_BASE_CLASSES =
-  "absolute top-3 right-3 z-10 flex h-9 w-9 items-center justify-center rounded-full border shadow-sm transition-all hover:scale-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
+  "absolute top-3 right-3 z-10 flex h-9 w-9 items-center justify-center rounded-none-none border shadow-none-none transition-all hover:scale-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
 
 const TOGGLE_SAVED_CLASSES = "border-primary bg-primary text-surface";
 const TOGGLE_DEFAULT_CLASSES =
@@ -157,7 +157,7 @@ function BaseSpotCardImpl({
           <div className="flex items-center space-x-1">
             <span
               aria-hidden="true"
-              className={cn("h-1.5 w-1.5 rounded-full", "bg-primary")}
+              className={cn("h-1.5 w-1.5 rounded-none-none", "bg-primary")}
             />
             <span className="text-secondary uppercase">
               {spot.sports.join(" | ")}

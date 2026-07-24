@@ -15,11 +15,11 @@ export function PostClosedNotice() {
       id="post-closed-notice"
       role="status"
       aria-labelledby="post-closed-notice-heading"
-      className="mx-auto flex max-w-md flex-col items-center gap-5 rounded-2xl border border-outline-variant bg-surface-container-low p-8 text-center animate-fade-in"
+      className="mx-auto flex max-w-md flex-col items-center gap-5 rounded-none-none border border-outline-variant bg-surface-container-low p-8 text-center animate-fade-in"
     >
       <div
         aria-hidden="true"
-        className="flex h-14 w-14 items-center justify-center rounded-full border border-outline-variant bg-surface-container-high text-on-surface"
+        className="flex h-14 w-14 items-center justify-center rounded-none-none border border-outline-variant bg-surface-container-high text-on-surface"
       >
         <Shield size={24} />
       </div>
@@ -43,7 +43,7 @@ export function PostClosedNotice() {
         <Link
           href={adminHref}
           className={cn(
-            "inline-flex w-full items-center justify-center gap-2 rounded-lg px-5 py-2.5 text-xs font-bold uppercase tracking-widest transition-all shadow-sm",
+            "inline-flex w-full items-center justify-center gap-2 rounded-none-none px-5 py-2.5 text-xs font-bold uppercase tracking-widest transition-all shadow-none-none",
             "min-h-10 bg-on-surface text-surface hover:bg-on-surface/90",
           )}
         >
@@ -54,7 +54,7 @@ export function PostClosedNotice() {
         <Link
           href="/"
           className={cn(
-            "inline-flex w-full items-center justify-center gap-2 rounded-lg border border-outline px-5 py-2.5 text-xs font-bold uppercase tracking-widest transition-all",
+            "inline-flex w-full items-center justify-center gap-2 rounded-none-none border border-outline px-5 py-2.5 text-xs font-bold uppercase tracking-widest transition-all",
             "min-h-10 text-on-surface hover:bg-surface-container",
           )}
         >
