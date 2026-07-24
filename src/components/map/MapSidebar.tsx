@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { Compass, Heart, MapPin } from "lucide-react";
-import { memo, useCallback, useMemo } from "react";
+import { memo, useCallback, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/cn";
 import { useSpotsStore } from "@/stores/spots-store";
@@ -25,6 +25,12 @@ import {
 } from "@/lib/spots/geo";
 import type { DistanceUnit } from "@/stores/preferences-store";
 import { TypeBadges } from "@/components/spot/TypeBadges";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 interface MapSidebarProps {
   spots: readonly Spot[];
@@ -87,11 +93,27 @@ function MapSidebarBase({ spots }: MapSidebarProps) {
     [sortedSpots, distanceOrigin],
   );
 
+  const [userCity, setUserCity] = useState<string | null>(
+    groupedSpots[0]?.key ?? null,
+  );
+
+  const openCity = useMemo(() => {
+    if (activeId) {
+      const key = groupedSpots.find((g) =>
+        g.spots.some((s) => s.id === activeId),
+      )?.key;
+      if (key) return key;
+    }
+    if (userCity && groupedSpots.some((g) => g.key === userCity)) {
+      return userCity;
+    }
+    return groupedSpots[0]?.key ?? null;
+  }, [activeId, groupedSpots, userCity]);
   return (
     <aside
       id="map-sidebar"
       aria-label="Spot list"
-      className="w-full lg:w-80 flex flex-col border border-outline-variant rounded-2xl bg-surface-bright overflow-hidden sm:h-[150px] lg:h-full"
+      className="w-full lg:w-80 flex flex-col border border-outline-variant bg-surface-bright overflow-hidden sm:h-[150px] lg:h-full"
     >
       <div className="py-2 mx-auto border-b border-outline-variant bg-surface-container-low">
         {hasFilter && filterLabel && !showRadiusChips && (
@@ -157,25 +179,51 @@ function MapSidebarBase({ spots }: MapSidebarProps) {
         className="ml-1 md:ml-0 flex-1 flex flex-row lg:flex-col overflow-x-auto lg:overflow-y-auto space-x-1 lg:space-x-0 lg:space-y-2 no-scrollbar snap-x lg:snap-none snap-mandatory"
       >
         <div className="hidden md:flex flex-col">
-          {groupedSpots.map((group) => (
-            <SpotGroupSection
-              key={group.key}
-              group={group}
-              activeId={activeId}
-              savedIds={savedIds}
-              distanceOrigin={distanceOrigin}
-              distanceUnit={distanceUnit}
-              onSelect={handleSelect}
-            />
-          ))}
+          <Accordion
+            multiple={false}
+            value={openCity === null ? [] : [openCity]}
+            onValueChange={(v: string[]) => setUserCity(v[0] ?? null)}
+          >
+            {groupedSpots.map((group) => (
+              <AccordionItem key={group.key} value={group.key}>
+                <AccordionTrigger className="sticky top-0 z-10">
+                  <MapPin
+                    size={10}
+                    aria-hidden="true"
+                    className="text-secondary shrink-0"
+                  />
+                  <span className="truncate">
+                    {group.city}
+                    {group.countryCode ? ` · ${group.countryCode}` : ""}
+                  </span>
+                  <span className="ml-auto text-secondary shrink-0">
+                    {group.spots.length} spots
+                  </span>
+                </AccordionTrigger>
+                <AccordionContent>
+                  {group.spots.map((spot) => (
+                    <SidebarSpotItem
+                      key={spot.id}
+                      spot={spot}
+                      isActive={activeId === spot.id}
+                      isSaved={savedIds.has(spot.id)}
+                      distanceOrigin={distanceOrigin}
+                      distanceUnit={distanceUnit}
+                      onSelect={handleSelect}
+                    />
+                  ))}
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
         </div>
         {spots.length === 0 &&
           (mapMode === "saved" ? (
             <div
               id="map-saved-empty-state"
-              className="m-4 flex flex-col items-center justify-center py-10 px-4 text-center rounded-2xl border border-dashed border-outline-variant bg-surface-container-low"
+              className="m-4 flex flex-col items-center justify-center py-10 px-4 text-center border border-dashed border-outline-variant bg-surface-container-low"
             >
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-surface-container-high border border-outline-variant text-secondary mb-4">
+              <div className="flex h-12 w-12 items-center justify-center bg-surface-container-high border border-outline-variant text-secondary mb-4">
                 <Heart
                   size={20}
                   className="text-secondary"
@@ -192,7 +240,7 @@ function MapSidebarBase({ spots }: MapSidebarProps) {
               <button
                 type="button"
                 onClick={() => router.push("/")}
-                className="mt-6 inline-flex items-center space-x-2 rounded-lg bg-on-surface text-surface px-5 py-2 text-xs font-bold tracking-widest uppercase hover:bg-on-surface/90 transition-all"
+                className="mt-6 inline-flex items-center space-x-2 bg-on-surface text-surface px-5 py-2 text-xs font-bold tracking-widest uppercase hover:bg-on-surface/90 transition-all"
               >
                 <Compass size={14} aria-hidden="true" />
                 <span>Explore archive</span>
@@ -311,58 +359,6 @@ const SidebarSpotItem = memo(function SidebarSpotItem({
         {isSaved && <span className="visually-hidden">Saved spot</span>}
       </span>
     </button>
-  );
-});
-
-interface SpotGroupSectionProps {
-  group: SpotGroup;
-  activeId: string | null;
-  savedIds: ReadonlySet<string>;
-  distanceOrigin: { lat: number; lon: number } | null;
-  distanceUnit: DistanceUnit;
-  onSelect: (spot: Spot) => void;
-}
-
-const SpotGroupSection = memo(function SpotGroupSection({
-  group,
-  activeId,
-  savedIds,
-  distanceOrigin,
-  distanceUnit,
-  onSelect,
-}: SpotGroupSectionProps) {
-  return (
-    <section
-      id={`sidebar-city-${group.key}`}
-      role="group"
-      aria-labelledby={`sidebar-city-${group.key}-label`}
-      className="flex flex-col"
-    >
-      <h3
-        id={`sidebar-city-${group.key}-label`}
-        className="sticky top-0 z-10 flex items-center gap-1.5 border-b border-outline-variant bg-surface-bright px-2 py-1 font-mono text-[10px] font-bold tracking-widest uppercase text-on-surface"
-      >
-        <MapPin size={10} aria-hidden="true" className="text-secondary" />
-        <span className="truncate">
-          {group.city}
-          {group.countryCode ? ` · ${group.countryCode}` : ""}
-        </span>
-        <span className="ml-auto text-secondary shrink-0">
-          {group.spots.length} spots
-        </span>
-      </h3>
-      {group.spots.map((spot) => (
-        <SidebarSpotItem
-          key={spot.id}
-          spot={spot}
-          isActive={activeId === spot.id}
-          isSaved={savedIds.has(spot.id)}
-          distanceOrigin={distanceOrigin}
-          distanceUnit={distanceUnit}
-          onSelect={onSelect}
-        />
-      ))}
-    </section>
   );
 });
 

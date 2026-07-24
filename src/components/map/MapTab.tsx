@@ -108,7 +108,13 @@ export default function MapTab({
         ? "nearby"
         : "filtered";
     useMapStore.getState().setMapMode(next);
-  }, [nearbyRequested, savedRequested, savedModeActive, savedModeBlocked, dismissSaved]);
+  }, [
+    nearbyRequested,
+    savedRequested,
+    savedModeActive,
+    savedModeBlocked,
+    dismissSaved,
+  ]);
 
   useEffect(() => {
     if (!nearbyRequested) return;
@@ -148,7 +154,14 @@ export default function MapTab({
     if (hasRegionFilter) {
       fitBoundsToSpots();
     }
-  }, [nearYou, savedModeActive, hasRegionFilter, region, country, fitBoundsToSpots]);
+  }, [
+    nearYou,
+    savedModeActive,
+    hasRegionFilter,
+    region,
+    country,
+    fitBoundsToSpots,
+  ]);
 
   const initialCenter: [number, number] =
     nearYou && userLatLon
@@ -173,7 +186,7 @@ export default function MapTab({
       <div className="flex-1 flex flex-col">
         <div
           id="map-canvas-container"
-          className="flex-1 border border-outline-variant rounded-2xl bg-surface-container-low overflow-hidden relative flex flex-col"
+          className="flex-1 border border-outline-variant bg-surface-container-low overflow-hidden relative flex flex-col"
         >
           {/* <MapHeaderBar /> */}
 
